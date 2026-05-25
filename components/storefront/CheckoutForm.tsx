@@ -27,11 +27,6 @@ const METHODES = [
   { id: "mobilemoney", label: "Mobile Money", desc: "Orange, Wave, MTN, Moov, M-Pesa", icon: Smartphone },
 ];
 
-declare global {
-  interface Window {
-    FlutterwaveCheckout: (config: any) => void;
-  }
-}
 
 export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoUrl }: Props) {
   const router = useRouter();
