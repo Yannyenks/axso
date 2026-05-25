@@ -2,13 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import React from "react";
 import {
   LayoutDashboard, Store, ShoppingCart, Users, DollarSign,
   Truck, Settings, LogOut, Shield, ChevronRight,
   BarChart3, Lock
 } from "lucide-react";
 
-const SECTIONS = [
+type NavItem = { href: string; label: string; icon: React.ElementType; exact?: boolean };
+type Section = { label: string; items: NavItem[] };
+
+const SECTIONS: Section[] = [
   {
     label: "Vue d'ensemble",
     items: [{ href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true }],
