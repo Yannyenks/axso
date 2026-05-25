@@ -1,0 +1,446 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =====================
+// TENANT (Boutique)
+// =====================
+model Tenant {
+  id                  String   @id @default(cuid())
+  slug                String   @unique
+  customDomain        String?  @unique
+  nomBoutique         String
+  description         String?
+  categorie           String
+  pays                String
+  devise              String   @default("XAF")
+  whatsapp            String
+  email               String   @unique
+  telephone           String?
+  adresse             String?
+  logoUrl             String?
+  bannerUrl           String?
+  themeId             String   @default("terre-et-or")
+  themeConfig         Json     @default("{}")
+  commissionRate      Float    @default(0.03)
+  statut              String   @default("active")
+  planType            String   @default("gratuit")
+  metaTitle           String?
+  metaDescription     String?
+  socialLinks         Json     @default("{}")
+  parametresPaiement  Json     @default("{}")
+  parametresLivraison Json     @default("{}")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  produits    Produit[]
+  collections Collection[]
+  commandes   Commande[]
+  clients     Client[]
+  commissions Commission[]
+  codesPromo  CodePromo[]
+  avis        Avis[]
+  membres     MembreEquipe[]
+  analytics   Analytics[]
+  livreurs    Livreur[]
+  themes      Theme[]
+}
+
+// =====================
+// PRODUIT
+// =====================
+model Produit {
+  id            String   @id @default(cuid())
+  tenantId      String
+  nom           String
+  slug          String
+  description   String?
+  descriptionIA String?
+  prix          Float
+  prixCompare   Float?
+  cout          Float?
+  stock         Int      @default(0)
+  sku           String?
+  images        String[]
+  categorie     String?
+  tags          String[]
+  poids         Float?
+  actif         Boolean  @default(true)
+  featured      Boolean  @default(false)
+  metaTitle     String?
+  metaDesc      String?
+  ventes        Int      @default(0)
+  vues          Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant         Tenant          @relation(fields: [tenantId], references: [id])
+  variantes      Variante[]
+  collections    Collection[]    @relation("ProduitCollection")
+  lignesCommande LigneCommande[]
+  avis           Avis[]
+  wishlist       Wishlist[]
+
+  @@unique([tenantId, slug])
+}
+
+// =====================
+// VARIANTE PRODUIT
+// =====================
+model Variante {
+  id        String  @id @default(cuid())
+  produitId String
+  nom       String
+  valeur    String
+  prix      Float?
+  stock     Int     @default(0)
+  sku       String?
+
+  produit Produit @relation(fields: [produitId], references: [id])
+}
+
+// =====================
+// COLLECTION
+// =====================
+model Collection {
+  id          String   @id @default(cuid())
+  tenantId    String
+  nom         String
+  slug        String
+  description String?
+  imageUrl    String?
+  actif       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  produits Produit[] @relation("ProduitCollection")
+}
+
+// =====================
+// CLIENT
+// =====================
+model Client {
+  id             String   @id @default(cuid())
+  tenantId       String
+  nom            String
+  email          String
+  telephone      String?
+  adresse        String?
+  ville          String?
+  pays           String?
+  totalCommandes Int      @default(0)
+  totalDepense   Float    @default(0)
+  createdAt      DateTime @default(now())
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  commandes Commande[]
+  avis      Avis[]
+  wishlist  Wishlist[]
+
+  @@unique([tenantId, email])
+}
+
+// =====================
+// COMMANDE
+// =====================
+model Commande {
+  id               String   @id @default(cuid())
+  numero           String   @unique
+  tenantId         String
+  clientId         String?
+  livreurId        String?
+  clientNom        String
+  clientEmail      String
+  clientTelephone  String
+  adresseLivraison String
+  ville            String
+  pays             String
+  montantSousTotal Float
+  montantLivraison Float    @default(0)
+  montantReduction Float    @default(0)
+  montantTotal     Float
+  devise           String   @default("XAF")
+  statut           String   @default("en_attente")
+  paiementStatut   String   @default("pending")
+  methodePaiement  String
+  flutterwaveRef   String?
+  codePromoId      String?
+  noteClient       String?
+  numeroSuivi      String?
+  transporteur     String?
+  livraisonStatut  String   @default("non_expediee")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tenant     Tenant          @relation(fields: [tenantId], references: [id])
+  client     Client?         @relation(fields: [clientId], references: [id])
+  livreur    Livreur?        @relation(fields: [livreurId], references: [id])
+  lignes     LigneCommande[]
+  commission Commission?
+  escrow     Escrow?
+  codePromo  CodePromo?      @relation(fields: [codePromoId], references: [id])
+}
+
+// =====================
+// LIGNE DE COMMANDE
+// =====================
+model LigneCommande {
+  id         String  @id @default(cuid())
+  commandeId String
+  produitId  String
+  nom        String
+  prix       Float
+  quantite   Int
+  imageUrl   String?
+  variante   String?
+
+  commande Commande @relation(fields: [commandeId], references: [id])
+  produit  Produit  @relation(fields: [produitId], references: [id])
+}
+
+// =====================
+// LIVREUR
+// =====================
+model Livreur {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  tenantId     String?
+  nom          String
+  telephone    String
+  vehicule     String   @default("moto")
+  zone         String?
+  disponible   Boolean  @default(true)
+  actif        Boolean  @default(true)
+  latitude     Float?
+  longitude    Float?
+  positionAt   DateTime?
+  createdAt    DateTime @default(now())
+
+  user          User           @relation(fields: [userId], references: [id])
+  tenant        Tenant?        @relation(fields: [tenantId], references: [id])
+  commandes     Commande[]
+  notifications Notification[]
+}
+
+// =====================
+// NOTIFICATION LIVREUR
+// =====================
+model Notification {
+  id         String   @id @default(cuid())
+  livreurId  String
+  type       String
+  titre      String
+  message    String
+  commandeId String?
+  lu         Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  livreur Livreur @relation(fields: [livreurId], references: [id])
+}
+
+// =====================
+// COMMISSION
+// =====================
+model Commission {
+  id                String    @id @default(cuid())
+  commandeId        String    @unique
+  tenantId          String
+  montantCommande   Float
+  montantCommission Float
+  montantMarchand   Float
+  taux              Float
+  devise            String
+  statut            String    @default("pending")
+  capturedAt        DateTime?
+  createdAt         DateTime  @default(now())
+
+  commande Commande @relation(fields: [commandeId], references: [id])
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+// =====================
+// ESCROW (Séquestre)
+// =====================
+model Escrow {
+  id           String    @id @default(cuid())
+  commandeId   String    @unique
+  tenantId     String
+  montant      Float
+  statut       String    @default("held")
+  raisonLitige String?
+  heldAt       DateTime  @default(now())
+  releaseAt    DateTime
+  releasedAt   DateTime?
+
+  commande Commande @relation(fields: [commandeId], references: [id])
+}
+
+// =====================
+// CODE PROMO
+// =====================
+model CodePromo {
+  id              String    @id @default(cuid())
+  tenantId        String
+  code            String
+  type            String
+  valeur          Float
+  minCommande     Float?
+  maxUtilisations Int?
+  utilisations    Int       @default(0)
+  dateExpiration  DateTime?
+  actif           Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  commandes Commande[]
+
+  @@unique([tenantId, code])
+}
+
+// =====================
+// AVIS CLIENT
+// =====================
+model Avis {
+  id          String   @id @default(cuid())
+  tenantId    String
+  produitId   String
+  clientId    String
+  note        Int
+  titre       String?
+  commentaire String?
+  verifie     Boolean  @default(false)
+  approuve    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  produit Produit @relation(fields: [produitId], references: [id])
+  client  Client  @relation(fields: [clientId], references: [id])
+}
+
+// =====================
+// WISHLIST
+// =====================
+model Wishlist {
+  id        String   @id @default(cuid())
+  clientId  String
+  produitId String
+  createdAt DateTime @default(now())
+
+  client  Client  @relation(fields: [clientId], references: [id])
+  produit Produit @relation(fields: [produitId], references: [id])
+
+  @@unique([clientId, produitId])
+}
+
+// =====================
+// MEMBRE ÉQUIPE
+// =====================
+model MembreEquipe {
+  id        String   @id @default(cuid())
+  tenantId  String
+  email     String
+  nom       String
+  role      String   @default("editeur")
+  actif     Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+// =====================
+// ANALYTICS
+// =====================
+model Analytics {
+  id       String   @id @default(cuid())
+  tenantId String
+  date     DateTime @default(now())
+  type     String
+  valeur   Float    @default(1)
+  metadata Json     @default("{}")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+// =====================
+// COMPTE UTILISATEUR (NextAuth)
+// =====================
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  tenantId      String?
+  role          String    @default("owner")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  livreur  Livreur?
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// =====================
+// THÈME PERSONNALISÉ
+// =====================
+model Theme {
+  id          String   @id @default(cuid())
+  tenantId    String?
+  nom         String
+  slug        String
+  description String?
+  badge       String?
+  config      Json
+  effetId     String?
+  apercu      String?
+  actif       Boolean  @default(true)
+  premium     Boolean  @default(false)
+  ordre       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, slug])
+}
