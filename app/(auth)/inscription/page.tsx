@@ -5,90 +5,385 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowRight, ArrowLeft, Check, Loader2, Store, Globe, Palette, Sparkles } from "lucide-react";
-import { slugify } from "@/lib/utils";
+import {
+  ArrowRight, ArrowLeft, Check, Loader2, Store, Sparkles,
+  Bot, Send, CheckCircle2, Package, Truck, Palette, AlertCircle,
+} from "lucide-react";
+import type { PlanBoutique } from "@/lib/ai-agent";
 
-const etapes = ["Votre compte", "Votre boutique", "Votre thème"];
+// ─── Schemas ─────────────────────────────────────────────────────────────────
 
 const schemaCompte = z.object({
   name: z.string().min(2, "Minimum 2 caractères"),
   email: z.string().email("Email invalide"),
   password: z.string().min(6, "Minimum 6 caractères"),
-});
-
-const schemaBoutique = z.object({
-  nomBoutique: z.string().min(2, "Minimum 2 caractères"),
-  categorie: z.string().min(1, "Choisissez une catégorie"),
-  pays: z.string().min(1, "Choisissez un pays"),
   whatsapp: z.string().min(8, "Numéro WhatsApp requis"),
 });
 
-const categories = [
-  "Mode & Vêtements", "Beauté & Cosmétiques", "Alimentation & Épicerie",
-  "Artisanat & Art", "Électronique", "Maison & Décoration",
-  "Santé & Bien-être", "Sport & Loisirs", "Autre",
-];
+type CompteData = z.infer<typeof schemaCompte>;
 
-const pays = [
-  { code: "SN", nom: "Sénégal", devise: "XOF", flag: "🇸🇳" },
-  { code: "CM", nom: "Cameroun", devise: "XAF", flag: "🇨🇲" },
-  { code: "CI", nom: "Côte d'Ivoire", devise: "XOF", flag: "🇨🇮" },
-  { code: "GH", nom: "Ghana", devise: "GHS", flag: "🇬🇭" },
-  { code: "NG", nom: "Nigeria", devise: "NGN", flag: "🇳🇬" },
-  { code: "KE", nom: "Kenya", devise: "KES", flag: "🇰🇪" },
-  { code: "MA", nom: "Maroc", devise: "MAD", flag: "🇲🇦" },
-  { code: "TG", nom: "Togo", devise: "XOF", flag: "🇹🇬" },
-  { code: "BJ", nom: "Bénin", devise: "XOF", flag: "🇧🇯" },
-  { code: "ML", nom: "Mali", devise: "XOF", flag: "🇲🇱" },
-];
+const inputCls =
+  "w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/10 focus:outline-none transition-all";
 
-const themes = [
-  { id: "noir-obsidien", nom: "Noir Obsidien", desc: "Mode & Luxe", fond: "#0a0a0a", accent: "#F5A623", emoji: "✨", preview: "Sombre & élégant" },
-  { id: "violet-cosmos", nom: "Violet Cosmos", desc: "Beauté & Cosmétiques", fond: "#1a0a2e", accent: "#7c3aed", emoji: "💜", preview: "Mystérieux & premium" },
-  { id: "terre-et-or", nom: "Terre & Or", desc: "Artisanat & Terroir", fond: "#fff8f0", accent: "#c2622d", emoji: "🌿", preview: "Chaleureux & naturel" },
-];
+// ─── Noms des thèmes ──────────────────────────────────────────────────────────
 
-const inputCls = "w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/10 focus:outline-none transition-all";
+const THEMES: Record<string, { nom: string; emoji: string; couleur: string }> = {
+  "noir-obsidien":   { nom: "Noir Obsidien",   emoji: "✨", couleur: "#F5A623" },
+  "violet-cosmos":  { nom: "Violet Cosmos",    emoji: "💜", couleur: "#7c3aed" },
+  "terre-et-or":    { nom: "Terre & Or",       emoji: "🌿", couleur: "#c2622d" },
+  "kente-royal":    { nom: "Kente Royal",      emoji: "👑", couleur: "#D4AF37" },
+  "ocean-atlantique": { nom: "Océan Atlantique", emoji: "🌊", couleur: "#0ea5e9" },
+  "bwiti-forest":   { nom: "Bwiti Forest",     emoji: "🌱", couleur: "#16a34a" },
+};
 
-export default function InscriptionPage() {
+// ─── Plan preview card ────────────────────────────────────────────────────────
+
+function PlanPreviewCard({
+  plan,
+  messageIA,
+  onConfirmer,
+  onModifier,
+  loading,
+}: {
+  plan: PlanBoutique & { messageIA?: string };
+  messageIA: string;
+  onConfirmer: () => void;
+  onModifier: () => void;
+  loading: boolean;
+}) {
+  const theme = THEMES[plan.themeId] || THEMES["terre-et-or"];
+  return (
+    <div className="space-y-4">
+      {/* Message IA */}
+      <div className="flex gap-3">
+        <div className="w-8 h-8 rounded-xl bg-[#F5A623]/20 border border-[#F5A623]/30 flex items-center justify-center flex-shrink-0">
+          <Bot size={14} className="text-[#F5A623]" />
+        </div>
+        <div className="flex-1 bg-amber-50 border border-[#F5A623]/20 rounded-2xl px-4 py-3">
+          <p className="text-sm text-gray-700 leading-relaxed">{messageIA}</p>
+        </div>
+      </div>
+
+      {/* Plan card */}
+      <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+        {/* Header boutique */}
+        <div className="p-4 border-b border-gray-50" style={{ background: `linear-gradient(135deg, ${theme.couleur}10, ${theme.couleur}05)` }}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+              style={{ background: `${theme.couleur}20`, border: `2px solid ${theme.couleur}40` }}>
+              {theme.emoji}
+            </div>
+            <div>
+              <p className="font-bold text-gray-900">{plan.nomBoutique}</p>
+              <p className="text-xs text-gray-400">{plan.categorie} · {plan.pays} · {plan.devise}</p>
+            </div>
+            <div className="ml-auto text-xs px-2 py-1 rounded-lg border font-medium"
+              style={{ color: theme.couleur, borderColor: `${theme.couleur}30`, background: `${theme.couleur}10` }}>
+              {theme.nom}
+            </div>
+          </div>
+          {plan.description && (
+            <p className="text-xs text-gray-500 mt-2">{plan.description}</p>
+          )}
+        </div>
+
+        {/* Produits */}
+        <div className="p-4 border-b border-gray-50">
+          <div className="flex items-center gap-2 mb-3">
+            <Package size={13} className="text-gray-400" />
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              {plan.produits.length} produits de démarrage
+            </p>
+          </div>
+          <div className="space-y-2">
+            {plan.produits.map((p, i) => (
+              <div key={i} className="flex items-center justify-between text-sm">
+                <span className="text-gray-700">{p.nom}</span>
+                <span className="font-semibold text-gray-900">
+                  {p.prix.toLocaleString()} {plan.devise}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Livraison */}
+        {plan.livraison && (
+          <div className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Truck size={13} className="text-gray-400" />
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Livraison configurée</p>
+            </div>
+            <div className="flex gap-4 text-xs text-gray-600">
+              <span>Locale : {plan.livraison.locale.toLocaleString()} {plan.devise}</span>
+              <span>Nationale : {plan.livraison.nationale.toLocaleString()} {plan.devise}</span>
+            </div>
+            {plan.livraison.gratuite > 0 && (
+              <p className="text-xs text-green-600 mt-1">
+                Livraison gratuite dès {plan.livraison.gratuite.toLocaleString()} {plan.devise}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Boutons */}
+      <div className="flex gap-3">
+        <button
+          onClick={onModifier}
+          disabled={loading}
+          className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-xl hover:bg-gray-50 transition-all text-sm font-medium disabled:opacity-40"
+        >
+          Modifier
+        </button>
+        <button
+          onClick={onConfirmer}
+          disabled={loading}
+          className="flex-1 bg-[#F5A623] text-white font-bold py-3 rounded-xl hover:bg-[#D4911A] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#F5A623]/25 disabled:opacity-50 text-sm"
+        >
+          {loading ? (
+            <><Loader2 size={15} className="animate-spin" /> Création en cours...</>
+          ) : (
+            <><Sparkles size={15} /> Créer ma boutique</>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Étape IA ─────────────────────────────────────────────────────────────────
+
+function EtapeIA({
+  onBack,
+  compte,
+}: {
+  onBack: () => void;
+  compte: CompteData;
+}) {
   const router = useRouter();
-  const [etape, setEtape] = useState(0);
+  const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [erreur, setErreur] = useState("");
-  const [themeChoisi, setThemeChoisi] = useState("terre-et-or");
-  const [donneesCompte, setDonneesCompte] = useState<z.infer<typeof schemaCompte> | null>(null);
-  const [donneesBoutique, setDonneesBoutique] = useState<z.infer<typeof schemaBoutique> | null>(null);
+  const [plan, setPlan] = useState<(PlanBoutique & { messageIA?: string }) | null>(null);
+  const [messageIA, setMessageIA] = useState("");
+  const [phase, setPhase] = useState<"saisie" | "plan" | "creation" | "succes">("saisie");
+  const [progress, setProgress] = useState<string[]>([]);
 
-  const formCompte = useForm<z.infer<typeof schemaCompte>>({ resolver: zodResolver(schemaCompte) });
-  const formBoutique = useForm<z.infer<typeof schemaBoutique>>({ resolver: zodResolver(schemaBoutique) });
-
-  const onSubmitCompte = (data: z.infer<typeof schemaCompte>) => { setDonneesCompte(data); setEtape(1); };
-  const onSubmitBoutique = (data: z.infer<typeof schemaBoutique>) => { setDonneesBoutique(data); setEtape(2); };
-
-  const finaliserInscription = async () => {
-    if (!donneesCompte || !donneesBoutique) return;
+  const analyser = async () => {
+    if (!description.trim() || loading) return;
     setLoading(true);
     setErreur("");
     try {
-      const slug = slugify(donneesBoutique.nomBoutique);
-      const paysCible = pays.find((p) => p.code === donneesBoutique.pays);
-      const response = await fetch("/api/tenants", {
+      const res = await fetch("/api/ai/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...donneesCompte, ...donneesBoutique, slug, themeId: themeChoisi, devise: paysCible?.devise || "XOF" }),
+        body: JSON.stringify({ phase: "analyser", description }),
       });
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.message || "Erreur lors de la création");
-      }
-      router.push("/connexion?inscription=success");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      setPlan(data.plan);
+      setMessageIA(data.messageIA || data.plan.messageIA || "Voici ce que je vais créer pour vous !");
+      setPhase("plan");
     } catch (err: any) {
-      setErreur(err.message);
+      setErreur(err.message || "Erreur lors de l'analyse. Vérifiez votre clé ANTHROPIC_API_KEY.");
+    } finally {
       setLoading(false);
     }
   };
 
-  const stepIcons = [Store, Globe, Palette];
+  const executer = async () => {
+    if (!plan) return;
+    setLoading(true);
+    setErreur("");
+    setPhase("creation");
+
+    const steps = [
+      "Création de votre boutique...",
+      "Configuration du thème...",
+      "Ajout des produits...",
+      "Configuration de la livraison...",
+      "Finalisation...",
+    ];
+
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i < steps.length) {
+        setProgress((prev) => [...prev, steps[i]]);
+        i++;
+      }
+    }, 600);
+
+    try {
+      const res = await fetch("/api/ai/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phase: "executer", plan, compte }),
+      });
+      const data = await res.json();
+      clearInterval(interval);
+      if (!res.ok) throw new Error(data.message);
+      setPhase("succes");
+      setTimeout(() => router.push("/connexion?inscription=success"), 2500);
+    } catch (err: any) {
+      clearInterval(interval);
+      setErreur(err.message || "Erreur lors de la création");
+      setPhase("plan");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Succès
+  if (phase === "succes") {
+    return (
+      <div className="text-center py-8 space-y-4">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+          <CheckCircle2 size={32} className="text-green-500" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-900">Boutique créée !</h3>
+        <p className="text-gray-500 text-sm">Vous allez être redirigé vers la connexion...</p>
+        <div className="flex justify-center">
+          <Loader2 size={20} className="animate-spin text-[#F5A623]" />
+        </div>
+      </div>
+    );
+  }
+
+  // Création en cours
+  if (phase === "creation") {
+    return (
+      <div className="py-6 space-y-4">
+        <div className="text-center mb-4">
+          <Sparkles size={24} className="text-[#F5A623] mx-auto mb-2" />
+          <p className="font-semibold text-gray-900">L'IA construit votre boutique...</p>
+        </div>
+        <div className="space-y-2">
+          {progress.map((step, i) => (
+            <div key={i} className="flex items-center gap-3 text-sm">
+              <CheckCircle2 size={16} className="text-green-500 flex-shrink-0" />
+              <span className="text-gray-700">{step}</span>
+            </div>
+          ))}
+          {progress.length < 5 && (
+            <div className="flex items-center gap-3 text-sm">
+              <Loader2 size={16} className="text-[#F5A623] animate-spin flex-shrink-0" />
+              <span className="text-gray-400">En cours...</span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="mb-2">
+        <h2 className="text-xl font-bold text-gray-900">L'IA crée votre boutique</h2>
+        <p className="text-gray-400 text-sm mt-0.5">Décrivez votre business en quelques mots</p>
+      </div>
+
+      {/* Message IA initial */}
+      {phase === "saisie" && (
+        <div className="flex gap-3">
+          <div className="w-8 h-8 rounded-xl bg-[#F5A623]/20 border border-[#F5A623]/30 flex items-center justify-center flex-shrink-0">
+            <Bot size={14} className="text-[#F5A623]" />
+          </div>
+          <div className="flex-1 bg-amber-50 border border-[#F5A623]/20 rounded-2xl px-4 py-3">
+            <p className="text-sm text-gray-700">
+              Bonjour {compte.name.split(" ")[0]} ! 👋 Décrivez votre business et je vais créer toute votre boutique automatiquement — nom, thème, produits, livraison. Par exemple : <em className="text-[#F5A623]">"Je vends des robes wax et boubous au Sénégal"</em>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {erreur && (
+        <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm">
+          <AlertCircle size={15} className="flex-shrink-0" />
+          {erreur}
+        </div>
+      )}
+
+      {/* Plan IA */}
+      {phase === "plan" && plan && (
+        <PlanPreviewCard
+          plan={plan}
+          messageIA={messageIA}
+          onConfirmer={executer}
+          onModifier={() => { setPlan(null); setPhase("saisie"); }}
+          loading={loading}
+        />
+      )}
+
+      {/* Zone de saisie */}
+      {phase === "saisie" && (
+        <>
+          {/* Exemples */}
+          <div className="flex flex-wrap gap-2">
+            {[
+              "Mode africaine au Cameroun",
+              "Cosmétiques naturels au Sénégal",
+              "Artisanat et bijoux au Maroc",
+            ].map((ex) => (
+              <button
+                key={ex}
+                onClick={() => setDescription(ex)}
+                className="text-xs bg-gray-50 border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg hover:border-[#F5A623]/40 hover:text-[#F5A623] transition-all"
+              >
+                {ex}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex gap-2">
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), analyser())}
+              placeholder="Décrivez votre business : produits, pays, clientèle cible..."
+              rows={3}
+              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/10 focus:outline-none transition-all resize-none"
+              disabled={loading}
+            />
+            <button
+              onClick={analyser}
+              disabled={!description.trim() || loading}
+              className="w-12 bg-[#F5A623] rounded-xl flex items-center justify-center hover:bg-[#D4911A] transition-colors disabled:opacity-40 self-end"
+            >
+              {loading ? <Loader2 size={16} className="animate-spin text-white" /> : <Send size={16} className="text-white" />}
+            </button>
+          </div>
+
+          <div className="flex gap-3 pt-1">
+            <button
+              type="button"
+              onClick={onBack}
+              className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-xl hover:bg-gray-50 transition-all flex items-center justify-center gap-2 text-sm font-medium"
+            >
+              <ArrowLeft size={15} /> Retour
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── Page principale ──────────────────────────────────────────────────────────
+
+export default function InscriptionPage() {
+  const router = useRouter();
+  const [etape, setEtape] = useState(0);
+  const [modeIA, setModeIA] = useState(false);
+  const [compte, setCompte] = useState<CompteData | null>(null);
+
+  const formCompte = useForm<CompteData>({ resolver: zodResolver(schemaCompte) });
+
+  const onSubmitCompte = (data: CompteData) => {
+    setCompte(data);
+    setEtape(1);
+    setModeIA(true);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-orange-50/20 to-white flex overflow-hidden">
@@ -110,44 +405,40 @@ export default function InscriptionPage() {
 
         <div className="max-w-sm">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F5A623]/10 border border-[#F5A623]/25 rounded-full text-[#F5A623] text-xs font-semibold mb-6">
-            <Sparkles size={11} /> Inscription gratuite
+            <Sparkles size={11} /> Inscription gratuite · Propulsée par l'IA
           </div>
-          <h1 className="text-3xl font-bold font-playfair text-gray-900 leading-tight mb-4">
-            Lancez votre boutique<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5A623] to-[#E09015]">en 3 minutes</span>
+          <h1 className="text-3xl font-bold text-gray-900 leading-tight mb-4">
+            Décrivez votre business,<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5A623] to-[#E09015]">l'IA crée tout</span>
           </h1>
           <p className="text-gray-500 text-sm leading-relaxed mb-8">
-            Rejoignez plus de 1 247 marchands africains qui vendent en ligne avec Axso. Sans carte bancaire, sans engagement.
+            En 2 étapes, votre boutique est en ligne — nom, thème, produits, livraison. Tout configuré automatiquement.
           </p>
 
-          {/* Step visual */}
           <div className="space-y-3">
-            {etapes.map((e, i) => {
-              const Icon = stepIcons[i];
-              return (
-                <div key={i} className={`flex items-center gap-3 p-3.5 rounded-2xl transition-all ${i === etape ? "bg-white border border-[#F5A623]/20 shadow-md" : i < etape ? "bg-[#F5A623]/5" : "opacity-40"}`}>
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${i <= etape ? "bg-[#F5A623] text-white" : "bg-gray-100 text-gray-400"}`}>
-                    {i < etape ? <Check size={14} /> : <Icon size={14} />}
-                  </div>
-                  <div>
-                    <p className={`text-sm font-semibold ${i === etape ? "text-gray-900" : "text-gray-500"}`}>{e}</p>
-                    {i === etape && <p className="text-xs text-[#F5A623]">En cours</p>}
-                  </div>
-                  {i === etape && (
-                    <div className="ml-auto w-2 h-2 rounded-full bg-[#F5A623] animate-pulse" />
-                  )}
+            {[
+              { icon: Store, label: "Votre compte", desc: "Email et mot de passe", done: etape > 0 },
+              { icon: Bot, label: "L'IA configure tout", desc: "Décrivez votre business", done: false },
+            ].map((s, i) => (
+              <div key={i} className={`flex items-center gap-3 p-3.5 rounded-2xl transition-all ${i === etape ? "bg-white border border-[#F5A623]/20 shadow-md" : i < etape ? "bg-[#F5A623]/5" : "opacity-40"}`}>
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${i <= etape ? "bg-[#F5A623] text-white" : "bg-gray-100 text-gray-400"}`}>
+                  {s.done ? <Check size={14} /> : <s.icon size={14} />}
                 </div>
-              );
-            })}
+                <div>
+                  <p className={`text-sm font-semibold ${i === etape ? "text-gray-900" : "text-gray-500"}`}>{s.label}</p>
+                  <p className="text-xs text-gray-400">{s.desc}</p>
+                </div>
+                {i === etape && <div className="ml-auto w-2 h-2 rounded-full bg-[#F5A623] animate-pulse" />}
+              </div>
+            ))}
           </div>
         </div>
 
         <p className="text-gray-400 text-xs">© 2026 Axso · Made for Africa</p>
       </div>
 
-      {/* Right panel — form */}
+      {/* Right panel */}
       <div className="flex-1 flex items-center justify-center px-6 py-12 relative">
-        {/* Mobile logo */}
         <div className="absolute top-8 left-6 lg:hidden">
           <Link href="/">
             <img src="/logo.png" alt="axso" style={{ height: "48px", width: "auto", objectFit: "contain" }} />
@@ -157,12 +448,13 @@ export default function InscriptionPage() {
         <div className="w-full max-w-md pt-16 lg:pt-0">
           {/* Mobile stepper */}
           <div className="flex items-center justify-center gap-2 mb-6 lg:hidden">
-            {etapes.map((e, i) => (
+            {["Compte", "Boutique IA"].map((label, i) => (
               <div key={i} className="flex items-center gap-2">
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${i <= etape ? "bg-[#F5A623] text-white" : "bg-gray-100 text-gray-400"}`}>
                   {i < etape ? <Check size={12} /> : i + 1}
                 </div>
-                {i < etapes.length - 1 && <div className={`w-6 h-0.5 ${i < etape ? "bg-[#F5A623]" : "bg-gray-200"}`} />}
+                <span className="text-xs text-gray-400 hidden sm:block">{label}</span>
+                {i < 1 && <div className={`w-6 h-0.5 ${i < etape ? "bg-[#F5A623]" : "bg-gray-200"}`} />}
               </div>
             ))}
           </div>
@@ -171,13 +463,7 @@ export default function InscriptionPage() {
             className="bg-white rounded-3xl p-8 border border-gray-100"
             style={{ boxShadow: "0 32px 64px -12px rgba(201,168,76,0.15), 0 0 0 1px rgba(201,168,76,0.05)" }}
           >
-            {erreur && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm text-center mb-4">
-                {erreur}
-              </div>
-            )}
-
-            {/* ÉTAPE 1 */}
+            {/* ÉTAPE 0 — Compte */}
             {etape === 0 && (
               <form onSubmit={formCompte.handleSubmit(onSubmitCompte)} className="space-y-4">
                 <div className="mb-6">
@@ -200,104 +486,21 @@ export default function InscriptionPage() {
                   <input {...formCompte.register("password")} type="password" placeholder="Minimum 6 caractères" className={inputCls} />
                   {formCompte.formState.errors.password && <p className="text-red-500 text-xs mt-1">{formCompte.formState.errors.password.message}</p>}
                 </div>
+                <div>
+                  <label className="block text-gray-600 text-sm font-medium mb-1.5">WhatsApp</label>
+                  <input {...formCompte.register("whatsapp")} placeholder="+221 77 123 45 67" className={inputCls} />
+                  {formCompte.formState.errors.whatsapp && <p className="text-red-500 text-xs mt-1">{formCompte.formState.errors.whatsapp.message}</p>}
+                </div>
 
                 <button type="submit" className="w-full bg-[#F5A623] text-white font-bold py-3.5 rounded-xl hover:bg-[#D4911A] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#F5A623]/30 hover:scale-[1.02] active:scale-95 mt-2">
-                  Continuer <ArrowRight size={16} />
+                  <Bot size={16} /> Continuer avec l'IA <ArrowRight size={16} />
                 </button>
               </form>
             )}
 
-            {/* ÉTAPE 2 */}
-            {etape === 1 && (
-              <form onSubmit={formBoutique.handleSubmit(onSubmitBoutique)} className="space-y-4">
-                <div className="mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">Votre boutique</h2>
-                  <p className="text-gray-400 text-sm mt-0.5">Configurable à tout moment</p>
-                </div>
-
-                <div>
-                  <label className="block text-gray-600 text-sm font-medium mb-1.5">Nom de la boutique</label>
-                  <input {...formBoutique.register("nomBoutique")} placeholder="Mode Aminata" className={inputCls} />
-                  {formBoutique.formState.errors.nomBoutique && <p className="text-red-500 text-xs mt-1">{formBoutique.formState.errors.nomBoutique.message}</p>}
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-sm font-medium mb-1.5">Catégorie</label>
-                  <select {...formBoutique.register("categorie")} className={inputCls}>
-                    <option value="">Sélectionnez une catégorie...</option>
-                    {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                  {formBoutique.formState.errors.categorie && <p className="text-red-500 text-xs mt-1">{formBoutique.formState.errors.categorie.message}</p>}
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-sm font-medium mb-1.5">Pays</label>
-                  <select {...formBoutique.register("pays")} className={inputCls}>
-                    <option value="">Sélectionnez votre pays...</option>
-                    {pays.map((p) => <option key={p.code} value={p.code}>{p.flag} {p.nom}</option>)}
-                  </select>
-                  {formBoutique.formState.errors.pays && <p className="text-red-500 text-xs mt-1">{formBoutique.formState.errors.pays.message}</p>}
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-sm font-medium mb-1.5">Numéro WhatsApp</label>
-                  <input {...formBoutique.register("whatsapp")} placeholder="+221 77 123 45 67" className={inputCls} />
-                  {formBoutique.formState.errors.whatsapp && <p className="text-red-500 text-xs mt-1">{formBoutique.formState.errors.whatsapp.message}</p>}
-                </div>
-
-                <div className="flex gap-3 mt-2">
-                  <button type="button" onClick={() => setEtape(0)}
-                    className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-xl hover:bg-gray-50 transition-all flex items-center justify-center gap-2 text-sm font-medium">
-                    <ArrowLeft size={15} /> Retour
-                  </button>
-                  <button type="submit"
-                    className="flex-1 bg-[#F5A623] text-white font-bold py-3 rounded-xl hover:bg-[#D4911A] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#F5A623]/25 hover:scale-[1.02] active:scale-95 text-sm">
-                    Continuer <ArrowRight size={15} />
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* ÉTAPE 3 */}
-            {etape === 2 && (
-              <div>
-                <div className="mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">Choisissez votre thème</h2>
-                  <p className="text-gray-400 text-sm mt-0.5">Modifiable à tout moment depuis le tableau de bord</p>
-                </div>
-
-                <div className="space-y-3">
-                  {themes.map((t) => (
-                    <button key={t.id} type="button" onClick={() => setThemeChoisi(t.id)}
-                      className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
-                        themeChoisi === t.id ? "border-[#F5A623] bg-amber-50/50 shadow-md shadow-[#F5A623]/10" : "border-gray-100 hover:border-gray-200 bg-gray-50/50"
-                      }`}>
-                      <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0 shadow-inner"
-                        style={{ backgroundColor: t.fond, border: `2px solid ${t.accent}` }}>
-                        {t.emoji}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-gray-900 font-semibold text-sm">{t.nom}</p>
-                        <p className="text-gray-400 text-xs">{t.desc}</p>
-                        <p className="text-[11px] mt-0.5" style={{ color: t.accent }}>{t.preview}</p>
-                      </div>
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                        themeChoisi === t.id ? "bg-[#F5A623] border-[#F5A623]" : "border-gray-300"
-                      }`}>
-                        {themeChoisi === t.id && <Check size={11} className="text-white" />}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex gap-3 mt-6">
-                  <button type="button" onClick={() => setEtape(1)}
-                    className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-xl hover:bg-gray-50 transition-all flex items-center justify-center gap-2 text-sm font-medium">
-                    <ArrowLeft size={15} /> Retour
-                  </button>
-                  <button onClick={finaliserInscription} disabled={loading}
-                    className="flex-1 bg-[#F5A623] text-white font-bold py-3 rounded-xl hover:bg-[#D4911A] transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-[#F5A623]/25 hover:scale-[1.02] active:scale-95 text-sm">
-                    {loading ? <><Loader2 size={15} className="animate-spin" /> Création...</> : <><Sparkles size={15} /> Créer ma boutique</>}
-                  </button>
-                </div>
-              </div>
+            {/* ÉTAPE 1 — Onboarding IA */}
+            {etape === 1 && compte && (
+              <EtapeIA compte={compte} onBack={() => setEtape(0)} />
             )}
           </div>
 
