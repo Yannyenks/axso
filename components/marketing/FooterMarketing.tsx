@@ -30,7 +30,7 @@ const liens = {
 export function FooterMarketing() {
   return (
     <footer className="bg-gray-900 pt-16 pb-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-6 sm:px-10 lg:px-16 xl:px-24">
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
           <div className="col-span-2 lg:col-span-1">
             <Link href="/" className="inline-block mb-4">
@@ -44,7 +44,7 @@ export function FooterMarketing() {
             <div className="flex gap-3">
               {["T", "F", "I", "L"].map((s, i) => (
                 <a key={i} href="#"
-                  className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-gray-400 hover:text-[#F5A623] hover:bg-gray-700 transition-all text-xs font-bold">
+                  className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-gray-400 hover:text-[#1B4FD8] hover:bg-gray-700 transition-all text-xs font-bold">
                   {s}
                 </a>
               ))}
@@ -57,7 +57,7 @@ export function FooterMarketing() {
               <ul className="space-y-2.5">
                 {items.map((lien) => (
                   <li key={lien.label}>
-                    <Link href={lien.href} className="text-gray-400 text-sm hover:text-[#F5A623] transition-colors">
+                    <Link href={lien.href} className="text-gray-400 text-sm hover:text-[#1B4FD8] transition-colors">
                       {lien.label}
                     </Link>
                   </li>

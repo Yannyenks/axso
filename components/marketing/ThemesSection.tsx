@@ -8,7 +8,7 @@ const themes = [
     nom: "Noir Obsidien",
     categorie: "Mode & Luxe",
     fond: "#0a0a0a",
-    accent: "#F5A623",
+    accent: "#1B4FD8",
     texte: "#F5F5F0",
     surface: "#111",
     description: "Élégance africaine contemporaine. Particules dorées, animations cinématiques.",
@@ -77,7 +77,7 @@ export function ThemesSection() {
       <div className="absolute -right-32 top-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-3xl pointer-events-none"
         style={{ backgroundColor: `${theme.accent}08`, transition: "background-color 0.5s ease" }} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div className="w-full px-6 sm:px-10 lg:px-16 xl:px-24 relative">
         <div
           className="text-center mb-16"
           style={{
@@ -85,7 +85,7 @@ export function ThemesSection() {
             animation: visible ? "flip3dIn 0.7s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          <span className="text-[#F5A623] text-sm font-semibold uppercase tracking-widest mb-4 block">
+          <span className="text-[#1B4FD8] text-sm font-semibold uppercase tracking-widest mb-4 block">
             3 Thèmes Premium
           </span>
           <h2 className="text-4xl sm:text-5xl font-bold font-playfair text-gray-900 mb-4">
@@ -193,7 +193,7 @@ export function ThemesSection() {
           }}
         >
           <Link href="/themes"
-            className="inline-flex items-center gap-2 border border-[#F5A623]/40 text-[#F5A623] px-6 py-3 rounded-xl hover:bg-amber-50 hover:scale-105 transition-all font-medium">
+            className="inline-flex items-center gap-2 border border-[#1B4FD8]/40 text-[#1B4FD8] px-6 py-3 rounded-xl hover:bg-blue-50 hover:scale-105 transition-all font-medium">
             Voir tous les thèmes →
           </Link>
         </div>

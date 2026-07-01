@@ -1,23 +1,54 @@
-// Client Anthropic Claude pour l'assistant IA Axso
+// Client IA hybride pour Axso
+// Tâches légères  → freellmapi (free tiers : Gemini, Groq, Mistral, etc.)
+// Tâches agentiques → Claude Anthropic (tool use natif dans lib/ai-agent.ts)
+
 import Anthropic from "@anthropic-ai/sdk";
-
-// Singleton client Anthropic (côté serveur uniquement)
-let client: Anthropic | null = null;
-
-function getClient(): Anthropic {
-  if (!client) {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) throw new Error("ANTHROPIC_API_KEY manquante");
-    client = new Anthropic({ apiKey });
-  }
-  return client;
-}
+import { hasFreeLLM, completionFreeLLM, hasNVIDIA, completionNVIDIA, ChatMessage } from "./llm-client";
 
 const SYSTEME_PROMPT = `Tu es l'assistant IA d'Axso, la plateforme e-commerce premium de l'Afrique.
 Tu parles français, avec un ton chaleureux et encourageant, comme un vrai conseiller business africain.
 Tu aides les marchands africains à vendre mieux en ligne.
 Tu connais les marchés africains, les habitudes d'achat, les prix locaux.
 Sois concis, pratique et positif. Utilise des emojis occasionnellement pour rendre les réponses plus vivantes.`;
+
+// Singleton Claude (utilisé uniquement en fallback si freellmapi absent)
+let claudeClient: Anthropic | null = null;
+function getClaudeClient(): Anthropic {
+  if (!claudeClient) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) throw new Error("ANTHROPIC_API_KEY manquante");
+    claudeClient = new Anthropic({ apiKey });
+  }
+  return claudeClient;
+}
+
+// Routeur : freellmapi en priorité, Claude en fallback
+async function completion(
+  messages: ChatMessage[],
+  maxTokens = 500
+): Promise<string> {
+  if (hasFreeLLM()) {
+    const result = await completionFreeLLM(messages, maxTokens);
+    return result.text;
+  }
+  if (hasNVIDIA()) {
+    const result = await completionNVIDIA(messages, maxTokens);
+    return result.text;
+  }
+  // Fallback Claude Anthropic
+  const anthropic = getClaudeClient();
+  const [systemMsg, ...rest] = messages;
+  const response = await anthropic.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: maxTokens,
+    system: systemMsg?.role === "system" ? systemMsg.content : SYSTEME_PROMPT,
+    messages: (systemMsg?.role === "system" ? rest : messages).map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    })),
+  });
+  return (response.content[0] as any).text;
+}
 
 // Générer une description produit IA
 export async function genererDescriptionProduit(
@@ -26,12 +57,9 @@ export async function genererDescriptionProduit(
   prix: number,
   devise: string
 ): Promise<string> {
-  const anthropic = getClient();
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 500,
-    system: SYSTEME_PROMPT,
-    messages: [
+  return completion(
+    [
+      { role: "system", content: SYSTEME_PROMPT },
       {
         role: "user",
         content: `Écris une description produit accrocheuse et professionnelle pour :
@@ -42,9 +70,8 @@ Prix: ${prix} ${devise}
 La description doit faire 2-3 phrases, mettre en valeur les bénéfices, et donner envie d'acheter.`,
       },
     ],
-  });
-
-  return (message.content[0] as any).text;
+    500
+  );
 }
 
 // Générer les balises SEO pour un produit
@@ -53,28 +80,24 @@ export async function genererSEO(
   description: string,
   categorie: string
 ): Promise<{ metaTitle: string; metaDescription: string }> {
-  const anthropic = getClient();
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 300,
-    system: SYSTEME_PROMPT,
-    messages: [
-      {
-        role: "user",
-        content: `Génère les balises SEO pour ce produit :
+  try {
+    const texte = await completion(
+      [
+        { role: "system", content: SYSTEME_PROMPT },
+        {
+          role: "user",
+          content: `Génère les balises SEO pour ce produit :
 Nom: ${nomProduit}
 Description: ${description}
 Catégorie: ${categorie}
 
 Réponds en JSON avec : {"metaTitle": "...", "metaDescription": "..."}
 Le metaTitle doit faire max 60 caractères. La metaDescription max 155 caractères.`,
-      },
-    ],
-  });
-
-  try {
-    const text = (message.content[0] as any).text;
-    const json = text.match(/\{[\s\S]*\}/)?.[0];
+        },
+      ],
+      300
+    );
+    const json = texte.match(/\{[\s\S]*\}/)?.[0];
     return JSON.parse(json || "{}");
   } catch {
     return {
@@ -90,12 +113,9 @@ export async function suggererPrix(
   categorie: string,
   pays: string
 ): Promise<string> {
-  const anthropic = getClient();
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 300,
-    system: SYSTEME_PROMPT,
-    messages: [
+  return completion(
+    [
+      { role: "system", content: SYSTEME_PROMPT },
       {
         role: "user",
         content: `Suggère une fourchette de prix réaliste pour ce produit sur le marché africain :
@@ -106,22 +126,16 @@ Pays: ${pays}
 Donne une réponse courte avec la fourchette de prix conseillée et un bref raisonnement.`,
       },
     ],
-  });
-
-  return (message.content[0] as any).text;
+    300
+  );
 }
 
 // Chat général avec l'assistant IA
 export async function chatAvecIA(
   messages: Array<{ role: "user" | "assistant"; content: string }>
 ): Promise<string> {
-  const anthropic = getClient();
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 1000,
-    system: SYSTEME_PROMPT,
-    messages,
-  });
-
-  return (response.content[0] as any).text;
+  return completion(
+    [{ role: "system", content: SYSTEME_PROMPT }, ...messages],
+    1000
+  );
 }

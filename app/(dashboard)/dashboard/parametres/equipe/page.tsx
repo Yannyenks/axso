@@ -70,7 +70,7 @@ export default function EquipePage() {
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 font-playfair">Équipe</h1>
+          <h1 className="text-2xl font-bold text-gray-900 font-poppins">Équipe</h1>
           <p className="text-gray-400 text-sm mt-1">{membres.length} membre(s) dans votre équipe</p>
         </div>
       </div>
@@ -172,4 +172,4 @@ export default function EquipePage() {
     </div>
   );
 }
-
+

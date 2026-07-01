@@ -44,11 +44,11 @@ export function TarifsSection() {
     <section ref={sectionRef} className="py-24 bg-gray-50/50 relative overflow-hidden" id="tarifs">
       {/* Aurora background */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-[#F5A623]/6 rounded-full blur-3xl" style={{ animation: "aurora 10s ease-in-out infinite" }} />
-        <div className="absolute bottom-0 right-0 w-72 h-72 bg-amber-100/40 rounded-full blur-3xl" style={{ animation: "aurora 13s ease-in-out 4s infinite" }} />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-[#1B4FD8]/6 rounded-full blur-3xl" style={{ animation: "aurora 10s ease-in-out infinite" }} />
+        <div className="absolute bottom-0 right-0 w-72 h-72 bg-blue-100/40 rounded-full blur-3xl" style={{ animation: "aurora 13s ease-in-out 4s infinite" }} />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div className="w-full px-6 sm:px-10 lg:px-16 xl:px-24 relative">
         <div
           className="text-center mb-16"
           style={{
@@ -56,13 +56,13 @@ export function TarifsSection() {
             animation: visible ? "flip3dIn 0.7s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          <span className="text-[#F5A623] text-sm font-semibold uppercase tracking-widest mb-4 block">
+          <span className="text-[#1B4FD8] text-sm font-semibold uppercase tracking-widest mb-4 block">
             Tarification Transparente
           </span>
-          <h2 className="text-4xl sm:text-5xl font-bold font-playfair text-gray-900 mb-4">
+          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
             100% gratuit pour lancer
           </h2>
-          <p className="text-gray-400 text-xl max-w-2xl mx-auto">
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
             Aucune mensualité. Aucun abonnement. On ne gagne que quand vous gagnez.
           </p>
         </div>
@@ -71,7 +71,7 @@ export function TarifsSection() {
           {/* 3D tilt pricing card */}
           <div
             ref={cardRef}
-            className="relative bg-white rounded-3xl border-2 border-[#F5A623]/40 p-8 sm:p-10 overflow-hidden"
+            className="relative bg-white rounded-3xl border-2 border-[#1B4FD8]/40 p-8 sm:p-10 overflow-hidden"
             onMouseMove={onMouseMove}
             onMouseLeave={() => setTilt({ x: 0, y: 0 })}
             style={{
@@ -82,8 +82,8 @@ export function TarifsSection() {
                 ? "transform 0.6s cubic-bezier(0.23,1,0.32,1), box-shadow 0.6s ease"
                 : "transform 0.08s linear",
               boxShadow: tilt.x !== 0
-                ? `${-tilt.y * 3}px ${-tilt.x * 3}px 60px rgba(245,166,35,0.25), 0 40px 80px rgba(245,166,35,0.12)`
-                : "0 20px 60px rgba(245,166,35,0.12)",
+                ? `${-tilt.y * 3}px ${-tilt.x * 3}px 60px rgba(27,79,216,0.25), 0 40px 80px rgba(27,79,216,0.12)`
+                : "0 20px 60px rgba(27,79,216,0.12)",
               willChange: "transform",
             }}
           >
@@ -91,14 +91,14 @@ export function TarifsSection() {
             <div
               className="absolute inset-0 pointer-events-none rounded-3xl transition-opacity duration-300"
               style={{
-                background: "linear-gradient(105deg, transparent 40%, rgba(245,166,35,0.08) 50%, transparent 60%)",
+                background: "linear-gradient(105deg, transparent 40%, rgba(27,79,216,0.08) 50%, transparent 60%)",
                 backgroundSize: "200% 100%",
                 animation: visible ? "shimmer 3s linear infinite" : "none",
                 opacity: tilt.x !== 0 ? 1 : 0.4,
               }}
             />
 
-            <div className="absolute top-0 right-0 bg-[#F5A623] text-white text-xs font-bold px-4 py-2 rounded-bl-2xl flex items-center gap-1">
+            <div className="absolute top-0 right-0 bg-[#1B4FD8] text-white text-xs font-bold px-4 py-2 rounded-bl-2xl flex items-center gap-1">
               <Zap size={11} />
               PLAN UNIQUE
             </div>
@@ -108,7 +108,7 @@ export function TarifsSection() {
                 <span
                   className="text-6xl font-bold font-playfair"
                   style={{
-                    background: "linear-gradient(110deg, #F5A623 0%, #FFD280 40%, #F5A623 60%, #E09015 100%)",
+                    background: "linear-gradient(110deg, #1B4FD8 0%, #7B9EFF 40%, #1B4FD8 60%, #1440BE 100%)",
                     backgroundSize: "200% auto",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
@@ -121,8 +121,8 @@ export function TarifsSection() {
                 <span className="text-gray-400 mb-2">/ mois</span>
               </div>
               <div className="flex items-center gap-2 text-lg text-gray-700">
-                <Star className="text-[#F5A623]" size={18} fill="#F5A623" />
-                <span><strong className="text-[#F5A623]">3%</strong> de commission par vente réussie</span>
+                <Star className="text-[#1B4FD8]" size={18} fill="#1B4FD8" />
+                <span><strong className="text-[#1B4FD8]">3%</strong> de commission par vente réussie</span>
               </div>
               <p className="text-gray-400 text-sm mt-2">
                 Sur une vente de 50 000 F → Vous recevez 48 500 F, Axso garde 1 500 F
@@ -139,8 +139,8 @@ export function TarifsSection() {
                     animation: visible ? `slideRevealLeft 0.5s ${400 + i * 40}ms cubic-bezier(0.23,1,0.32,1) both` : "none",
                   }}
                 >
-                  <div className="w-5 h-5 rounded-full bg-[#F5A623]/15 flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:bg-[#F5A623] hover:scale-110 group">
-                    <Check className="text-[#F5A623] group-hover:text-white transition-colors" size={12} strokeWidth={3} />
+                  <div className="w-5 h-5 rounded-full bg-[#1B4FD8]/15 flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:bg-[#1B4FD8] hover:scale-110 group">
+                    <Check className="text-[#1B4FD8] group-hover:text-white transition-colors" size={12} strokeWidth={3} />
                   </div>
                   <span className="text-gray-600 text-sm">{f}</span>
                 </div>
@@ -149,7 +149,7 @@ export function TarifsSection() {
 
             <Link
               href="/inscription"
-              className="block w-full text-center bg-[#F5A623] text-white font-bold py-4 rounded-xl text-lg hover:bg-[#D4911A] transition-all hover:scale-[1.02] shadow-lg shadow-[#F5A623]/30 active:scale-[0.98]"
+              className="block w-full text-center bg-[#1B4FD8] text-white font-bold py-4 rounded-xl text-lg hover:bg-[#1440BE] transition-all hover:scale-[1.02] shadow-lg shadow-[#1B4FD8]/30 active:scale-[0.98]"
             >
               Créer ma boutique gratuitement →
             </Link>
@@ -169,13 +169,13 @@ export function TarifsSection() {
           ].map((item, i) => (
             <div
               key={i}
-              className={`p-4 rounded-xl border transition-all duration-300 ${item.highlight ? "bg-amber-50 border-[#F5A623]/30 hover:scale-105" : "bg-white border-gray-100 hover:border-gray-200"}`}
+              className={`p-4 rounded-xl border transition-all duration-300 ${item.highlight ? "bg-blue-50 border-[#1B4FD8]/30 hover:scale-105" : "bg-white border-gray-100 hover:border-gray-200"}`}
               style={{
                 opacity: visible ? 1 : 0,
                 animation: visible ? `flip3dIn 0.6s ${800 + i * 100}ms cubic-bezier(0.23,1,0.32,1) both` : "none",
               }}
             >
-              <p className="font-bold mb-1" style={{ color: item.highlight ? "#F5A623" : "#9ca3af" }}>
+              <p className="font-bold mb-1" style={{ color: item.highlight ? "#1B4FD8" : "#9ca3af" }}>
                 {item.plateforme}
               </p>
               <p className="text-xs text-gray-400">{item.cout}</p>

@@ -147,8 +147,8 @@ export async function POST(request: Request) {
     if (err instanceof z.ZodError) {
       return NextResponse.json({ message: "Données invalides", erreurs: err.issues }, { status: 400 });
     }
-    if ((err as any)?.message?.includes("ANTHROPIC_API_KEY")) {
-      return NextResponse.json({ message: "Clé API Anthropic manquante dans .env.local" }, { status: 503 });
+    if ((err as any)?.message?.includes("configuré")) {
+      return NextResponse.json({ message: "Aucun fournisseur IA configuré. Ajoute FREELLMAPI_KEY ou ANTHROPIC_API_KEY dans .env.local" }, { status: 503 });
     }
     console.error("[API/AI/ONBOARDING]", err);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });

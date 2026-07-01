@@ -37,7 +37,7 @@ export default async function AdminLivreursPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total livreurs", value: livreurs.length, color: "#F5A623" },
+          { label: "Total livreurs", value: livreurs.length, color: "#1B4FD8" },
           { label: "Disponibles", value: disponibles, color: "#34d399" },
           { label: "Indépendants", value: independants.length, color: "#60a5fa" },
           { label: "Attachés boutique", value: attaches.length, color: "#a78bfa" },
@@ -52,7 +52,7 @@ export default async function AdminLivreursPage() {
       {/* Table livreurs */}
       <div className="bg-white border border-white/5 rounded-2xl overflow-hidden">
         <div className="px-6 py-4 border-b border-white/5 flex items-center gap-2">
-          <Truck size={15} className="text-[#F5A623]" />
+          <Truck size={15} className="text-[#1B4FD8]" />
           <h2 className="text-white font-semibold">Tous les livreurs</h2>
         </div>
         <div className="overflow-x-auto">
@@ -88,7 +88,7 @@ export default async function AdminLivreursPage() {
                     <td className="px-5 py-4 text-gray-400 text-xs">{l.zone || "—"}</td>
                     <td className="px-5 py-4">
                       {l.tenant ? (
-                        <span className="text-xs text-[#F5A623] bg-[#F5A623]/10 px-2 py-0.5 rounded-full border border-[#F5A623]/20">
+                        <span className="text-xs text-[#1B4FD8] bg-[#1B4FD8]/10 px-2 py-0.5 rounded-full border border-[#1B4FD8]/20">
                           {l.tenant.nomBoutique}
                         </span>
                       ) : (

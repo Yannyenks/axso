@@ -233,9 +233,10 @@ export default async function ProduitPage({ params }: Props) {
 
             {/* Add to cart */}
             <AddToCartButton
-              produit={{ id: produit.id, nom: produit.nom, prix: produit.prix, images: produit.images, stock: produit.stock }}
+              produit={{ id: produit.id, nom: produit.nom, prix: produit.prix, images: produit.images, stock: produit.stock, type: produit.type, fichierUrl: produit.fichierUrl, fichierNom: produit.fichierNom }}
               theme={c}
               tenantSlug={slug}
+              whatsappNumero={tenant.whatsappNumero || tenant.whatsapp}
             />
 
             {/* WhatsApp contact */}

@@ -70,12 +70,12 @@ export default function ThemesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 font-playfair">Theme Studio</h1>
+          <h1 className="text-2xl font-bold text-gray-900 font-poppins">Theme Studio</h1>
           <p className="text-gray-400 text-sm mt-1">Créez et gérez les thèmes de votre boutique</p>
         </div>
         <button
           onClick={() => router.push("/dashboard/themes/creer")}
-          className="flex items-center gap-2 bg-[#F5A623] text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-[#D4911A] transition-all shadow-lg shadow-[#F5A623]/25"
+          className="flex items-center gap-2 bg-[#F5A623] text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-[#d4820a] transition-all shadow-lg shadow-[#F5A623]/25"
         >
           <Plus size={16} /> Créer un thème
         </button>
@@ -95,7 +95,7 @@ export default function ThemesPage() {
           </div>
           {tenant.slug && (
             <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer"
-              className="ml-auto flex items-center gap-1.5 text-xs text-[#F5A623] border border-[#F5A623]/30 px-3 py-1.5 rounded-lg hover:bg-amber-50 transition-all">
+              className="ml-auto flex items-center gap-1.5 text-xs text-[#F5A623] border border-[#F5A623]/30 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-all">
               <ExternalLink size={11} /> Voir la boutique
             </a>
           )}
@@ -224,7 +224,7 @@ function ThemeCard({
 
         <div className="flex gap-2">
           {actif ? (
-            <div className="flex-1 text-center py-2 rounded-xl text-xs font-semibold text-[#F5A623] bg-amber-50 border border-[#F5A623]/20">
+            <div className="flex-1 text-center py-2 rounded-xl text-xs font-semibold text-[#F5A623] bg-blue-50 border border-[#F5A623]/20">
               Thème actif
             </div>
           ) : (

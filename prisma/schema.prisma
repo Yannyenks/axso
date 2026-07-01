@@ -19,6 +19,7 @@ model Tenant {
   pays                String
   devise              String   @default("XAF")
   whatsapp            String
+  whatsappNumero      String?  // Numéro WhatsApp marchand pour commandes physiques ex: "+22507XXXXXXXX"
   email               String   @unique
   telephone           String?
   adresse             String?
@@ -48,35 +49,49 @@ model Tenant {
   analytics   Analytics[]
   livreurs    Livreur[]
   themes      Theme[]
+  wallet       Wallet?
+  postsSociaux PostSocial[]
 }
 
 // =====================
 // PRODUIT
 // =====================
 model Produit {
-  id            String   @id @default(cuid())
-  tenantId      String
-  nom           String
-  slug          String
-  description   String?
-  descriptionIA String?
-  prix          Float
-  prixCompare   Float?
-  cout          Float?
-  stock         Int      @default(0)
-  sku           String?
-  images        String[]
-  categorie     String?
-  tags          String[]
-  poids         Float?
-  actif         Boolean  @default(true)
-  featured      Boolean  @default(false)
-  metaTitle     String?
-  metaDesc      String?
-  ventes        Int      @default(0)
-  vues          Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              String   @id @default(cuid())
+  tenantId        String
+  nom             String
+  slug            String
+  description     String?
+  descriptionIA   String?
+  prix            Float
+  prixCompare     Float?
+  cout            Float?
+  stock           Int      @default(0)
+  sku             String?
+  images          String[]
+  videos          String[] // URLs vidéos produit (Vercel Blob)
+  categorie       String?
+  tags            String[]
+  poids           Float?
+  actif           Boolean  @default(true)
+  featured        Boolean  @default(false)
+  metaTitle       String?
+  metaDesc        String?
+  ventes          Int      @default(0)
+  vues            Int      @default(0)
+  // Type de produit
+  type            String   @default("physique") // physique | digital | dropshipping
+  // Produit digital
+  fichierUrl      String?  // URL du fichier téléchargeable (Vercel Blob)
+  fichierNom      String?  // Nom du fichier affiché
+  fichierTaille   Int?     // Taille en octets
+  instructionsTelechargement String?
+  // Dropshipping
+  prixFournisseur Float?   // Prix d'achat fournisseur
+  urlFournisseur  String?  // URL source produit fournisseur
+  nomFournisseur  String?  // Nom du fournisseur
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   tenant         Tenant          @relation(fields: [tenantId], references: [id])
   variantes      Variante[]
@@ -84,8 +99,24 @@ model Produit {
   lignesCommande LigneCommande[]
   avis           Avis[]
   wishlist       Wishlist[]
+  telechargements Telechargement[]
 
   @@unique([tenantId, slug])
+}
+
+// =====================
+// TÉLÉCHARGEMENT (produits digitaux)
+// =====================
+model Telechargement {
+  id         String   @id @default(cuid())
+  produitId  String
+  commandeId String
+  token      String   @unique
+  expireAt   DateTime
+  telecharge Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  produit  Produit  @relation(fields: [produitId], references: [id])
 }
 
 // =====================
@@ -366,6 +397,55 @@ model Analytics {
 }
 
 // =====================
+// RÉSEAU SOCIAL AXSO
+// =====================
+model PostSocial {
+  id          String   @id @default(cuid())
+  tenantId    String
+  type        String   @default("post") // post | story | video | produit | milestone | sondage
+  contenu     String?
+  mediaUrls   String[] @default([])
+  produitId   String?
+  produitNom  String?
+  produitPrix Float?
+  produitImg  String?
+  scoreValeur Float?                     // pour les milestones (CA, commandes, etc.)
+  scoreLabel  String?                    // ex: "100 commandes" "500k FCFA"
+  sondageOptions String[] @default([])
+  sondageVotes  Int[]    @default([])
+  vues         Int      @default(0)
+  expireAt     DateTime?                 // stories : 24h
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  reactions   ReactionSociale[]
+  commentaires CommentaireSocial[]
+}
+
+model ReactionSociale {
+  id        String   @id @default(cuid())
+  postId    String
+  tenantId  String
+  emoji     String   @default("❤️")
+  createdAt DateTime @default(now())
+
+  post PostSocial @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@unique([postId, tenantId])
+}
+
+model CommentaireSocial {
+  id        String   @id @default(cuid())
+  postId    String
+  tenantId  String
+  auteur    String   // nomBoutique
+  contenu   String
+  createdAt DateTime @default(now())
+
+  post PostSocial @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+// =====================
 // COMPTE UTILISATEUR (NextAuth)
 // =====================
 model User {
@@ -443,4 +523,357 @@ model Theme {
   tenant Tenant? @relation(fields: [tenantId], references: [id])
 
   @@unique([tenantId, slug])
+}
+
+// =====================
+// POST PLANIFIÉ (Social Scheduler)
+// =====================
+model PostPlanifie {
+  id          String   @id @default(cuid())
+  tenantId    String
+  plateforme  String   // instagram | facebook | tiktok | whatsapp | twitter
+  contenu     String   // texte du post
+  hashtags    String[] // liste de hashtags
+  imageUrl    String?
+  videoUrl    String?
+  planifieLe  DateTime // quand publier
+  publieLe    DateTime?
+  statut      String   @default("planifie") // planifie | publie | echec | annule
+  externalId  String?  // ID du post sur la plateforme externe
+  erreur      String?
+  noteInterne String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, statut, planifieLe])
+}
+
+// =====================
+// CONNECTEUR MCP
+// =====================
+model ConnecteurConfig {
+  id          String   @id @default(cuid())
+  tenantId    String
+  type        String   // meta | whatsapp | gmail | google_ads | tiktok | sms
+  statut      String   @default("inactif") // actif | inactif | erreur
+  pageId      String?  // Facebook Page ID
+  igUserId    String?  // Instagram Business User ID
+  accessToken String?  // Token OAuth spécifique au tenant
+  config      Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, type])
+  @@index([tenantId])
+}
+
+// =====================
+// VIDÉO GÉNÉRÉE IA
+// =====================
+model VideoGeneree {
+  id          String   @id @default(cuid())
+  tenantId    String
+  prompt      String
+  style       String   @default("product") // product | ugc | ad | demo
+  videoUrl    String?
+  thumbnailUrl String?
+  duree       Int?     // secondes
+  statut      String   @default("en_cours") // en_cours | pret | erreur
+  requestId   String?  // ID de la requête fal.ai pour polling
+  erreur      String?
+  createdAt   DateTime @default(now())
+}
+
+// =====================
+// VOIX OFF GÉNÉRÉE IA
+// =====================
+model VoixOff {
+  id          String   @id @default(cuid())
+  tenantId    String
+  texte       String
+  voixId      String   @default("rachel")
+  langue      String   @default("fr")
+  audioUrl    String?
+  duree       Int?
+  statut      String   @default("en_cours")
+  createdAt   DateTime @default(now())
+}
+
+// =====================
+// CAMPAGNE PUBLICITAIRE
+// =====================
+model Campagne {
+  id           String   @id @default(cuid())
+  tenantId     String
+  plateforme   String   // meta | google | tiktok
+  nom          String
+  objectif     String   @default("conversions") // trafic | conversions | notoriete | leads
+  budget       Float    // budget total
+  budgetJour   Float?   // budget journalier
+  devise       String   @default("XOF")
+  statut       String   @default("brouillon") // brouillon | active | pause | terminee
+  dateDebut    DateTime?
+  dateFin      DateTime?
+  // Métriques (synchronisées depuis l'API)
+  depense      Float    @default(0)
+  impressions  Int      @default(0)
+  clics        Int      @default(0)
+  conversions  Int      @default(0)
+  cpc          Float    @default(0) // coût par clic
+  cpa          Float    @default(0) // coût par acquisition
+  roas         Float    @default(0) // retour sur dépense pub
+  // IDs externes
+  externalId   String?  // ID côté Meta/Google
+  adSetId      String?
+  // Ciblage
+  ciblePays    String[] @default([])
+  cibleAge     String   @default("18-45")
+  cibleInterets String[] @default([])
+  // Créatif
+  titreAd      String?
+  descriptionAd String?
+  imageAdUrl   String?
+  videoAdUrl   String?
+  urlDestination String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  publicites   Publicite[]
+}
+
+// =====================
+// PUBLICITÉ (Ad créatif)
+// =====================
+model Publicite {
+  id          String   @id @default(cuid())
+  campagneId  String
+  tenantId    String
+  titre       String
+  description String?
+  imageUrl    String?
+  videoUrl    String?
+  urlClic     String?
+  statut      String   @default("active")
+  impressions Int      @default(0)
+  clics       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  campagne Campagne @relation(fields: [campagneId], references: [id], onDelete: Cascade)
+}
+
+// =====================
+// VEILLE CONCURRENTIELLE
+// =====================
+model VeilleConcurrentielle {
+  id              String   @id @default(cuid())
+  tenantId        String
+  nomConcurrent   String
+  urlConcurrent   String?
+  categorie       String?
+  produitNom      String?
+  prixDetecte     Float?
+  descriptionNote String?
+  alerteActive    Boolean  @default(true)
+  detectedAt      DateTime @default(now())
+  createdAt       DateTime @default(now())
+}
+
+// =====================
+// CAMPAGNE SMS
+// =====================
+model CampagneSMS {
+  id         String   @id @default(cuid())
+  tenantId   String
+  nom        String
+  message    String   @db.Text
+  segment    String   @default("tous") // tous | vip | inactifs
+  nbEnvoyes  Int      @default(0)
+  nbLivres   Int      @default(0)
+  statut     String   @default("brouillon") // brouillon | envoye
+  createdAt  DateTime @default(now())
+}
+
+// =====================
+// WALLET AXSO
+// =====================
+model Wallet {
+  id              String   @id @default(cuid())
+  tenantId        String   @unique
+  solde           Float    @default(0)
+  totalRecu       Float    @default(0)
+  totalRetire     Float    @default(0)
+  totalCommission Float    @default(0)
+  devise          String   @default("XAF")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant       Tenant             @relation(fields: [tenantId], references: [id])
+  transactions WalletTransaction[]
+  retraits     Retrait[]
+}
+
+// =====================
+// TRANSACTION WALLET
+// =====================
+model WalletTransaction {
+  id          String   @id @default(cuid())
+  walletId    String
+  type        String   // CREDIT | COMMISSION | RETRAIT | REMBOURSEMENT
+  montant     Float
+  devise      String   @default("XAF")
+  description String
+  reference   String?
+  commandeId  String?
+  statut      String   @default("completed")
+  createdAt   DateTime @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id])
+}
+
+// =====================
+// RETRAIT (Withdrawal)
+// =====================
+model Retrait {
+  id           String   @id @default(cuid())
+  walletId     String
+  tenantId     String
+  montant      Float
+  devise       String   @default("XAF")
+  methode      String   // mobile_money | virement_bancaire
+  destinataire String
+  operateur    String?  // MTN | Orange | Wave | M-Pesa | ...
+  statut       String   @default("en_attente") // en_attente | traitement | complete | echoue
+  reference    String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  wallet Wallet @relation(fields: [walletId], references: [id])
+}
+
+// =====================
+// PIXEL TRACKING EVENT
+// =====================
+model PixelEvent {
+  id         String   @id @default(cuid())
+  tenantId   String
+  type       String   // PageView | AddToCart | Purchase | Lead | ViewContent
+  valeur     Float?   // valeur de l'événement (ex: montant achat)
+  devise     String?
+  produitId  String?
+  commandeId String?
+  source     String?  // meta | google | direct | organic
+  campagneId String?
+  sessionId  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+}
+
+// =====================
+// AGENT MEMORY
+// =====================
+model AgentMemory {
+  id        String   @id @default(cuid())
+  tenantId  String
+  agentId   String
+  cle       String
+  valeur    String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, agentId, cle])
+  @@index([tenantId, agentId])
+}
+
+// =====================
+// AGENT TASK (bus inter-agents)
+// =====================
+model AgentTask {
+  id        String   @id @default(cuid())
+  tenantId  String
+  fromAgent String
+  toAgent   String
+  type      String
+  payload   Json
+  statut    String   @default("pending") // pending | en_cours | complete | echec
+  resultat  Json?
+  priorite  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, toAgent, statut])
+}
+
+// =====================
+// AGENT DECISION (log autonome)
+// =====================
+model AgentDecision {
+  id           String   @id @default(cuid())
+  tenantId     String
+  agentId      String
+  type         String
+  description  String
+  donnees      Json     @default("{}")
+  impactEstime Float?
+  impactReel   Float?
+  statut       String   @default("effectuee")
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, agentId])
+  @@index([tenantId, createdAt])
+}
+
+// =====================
+// AGENT GOAL (objectifs revenus)
+// =====================
+model AgentGoal {
+  id        String   @id @default(cuid())
+  tenantId  String
+  type      String
+  titre     String
+  cible     Float
+  actuel    Float    @default(0)
+  devise    String   @default("XAF")
+  deadline  DateTime
+  statut    String   @default("actif") // actif | atteint | echoue | pause
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, statut])
+}
+
+// =====================
+// MESSAGE RECU (WhatsApp / Instagram DM entrants)
+// =====================
+model MessageRecu {
+  id        String   @id @default(cuid())
+  tenantId  String
+  source    String   // "whatsapp" | "instagram_dm" | "facebook_messenger"
+  de        String   // numéro de téléphone ou FB user id
+  nom       String?  // nom du contact si disponible
+  corps     String   @db.Text
+  lu        Boolean  @default(false)
+  repondu   Boolean  @default(false)
+  payload   Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, source])
+  @@index([tenantId, lu])
+}
+
+// =====================
+// CAMPAGNE EMAIL (historique envois)
+// =====================
+model CampagneEmail {
+  id        String   @id @default(cuid())
+  tenantId  String
+  sujet     String
+  corps     String   @db.Text
+  segment   String   @default("tous")
+  nbEnvoyes Int      @default(0)
+  statut    String   @default("envoye") // brouillon | envoye | echec
+  source    String   @default("resend")  // resend | gmail
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
 }

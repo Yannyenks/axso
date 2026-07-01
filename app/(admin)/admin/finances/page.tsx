@@ -74,7 +74,7 @@ export default async function AdminFinancesPage() {
       {/* Top boutiques par commission */}
       <div className="bg-white border border-white/5 rounded-2xl p-6">
         <h2 className="text-white font-semibold mb-4 flex items-center gap-2">
-          <DollarSign size={15} className="text-[#F5A623]" />
+          <DollarSign size={15} className="text-[#1B4FD8]" />
           Top boutiques par revenus générés
         </h2>
         <div className="space-y-3">
@@ -92,7 +92,7 @@ export default async function AdminFinancesPage() {
                     <span className="text-green-400 text-sm font-bold">{formatMontant(comm, tenant?.devise || "XOF")}</span>
                   </div>
                   <div className="w-full bg-[#1a1a2e] rounded-full h-1.5">
-                    <div className="h-full bg-gradient-to-r from-[#F5A623] to-[#FFD280] rounded-full" style={{ width: `${(comm / maxComm) * 100}%` }} />
+                    <div className="h-full bg-gradient-to-r from-[#1B4FD8] to-[#7B9EFF] rounded-full" style={{ width: `${(comm / maxComm) * 100}%` }} />
                   </div>
                   <p className="text-gray-500 text-[10px] mt-0.5">Versé au marchand : {formatMontant(marchand, tenant?.devise || "XOF")}</p>
                 </div>
@@ -119,7 +119,7 @@ export default async function AdminFinancesPage() {
             <tbody className="divide-y divide-white/5">
               {dernieresCommissions.map(c => (
                 <tr key={c.id} className="hover:bg-white/[0.02] transition-colors">
-                  <td className="px-5 py-3 text-[#F5A623] font-mono text-xs">{c.commande.numero}</td>
+                  <td className="px-5 py-3 text-[#1B4FD8] font-mono text-xs">{c.commande.numero}</td>
                   <td className="px-5 py-3 text-white text-xs">{c.tenant.nomBoutique}</td>
                   <td className="px-5 py-3 text-gray-400 text-xs">{c.commande.clientNom}</td>
                   <td className="px-5 py-3 text-white">{formatMontant(c.montantCommande, c.devise)}</td>

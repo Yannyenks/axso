@@ -49,7 +49,7 @@ export default async function CommissionsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 font-playfair">Commissions & Escrow</h1>
+        <h1 className="text-2xl font-bold text-gray-900 font-poppins">Commissions & Escrow</h1>
         <p className="text-gray-400 text-sm mt-1">
           Taux Axso : {(tenant.commissionRate * 100).toFixed(0)}% · Fonds sécurisés 48h après paiement
         </p>
@@ -199,4 +199,4 @@ export default async function CommissionsPage() {
     </div>
   );
 }
-
+

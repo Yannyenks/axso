@@ -53,7 +53,7 @@ function PayCard({ p, i, visible }: { p: typeof pays[0]; i: number; visible: boo
       <div className="space-y-2">
         {p.methodes.map((m, j) => (
           <div key={j} className="flex items-center gap-2 text-sm text-gray-500">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#F5A623]" />
+            <div className="w-1.5 h-1.5 rounded-full bg-[#1B4FD8]" />
             {m}
           </div>
         ))}
@@ -79,11 +79,11 @@ export function PaiementsSection() {
     <section ref={sectionRef} className="py-24 bg-white relative overflow-hidden" id="paiements">
       {/* Floating background accent */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-20 -right-20 w-80 h-80 bg-[#F5A623]/5 rounded-full blur-3xl" style={{ animation: "aurora 12s ease-in-out infinite" }} />
-        <div className="absolute bottom-10 -left-20 w-64 h-64 bg-amber-100/30 rounded-full blur-3xl" style={{ animation: "aurora 9s ease-in-out 3s infinite" }} />
+        <div className="absolute top-20 -right-20 w-80 h-80 bg-[#1B4FD8]/5 rounded-full blur-3xl" style={{ animation: "aurora 12s ease-in-out infinite" }} />
+        <div className="absolute bottom-10 -left-20 w-64 h-64 bg-blue-100/30 rounded-full blur-3xl" style={{ animation: "aurora 9s ease-in-out 3s infinite" }} />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div className="w-full px-6 sm:px-10 lg:px-16 xl:px-24 relative">
         <div
           className="text-center mb-16"
           style={{
@@ -91,7 +91,7 @@ export function PaiementsSection() {
             animation: visible ? "flip3dIn 0.7s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          <span className="text-[#F5A623] text-sm font-semibold uppercase tracking-widest mb-4 block">
+          <span className="text-[#1B4FD8] text-sm font-semibold uppercase tracking-widest mb-4 block">
             Paiements Africains
           </span>
           <h2 className="text-4xl sm:text-5xl font-bold font-playfair text-gray-900 mb-4">
@@ -118,14 +118,14 @@ export function PaiementsSection() {
             return (
               <div
                 key={i}
-                className="text-center p-6 bg-amber-50 rounded-2xl border border-amber-100 hover:scale-[1.04] hover:shadow-xl hover:shadow-[#F5A623]/15 transition-all duration-300"
+                className="text-center p-6 bg-blue-50 rounded-2xl border border-blue-100 hover:scale-[1.04] hover:shadow-xl hover:shadow-[#1B4FD8]/15 transition-all duration-300"
                 style={{
                   opacity: visible ? 1 : 0,
                   animation: visible ? `flip3dIn 0.7s ${600 + i * 120}ms cubic-bezier(0.23,1,0.32,1) both` : "none",
                 }}
               >
                 <div className="inline-flex items-center justify-center w-12 h-12 bg-white rounded-xl mb-4 shadow-sm group-hover:scale-110 transition-transform">
-                  <Icone className="text-[#F5A623]" size={24} />
+                  <Icone className="text-[#1B4FD8]" size={24} />
                 </div>
                 <h4 className="text-gray-900 font-bold mb-2">{avantage.titre}</h4>
                 <p className="text-gray-500 text-sm">{avantage.desc}</p>

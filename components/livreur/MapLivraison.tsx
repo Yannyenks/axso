@@ -48,7 +48,7 @@ export function MapLivraison({ adresse, ville, latitude, longitude, livreurLat, 
       // Marqueur destination
       const iconDest = L.divIcon({
         className: "",
-        html: `<div style="background:#F5A623;width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4)"></div>`,
+        html: `<div style="background:#1B4FD8;width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4)"></div>`,
         iconSize: [32, 32],
         iconAnchor: [16, 32],
       });
@@ -73,7 +73,7 @@ export function MapLivraison({ adresse, ville, latitude, longitude, livreurLat, 
 
         // Tracer la ligne entre les deux points
         L.polyline([[livreurLat, livreurLng], [destLat, destLng]], {
-          color: "#F5A623",
+          color: "#1B4FD8",
           weight: 3,
           opacity: 0.7,
           dashArray: "8, 8",

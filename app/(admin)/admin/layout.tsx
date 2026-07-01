@@ -23,7 +23,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <aside className="w-60 flex-shrink-0 bg-gray-50 border-r border-white/5 flex flex-col">
         <div className="p-6 border-b border-white/5">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#F5A623] to-[#FFD280] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1B4FD8] to-[#7B9EFF] flex items-center justify-center">
               <Shield size={14} className="text-black" />
             </div>
             <div>

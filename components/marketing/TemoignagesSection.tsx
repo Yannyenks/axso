@@ -6,7 +6,7 @@ const temoignages = [
   {
     nom: "Aminata Diallo", role: "Créatrice de mode, Dakar", pays: "🇸🇳", note: 5,
     texte: "En 3 mois avec Axso, j'ai multiplié mes ventes par 4. Le paiement Wave intégré a tout changé — mes clientes peuvent payer en quelques secondes. L'IA m'a même aidé à rédiger mes fiches produits !",
-    ventes: "847 000 XOF", avatar: "A", couleur: "#F5A623",
+    ventes: "847 000 XOF", avatar: "A", couleur: "#1B4FD8",
   },
   {
     nom: "Jean-Pierre Mbarga", role: "Artisan, Douala", pays: "🇨🇲", note: 5,
@@ -74,7 +74,7 @@ export function TemoignagesSection() {
         {PARTICLES.map((p, i) => (
           <div
             key={i}
-            className="absolute text-[#F5A623]"
+            className="absolute text-[#1B4FD8]"
             style={{
               left: `${p.x}%`,
               top: `${p.y}%`,
@@ -98,7 +98,7 @@ export function TemoignagesSection() {
             animation: visible ? "flip3dIn 0.7s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          <span className="text-[#F5A623] text-sm font-semibold uppercase tracking-widest mb-4 block">
+          <span className="text-[#1B4FD8] text-sm font-semibold uppercase tracking-widest mb-4 block">
             Témoignages
           </span>
           <h2 className="text-4xl sm:text-5xl font-bold font-playfair text-gray-900">
@@ -115,7 +115,7 @@ export function TemoignagesSection() {
           }}
         >
           <div
-            className="relative bg-gradient-to-br from-amber-50 to-white rounded-3xl border border-[#F5A623]/20 p-8 sm:p-12 text-center shadow-lg shadow-[#F5A623]/8"
+            className="relative bg-gradient-to-br from-blue-50 to-white rounded-3xl border border-[#1B4FD8]/20 p-8 sm:p-12 text-center shadow-lg shadow-[#1B4FD8]/8"
             style={{
               transform: "perspective(1000px)",
               transformStyle: "preserve-3d",
@@ -131,12 +131,12 @@ export function TemoignagesSection() {
               {[...Array(t.note)].map((_, i) => (
                 <Star
                   key={i}
-                  className="text-[#F5A623]"
+                  className="text-[#1B4FD8]"
                   size={22}
-                  fill="#F5A623"
+                  fill="#1B4FD8"
                   style={{
                     animation: visible ? `floatParticle 2s ${i * 0.1}s ease-in-out infinite` : "none",
-                    filter: "drop-shadow(0 0 4px rgba(245,166,35,0.6))",
+                    filter: "drop-shadow(0 0 4px rgba(27,79,216,0.6))",
                   }}
                 />
               ))}
@@ -190,7 +190,7 @@ export function TemoignagesSection() {
         >
           <button
             onClick={() => navigate("left")}
-            className="w-11 h-11 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:text-[#F5A623] hover:border-[#F5A623]/50 hover:shadow-lg hover:shadow-[#F5A623]/20 hover:scale-110 transition-all duration-200"
+            className="w-11 h-11 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:text-[#1B4FD8] hover:border-[#1B4FD8]/50 hover:shadow-lg hover:shadow-[#1B4FD8]/20 hover:scale-110 transition-all duration-200"
           >
             <ChevronLeft size={18} />
           </button>
@@ -206,7 +206,7 @@ export function TemoignagesSection() {
           </div>
           <button
             onClick={() => navigate("right")}
-            className="w-11 h-11 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:text-[#F5A623] hover:border-[#F5A623]/50 hover:shadow-lg hover:shadow-[#F5A623]/20 hover:scale-110 transition-all duration-200"
+            className="w-11 h-11 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:text-[#1B4FD8] hover:border-[#1B4FD8]/50 hover:shadow-lg hover:shadow-[#1B4FD8]/20 hover:scale-110 transition-all duration-200"
           >
             <ChevronRight size={18} />
           </button>

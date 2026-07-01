@@ -43,7 +43,7 @@ export function KenteRoyalEffect() {
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(Math.PI / 4);
-      ctx.fillStyle = `rgba(245, 166, 35, ${alpha})`;
+      ctx.fillStyle = `rgba(27, 79, 216, ${alpha})`;
       ctx.fillRect(-size / 2, -size / 2, size, size);
       ctx.restore();
     }
@@ -62,7 +62,7 @@ export function KenteRoyalEffect() {
 
         // Bande dorée alternée
         if (b % 3 === 0) {
-          ctx.fillStyle = `rgba(245, 166, 35, ${alpha})`;
+          ctx.fillStyle = `rgba(27, 79, 216, ${alpha})`;
           ctx.fillRect(shift, y, canvas.width, h * 0.15);
         }
         if (b % 3 === 1) {
@@ -108,12 +108,12 @@ export function KenteRoyalEffect() {
         if (p.shape === 1) {
           drawDiamond(p.x, p.y, p.size, alpha);
         } else if (p.shape === 2) {
-          ctx.fillStyle = `rgba(245, 166, 35, ${alpha})`;
+          ctx.fillStyle = `rgba(27, 79, 216, ${alpha})`;
           ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
         } else {
           // Halo doré
           const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 5);
-          grd.addColorStop(0, `rgba(245, 166, 35, ${alpha})`);
+          grd.addColorStop(0, `rgba(27, 79, 216, ${alpha})`);
           grd.addColorStop(0.4, `rgba(200, 134, 26, ${alpha * 0.3})`);
           grd.addColorStop(1, "transparent");
           ctx.beginPath();
@@ -135,7 +135,7 @@ export function KenteRoyalEffect() {
         const x = Math.sin(t * 0.25 + i * 1.5) * canvas.width * 0.35 + canvas.width * 0.5;
         const grad = ctx.createLinearGradient(x - 60, 0, x + 60, canvas.height);
         grad.addColorStop(0, "transparent");
-        grad.addColorStop(0.3, "rgba(245, 166, 35, 0.6)");
+        grad.addColorStop(0.3, "rgba(27, 79, 216, 0.6)");
         grad.addColorStop(0.7, "rgba(200, 134, 26, 0.4)");
         grad.addColorStop(1, "transparent");
         ctx.fillStyle = grad;

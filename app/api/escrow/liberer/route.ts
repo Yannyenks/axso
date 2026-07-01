@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { crediterWallet } from "@/lib/wallet";
 
-// Libérer manuellement un escrow (admin/owner si délai dépassé)
+// Libérer manuellement un escrow (owner si délai 48h dépassé)
+// Crédite automatiquement le wallet du marchand.
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -37,19 +39,40 @@ export async function POST(req: NextRequest) {
     }, { status: 400 });
   }
 
+  const commande = escrow.commande;
+  const montantCommission = commande.commission?.montantCommission
+    ?? commande.montantTotal * 0.03;
+
   await prisma.$transaction(async (tx) => {
+    // 1. Libérer l'escrow
     await tx.escrow.update({
       where: { commandeId },
       data: { statut: "released", releasedAt: now },
     });
 
-    if (escrow.commande.commission) {
+    // 2. Capturer la commission
+    if (commande.commission) {
       await tx.commission.update({
         where: { commandeId },
         data: { statut: "captured", capturedAt: now },
       });
     }
+
+    // 3. Créditer le wallet marchand (montant net après commission)
+    await crediterWallet(tx, {
+      tenantId,
+      montantTotal: commande.montantTotal,
+      montantCommission,
+      devise: commande.devise,
+      commandeId,
+      reference: commande.numero,
+    });
   });
 
-  return NextResponse.json({ success: true, montant: escrow.montant });
+  return NextResponse.json({
+    success: true,
+    montant: escrow.montant,
+    montantNet: escrow.montant - montantCommission,
+    message: "Fonds libérés et crédités sur votre wallet Axso.",
+  });
 }

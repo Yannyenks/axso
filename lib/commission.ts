@@ -1,10 +1,24 @@
 // Calcul et gestion des commissions Axso (3% par défaut)
+// Commission applicable UNIQUEMENT aux produits digitaux.
+// Physique & dropshipping → paiement à la livraison, sans commission plateforme.
 import { prisma } from "@/lib/prisma";
 
 export interface ResultatCommission {
   montantCommission: number;
   montantMarchand: number;
   taux: number;
+}
+
+type LigneAvecProduit = { produit?: { type?: string | null } | null };
+
+/** Retourne 0 si au moins une ligne est physique/dropshipping, sinon tenantRate. */
+export function tauxCommissionEffectif(
+  lignes: LigneAvecProduit[],
+  tenantRate: number
+): number {
+  if (!lignes?.length) return 0;
+  const toutDigital = lignes.every(l => l.produit?.type === "digital");
+  return toutDigital ? tenantRate : 0;
 }
 
 export function calculerCommission(

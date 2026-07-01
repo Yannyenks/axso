@@ -25,7 +25,7 @@ export default async function LivreurLayout({ children }: { children: React.Reac
     <div className="min-h-screen bg-gray-50 text-white">
       {/* Fond étoilé subtil */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-[#F5A623]/5 to-transparent" />
+        <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-[#1B4FD8]/5 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#080810] to-transparent" />
       </div>
 
@@ -33,7 +33,7 @@ export default async function LivreurLayout({ children }: { children: React.Reac
       <header className="sticky top-0 z-50 bg-gray-50/90 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#F5A623] to-[#FFD280] flex items-center justify-center shadow-lg shadow-[#F5A623]/20">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1B4FD8] to-[#7B9EFF] flex items-center justify-center shadow-lg shadow-[#1B4FD8]/20">
               <span className="text-black font-bold text-sm">A</span>
             </div>
             <div>
@@ -61,11 +61,11 @@ export default async function LivreurLayout({ children }: { children: React.Reac
       {/* Bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gray-50/95 backdrop-blur-xl border-t border-white/5 safe-area-bottom">
         <div className="max-w-2xl mx-auto px-4 py-3 grid grid-cols-3">
-          <Link href="/livreur" className="flex flex-col items-center gap-1 text-gray-400 hover:text-[#F5A623] transition-colors py-1">
+          <Link href="/livreur" className="flex flex-col items-center gap-1 text-gray-400 hover:text-[#1B4FD8] transition-colors py-1">
             <Home size={20} />
             <span className="text-[10px]">Accueil</span>
           </Link>
-          <Link href="/livreur/commandes" className="flex flex-col items-center gap-1 text-gray-400 hover:text-[#F5A623] transition-colors py-1">
+          <Link href="/livreur/commandes" className="flex flex-col items-center gap-1 text-gray-400 hover:text-[#1B4FD8] transition-colors py-1">
             <List size={20} />
             <span className="text-[10px]">Livraisons</span>
           </Link>

@@ -1,9 +1,15 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { ShoppingBag, Users, Globe, TrendingUp } from "lucide-react";
+import { CartParallax } from "./CartParallax";
+
+const STATS_CARTS = [
+  { size: 400, top: "15%", duration: 22, delay: 2,  opacity: 0.04, direction: "rtl" as const },
+  { size: 560, top: "55%", duration: 17, delay: 8,  opacity: 0.03, direction: "ltr" as const },
+];
 
 const stats = [
-  { icone: ShoppingBag, valeur: 1247, suffixe: "+", label: "Boutiques actives", couleur: "#F5A623" },
+  { icone: ShoppingBag, valeur: 1247, suffixe: "+", label: "Boutiques actives", couleur: "#1B4FD8" },
   { icone: Users, valeur: 48200, suffixe: "+", label: "Clients servis", couleur: "#7c3aed" },
   { icone: Globe, valeur: 23, suffixe: " pays", label: "Pays couverts", couleur: "#c2622d" },
   { icone: TrendingUp, valeur: 98, suffixe: "%", label: "Satisfaction marchands", couleur: "#10b981" },
@@ -51,12 +57,13 @@ export function StatsSection() {
 
   return (
     <section ref={sectionRef} className="py-20 bg-white border-y border-gray-100 relative overflow-hidden">
+      <CartParallax carts={STATS_CARTS} color="#1B4FD8" />
       {/* Ambient glow background */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[200px] bg-[#F5A623]/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[200px] bg-[#1B4FD8]/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div className="w-full px-6 sm:px-10 lg:px-16 xl:px-24 relative">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
           {stats.map((s, i) => {
             const Icone = s.icone;

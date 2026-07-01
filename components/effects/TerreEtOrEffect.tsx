@@ -41,33 +41,33 @@ export function TerreEtOrEffect() {
           <pattern id="kente-base" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
             {/* Lignes horizontales */}
             <rect x="0" y="0" width="40" height="4" fill="#c2622d" />
-            <rect x="0" y="8" width="40" height="2" fill="#F5A623" />
+            <rect x="0" y="8" width="40" height="2" fill="#1B4FD8" />
             <rect x="0" y="14" width="40" height="4" fill="#c2622d" />
             <rect x="0" y="22" width="40" height="2" fill="#8B4513" />
             <rect x="0" y="28" width="40" height="4" fill="#c2622d" />
-            <rect x="0" y="36" width="40" height="2" fill="#F5A623" />
+            <rect x="0" y="36" width="40" height="2" fill="#1B4FD8" />
             {/* Lignes verticales */}
-            <rect x="0" y="0" width="4" height="40" fill="#F5A623" opacity="0.5" />
+            <rect x="0" y="0" width="4" height="40" fill="#1B4FD8" opacity="0.5" />
             <rect x="10" y="0" width="2" height="40" fill="#8B4513" opacity="0.5" />
-            <rect x="20" y="0" width="4" height="40" fill="#F5A623" opacity="0.5" />
+            <rect x="20" y="0" width="4" height="40" fill="#1B4FD8" opacity="0.5" />
             <rect x="32" y="0" width="2" height="40" fill="#8B4513" opacity="0.5" />
           </pattern>
 
           {/* Motif kente diamant */}
           <pattern id="kente-diamond" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
             <polygon points="30,2 58,30 30,58 2,30" fill="none" stroke="#c2622d" strokeWidth="2" />
-            <polygon points="30,12 48,30 30,48 12,30" fill="none" stroke="#F5A623" strokeWidth="1.5" />
+            <polygon points="30,12 48,30 30,48 12,30" fill="none" stroke="#1B4FD8" strokeWidth="1.5" />
             <circle cx="30" cy="30" r="5" fill="#c2622d" />
-            <circle cx="2" cy="2" r="3" fill="#F5A623" />
-            <circle cx="58" cy="2" r="3" fill="#F5A623" />
-            <circle cx="2" cy="58" r="3" fill="#F5A623" />
-            <circle cx="58" cy="58" r="3" fill="#F5A623" />
+            <circle cx="2" cy="2" r="3" fill="#1B4FD8" />
+            <circle cx="58" cy="2" r="3" fill="#1B4FD8" />
+            <circle cx="2" cy="58" r="3" fill="#1B4FD8" />
+            <circle cx="58" cy="58" r="3" fill="#1B4FD8" />
           </pattern>
 
           {/* Motif adinkra (croissant) */}
           <pattern id="adinkra" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
             <circle cx="40" cy="40" r="25" fill="none" stroke="#c2622d" strokeWidth="2" />
-            <circle cx="40" cy="40" r="15" fill="none" stroke="#F5A623" strokeWidth="1.5" />
+            <circle cx="40" cy="40" r="15" fill="none" stroke="#1B4FD8" strokeWidth="1.5" />
             <line x1="40" y1="15" x2="40" y2="65" stroke="#8B4513" strokeWidth="1" />
             <line x1="15" y1="40" x2="65" y2="40" stroke="#8B4513" strokeWidth="1" />
           </pattern>
@@ -79,7 +79,7 @@ export function TerreEtOrEffect() {
 
         {/* Bordures décoratives */}
         <rect x="0" y="0" width="100%" height="8" fill="#c2622d" opacity="0.8" />
-        <rect x="0" y="8" width="100%" height="3" fill="#F5A623" opacity="0.6" />
+        <rect x="0" y="8" width="100%" height="3" fill="#1B4FD8" opacity="0.6" />
 
         {/* Motifs adinkra aux coins */}
         {[0, 160, 320, 480, 640, 800, 960].map((x) =>

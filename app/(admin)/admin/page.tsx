@@ -49,7 +49,7 @@ export default async function AdminDashboard() {
   const revenuPending = commissionsPending._sum.montantCommission || 0;
 
   const kpis = [
-    { label: "Boutiques actives", value: boutiquesActives, total: totalBoutiques, icon: Store, color: "#F5A623", href: "/admin/boutiques" },
+    { label: "Boutiques actives", value: boutiquesActives, total: totalBoutiques, icon: Store, color: "#1B4FD8", href: "/admin/boutiques" },
     { label: "Revenus capturés", value: formatMontant(revenuTotal, "XOF"), sub: `+${formatMontant(revenuMois, "XOF")} ce mois`, icon: DollarSign, color: "#34d399", href: "/admin/finances" },
     { label: "Commandes payées", value: totalCommandes, sub: `${commandesMois} ce mois`, icon: ShoppingCart, color: "#60a5fa", href: null },
     { label: "Clients totaux", value: totalClients.toLocaleString("fr-FR"), icon: Users, color: "#a78bfa", href: null },
@@ -91,12 +91,12 @@ export default async function AdminDashboard() {
         <div className="bg-white border border-white/5 rounded-2xl overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
             <h2 className="text-white font-semibold">Dernières boutiques</h2>
-            <Link href="/admin/boutiques" className="text-[#F5A623] text-xs hover:underline">Voir toutes →</Link>
+            <Link href="/admin/boutiques" className="text-[#1B4FD8] text-xs hover:underline">Voir toutes →</Link>
           </div>
           <div className="divide-y divide-white/5">
             {dernieresBoutiques.map(b => (
               <div key={b.id} className="flex items-center gap-4 px-6 py-4">
-                <div className="w-9 h-9 rounded-xl bg-[#F5A623]/10 border border-[#F5A623]/20 flex items-center justify-center text-sm font-bold text-[#F5A623]">
+                <div className="w-9 h-9 rounded-xl bg-[#1B4FD8]/10 border border-[#1B4FD8]/20 flex items-center justify-center text-sm font-bold text-[#1B4FD8]">
                   {b.nomBoutique.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -128,7 +128,7 @@ export default async function AdminDashboard() {
                   <p className="text-gray-500 text-[10px]">{c.tenant.nomBoutique} · {c.clientNom}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-[#F5A623] text-sm font-bold">{formatMontant(c.montantTotal, c.devise)}</p>
+                  <p className="text-[#1B4FD8] text-sm font-bold">{formatMontant(c.montantTotal, c.devise)}</p>
                   <p className="text-green-400 text-[10px]">+{formatMontant(c.montantTotal * 0.03, c.devise)} comm.</p>
                 </div>
               </div>

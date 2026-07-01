@@ -11,7 +11,7 @@ const VEHICULES = [
   { value: "a_pied", label: "🚶 À pied", desc: "Courtes distances" },
 ];
 
-const inputCls = "w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/10 focus:outline-none transition-all";
+const inputCls = "w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:border-[#1B4FD8] focus:ring-2 focus:ring-[#1B4FD8]/10 focus:outline-none transition-all";
 
 export default function InscriptionLivreurPage() {
   const router = useRouter();
@@ -56,7 +56,7 @@ export default function InscriptionLivreurPage() {
           </p>
           <button
             onClick={() => router.push("/connexion")}
-            className="w-full bg-[#F5A623] text-white font-bold py-3 rounded-xl hover:bg-[#D4911A] transition-all shadow-lg shadow-[#F5A623]/25"
+            className="w-full bg-[#1B4FD8] text-white font-bold py-3 rounded-xl hover:bg-[#1440BE] transition-all shadow-lg shadow-[#1B4FD8]/25"
           >
             Se connecter
           </button>
@@ -68,7 +68,7 @@ export default function InscriptionLivreurPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-white flex items-center justify-center px-4 py-12 relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-[#F5A623]/8 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-[#1B4FD8]/8 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-60 h-60 bg-blue-50 rounded-full blur-3xl" />
       </div>
 
@@ -78,15 +78,15 @@ export default function InscriptionLivreurPage() {
             <img src="/logo.png" alt="axso" style={{ height: "56px", width: "auto", objectFit: "contain" }} />
           </Link>
           <div className="mt-3 flex items-center justify-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-[#F5A623]/20 flex items-center justify-center">
-              <Truck size={22} className="text-[#F5A623]" />
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-[#1B4FD8]/20 flex items-center justify-center">
+              <Truck size={22} className="text-[#1B4FD8]" />
             </div>
           </div>
           <h1 className="text-xl font-bold text-gray-900 mt-3">Rejoindre comme livreur</h1>
           <p className="text-gray-400 text-sm mt-1">Recevez des commandes et gérez vos livraisons</p>
         </div>
 
-        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-xl shadow-[#F5A623]/8">
+        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-xl shadow-[#1B4FD8]/8">
           {erreur && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm mb-5">
               {erreur}
@@ -127,7 +127,7 @@ export default function InscriptionLivreurPage() {
                     onClick={() => setForm({ ...form, vehicule: v.value })}
                     className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm transition-all ${
                       form.vehicule === v.value
-                        ? "border-[#F5A623] bg-amber-50 text-gray-900"
+                        ? "border-[#1B4FD8] bg-blue-50 text-gray-900"
                         : "border-gray-100 text-gray-500 hover:border-gray-200 bg-gray-50"
                     }`}
                   >
@@ -144,7 +144,7 @@ export default function InscriptionLivreurPage() {
                 placeholder="Ex: Dakar, Abidjan Plateau..." className={inputCls} />
             </div>
 
-            <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
               <p className="text-amber-700 text-xs leading-relaxed">
                 En créant un compte, vous rejoignez la plateforme Axso en tant que livreur indépendant. Les marchands pourront vous assigner des commandes.
               </p>
@@ -152,7 +152,7 @@ export default function InscriptionLivreurPage() {
 
             <button
               type="submit" disabled={loading}
-              className="w-full bg-[#F5A623] text-white font-bold py-3.5 rounded-xl hover:bg-[#D4911A] transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm shadow-lg shadow-[#F5A623]/25 hover:scale-[1.02] active:scale-95"
+              className="w-full bg-[#1B4FD8] text-white font-bold py-3.5 rounded-xl hover:bg-[#1440BE] transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm shadow-lg shadow-[#1B4FD8]/25 hover:scale-[1.02] active:scale-95"
             >
               {loading ? <><Loader2 size={16} className="animate-spin" /> Création du compte...</> : "Créer mon compte livreur"}
             </button>
@@ -160,12 +160,12 @@ export default function InscriptionLivreurPage() {
         </div>
 
         <div className="text-center mt-6 space-y-2">
-          <Link href="/connexion" className="text-[#F5A623] hover:underline text-sm flex items-center justify-center gap-1">
+          <Link href="/connexion" className="text-[#1B4FD8] hover:underline text-sm flex items-center justify-center gap-1">
             <ArrowLeft size={13} /> Retour à la connexion
           </Link>
           <p className="text-gray-400 text-xs">
             Vous voulez ouvrir une boutique ?{" "}
-            <Link href="/inscription" className="text-gray-400 hover:text-[#F5A623] transition-colors underline">
+            <Link href="/inscription" className="text-gray-400 hover:text-[#1B4FD8] transition-colors underline">
               Créer un compte vendeur
             </Link>
           </p>

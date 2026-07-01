@@ -88,11 +88,11 @@ export function NotificationsPanel({ livreurId }: Props) {
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="relative w-11 h-11 rounded-2xl bg-[#111] border border-[#1a1a1a] flex items-center justify-center text-gray-400 hover:text-white hover:border-[#F5A623]/30 transition-all"
+        className="relative w-11 h-11 rounded-2xl bg-[#111] border border-[#1a1a1a] flex items-center justify-center text-gray-400 hover:text-white hover:border-[#1B4FD8]/30 transition-all"
       >
         <Bell size={18} />
         {nonLues > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#F5A623] rounded-full text-black text-[10px] font-bold flex items-center justify-center animate-pulse">
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#1B4FD8] rounded-full text-black text-[10px] font-bold flex items-center justify-center animate-pulse">
             {nonLues > 9 ? "9+" : nonLues}
           </span>
         )}
@@ -101,18 +101,18 @@ export function NotificationsPanel({ livreurId }: Props) {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-14 w-80 bg-[#111] border border-[#F5A623]/20 rounded-2xl shadow-2xl z-50 overflow-hidden">
+          <div className="absolute right-0 top-14 w-80 bg-[#111] border border-[#1B4FD8]/20 rounded-2xl shadow-2xl z-50 overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-[#1a1a1a]">
               <div className="flex items-center gap-2">
-                <Bell size={14} className="text-[#F5A623]" />
+                <Bell size={14} className="text-[#1B4FD8]" />
                 <h3 className="text-white font-semibold text-sm">Notifications</h3>
                 {nonLues > 0 && (
-                  <span className="bg-[#F5A623] text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full">{nonLues}</span>
+                  <span className="bg-[#1B4FD8] text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full">{nonLues}</span>
                 )}
               </div>
               <div className="flex items-center gap-2">
                 {nonLues > 0 && (
-                  <button onClick={toutMarquerLu} className="text-gray-500 hover:text-[#F5A623] transition-colors" title="Tout marquer lu">
+                  <button onClick={toutMarquerLu} className="text-gray-500 hover:text-[#1B4FD8] transition-colors" title="Tout marquer lu">
                     <CheckCheck size={14} />
                   </button>
                 )}
@@ -131,7 +131,7 @@ export function NotificationsPanel({ livreurId }: Props) {
               ) : notifications.map((n) => (
                 <div
                   key={n.id}
-                  className={`px-4 py-3 border-b border-[#1a1a1a] hover:bg-[#151515] transition-colors ${!n.lu ? "bg-[#F5A623]/5" : ""}`}
+                  className={`px-4 py-3 border-b border-[#1a1a1a] hover:bg-[#151515] transition-colors ${!n.lu ? "bg-[#1B4FD8]/5" : ""}`}
                 >
                   <div className="flex items-start gap-3">
                     <span className="text-lg flex-shrink-0 mt-0.5">{TYPE_ICON[n.type] || "🔔"}</span>
@@ -142,7 +142,7 @@ export function NotificationsPanel({ livreurId }: Props) {
                         {new Date(n.createdAt).toLocaleString("fr-FR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
                       </p>
                     </div>
-                    {!n.lu && <div className="w-2 h-2 bg-[#F5A623] rounded-full flex-shrink-0 mt-1.5" />}
+                    {!n.lu && <div className="w-2 h-2 bg-[#1B4FD8] rounded-full flex-shrink-0 mt-1.5" />}
                   </div>
                 </div>
               ))}

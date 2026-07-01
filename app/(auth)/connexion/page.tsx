@@ -82,7 +82,7 @@ function ConnexionForm() {
             type="email"
             {...register("email")}
             placeholder="aminata@example.com"
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/10 focus:outline-none transition-all"
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:border-[#1B4FD8] focus:ring-2 focus:ring-[#1B4FD8]/10 focus:outline-none transition-all"
           />
           {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
         </div>
@@ -94,7 +94,7 @@ function ConnexionForm() {
               type={showPass ? "text" : "password"}
               {...register("password")}
               placeholder="••••••••"
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/10 focus:outline-none transition-all pr-10"
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:border-[#1B4FD8] focus:ring-2 focus:ring-[#1B4FD8]/10 focus:outline-none transition-all pr-10"
             />
             <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
               {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -104,7 +104,7 @@ function ConnexionForm() {
         </div>
 
         <div className="flex justify-end">
-          <Link href="/mot-de-passe-oublie" className="text-[#F5A623] text-xs hover:underline font-medium">
+          <Link href="/mot-de-passe-oublie" className="text-[#1B4FD8] text-xs hover:underline font-medium">
             Mot de passe oublié ?
           </Link>
         </div>
@@ -112,13 +112,13 @@ function ConnexionForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-[#F5A623] text-white font-bold py-3.5 rounded-xl hover:bg-[#D4911A] transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-[#F5A623]/30 hover:shadow-[#F5A623]/50 hover:scale-[1.02] active:scale-95"
+          className="w-full bg-[#1B4FD8] text-white font-bold py-3.5 rounded-xl hover:bg-[#1440BE] transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-[#1B4FD8]/30 hover:shadow-[#1B4FD8]/50 hover:scale-[1.02] active:scale-95"
         >
           {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Connexion...</> : "Se connecter →"}
         </button>
       </form>
 
-      <div className="mt-5 p-3.5 bg-amber-50 rounded-xl border border-amber-100">
+      <div className="mt-5 p-3.5 bg-blue-50 rounded-xl border border-blue-100">
         <p className="text-amber-700 text-[11px] font-semibold uppercase tracking-wider mb-1.5">Comptes de démo</p>
         <p className="text-amber-600 text-xs font-mono">aminata@modeaminata.sn / axso2024</p>
         <p className="text-amber-600 text-xs font-mono">grace@beautegrace.ci / axso2024</p>
@@ -126,7 +126,7 @@ function ConnexionForm() {
 
       <p className="text-center text-gray-400 text-sm mt-5">
         Pas encore de boutique ?{" "}
-        <Link href="/inscription" className="text-[#F5A623] hover:underline font-semibold">Créer gratuitement</Link>
+        <Link href="/inscription" className="text-[#1B4FD8] hover:underline font-semibold">Créer gratuitement</Link>
       </p>
     </div>
   );
@@ -134,13 +134,13 @@ function ConnexionForm() {
 
 export default function ConnexionPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-orange-50/20 to-white flex overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/20 to-white flex overflow-hidden">
       {/* Gradient orbs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 left-1/4 w-96 h-96 bg-[#F5A623]/8 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-72 h-72 bg-amber-100/60 rounded-full blur-3xl" />
+        <div className="absolute top-20 left-1/4 w-96 h-96 bg-[#1B4FD8]/8 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-72 h-72 bg-blue-100/60 rounded-full blur-3xl" />
         <div className="absolute inset-0 opacity-[0.025]" style={{
-          backgroundImage: `linear-gradient(#F5A623 1px, transparent 1px), linear-gradient(90deg, #F5A623 1px, transparent 1px)`,
+          backgroundImage: `linear-gradient(#1B4FD8 1px, transparent 1px), linear-gradient(90deg, #1B4FD8 1px, transparent 1px)`,
           backgroundSize: "48px 48px",
         }} />
       </div>
@@ -152,14 +152,14 @@ export default function ConnexionPage() {
         </Link>
 
         <div className="max-w-md">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F5A623]/10 border border-[#F5A623]/25 rounded-full text-[#F5A623] text-xs font-semibold mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#1B4FD8]/10 border border-[#1B4FD8]/25 rounded-full text-[#1B4FD8] text-xs font-semibold mb-6">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#1B4FD8] animate-pulse" />
             +1 247 boutiques actives en Afrique
           </div>
 
           <h1 className="text-4xl font-bold font-playfair text-gray-900 leading-tight mb-4">
             Gérez votre boutique<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5A623] to-[#E09015]">comme un pro</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1B4FD8] to-[#1440BE]">comme un pro</span>
           </h1>
 
           <p className="text-gray-500 text-base leading-relaxed mb-8">
@@ -169,8 +169,8 @@ export default function ConnexionPage() {
           <div className="space-y-4 mb-10">
             {FEATURES.map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-[#F5A623]/10 flex items-center justify-center flex-shrink-0">
-                  <Icon size={15} className="text-[#F5A623]" />
+                <div className="w-8 h-8 rounded-xl bg-[#1B4FD8]/10 flex items-center justify-center flex-shrink-0">
+                  <Icon size={15} className="text-[#1B4FD8]" />
                 </div>
                 <span className="text-gray-600 text-sm">{text}</span>
               </div>
@@ -183,13 +183,13 @@ export default function ConnexionPage() {
             style={{ boxShadow: "0 20px 40px -8px rgba(0,0,0,0.08), 0 0 0 1px rgba(201,168,76,0.08)" }}
           >
             <div className="flex gap-0.5 mb-3">
-              {[1,2,3,4,5].map(i => <Star key={i} size={13} className="fill-[#F5A623] text-[#F5A623]" />)}
+              {[1,2,3,4,5].map(i => <Star key={i} size={13} className="fill-[#1B4FD8] text-[#1B4FD8]" />)}
             </div>
             <p className="text-gray-700 text-sm leading-relaxed mb-3">
               "Axso a transformé mon activité. Je gère ma boutique depuis mon téléphone et les paiements arrivent directement."
             </p>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#F5A623] flex items-center justify-center text-white text-xs font-bold">A</div>
+              <div className="w-8 h-8 rounded-full bg-[#1B4FD8] flex items-center justify-center text-white text-xs font-bold">A</div>
               <div>
                 <p className="text-gray-800 text-xs font-semibold">Aminata Kouyaté</p>
                 <p className="text-gray-400 text-xs">Mode Aminata, Dakar</p>

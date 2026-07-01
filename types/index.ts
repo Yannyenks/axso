@@ -61,6 +61,9 @@ export interface ItemPanier {
   imageUrl?: string;
   variante?: string;
   stock: number;
+  type?: "physique" | "digital" | "dropshipping";
+  fichierUrl?: string;
+  fichierNom?: string;
 }
 
 // Statuts commande

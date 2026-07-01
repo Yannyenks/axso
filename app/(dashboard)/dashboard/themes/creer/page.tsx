@@ -210,7 +210,7 @@ export default function CreerThemePage() {
             <RefreshCw size={11} /> Actualiser
           </button>
           <button onClick={sauvegarder} disabled={saving}
-            className="flex items-center gap-2 bg-[#F5A623] text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-[#D4911A] disabled:opacity-50 transition-all shadow shadow-[#F5A623]/25">
+            className="flex items-center gap-2 bg-[#F5A623] text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-[#d4820a] disabled:opacity-50 transition-all shadow shadow-[#F5A623]/25">
             <Save size={14} />
             {saving ? "Sauvegarde..." : themeId ? "Mettre à jour" : "Créer le thème"}
           </button>
@@ -294,7 +294,7 @@ export default function CreerThemePage() {
                   <div className="grid grid-cols-4 gap-2">
                     {["4px", "8px", "12px", "16px", "20px", "24px", "32px", "50px"].map((r) => (
                       <button key={r} onClick={() => setRadius(r)}
-                        className={`py-2 text-xs border-2 transition-all ${config.radius === r ? "border-[#F5A623] text-[#F5A623] bg-amber-50" : "border-gray-100 text-gray-500 hover:border-gray-200"}`}
+                        className={`py-2 text-xs border-2 transition-all ${config.radius === r ? "border-[#F5A623] text-[#F5A623] bg-blue-50" : "border-gray-100 text-gray-500 hover:border-gray-200"}`}
                         style={{ borderRadius: r }}>
                         {r}
                       </button>

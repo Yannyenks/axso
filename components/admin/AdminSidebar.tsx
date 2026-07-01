@@ -9,7 +9,8 @@ import {
   BarChart3, Lock
 } from "lucide-react";
 
-type NavItem = { href: string; label: string; icon: React.ElementType; exact?: boolean };
+type IconComponent = React.FC<{ size?: number; className?: string }>;
+type NavItem = { href: string; label: string; icon: IconComponent; exact?: boolean };
 type Section = { label: string; items: NavItem[] };
 
 const SECTIONS: Section[] = [
@@ -58,12 +59,12 @@ export function AdminSidebar() {
       {/* Logo */}
       <div className="p-6 border-b border-white/5">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#F5A623] to-[#FFD280] flex items-center justify-center shadow-lg shadow-[#F5A623]/20">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1B4FD8] to-[#7B9EFF] flex items-center justify-center shadow-lg shadow-[#1B4FD8]/20">
             <Shield size={15} className="text-black" />
           </div>
           <div>
             <p className="text-white font-bold text-sm tracking-tight">Axso HQ</p>
-            <p className="text-[#F5A623]/60 text-[10px] uppercase tracking-widest">Admin Platform</p>
+            <p className="text-[#1B4FD8]/60 text-[10px] uppercase tracking-widest">Admin Platform</p>
           </div>
         </div>
       </div>
@@ -85,12 +86,12 @@ export function AdminSidebar() {
                     href={item.href}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all group relative ${
                       active
-                        ? "bg-[#F5A623]/10 text-[#F5A623]"
+                        ? "bg-[#1B4FD8]/10 text-[#1B4FD8]"
                         : "text-gray-400 hover:text-white hover:bg-white/5"
                     }`}
                   >
                     {active && (
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-[#F5A623] rounded-r-full" />
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-[#1B4FD8] rounded-r-full" />
                     )}
                     <Icon size={15} className="flex-shrink-0" />
                     <span className="flex-1 font-medium">{item.label}</span>

@@ -129,7 +129,7 @@ export default function EditProduitPage() {
             <ArrowLeft size={16} />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-white font-playfair line-clamp-1">{produit.nom}</h1>
+            <h1 className="text-xl font-bold text-white font-poppins line-clamp-1">{produit.nom}</h1>
             <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
               <span>{produit.ventes} ventes</span>
               <span>·</span>
@@ -150,7 +150,7 @@ export default function EditProduitPage() {
             {form.actif ? "Actif" : "Brouillon"}
           </button>
           <button onClick={sauvegarder} disabled={saving}
-            className="flex items-center gap-2 bg-[#F5A623] text-black font-semibold px-5 py-2 rounded-xl text-sm hover:bg-[#FFD280] transition-all disabled:opacity-50">
+            className="flex items-center gap-2 bg-[#F5A623] text-black font-semibold px-5 py-2 rounded-xl text-sm hover:bg-[#d4820a] transition-all disabled:opacity-50">
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
             Enregistrer
           </button>
@@ -175,7 +175,7 @@ export default function EditProduitPage() {
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-gray-400 text-xs">Description</label>
                 <button onClick={genererDescription} disabled={genIA}
-                  className="flex items-center gap-1.5 text-[#F5A623] text-xs hover:text-[#FFD280] transition-colors disabled:opacity-50">
+                  className="flex items-center gap-1.5 text-[#F5A623] text-xs hover:text-[#d4820a] transition-colors disabled:opacity-50">
                   {genIA ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
                   Régénérer avec l'IA
                 </button>

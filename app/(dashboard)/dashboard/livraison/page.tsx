@@ -45,7 +45,7 @@ export default async function LivraisonPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 font-playfair">Livraisons</h1>
+          <h1 className="text-2xl font-bold text-gray-900 font-poppins">Livraisons</h1>
           <p className="text-gray-400 text-sm mt-1">Suivi et assignation des expéditions</p>
         </div>
         <a
@@ -171,4 +171,4 @@ export default async function LivraisonPage() {
     </div>
   );
 }
-
+

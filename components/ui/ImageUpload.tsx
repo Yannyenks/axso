@@ -53,7 +53,7 @@ export function ImageUpload({ value, onChange, onRemove, label, hint, className 
       {label && <label className="text-gray-400 text-xs block">{label}</label>}
       <div
         className={`relative ${aspectClass} rounded-xl border-2 border-dashed transition-all cursor-pointer overflow-hidden ${
-          dragging ? "border-[#F5A623] bg-[#F5A623]/5" : "border-[#222] bg-[#0d0d0d] hover:border-[#F5A623]/40"
+          dragging ? "border-[#1B4FD8] bg-[#1B4FD8]/5" : "border-[#222] bg-[#0d0d0d] hover:border-[#1B4FD8]/40"
         }`}
         onClick={() => !uploading && inputRef.current?.click()}
         onDragOver={e => { e.preventDefault(); setDragging(true); }}
@@ -79,11 +79,11 @@ export function ImageUpload({ value, onChange, onRemove, label, hint, className 
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4">
             {uploading ? (
-              <Loader2 size={24} className="text-[#F5A623] animate-spin" />
+              <Loader2 size={24} className="text-[#1B4FD8] animate-spin" />
             ) : (
               <>
-                <div className="w-10 h-10 rounded-xl bg-[#F5A623]/10 border border-[#F5A623]/20 flex items-center justify-center">
-                  <Upload size={18} className="text-[#F5A623]" />
+                <div className="w-10 h-10 rounded-xl bg-[#1B4FD8]/10 border border-[#1B4FD8]/20 flex items-center justify-center">
+                  <Upload size={18} className="text-[#1B4FD8]" />
                 </div>
                 <p className="text-gray-400 text-xs text-center">Cliquer ou glisser une image</p>
                 <p className="text-gray-600 text-[10px]">JPEG, PNG, WebP — max 5 MB</p>
@@ -93,7 +93,7 @@ export function ImageUpload({ value, onChange, onRemove, label, hint, className 
         )}
         {uploading && value && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <Loader2 size={24} className="text-[#F5A623] animate-spin" />
+            <Loader2 size={24} className="text-[#1B4FD8] animate-spin" />
           </div>
         )}
       </div>

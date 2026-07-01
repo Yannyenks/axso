@@ -6,11 +6,11 @@ import { Store, Palette, Globe, Link2, Truck, Save, Loader2, ExternalLink, Copy,
 import { ImageUpload } from "@/components/ui/ImageUpload";
 
 const THEMES = [
-  { id: "noir-obsidien", nom: "Noir Obsidien", desc: "Luxe & Mode", fond: "#0a0a0a", accent: "#F5A623", texte: "#F5F5F0", badge: "✦ Premium" },
+  { id: "noir-obsidien", nom: "Noir Obsidien", desc: "Luxe & Mode", fond: "#0a0a0a", accent: "#1B4FD8", texte: "#F5F5F0", badge: "✦ Premium" },
   { id: "violet-cosmos", nom: "Violet Cosmos", desc: "Beauté & Art", fond: "#1a0a2e", accent: "#7c3aed", texte: "#f0eaff", badge: "✦ Premium" },
   { id: "terre-et-or", nom: "Terre & Or", desc: "Artisanat & Culture", fond: "#fff8f0", accent: "#c2622d", texte: "#2c1503", badge: null },
   { id: "ocean-atlantique", nom: "Océan Atlantique", desc: "Luxe Côtier & Marine", fond: "#010d1f", accent: "#00b4d8", texte: "#e0f4ff", badge: "🌊 3D" },
-  { id: "kente-royal", nom: "Kente Royal", desc: "Artisanat Africain Premium", fond: "#1a0e00", accent: "#f5a623", texte: "#fff8e8", badge: "👑 3D" },
+  { id: "kente-royal", nom: "Kente Royal", desc: "Artisanat Africain Premium", fond: "#1a0e00", accent: "#1b4fd8", texte: "#fff8e8", badge: "👑 3D" },
   { id: "bwiti-forest", nom: "Bwiti Forest", desc: "Nature & Bien-être Bio", fond: "#071a0b", accent: "#4ade80", texte: "#e8ffe0", badge: "🌿 3D" },
 ];
 
@@ -105,13 +105,13 @@ export default function BoutiquePage() {
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 font-playfair">Ma Boutique</h1>
+          <h1 className="text-2xl font-bold text-gray-900 font-poppins">Ma Boutique</h1>
           <p className="text-gray-400 text-sm mt-1">Configurez chaque aspect de votre boutique</p>
         </div>
         {tenant && (
           <div className="flex items-center gap-2">
             <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-xs text-[#F5A623] border border-[#F5A623]/30 px-3 py-1.5 rounded-lg hover:bg-amber-50 transition-all">
+              className="flex items-center gap-1.5 text-xs text-[#d4820a] border border-[#F5A623]/30 px-3 py-1.5 rounded-lg hover:bg-amber-50 transition-all">
               <ExternalLink size={12} /> Voir la boutique
             </a>
             <button onClick={() => { navigator.clipboard.writeText(urlProd); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
@@ -191,7 +191,7 @@ export default function BoutiquePage() {
                 <button key={t.id} type="button" onClick={() => set("themeId", t.id)}
                   className={`w-full text-left rounded-2xl border-2 overflow-hidden transition-all ${form.themeId === t.id ? "border-[#F5A623] shadow-lg shadow-[#F5A623]/10" : "border-gray-100 hover:border-gray-200"}`}>
                   <div className="h-14 flex items-center justify-center relative" style={{ backgroundColor: t.fond }}>
-                    <p className="font-playfair font-bold" style={{ color: t.accent }}>{form.nomBoutique || "Ma Boutique"}</p>
+                    <p className="font-poppins font-bold" style={{ color: t.accent }}>{form.nomBoutique || "Ma Boutique"}</p>
                     {form.themeId === t.id && (
                       <div className="absolute top-2 right-3 w-5 h-5 rounded-full bg-[#F5A623] flex items-center justify-center text-white text-xs font-bold">✓</div>
                     )}
@@ -299,8 +299,8 @@ export default function BoutiquePage() {
             <input value={form.zonesLivraison} onChange={e => set("zonesLivraison", e.target.value)}
               placeholder="Ex: Dakar, Thiès, Saint-Louis, Toute la ville" className={inputCls} />
           </div>
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-            <p className="text-blue-600 text-xs leading-relaxed">
+          <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
+            <p className="text-amber-700 text-xs leading-relaxed">
               <strong>Système escrow :</strong> Le paiement client est sécurisé pendant 48h. Les fonds vous sont versés automatiquement après confirmation de livraison. Axso prélève 3% de commission sur chaque vente confirmée.
             </p>
           </div>
@@ -308,7 +308,7 @@ export default function BoutiquePage() {
       )}
 
       <button onClick={sauvegarder} disabled={saving}
-        className="w-full flex items-center justify-center gap-2 bg-[#F5A623] text-white font-bold py-4 rounded-xl hover:bg-[#D4911A] transition-all disabled:opacity-50 shadow-lg shadow-[#F5A623]/25 hover:scale-[1.01] active:scale-95">
+        className="w-full flex items-center justify-center gap-2 bg-[#F5A623] text-white font-bold py-4 rounded-xl hover:bg-[#d4820a] transition-all disabled:opacity-50 shadow-lg shadow-[#F5A623]/25 hover:scale-[1.01] active:scale-95">
         {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
         {saving ? "Sauvegarde en cours..." : "Enregistrer les modifications"}
       </button>

@@ -23,12 +23,12 @@ const schemaCompte = z.object({
 type CompteData = z.infer<typeof schemaCompte>;
 
 const inputCls =
-  "w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/10 focus:outline-none transition-all";
+  "w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:border-[#1B4FD8] focus:ring-2 focus:ring-[#1B4FD8]/10 focus:outline-none transition-all";
 
 // ─── Noms des thèmes ──────────────────────────────────────────────────────────
 
 const THEMES: Record<string, { nom: string; emoji: string; couleur: string }> = {
-  "noir-obsidien":   { nom: "Noir Obsidien",   emoji: "✨", couleur: "#F5A623" },
+  "noir-obsidien":   { nom: "Noir Obsidien",   emoji: "✨", couleur: "#1B4FD8" },
   "violet-cosmos":  { nom: "Violet Cosmos",    emoji: "💜", couleur: "#7c3aed" },
   "terre-et-or":    { nom: "Terre & Or",       emoji: "🌿", couleur: "#c2622d" },
   "kente-royal":    { nom: "Kente Royal",      emoji: "👑", couleur: "#D4AF37" },
@@ -56,10 +56,10 @@ function PlanPreviewCard({
     <div className="space-y-4">
       {/* Message IA */}
       <div className="flex gap-3">
-        <div className="w-8 h-8 rounded-xl bg-[#F5A623]/20 border border-[#F5A623]/30 flex items-center justify-center flex-shrink-0">
-          <Bot size={14} className="text-[#F5A623]" />
+        <div className="w-8 h-8 rounded-xl bg-[#1B4FD8]/20 border border-[#1B4FD8]/30 flex items-center justify-center flex-shrink-0">
+          <Bot size={14} className="text-[#1B4FD8]" />
         </div>
-        <div className="flex-1 bg-amber-50 border border-[#F5A623]/20 rounded-2xl px-4 py-3">
+        <div className="flex-1 bg-blue-50 border border-[#1B4FD8]/20 rounded-2xl px-4 py-3">
           <p className="text-sm text-gray-700 leading-relaxed">{messageIA}</p>
         </div>
       </div>
@@ -139,7 +139,7 @@ function PlanPreviewCard({
         <button
           onClick={onConfirmer}
           disabled={loading}
-          className="flex-1 bg-[#F5A623] text-white font-bold py-3 rounded-xl hover:bg-[#D4911A] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#F5A623]/25 disabled:opacity-50 text-sm"
+          className="flex-1 bg-[#1B4FD8] text-white font-bold py-3 rounded-xl hover:bg-[#1440BE] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#1B4FD8]/25 disabled:opacity-50 text-sm"
         >
           {loading ? (
             <><Loader2 size={15} className="animate-spin" /> Création en cours...</>
@@ -244,7 +244,7 @@ function EtapeIA({
         <h3 className="text-xl font-bold text-gray-900">Boutique créée !</h3>
         <p className="text-gray-500 text-sm">Vous allez être redirigé vers la connexion...</p>
         <div className="flex justify-center">
-          <Loader2 size={20} className="animate-spin text-[#F5A623]" />
+          <Loader2 size={20} className="animate-spin text-[#1B4FD8]" />
         </div>
       </div>
     );
@@ -255,7 +255,7 @@ function EtapeIA({
     return (
       <div className="py-6 space-y-4">
         <div className="text-center mb-4">
-          <Sparkles size={24} className="text-[#F5A623] mx-auto mb-2" />
+          <Sparkles size={24} className="text-[#1B4FD8] mx-auto mb-2" />
           <p className="font-semibold text-gray-900">L'IA construit votre boutique...</p>
         </div>
         <div className="space-y-2">
@@ -267,7 +267,7 @@ function EtapeIA({
           ))}
           {progress.length < 5 && (
             <div className="flex items-center gap-3 text-sm">
-              <Loader2 size={16} className="text-[#F5A623] animate-spin flex-shrink-0" />
+              <Loader2 size={16} className="text-[#1B4FD8] animate-spin flex-shrink-0" />
               <span className="text-gray-400">En cours...</span>
             </div>
           )}
@@ -286,12 +286,12 @@ function EtapeIA({
       {/* Message IA initial */}
       {phase === "saisie" && (
         <div className="flex gap-3">
-          <div className="w-8 h-8 rounded-xl bg-[#F5A623]/20 border border-[#F5A623]/30 flex items-center justify-center flex-shrink-0">
-            <Bot size={14} className="text-[#F5A623]" />
+          <div className="w-8 h-8 rounded-xl bg-[#1B4FD8]/20 border border-[#1B4FD8]/30 flex items-center justify-center flex-shrink-0">
+            <Bot size={14} className="text-[#1B4FD8]" />
           </div>
-          <div className="flex-1 bg-amber-50 border border-[#F5A623]/20 rounded-2xl px-4 py-3">
+          <div className="flex-1 bg-blue-50 border border-[#1B4FD8]/20 rounded-2xl px-4 py-3">
             <p className="text-sm text-gray-700">
-              Bonjour {compte.name.split(" ")[0]} ! 👋 Décrivez votre business et je vais créer toute votre boutique automatiquement — nom, thème, produits, livraison. Par exemple : <em className="text-[#F5A623]">"Je vends des robes wax et boubous au Sénégal"</em>
+              Bonjour {compte.name.split(" ")[0]} ! 👋 Décrivez votre business en quelques mots et je vais créer toute votre boutique automatiquement — nom, thème, produits, livraison. Exemples : <em className="text-[#1B4FD8]">"Je vends des vêtements mode à Paris"</em> ou <em className="text-[#1B4FD8]">"Dropshipping produits tech, basé à Dubaï"</em> ou <em className="text-[#1B4FD8]">"Bijoux artisanaux au Sénégal"</em>
             </p>
           </div>
         </div>
@@ -328,7 +328,7 @@ function EtapeIA({
               <button
                 key={ex}
                 onClick={() => setDescription(ex)}
-                className="text-xs bg-gray-50 border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg hover:border-[#F5A623]/40 hover:text-[#F5A623] transition-all"
+                className="text-xs bg-gray-50 border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg hover:border-[#1B4FD8]/40 hover:text-[#1B4FD8] transition-all"
               >
                 {ex}
               </button>
@@ -342,13 +342,13 @@ function EtapeIA({
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), analyser())}
               placeholder="Décrivez votre business : produits, pays, clientèle cible..."
               rows={3}
-              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/10 focus:outline-none transition-all resize-none"
+              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:border-[#1B4FD8] focus:ring-2 focus:ring-[#1B4FD8]/10 focus:outline-none transition-all resize-none"
               disabled={loading}
             />
             <button
               onClick={analyser}
               disabled={!description.trim() || loading}
-              className="w-12 bg-[#F5A623] rounded-xl flex items-center justify-center hover:bg-[#D4911A] transition-colors disabled:opacity-40 self-end"
+              className="w-12 bg-[#1B4FD8] rounded-xl flex items-center justify-center hover:bg-[#1440BE] transition-colors disabled:opacity-40 self-end"
             >
               {loading ? <Loader2 size={16} className="animate-spin text-white" /> : <Send size={16} className="text-white" />}
             </button>
@@ -386,13 +386,13 @@ export default function InscriptionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-orange-50/20 to-white flex overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/20 to-white flex overflow-hidden">
       {/* Background orbs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-24 left-1/4 w-80 h-80 bg-[#F5A623]/8 rounded-full blur-3xl" />
-        <div className="absolute bottom-16 right-16 w-64 h-64 bg-amber-100/50 rounded-full blur-3xl" />
+        <div className="absolute top-24 left-1/4 w-80 h-80 bg-[#1B4FD8]/8 rounded-full blur-3xl" />
+        <div className="absolute bottom-16 right-16 w-64 h-64 bg-blue-100/50 rounded-full blur-3xl" />
         <div className="absolute inset-0 opacity-[0.025]" style={{
-          backgroundImage: `linear-gradient(#F5A623 1px, transparent 1px), linear-gradient(90deg, #F5A623 1px, transparent 1px)`,
+          backgroundImage: `linear-gradient(#1B4FD8 1px, transparent 1px), linear-gradient(90deg, #1B4FD8 1px, transparent 1px)`,
           backgroundSize: "48px 48px",
         }} />
       </div>
@@ -404,12 +404,12 @@ export default function InscriptionPage() {
         </Link>
 
         <div className="max-w-sm">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F5A623]/10 border border-[#F5A623]/25 rounded-full text-[#F5A623] text-xs font-semibold mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#1B4FD8]/10 border border-[#1B4FD8]/25 rounded-full text-[#1B4FD8] text-xs font-semibold mb-6">
             <Sparkles size={11} /> Inscription gratuite · Propulsée par l'IA
           </div>
           <h1 className="text-3xl font-bold text-gray-900 leading-tight mb-4">
             Décrivez votre business,<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5A623] to-[#E09015]">l'IA crée tout</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1B4FD8] to-[#1440BE]">l'IA crée tout</span>
           </h1>
           <p className="text-gray-500 text-sm leading-relaxed mb-8">
             En 2 étapes, votre boutique est en ligne — nom, thème, produits, livraison. Tout configuré automatiquement.
@@ -420,15 +420,15 @@ export default function InscriptionPage() {
               { icon: Store, label: "Votre compte", desc: "Email et mot de passe", done: etape > 0 },
               { icon: Bot, label: "L'IA configure tout", desc: "Décrivez votre business", done: false },
             ].map((s, i) => (
-              <div key={i} className={`flex items-center gap-3 p-3.5 rounded-2xl transition-all ${i === etape ? "bg-white border border-[#F5A623]/20 shadow-md" : i < etape ? "bg-[#F5A623]/5" : "opacity-40"}`}>
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${i <= etape ? "bg-[#F5A623] text-white" : "bg-gray-100 text-gray-400"}`}>
+              <div key={i} className={`flex items-center gap-3 p-3.5 rounded-2xl transition-all ${i === etape ? "bg-white border border-[#1B4FD8]/20 shadow-md" : i < etape ? "bg-[#1B4FD8]/5" : "opacity-40"}`}>
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${i <= etape ? "bg-[#1B4FD8] text-white" : "bg-gray-100 text-gray-400"}`}>
                   {s.done ? <Check size={14} /> : <s.icon size={14} />}
                 </div>
                 <div>
                   <p className={`text-sm font-semibold ${i === etape ? "text-gray-900" : "text-gray-500"}`}>{s.label}</p>
                   <p className="text-xs text-gray-400">{s.desc}</p>
                 </div>
-                {i === etape && <div className="ml-auto w-2 h-2 rounded-full bg-[#F5A623] animate-pulse" />}
+                {i === etape && <div className="ml-auto w-2 h-2 rounded-full bg-[#1B4FD8] animate-pulse" />}
               </div>
             ))}
           </div>
@@ -450,11 +450,11 @@ export default function InscriptionPage() {
           <div className="flex items-center justify-center gap-2 mb-6 lg:hidden">
             {["Compte", "Boutique IA"].map((label, i) => (
               <div key={i} className="flex items-center gap-2">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${i <= etape ? "bg-[#F5A623] text-white" : "bg-gray-100 text-gray-400"}`}>
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${i <= etape ? "bg-[#1B4FD8] text-white" : "bg-gray-100 text-gray-400"}`}>
                   {i < etape ? <Check size={12} /> : i + 1}
                 </div>
                 <span className="text-xs text-gray-400 hidden sm:block">{label}</span>
-                {i < 1 && <div className={`w-6 h-0.5 ${i < etape ? "bg-[#F5A623]" : "bg-gray-200"}`} />}
+                {i < 1 && <div className={`w-6 h-0.5 ${i < etape ? "bg-[#1B4FD8]" : "bg-gray-200"}`} />}
               </div>
             ))}
           </div>
@@ -492,7 +492,7 @@ export default function InscriptionPage() {
                   {formCompte.formState.errors.whatsapp && <p className="text-red-500 text-xs mt-1">{formCompte.formState.errors.whatsapp.message}</p>}
                 </div>
 
-                <button type="submit" className="w-full bg-[#F5A623] text-white font-bold py-3.5 rounded-xl hover:bg-[#D4911A] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#F5A623]/30 hover:scale-[1.02] active:scale-95 mt-2">
+                <button type="submit" className="w-full bg-[#1B4FD8] text-white font-bold py-3.5 rounded-xl hover:bg-[#1440BE] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#1B4FD8]/30 hover:scale-[1.02] active:scale-95 mt-2">
                   <Bot size={16} /> Continuer avec l'IA <ArrowRight size={16} />
                 </button>
               </form>
@@ -506,11 +506,11 @@ export default function InscriptionPage() {
 
           <p className="text-center text-gray-400 text-sm mt-5">
             Déjà un compte ?{" "}
-            <Link href="/connexion" className="text-[#F5A623] hover:underline font-semibold">Se connecter</Link>
+            <Link href="/connexion" className="text-[#1B4FD8] hover:underline font-semibold">Se connecter</Link>
           </p>
           <p className="text-center text-gray-400 text-xs mt-2">
             Vous êtes livreur ?{" "}
-            <Link href="/inscription/livreur" className="text-gray-500 hover:text-[#F5A623] transition-colors underline underline-offset-2">
+            <Link href="/inscription/livreur" className="text-gray-500 hover:text-[#1B4FD8] transition-colors underline underline-offset-2">
               Rejoindre la plateforme →
             </Link>
           </p>

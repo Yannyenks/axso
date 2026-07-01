@@ -33,7 +33,7 @@ export function FaqSection() {
     <section ref={sectionRef} className="py-24 bg-gray-50/50 relative overflow-hidden" id="faq">
       {/* Subtle background glow */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[400px] bg-[#F5A623]/4 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[400px] bg-[#1B4FD8]/4 rounded-full blur-3xl" />
       </div>
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 relative">
@@ -44,7 +44,7 @@ export function FaqSection() {
             animation: visible ? "flip3dIn 0.7s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          <span className="text-[#F5A623] text-sm font-semibold uppercase tracking-widest mb-4 block">FAQ</span>
+          <span className="text-[#1B4FD8] text-sm font-semibold uppercase tracking-widest mb-4 block">FAQ</span>
           <h2 className="text-4xl sm:text-5xl font-bold font-playfair text-gray-900">Questions fréquentes</h2>
         </div>
 
@@ -53,25 +53,25 @@ export function FaqSection() {
             <div
               key={i}
               className={`rounded-2xl border-2 transition-all duration-300 hover:scale-[1.005] ${
-                ouvert === i ? "bg-white shadow-md shadow-[#F5A623]/5" : "bg-white hover:border-gray-200"
+                ouvert === i ? "bg-white shadow-md shadow-[#1B4FD8]/5" : "bg-white hover:border-gray-200"
               }`}
               style={{
                 opacity: visible ? 1 : 0,
                 animation: visible ? `slideRevealLeft 0.5s ${i * 60}ms cubic-bezier(0.23,1,0.32,1) both` : "none",
-                borderColor: ouvert === i ? "rgba(245,166,35,0.35)" : "#f3f4f6",
-                boxShadow: ouvert === i ? "0 8px 30px rgba(245,166,35,0.08), 0 0 0 1px rgba(245,166,35,0.12)" : "none",
+                borderColor: ouvert === i ? "rgba(27,79,216,0.35)" : "#f3f4f6",
+                boxShadow: ouvert === i ? "0 8px 30px rgba(27,79,216,0.08), 0 0 0 1px rgba(27,79,216,0.12)" : "none",
               }}
             >
               <button
                 onClick={() => setOuvert(ouvert === i ? null : i)}
                 className="w-full flex items-center justify-between p-6 text-left"
               >
-                <span className={`font-semibold transition-colors duration-200 ${ouvert === i ? "text-[#F5A623]" : "text-gray-800"}`}>
+                <span className={`font-semibold transition-colors duration-200 ${ouvert === i ? "text-[#1B4FD8]" : "text-gray-800"}`}>
                   {faq.q}
                 </span>
                 <div
                   className={`flex-shrink-0 ml-4 w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
-                    ouvert === i ? "bg-[#F5A623] border-[#F5A623] scale-110 shadow-md shadow-[#F5A623]/30" : "border-gray-200 hover:border-[#F5A623]/40"
+                    ouvert === i ? "bg-[#1B4FD8] border-[#1B4FD8] scale-110 shadow-md shadow-[#1B4FD8]/30" : "border-gray-200 hover:border-[#1B4FD8]/40"
                   }`}
                   style={{
                     transform: ouvert === i ? "rotate(0deg) scale(1.1)" : "rotate(0deg) scale(1)",

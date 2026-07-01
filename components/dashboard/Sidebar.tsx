@@ -1,86 +1,163 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard, Package, ShoppingCart, Users, Store, Paintbrush,
-  CreditCard, TrendingUp, Megaphone, Truck, Star, Sparkles, BarChart3,
-  Settings, ChevronLeft, ChevronRight, Bike, Palette
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Zap } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import {
+  IconAxia, IconAccueil, IconBoutique, IconBuilder, IconProduits,
+  IconSourcing, IconCommandes, IconClients, IconWallet, IconRevenus,
+  IconMarketing, IconMessages, IconContenus, IconNavigateur, IconLivraisons,
+  IconAnalytics, IconConnecteurs, IconAbonnement, IconParametres, IconIA,
+} from "./AppIcons";
 
-const navItems = [
-  { href: "/dashboard", label: "Accueil", icone: LayoutDashboard },
-  { href: "/dashboard/produits", label: "Produits", icone: Package },
-  { href: "/dashboard/commandes", label: "Commandes", icone: ShoppingCart, badge: true },
-  { href: "/dashboard/clients", label: "Clients", icone: Users },
-  { href: "/dashboard/boutique", label: "Ma Boutique", icone: Store },
-  { href: "/dashboard/builder", label: "Constructeur", icone: Paintbrush },
-  { href: "/dashboard/themes", label: "Thèmes", icone: Palette },
-  { href: "/dashboard/paiements", label: "Paiements", icone: CreditCard },
-  { href: "/dashboard/revenus", label: "Revenus", icone: TrendingUp },
-  { href: "/dashboard/marketing", label: "Marketing", icone: Megaphone },
-  { href: "/dashboard/livraison", label: "Livraison", icone: Truck },
-  { href: "/dashboard/livreurs", label: "Livreurs", icone: Bike },
-  { href: "/dashboard/avis", label: "Avis clients", icone: Star },
-  { href: "/dashboard/ia", label: "Assistant IA", icone: Sparkles },
-  { href: "/dashboard/analytics", label: "Analytics", icone: BarChart3 },
-  { href: "/dashboard/parametres", label: "Paramètres", icone: Settings },
+// ─── Navigation ───────────────────────────────────────────────────────────────
+const NAV_GROUPS = [
+  {
+    label: "Intelligence",
+    items: [
+      { href: "/dashboard/ia",           label: "AXIA",         Icone: IconAxia,        highlight: true },
+    ],
+  },
+  {
+    label: "Boutique",
+    items: [
+      { href: "/dashboard",              label: "Accueil",      Icone: IconAccueil,     exact: true },
+      { href: "/dashboard/boutique",     label: "Ma boutique",  Icone: IconBoutique },
+      { href: "/dashboard/builder",      label: "Constructeur", Icone: IconBuilder },
+      { href: "/dashboard/produits",     label: "Produits",     Icone: IconProduits },
+      { href: "/dashboard/sourcing",     label: "Sourcing Drop",Icone: IconSourcing },
+      { href: "/dashboard/commandes",    label: "Commandes",    Icone: IconCommandes,   badge: true },
+      { href: "/dashboard/clients",      label: "Clients",      Icone: IconClients },
+    ],
+  },
+  {
+    label: "Finance",
+    items: [
+      { href: "/dashboard/wallet",       label: "Wallet",       Icone: IconWallet,      highlight: true },
+      { href: "/dashboard/revenus",      label: "Revenus",      Icone: IconRevenus },
+    ],
+  },
+  {
+    label: "Croissance",
+    items: [
+      { href: "/dashboard/marketing",    label: "Marketing",    Icone: IconMarketing },
+      { href: "/dashboard/messages",     label: "Axsocial",     Icone: IconMessages,    badge: true },
+      { href: "/dashboard/studio",       label: "Contenus",     Icone: IconContenus },
+      { href: "/dashboard/navigateur",   label: "Navigateur",   Icone: IconNavigateur },
+    ],
+  },
+  {
+    label: "Opérations",
+    items: [
+      { href: "/dashboard/livraison",    label: "Livraisons",   Icone: IconLivraisons },
+      { href: "/dashboard/analytics",    label: "Analytics",    Icone: IconAnalytics },
+    ],
+  },
+  {
+    label: "Système",
+    items: [
+      { href: "/dashboard/connecteurs",  label: "Connecteurs",  Icone: IconConnecteurs },
+      { href: "/dashboard/abonnement",   label: "Abonnement",   Icone: IconAbonnement },
+      { href: "/dashboard/parametres",   label: "Paramètres",   Icone: IconParametres },
+    ],
+  },
 ];
 
 export function Sidebar() {
-  const pathname = usePathname();
+  const pathname  = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+
+  const isActive = (href: string, exact = false) =>
+    exact ? pathname === href : (href !== "/dashboard" ? pathname.startsWith(href) : pathname === href);
 
   return (
     <aside
       className={cn(
         "flex flex-col bg-white border-r border-gray-100 transition-all duration-300 relative shadow-sm",
-        collapsed ? "w-16" : "w-60"
+        collapsed ? "w-[68px]" : "w-[230px]"
       )}
+      style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}
     >
-      {/* Logo */}
-      <div className={cn("flex items-center px-5 py-4 border-b border-gray-100", collapsed ? "justify-center px-3" : "")}>
-        {collapsed ? (
-          <div className="w-9 h-9 overflow-hidden flex-shrink-0">
-            <img src="/logo.png" alt="axso" style={{ height: "36px", width: "auto", objectFit: "contain", objectPosition: "left" }} />
-          </div>
-        ) : (
-          <img src="/logo.png" alt="axso" style={{ height: "48px", width: "auto", objectFit: "contain" }} />
-        )}
+      {/* Brand accent strip */}
+      <div className={cn(
+        "flex items-center justify-center border-b border-gray-100 transition-all",
+        collapsed ? "px-3 py-3" : "px-4 py-3"
+      )}>
+        <div className="flex items-center gap-2">
+          <IconAxia size={collapsed ? 32 : 28} />
+          {!collapsed && (
+            <span className="text-[13px] font-black tracking-tight text-gray-800">
+              axso
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-        {navItems.map((item) => {
-          const Icone = item.icone;
-          const actif = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+      <nav className="flex-1 py-3 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
+        {NAV_GROUPS.map((group) => (
+          <div key={group.label} className="mb-1">
+            {!collapsed && (
+              <p className="text-[9.5px] font-black text-gray-300 uppercase tracking-[0.2em] px-4 pt-3 pb-1.5">
+                {group.label}
+              </p>
+            )}
+            {collapsed && <div className="my-1 mx-3 border-t border-gray-100" />}
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              title={collapsed ? item.label : undefined}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
-                actif
-                  ? "bg-[#F5A623]/12 text-[#1B2A4A] border border-[#F5A623]/30 shadow-sm font-semibold"
-                  : "text-gray-500 hover:text-[#1B2A4A] hover:bg-orange-50/60",
-                collapsed && "justify-center"
-              )}
-            >
-              <Icone size={17} className="flex-shrink-0" />
-              {!collapsed && (
-                <span className="text-sm font-medium">{item.label}</span>
-              )}
-              {item.badge && !collapsed && actif && (
-                <span className="ml-auto bg-[#F5A623] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                  3
-                </span>
-              )}
-            </Link>
-          );
-        })}
+            <div className="px-2 space-y-0.5">
+              {group.items.map((item) => {
+                const { Icone } = item;
+                const actif     = isActive(item.href, (item as any).exact);
+                const isWallet  = item.href === "/dashboard/wallet";
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    title={collapsed ? item.label : undefined}
+                    className={cn(
+                      "flex items-center gap-2.5 px-2 py-1.5 rounded-xl transition-all duration-150 group",
+                      actif
+                        ? "bg-gray-100 shadow-sm"
+                        : "hover:bg-gray-50",
+                      collapsed && "justify-center"
+                    )}
+                  >
+                    {/* Icône squircle OS */}
+                    <div
+                      className={cn(
+                        "flex-shrink-0 transition-all duration-200",
+                        actif ? "scale-95" : "group-hover:scale-105",
+                        !actif && "opacity-80 group-hover:opacity-100"
+                      )}
+                    >
+                      <Icone size={collapsed ? 30 : 26} />
+                    </div>
+
+                    {/* Label */}
+                    {!collapsed && (
+                      <span className={cn(
+                        "text-[12.5px] font-medium flex-1 truncate transition-colors",
+                        actif ? "text-gray-900 font-semibold" : "text-gray-500 group-hover:text-gray-800"
+                      )}>
+                        {item.label}
+                      </span>
+                    )}
+
+                    {/* Badges */}
+                    {!collapsed && (item as any).badge && (
+                      <span className="ml-auto w-2 h-2 rounded-full bg-[#F5A623] flex-shrink-0" />
+                    )}
+                    {!collapsed && isWallet && !actif && (
+                      <Zap size={10} className="text-[#F5A623] ml-auto flex-shrink-0" />
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Collapse toggle */}

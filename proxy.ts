@@ -44,7 +44,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
-  return NextResponse.next();
+  // Expose pathname to server components via REQUEST header (not response header)
+  // Server components read request headers via headers() — response headers are invisible to them
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
 export const config = {

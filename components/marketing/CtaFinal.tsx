@@ -2,6 +2,13 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { CartParallax } from "./CartParallax";
+
+const CTA_CARTS = [
+  { size: 500, top: "10%", duration: 19, delay: 0,  opacity: 0.05, direction: "rtl" as const },
+  { size: 350, top: "60%", duration: 24, delay: 7,  opacity: 0.04, direction: "ltr" as const },
+  { size: 650, top: "30%", duration: 15, delay: 12, opacity: 0.025, direction: "rtl" as const },
+];
 
 function FlipDigit({ valeur, label }: { valeur: number; label: string }) {
   const [prev, setPrev] = useState(valeur);
@@ -76,6 +83,7 @@ export function CtaFinal() {
 
   return (
     <section ref={sectionRef} className="py-24 bg-gradient-to-b from-orange-50/60 to-white relative overflow-hidden">
+      <CartParallax carts={CTA_CARTS} color="#F5A623" />
       {/* Aurora background */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div
@@ -136,7 +144,7 @@ export function CtaFinal() {
             animation: visible ? "slideRevealLeft 0.8s 0.2s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          Lancez votre boutique
+          Laissez l'IA bâtir
           <br />
           <span
             className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5A623] via-[#FFD280] to-[#E09015]"
@@ -145,7 +153,7 @@ export function CtaFinal() {
               animation: "shimmer 3s linear infinite",
             }}
           >
-            africaine aujourd'hui
+            votre empire e-commerce
           </span>
         </h2>
 
@@ -156,8 +164,8 @@ export function CtaFinal() {
             animation: visible ? "flip3dIn 0.7s 0.4s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          Rejoignez 1 247 entrepreneurs africains qui vendent en ligne avec Axso.
-          Gratuit pour toujours, 3% seulement par vente.
+          7 agents IA, zéro configuration. Décrivez votre business, l'IA crée tout.
+          Rejoignez 1 247 entrepreneurs africains qui vendent avec Axso.
         </p>
 
         {/* Magnetic CTA button */}
@@ -191,7 +199,7 @@ export function CtaFinal() {
               }}
             />
             <Sparkles size={22} className="relative z-10" />
-            <span className="relative z-10">Créer ma boutique gratuitement</span>
+            <span className="relative z-10">Activer mes 7 agents IA — gratuit</span>
             <ArrowRight size={22} className="relative z-10 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>

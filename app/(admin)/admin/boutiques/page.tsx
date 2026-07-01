@@ -41,13 +41,13 @@ export default async function AdminBoutiquesPage() {
                   <tr key={b.id} className="hover:bg-white/[0.02] transition-colors">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#F5A623]/10 border border-[#F5A623]/20 flex items-center justify-center text-[#F5A623] text-xs font-bold flex-shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-[#1B4FD8]/10 border border-[#1B4FD8]/20 flex items-center justify-center text-[#1B4FD8] text-xs font-bold flex-shrink-0">
                           {b.nomBoutique.slice(0, 2).toUpperCase()}
                         </div>
                         <div>
                           <p className="text-white font-medium">{b.nomBoutique}</p>
                           <a href={`/${b.slug}`} target="_blank" rel="noopener noreferrer"
-                            className="text-[#F5A623]/60 text-[10px] hover:text-[#F5A623] flex items-center gap-1">
+                            className="text-[#1B4FD8]/60 text-[10px] hover:text-[#1B4FD8] flex items-center gap-1">
                             {b.slug} <ExternalLink size={9} />
                           </a>
                         </div>
@@ -55,7 +55,7 @@ export default async function AdminBoutiquesPage() {
                     </td>
                     <td className="px-5 py-4 text-gray-400">{b.pays}</td>
                     <td className="px-5 py-4">
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-[#F5A623]/10 text-[#F5A623] border border-[#F5A623]/20">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-[#1B4FD8]/10 text-[#1B4FD8] border border-[#1B4FD8]/20">
                         {b.planType}
                       </span>
                     </td>

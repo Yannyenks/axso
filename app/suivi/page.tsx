@@ -46,7 +46,7 @@ export default function SuiviPage() {
     en_attente: "#f59e0b",
     confirmee: "#60a5fa",
     en_preparation: "#a78bfa",
-    en_livraison: "#F5A623",
+    en_livraison: "#1B4FD8",
     livree: "#34d399",
     annulee: "#f87171",
   };
@@ -60,7 +60,7 @@ export default function SuiviPage() {
             <ArrowLeft size={16} />
             <span className="text-sm">Accueil</span>
           </Link>
-          <div className="font-playfair font-bold text-[#F5A623] text-lg">Axso</div>
+          <div className="font-playfair font-bold text-[#1B4FD8] text-lg">Axso</div>
           <div className="w-20" />
         </div>
       </header>
@@ -68,8 +68,8 @@ export default function SuiviPage() {
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-12 space-y-8">
         {/* Titre */}
         <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl bg-[#F5A623]/10 border border-[#F5A623]/20 flex items-center justify-center mx-auto mb-4">
-            <Package size={28} className="text-[#F5A623]" />
+          <div className="w-16 h-16 rounded-2xl bg-[#1B4FD8]/10 border border-[#1B4FD8]/20 flex items-center justify-center mx-auto mb-4">
+            <Package size={28} className="text-[#1B4FD8]" />
           </div>
           <h1 className="text-3xl font-bold font-playfair mb-2">Suivre ma commande</h1>
           <p className="text-gray-400">Entrez votre numéro de commande pour voir l'état de votre livraison</p>
@@ -83,13 +83,13 @@ export default function SuiviPage() {
               value={numero}
               onChange={e => setNumero(e.target.value.toUpperCase())}
               placeholder="AXS-2024-XXXX"
-              className="flex-1 bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white font-mono text-sm focus:outline-none focus:border-[#F5A623]/50 placeholder:text-gray-600"
+              className="flex-1 bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white font-mono text-sm focus:outline-none focus:border-[#1B4FD8]/50 placeholder:text-gray-600"
             />
             <button
               type="submit"
               disabled={recherche || !numero.trim()}
               className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: "#F5A623", color: "#0a0a0a" }}
+              style={{ backgroundColor: "#1B4FD8", color: "#0a0a0a" }}
             >
               {recherche ? (
                 <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
@@ -148,18 +148,18 @@ export default function SuiviPage() {
                             <div
                               className="w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all"
                               style={{
-                                backgroundColor: actif ? "#F5A623" : "#1a1a2e",
-                                borderColor: actif ? "#F5A623" : "#2a2a3e",
+                                backgroundColor: actif ? "#1B4FD8" : "#1a1a2e",
+                                borderColor: actif ? "#1B4FD8" : "#2a2a3e",
                               }}
                             >
                               <Icon size={14} className={actif ? "text-black" : "text-gray-600"} />
                             </div>
-                            <p className={`text-[9px] mt-1.5 text-center leading-tight max-w-[60px] ${actif ? "text-[#F5A623]" : "text-gray-600"} ${courant ? "font-bold" : ""}`}>
+                            <p className={`text-[9px] mt-1.5 text-center leading-tight max-w-[60px] ${actif ? "text-[#1B4FD8]" : "text-gray-600"} ${courant ? "font-bold" : ""}`}>
                               {etape.label}
                             </p>
                           </div>
                           {i < ETAPES.length - 1 && (
-                            <div className="flex-1 h-0.5 mx-1 mb-5" style={{ backgroundColor: i < etapeActuelle ? "#F5A623" : "#1a1a2e" }} />
+                            <div className="flex-1 h-0.5 mx-1 mb-5" style={{ backgroundColor: i < etapeActuelle ? "#1B4FD8" : "#1a1a2e" }} />
                           )}
                         </div>
                       );
@@ -174,7 +174,7 @@ export default function SuiviPage() {
               <h3 className="text-white font-semibold">Informations de livraison</h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <MapPin size={15} className="text-[#F5A623] mt-0.5 flex-shrink-0" />
+                  <MapPin size={15} className="text-[#1B4FD8] mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-gray-400 text-xs">Adresse de livraison</p>
                     <p className="text-white text-sm">{commande.adresseLivraison}, {commande.ville}</p>
@@ -182,12 +182,12 @@ export default function SuiviPage() {
                 </div>
                 {commande.livreur && (
                   <div className="flex items-start gap-3">
-                    <Truck size={15} className="text-[#F5A623] mt-0.5 flex-shrink-0" />
+                    <Truck size={15} className="text-[#1B4FD8] mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-gray-400 text-xs">Livreur assigné</p>
                       <p className="text-white text-sm">{commande.livreur.nom}</p>
                       {commande.livreur.telephone && (
-                        <a href={`tel:${commande.livreur.telephone}`} className="flex items-center gap-1 text-[#F5A623] text-xs mt-0.5 hover:underline">
+                        <a href={`tel:${commande.livreur.telephone}`} className="flex items-center gap-1 text-[#1B4FD8] text-xs mt-0.5 hover:underline">
                           <Phone size={11} />
                           {commande.livreur.telephone}
                         </a>
@@ -197,7 +197,7 @@ export default function SuiviPage() {
                 )}
                 {commande.numeroSuivi && (
                   <div className="flex items-start gap-3">
-                    <Package size={15} className="text-[#F5A623] mt-0.5 flex-shrink-0" />
+                    <Package size={15} className="text-[#1B4FD8] mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-gray-400 text-xs">Numéro de suivi transporteur</p>
                       <p className="text-white text-sm font-mono">{commande.numeroSuivi}</p>

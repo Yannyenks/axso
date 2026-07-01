@@ -1,7 +1,7 @@
 ﻿"use client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Save, Globe, Bell, Users, ExternalLink, Copy, Check, Settings } from "lucide-react";
+import { Save, Globe, Bell, Users, ExternalLink, Copy, Check, Settings, MessageCircle } from "lucide-react";
 import Link from "next/link";
 
 const PAYS = ["Sénégal", "Côte d'Ivoire", "Mali", "Burkina Faso", "Guinée", "Cameroun", "Bénin", "Togo", "Niger", "Mauritanie", "Gabon", "Congo", "RDC", "Madagascar", "France", "Maroc", "Tunisie", "Algérie", "Autre"];
@@ -16,6 +16,8 @@ export default function ParametresPage() {
   });
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [whatsappNumero, setWhatsappNumero] = useState("");
+  const [savingWhatsapp, setSavingWhatsapp] = useState(false);
 
   useEffect(() => {
     fetch("/api/tenants/moi-complet").then(r => r.json()).then(data => {
@@ -32,9 +34,32 @@ export default function ParametresPage() {
           pays: data.pays || "",
           devise: data.devise || "XOF",
         });
+        setWhatsappNumero(data.whatsappNumero || "");
       }
     });
   }, []);
+
+  async function sauvegarderWhatsapp(e: React.FormEvent) {
+    e.preventDefault();
+    if (!whatsappNumero.startsWith("+") || !/^\+\d+$/.test(whatsappNumero)) {
+      toast.error("Le numéro doit commencer par + suivi de chiffres (ex: +22507XXXXXXXX)");
+      return;
+    }
+    setSavingWhatsapp(true);
+    try {
+      const res = await fetch("/api/tenant/whatsapp", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ whatsappNumero }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Numéro WhatsApp Business enregistré !");
+    } catch {
+      toast.error("Erreur lors de la sauvegarde du numéro WhatsApp");
+    } finally {
+      setSavingWhatsapp(false);
+    }
+  }
 
   async function sauvegarder(e: React.FormEvent) {
     e.preventDefault();
@@ -65,7 +90,7 @@ export default function ParametresPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 font-playfair">Paramètres</h1>
+        <h1 className="text-2xl font-bold text-gray-900 font-poppins">Paramètres</h1>
         <p className="text-gray-400 text-sm mt-1">Gérez votre boutique {tenant?.nomBoutique || ""}</p>
       </div>
 
@@ -176,6 +201,39 @@ export default function ParametresPage() {
         </button>
       </form>
 
+      {/* WhatsApp Business */}
+      <form onSubmit={sauvegarderWhatsapp} className="bg-white border border-white/5 rounded-2xl p-6 space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <MessageCircle size={15} className="text-green-500" />
+          <h2 className="text-gray-800 font-semibold">WhatsApp Business</h2>
+        </div>
+        <p className="text-gray-500 text-xs">
+          Ce numéro recevra les confirmations de commandes pour vos produits physiques et dropshipping.
+        </p>
+        <div>
+          <label className="text-gray-400 text-xs block mb-2">Numéro WhatsApp Business</label>
+          <input
+            type="tel"
+            value={whatsappNumero}
+            onChange={e => setWhatsappNumero(e.target.value)}
+            placeholder="+22507XXXXXXXX"
+            className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-green-500/50 font-mono"
+          />
+          <p className="text-gray-500 text-xs mt-1.5">
+            Format international requis : +[indicatif pays][numéro]. Ex : +22507XXXXXXXX pour la Côte d'Ivoire.
+          </p>
+        </div>
+        <button
+          type="submit"
+          disabled={savingWhatsapp}
+          className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50"
+          style={{ backgroundColor: "#25D366", color: "#ffffff" }}
+        >
+          <Save size={15} />
+          {savingWhatsapp ? "Enregistrement..." : "Enregistrer le numéro"}
+        </button>
+      </form>
+
       {/* Plan actuel */}
       {tenant && (
         <div className="bg-white border border-white/5 rounded-2xl p-5">
@@ -200,4 +258,4 @@ export default function ParametresPage() {
     </div>
   );
 }
-
+

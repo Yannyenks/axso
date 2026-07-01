@@ -71,7 +71,7 @@ export function BoutiqueCard({ slug, nom }: BoutiqueCardProps) {
           href={`/${slug}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 flex items-center justify-center gap-2 bg-[#F5A623] text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-[#D4911A] transition-colors shadow-sm shadow-[#F5A623]/20"
+          className="flex-1 flex items-center justify-center gap-2 bg-[#F5A623] text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-[#d4820a] transition-colors shadow-sm shadow-[#F5A623]/20"
         >
           <ExternalLink size={14} />
           Voir ma boutique

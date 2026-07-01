@@ -63,7 +63,7 @@ export default function CodesPromoPage() {
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 font-playfair">Codes Promo</h1>
+          <h1 className="text-2xl font-bold text-gray-900 font-poppins">Codes Promo</h1>
           <p className="text-gray-400 text-sm mt-1">{codes.length} code(s) au total</p>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-90" style={{ backgroundColor: "#F5A623", color: "#0a0a0a" }}>
@@ -145,4 +145,4 @@ export default function CodesPromoPage() {
     </div>
   );
 }
-
+

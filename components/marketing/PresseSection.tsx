@@ -25,7 +25,7 @@ export function PresseSection() {
 
   return (
     <section ref={sectionRef} className="py-16 bg-gray-50 border-y border-gray-100 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-6 sm:px-10 lg:px-16 xl:px-24">
         <p
           className="text-center text-gray-300 text-sm uppercase tracking-widest mb-10"
           style={{
@@ -46,13 +46,13 @@ export function PresseSection() {
               }}
             >
               <span
-                className="text-gray-500 font-bold text-xs sm:text-sm text-center transition-all duration-300 group-hover:opacity-100 group-hover:text-[#F5A623] group-hover:scale-110"
+                className="text-gray-500 font-bold text-xs sm:text-sm text-center transition-all duration-300 group-hover:opacity-100 group-hover:text-[#1B4FD8] group-hover:scale-110"
                 style={{
                   filter: "blur(0px)",
                   transition: "opacity 0.3s, color 0.3s, transform 0.3s, text-shadow 0.3s",
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.textShadow = "0 0 20px rgba(245,166,35,0.5)";
+                  (e.currentTarget as HTMLElement).style.textShadow = "0 0 20px rgba(27,79,216,0.5)";
                   (e.currentTarget.parentElement as HTMLElement).style.opacity = "1";
                 }}
                 onMouseLeave={(e) => {
