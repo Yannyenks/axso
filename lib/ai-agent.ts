@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { hasFreeLLM, completionFreeLLM } from "./llm-client";
+import { hasNVIDIA, completionNVIDIA, hasFreeLLM, completionFreeLLM, hasPollinations, completionPollinations } from "./llm-client";
+import { generateProductImageUrl, buildProductImagePrompt } from "./image-gen";
 
 export interface PlanProduit {
   nom: string;
@@ -97,8 +98,30 @@ export async function analyserBusinessEtCreerPlan(
 
   let texte: string;
 
-  // Priorité 1 : freellmapi (Gemini Flash / Llama 70B / Mistral — tous capables de JSON structuré)
-  if (hasFreeLLM()) {
+  // Priorité 1 : NVIDIA NIM DeepSeek V4 Flash (rapide pour JSON structuré)
+  if (hasNVIDIA()) {
+    const result = await completionNVIDIA(
+      [
+        { role: "system", content: PROMPT_ANALYSTE },
+        { role: "user", content: description },
+      ],
+      2000,
+      process.env.NVIDIA_MODEL_DEEPSEEK ?? "deepseek-ai/deepseek-v4-flash"
+    );
+    texte = result.text;
+  } else if (hasPollinations()) {
+    // Priorité 2 : Pollinations Claude Sonnet 5 (meilleure qualité JSON)
+    const result = await completionPollinations(
+      [
+        { role: "system", content: PROMPT_ANALYSTE },
+        { role: "user", content: description },
+      ],
+      2000,
+      "claude-sonnet-5"
+    );
+    texte = result.text;
+  } else if (hasFreeLLM()) {
+    // Priorité 3 : freellmapi (si lancé en local)
     const result = await completionFreeLLM(
       [
         { role: "system", content: PROMPT_ANALYSTE },
@@ -110,7 +133,7 @@ export async function analyserBusinessEtCreerPlan(
   } else {
     // Fallback : Claude Anthropic
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) throw new Error("Aucun fournisseur IA configuré. Ajoute FREELLMAPI_KEY ou ANTHROPIC_API_KEY dans .env.local");
+    if (!apiKey) throw new Error("Aucun fournisseur IA configuré. Ajoute NVIDIA_KEY_DEEPSEEK ou ANTHROPIC_API_KEY dans .env.local");
 
     const client = new Anthropic({ apiKey });
     const response = await client.messages.create({
@@ -127,6 +150,17 @@ export async function analyserBusinessEtCreerPlan(
   // Corriger la devise selon le pays (carte mondiale)
   if (plan.pays && PAYS_DEVISES[plan.pays]) {
     plan.devise = PAYS_DEVISES[plan.pays];
+  }
+
+  // Générer images Flux pour chaque produit dès la création de la boutique
+  if (Array.isArray(plan.produits)) {
+    plan.produits = plan.produits.map((p: any, i: number) => ({
+      ...p,
+      imageUrl: generateProductImageUrl(
+        buildProductImagePrompt(p.nom, p.categorie || plan.categorie),
+        i * 7919 + Date.now() % 10000
+      ),
+    }));
   }
 
   return plan;

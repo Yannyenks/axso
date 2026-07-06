@@ -26,6 +26,7 @@ const schemaExecuter = z.object({
       prix: z.number(),
       stock: z.number().optional(),
       categorie: z.string(),
+      imageUrl: z.string().optional(),
     })),
     livraison: z.object({
       locale: z.number(),
@@ -121,6 +122,7 @@ export async function POST(request: Request) {
                 prix: p.prix,
                 stock: p.stock ?? 10,
                 categorie: p.categorie,
+                images: p.imageUrl ? [p.imageUrl] : [],
                 actif: true,
                 featured: true,
               },

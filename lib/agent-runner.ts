@@ -1,4 +1,4 @@
-// Boucle agentique partagée — freellmapi prioritaire, Claude en fallback
+// Boucle agentique partagée — NVIDIA prioritaire (Nemotron 120B / DeepSeek V4), Claude en fallback
 // Utilisée par tous les agents spécialisés d'Axso
 
 import Anthropic from "@anthropic-ai/sdk";
@@ -7,6 +7,8 @@ import {
   completionWithToolsFreeLLM,
   hasNVIDIA,
   completionWithToolsNVIDIA,
+  hasPollinations,
+  completionWithToolsPollinations,
   type ToolDefinition,
 } from "./llm-client";
 
@@ -31,28 +33,101 @@ function toAnthropicTools(tools: AgentTool[]): Anthropic.Tool[] {
   }));
 }
 
+function raceTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`timeout:${ms}`)), ms)
+    ),
+  ]);
+}
+
 export async function runAgent(
   systemPrompt: string,
   messages: Array<{ role: "user" | "assistant"; content: string }>,
   tools: AgentTool[],
   tenantId: string,
   executeOutil: ToolExecutor,
-  maxIterations = 6
+  maxIterations = 6,
+  fast = false
 ): Promise<AgentResult> {
+  // Priorité 1 : NVIDIA NIM — timeout automatique avec fallback
+  if (hasNVIDIA()) {
+    const timeoutMs = fast ? 9000 : 28000;
+    try {
+      return await raceTimeout(
+        runViaNVIDIA(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations, fast),
+        timeoutMs
+      );
+    } catch (err: any) {
+      if (!err?.message?.startsWith("timeout:")) throw err;
+      // NVIDIA trop lent → fallback transparent
+      console.warn(`[runAgent] NVIDIA timeout (${timeoutMs}ms), fallback activé`);
+    }
+  }
+  // Priorité 2 : Pollinations
+  if (hasPollinations()) {
+    return runViaPollinations(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations);
+  }
+  // Priorité 3 : freellmapi
   if (hasFreeLLM()) {
     return runViaFreeLLM(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations);
   }
-  if (hasNVIDIA()) {
-    return runViaNVIDIA(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations);
-  }
+  // Priorité 4 : Claude Anthropic
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (apiKey) {
     return runViaClaude(systemPrompt, messages, tools, tenantId, executeOutil, apiKey, maxIterations);
   }
   return {
-    reponse: "Aucun fournisseur IA configuré. Ajoute FREELLMAPI_KEY, NVIDIA_KEY_NEMOTRON ou ANTHROPIC_API_KEY dans .env.local.",
+    reponse: "Aucun fournisseur IA configuré. Ajoute NVIDIA_KEY_NEMOTRON, POLLINATIONS_API_KEY ou ANTHROPIC_API_KEY dans .env.local.",
     actions: [],
   };
+}
+
+async function runViaPollinations(
+  systemPrompt: string,
+  messages: Array<{ role: "user" | "assistant"; content: string }>,
+  tools: AgentTool[],
+  tenantId: string,
+  executeOutil: ToolExecutor,
+  maxIterations: number
+): Promise<AgentResult> {
+  const actionsEffectuees: string[] = [];
+  const conversation: any[] = [
+    { role: "system", content: systemPrompt },
+    ...messages,
+  ];
+
+  for (let i = 0; i < maxIterations; i++) {
+    const result = await completionWithToolsPollinations(conversation, tools, 2000);
+
+    if (result.stopReason === "end_turn") {
+      return { reponse: result.text ?? "Terminé.", actions: actionsEffectuees };
+    }
+
+    if (result.stopReason === "tool_use" && result.toolCalls?.length) {
+      conversation.push({
+        role: "assistant",
+        content: null,
+        tool_calls: result.toolCalls.map((tc) => ({
+          id: tc.id,
+          type: "function",
+          function: { name: tc.name, arguments: JSON.stringify(tc.arguments) },
+        })),
+      });
+
+      for (const tc of result.toolCalls) {
+        const { succes, resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
+        actionsEffectuees.push(resultat);
+        conversation.push({ role: "tool", tool_call_id: tc.id, content: resultat });
+      }
+      continue;
+    }
+
+    break;
+  }
+
+  return { reponse: "Terminé.", actions: actionsEffectuees };
 }
 
 async function runViaFreeLLM(
@@ -111,7 +186,8 @@ async function runViaNVIDIA(
   tools: AgentTool[],
   tenantId: string,
   executeOutil: ToolExecutor,
-  maxIterations: number
+  maxIterations: number,
+  fast = false
 ): Promise<AgentResult> {
   const actionsEffectuees: string[] = [];
   const conversation: any[] = [
@@ -120,7 +196,7 @@ async function runViaNVIDIA(
   ];
 
   for (let i = 0; i < maxIterations; i++) {
-    const result = await completionWithToolsNVIDIA(conversation, tools, 2000);
+    const result = await completionWithToolsNVIDIA(conversation, tools, 2000, undefined, fast);
 
     if (result.stopReason === "end_turn") {
       return { reponse: result.text ?? "Terminé.", actions: actionsEffectuees };

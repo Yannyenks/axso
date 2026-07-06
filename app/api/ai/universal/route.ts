@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { Resend } from "resend";
 import { runAgent, type AgentTool, type ToolExecutor } from "@/lib/agent-runner";
 import { executerOutilMcp } from "@/lib/mcp/executor";
+import { generateProductImage, buildProductImagePrompt } from "@/lib/image-gen";
+import { pollinationsVideoUrl, pollinationsAudioUrl, pollinationsImageUrl } from "@/lib/llm-client";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
 
@@ -13,6 +15,8 @@ const schema = z.object({
     role: z.enum(["user", "assistant"]),
     content: z.string(),
   })),
+  imageUrl: z.string().optional(),
+  fast: z.boolean().optional(),
 });
 
 const SYSTEM_PROMPT = `Tu es AXIA, le cerveau de la première plateforme e-commerce AI-native d'Afrique.
@@ -75,7 +79,7 @@ const OUTILS: AgentTool[] = [
   // ─── IMAGES ───────────────────────────────────────────────────────────────
   {
     name: "generer_image",
-    description: "Génère une image produit IA ultra qualité via Pollinations (TOUJOURS appeler avant ajouter_produit)",
+    description: "Génère une image produit ultra HD via fal.ai FLUX.1-dev ou Pollinations (gptimage/seedream-pro/flux). TOUJOURS appeler avant ajouter_produit.",
     parameters: {
       type: "object" as const,
       properties: {
@@ -84,6 +88,35 @@ const OUTILS: AgentTool[] = [
         style: { type: "string", enum: ["product_white", "product_lifestyle", "social_media", "banner"], description: "Style de rendu" },
       },
       required: ["description", "categorie"],
+    },
+  },
+  // ─── VIDÉO ────────────────────────────────────────────────────────────────
+  {
+    name: "generer_video",
+    description: "Génère une vidéo IA (Seedance 2.0, Veo, Wan Pro 1080p) depuis un prompt. Retourne l'URL de la vidéo MP4.",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        prompt: { type: "string", description: "Description cinématique précise de la vidéo" },
+        model: { type: "string", enum: ["seedance-2.0", "veo", "wan-pro-1080p", "wan"], description: "Modèle vidéo" },
+        duration: { type: "number", description: "Durée en secondes (3-10)" },
+        sujet: { type: "string", description: "Contexte : produit à filmer, style, ambiance" },
+      },
+      required: ["prompt"],
+    },
+  },
+  // ─── AUDIO / TTS ──────────────────────────────────────────────────────────
+  {
+    name: "generer_voiceover",
+    description: "Génère un audio voix off professionnel (ElevenLabs/Eleven Multilingual). Retourne l'URL MP3.",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        texte: { type: "string", description: "Texte à lire (max 500 mots)" },
+        voix: { type: "string", enum: ["nova", "alloy", "echo", "shimmer", "onyx", "rachel", "bella", "charlotte", "dorothy"], description: "Voix TTS" },
+        langue: { type: "string", description: "Langue : fr, en, ar, wo, etc." },
+      },
+      required: ["texte"],
     },
   },
   // ─── PRODUITS ─────────────────────────────────────────────────────────────
@@ -415,18 +448,34 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
     switch (nom) {
 
       case "generer_image": {
-        const stylePrompts: Record<string, string> = {
-          product_white: "professional product photo, pure white background, studio lighting, e-commerce, sharp details, 8K quality",
-          product_lifestyle: "lifestyle product photography, African context, natural lighting, warm atmosphere, premium quality",
-          social_media: "Instagram post visual, vibrant colors, African aesthetic, eye-catching, high quality",
-          banner: "wide marketing banner, professional design, African colors, premium brand look",
-        };
-        const styleHint = stylePrompts[args.style || "product_white"];
-        const prompt = `${args.description}, ${args.categorie}, ${styleHint}`;
-        const encoded = encodeURIComponent(prompt);
-        const seed = Math.floor(Math.random() * 999999);
-        const url = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&nologo=true&model=flux&enhance=true&seed=${seed}`;
+        const prompt = buildProductImagePrompt(args.description, args.categorie, args.style || "product_white");
+        // Priorité : fal.ai FLUX.1-dev → Pollinations gptimage (avec clé) → Pollinations flux-pro
+        let url: string;
+        if (process.env.FAL_KEY) {
+          url = await generateProductImage({ prompt });
+        } else if (process.env.POLLINATIONS_API_KEY) {
+          url = pollinationsImageUrl(prompt, "gptimage");
+        } else {
+          url = await generateProductImage({ prompt });
+        }
         return { succes: true, resultat: `IMAGE:${url}` };
+      }
+
+      case "generer_video": {
+        const model = args.model || "seedance-2.0";
+        const duration = Math.min(Math.max(args.duration || 5, 3), 10);
+        const fullPrompt = args.sujet ? `${args.prompt}, ${args.sujet}` : args.prompt;
+        const url = pollinationsVideoUrl(fullPrompt, model, duration);
+        return { succes: true, resultat: `VIDEO:${url}` };
+      }
+
+      case "generer_voiceover": {
+        if (!process.env.POLLINATIONS_API_KEY) {
+          return { succes: false, resultat: "POLLINATIONS_API_KEY requise pour la voix off. Ajoute-la dans .env.local" };
+        }
+        const voix = args.voix || "nova";
+        const url = pollinationsAudioUrl(args.texte, voix, "eleven-multilingual-v2");
+        return { succes: true, resultat: `AUDIO:${url}` };
       }
 
       case "ajouter_produit": {
@@ -640,8 +689,26 @@ export async function POST(request: Request) {
     const tenantId = (session.user as any)?.tenantId;
     if (!tenantId) return NextResponse.json({ message: "Boutique introuvable" }, { status: 404 });
 
-    const { messages } = schema.parse(await request.json());
-    const result = await runAgent(SYSTEM_PROMPT, messages, OUTILS, tenantId, executeOutil, 8);
+    const body = await request.json();
+    const { messages, imageUrl, fast } = schema.parse(body);
+
+    // If an image was attached, append it as an OpenAI vision content block
+    const enrichedMessages: any[] = imageUrl
+      ? messages.map((m, i) =>
+          i === messages.length - 1 && m.role === "user"
+            ? {
+                role: "user",
+                content: [
+                  { type: "text", text: m.content || "Analyse cette image." },
+                  { type: "image_url", image_url: { url: imageUrl } },
+                ],
+              }
+            : m
+        )
+      : messages;
+
+    // fast=true (floating AXIA): 4 iterations max, no deep thinking (~3s vs ~20s)
+    const result = await runAgent(SYSTEM_PROMPT, enrichedMessages, OUTILS, tenantId, executeOutil, fast ? 4 : 8, fast ?? false);
     return NextResponse.json(result);
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ message: "Format invalide" }, { status: 400 });

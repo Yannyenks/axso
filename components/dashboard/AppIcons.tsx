@@ -530,3 +530,28 @@ export function IconThemes({ size = 32 }: IconProps) {
     </svg>
   );
 }
+
+// ─── MAGIC IMPORT ────────────────────────────────────────────────────────────
+export function IconMagicImport({ size = 32 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <defs>
+        <linearGradient id="gMagic" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#fbbf24"/>
+          <stop offset="100%" stopColor="#f97316"/>
+        </linearGradient>
+      </defs>
+      <rect width="32" height="32" rx="8" fill="url(#gMagic)"/>
+      {/* Magic wand */}
+      <line x1="8" y1="24" x2="19" y2="13" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+      {/* Wand tip diamond */}
+      <path d="M20 12 L22.5 9.5 L25 12 L22.5 14.5 Z" fill="white" opacity="0.95"/>
+      {/* Sparkles */}
+      <circle cx="26" cy="7" r="1.8" fill="white" opacity="0.9"/>
+      <circle cx="9" cy="10" r="1.2" fill="white" opacity="0.7"/>
+      <circle cx="25" cy="21" r="1.2" fill="white" opacity="0.65"/>
+      <line x1="26" y1="14" x2="26" y2="18" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+      <line x1="24" y1="16" x2="28" y2="16" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+    </svg>
+  );
+}

@@ -19,9 +19,9 @@ const MODELES_VIDEO = [
   { id: "wan-2.5", label: "Wan 2.5", desc: "Rapide · Produit" },
 ];
 const MODELES_IMAGE = [
-  { id: "recraft-4.1", label: "Recraft 4.1", desc: "Photo produit ultra HD" },
-  { id: "gpt-image", label: "GPT Image", desc: "Créatif publicitaire" },
-  { id: "seedream-4.0", label: "Seedream 4.0", desc: "Artistique · Lifestyle" },
+  { id: "recraft-4.1", label: "Modèle HD", desc: "Photo produit ultra HD" },
+  { id: "gpt-image", label: "Modèle Créatif", desc: "Créatif publicitaire" },
+  { id: "seedream-4.0", label: "Modèle Artistique", desc: "Artistique · Lifestyle" },
 ];
 const STYLES_VIDEO = ["product", "ugc", "ad", "cinematic", "demo"];
 const STYLES_IMAGE = ["product_photo", "lifestyle", "advertisement", "minimal", "artistic"];
@@ -179,7 +179,7 @@ export default function MediasPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Médiathèque IA</h1>
-          <p className="text-gray-400 text-sm mt-0.5">Vidéos et images générées par Higgsfield & Claude</p>
+          <p className="text-gray-400 text-sm mt-0.5">Vidéos et images générées par IA</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={charger} className="p-2.5 rounded-xl border border-gray-200 text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all">

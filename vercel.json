@@ -1,0 +1,6 @@
+{
+  "functions": {
+    "app/api/ai/**": { "maxDuration": 60 },
+    "app/api/navigateur/**": { "maxDuration": 60 }
+  }
+}

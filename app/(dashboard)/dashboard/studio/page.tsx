@@ -151,7 +151,7 @@ function TabVideo() {
         </button>
 
         <p className="text-center text-xs text-gray-400">
-          Propulsé par <a href="https://fal.ai" target="_blank" rel="noopener noreferrer" className="text-[#F5A623] hover:underline">fal.ai</a> · Nécessite une clé FAL_KEY gratuite
+          Génération vidéo IA haute définition
         </p>
       </div>
 
@@ -279,7 +279,7 @@ function TabVoixOff() {
           {generating ? <><Loader2 size={16} className="animate-spin" /> Génération…</> : <><Volume2 size={16} /> Générer la voix</>}
         </button>
         <p className="text-center text-xs text-gray-400">
-          Propulsé par <a href="https://elevenlabs.io" target="_blank" rel="noopener noreferrer" className="text-[#7c3aed] hover:underline">ElevenLabs</a> · 10 000 chars/mois offerts
+          Synthèse vocale IA multilingue
         </p>
       </div>
 
