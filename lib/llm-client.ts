@@ -203,6 +203,38 @@ export async function completionWithToolsNVIDIA(
   return { text: choice?.message?.content ?? "", stopReason: "end_turn", provider: `nvidia:${selectedModel}` };
 }
 
+// ─── 1b. NVIDIA NIM — Z-AI GLM-5.2 ──────────────────────────────────────────
+
+export function hasGLM(): boolean {
+  return !!(process.env.NVIDIA_BASE_URL && process.env.NVIDIA_KEY_GLM);
+}
+
+export async function completionWithToolsGLM(messages: any[], tools: ToolDefinition[], maxTokens = 2000): Promise<CompletionWithToolsResult> {
+  const base = process.env.NVIDIA_BASE_URL?.replace(/\/$/, "") ?? "https://integrate.api.nvidia.com/v1";
+  const apiKey = process.env.NVIDIA_KEY_GLM;
+  if (!apiKey) throw new Error("NVIDIA_KEY_GLM manquante");
+
+  return _openAICompat(messages, tools, {
+    baseUrl: base,
+    apiKey,
+    model: "z-ai/glm-5.2",
+    maxTokens,
+  });
+}
+
+export async function completionGLM(messages: ChatMessage[], maxTokens = 800): Promise<CompletionResult> {
+  const base = process.env.NVIDIA_BASE_URL?.replace(/\/$/, "") ?? "https://integrate.api.nvidia.com/v1";
+  const apiKey = process.env.NVIDIA_KEY_GLM;
+  if (!apiKey) throw new Error("NVIDIA_KEY_GLM manquante");
+
+  return _openAICompatCompletion(messages, {
+    baseUrl: base,
+    apiKey,
+    model: "z-ai/glm-5.2",
+    maxTokens,
+  });
+}
+
 // ─── 2. Groq ─────────────────────────────────────────────────────────────────
 
 export function hasGroq(): boolean { return !!process.env.GROQ_API_KEY; }
@@ -387,6 +419,7 @@ function buildChain(messages: any[], tools: ToolDefinition[], maxTokens: number,
   const chain: Array<{ name: string; fn: ProviderFn }> = [];
 
   if (hasNVIDIA()) chain.push({ name: "nvidia", fn: () => completionWithToolsNVIDIA(messages, tools, maxTokens, undefined, fast) });
+  if (hasGLM()) chain.push({ name: "glm-5.2", fn: () => completionWithToolsGLM(messages, tools, maxTokens) });
   if (hasGroq()) chain.push({ name: "groq", fn: () => completionWithToolsGroq(messages, tools, maxTokens) });
   if (hasGemini()) chain.push({ name: "gemini", fn: () => completionWithToolsGemini(messages, tools, maxTokens) });
   if (hasCerebras()) chain.push({ name: "cerebras", fn: () => completionWithToolsCerebras(messages, tools, maxTokens) });
@@ -403,6 +436,7 @@ function buildChain(messages: any[], tools: ToolDefinition[], maxTokens: number,
 function buildSimpleChain(messages: ChatMessage[], maxTokens: number): Array<{ name: string; fn: SimpleProviderFn }> {
   const chain: Array<{ name: string; fn: SimpleProviderFn }> = [];
   if (hasNVIDIA()) chain.push({ name: "nvidia", fn: () => completionNVIDIA(messages, maxTokens) });
+  if (hasGLM()) chain.push({ name: "glm-5.2", fn: () => completionGLM(messages, maxTokens) });
   if (hasGroq()) chain.push({ name: "groq", fn: () => completionGroq(messages, maxTokens) });
   if (hasGemini()) chain.push({ name: "gemini", fn: () => completionGemini(messages, maxTokens) });
   chain.push({ name: "pollinations", fn: () => completionPollinations(messages, maxTokens) });
