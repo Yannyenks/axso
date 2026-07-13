@@ -399,6 +399,13 @@ export async function completionWithToolsFreeLLM(messages: any[], tools: ToolDef
   return _openAICompat(messages, tools, { baseUrl: baseURL, apiKey, model: "auto", maxTokens });
 }
 
+export async function completionFreeLLM(messages: ChatMessage[], maxTokens = 800): Promise<CompletionResult> {
+  const baseURL = process.env.FREELLMAPI_URL?.replace(/\/$/, "");
+  const apiKey = process.env.FREELLMAPI_KEY;
+  if (!baseURL || !apiKey) throw new Error("FREELLMAPI non configuré");
+  return _openAICompatCompletion(messages, { baseUrl: baseURL, apiKey, model: "gpt-4o-mini", maxTokens });
+}
+
 export async function streamWithOpenAI(messages: any[], tools: ToolDefinition[], maxTokens = 1500, model = "gpt-4o-mini"): Promise<globalThis.Response> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY manquante");
