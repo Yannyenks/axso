@@ -1,15 +1,15 @@
-// Boucle agentique partagée — NVIDIA prioritaire (Nemotron 120B / DeepSeek V4), Claude en fallback
+// Boucle agentique partagée — fallback automatique 8 providers
 // Utilisée par tous les agents spécialisés d'Axso
 
 import Anthropic from "@anthropic-ai/sdk";
 import {
-  hasFreeLLM,
-  completionWithToolsFreeLLM,
-  hasNVIDIA,
-  completionWithToolsNVIDIA,
-  hasPollinations,
-  completionWithToolsPollinations,
+  hasOpenAI,
+  completionWithToolsOpenAI,
+  streamWithOpenAI,
+  hasAnthropic,
+  completionWithToolsAuto,
   type ToolDefinition,
+  type ToolCall,
 } from "./llm-client";
 
 export type AgentTool = ToolDefinition;
@@ -51,37 +51,58 @@ export async function runAgent(
   maxIterations = 6,
   fast = false
 ): Promise<AgentResult> {
-  // Priorité 1 : NVIDIA NIM — timeout automatique avec fallback
-  if (hasNVIDIA()) {
-    const timeoutMs = fast ? 9000 : 28000;
-    try {
-      return await raceTimeout(
-        runViaNVIDIA(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations, fast),
-        timeoutMs
-      );
-    } catch (err: any) {
-      if (!err?.message?.startsWith("timeout:")) throw err;
-      // NVIDIA trop lent → fallback transparent
-      console.warn(`[runAgent] NVIDIA timeout (${timeoutMs}ms), fallback activé`);
+  // OpenAI streaming (si dispo) → runner dédié
+  if (hasOpenAI()) {
+    return runViaOpenAI(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations);
+  }
+  // Claude Anthropic (si dispo) → runner dédié (format différent)
+  if (hasAnthropic()) {
+    const key = process.env.ANTHROPIC_API_KEY!;
+    return runViaClaude(systemPrompt, messages, tools, tenantId, executeOutil, key, maxIterations);
+  }
+  // Tous les autres : chaîne de fallback automatique (NVIDIA → Groq → Gemini → … → Pollinations)
+  return runViaAuto(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations, fast);
+}
+
+// ── Runner générique avec fallback automatique ────────────────────────────────
+async function runViaAuto(
+  systemPrompt: string,
+  messages: Array<{ role: "user" | "assistant"; content: string }>,
+  tools: AgentTool[],
+  tenantId: string,
+  executeOutil: ToolExecutor,
+  maxIterations: number,
+  fast = false
+): Promise<AgentResult> {
+  const actionsEffectuees: string[] = [];
+  const conversation: any[] = [{ role: "system", content: systemPrompt }, ...messages];
+
+  for (let i = 0; i < maxIterations; i++) {
+    const result = await completionWithToolsAuto(conversation, tools, 2000, fast);
+
+    if (result.stopReason === "end_turn") {
+      return { reponse: result.text ?? "Terminé.", actions: actionsEffectuees };
     }
+
+    if (result.stopReason === "tool_use" && result.toolCalls?.length) {
+      conversation.push({
+        role: "assistant", content: null,
+        tool_calls: result.toolCalls.map((tc) => ({
+          id: tc.id, type: "function",
+          function: { name: tc.name, arguments: JSON.stringify(tc.arguments) },
+        })),
+      });
+      for (const tc of result.toolCalls) {
+        const { resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
+        actionsEffectuees.push(resultat);
+        conversation.push({ role: "tool", tool_call_id: tc.id, content: resultat });
+      }
+      continue;
+    }
+    break;
   }
-  // Priorité 2 : Pollinations
-  if (hasPollinations()) {
-    return runViaPollinations(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations);
-  }
-  // Priorité 3 : freellmapi
-  if (hasFreeLLM()) {
-    return runViaFreeLLM(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations);
-  }
-  // Priorité 4 : Claude Anthropic
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (apiKey) {
-    return runViaClaude(systemPrompt, messages, tools, tenantId, executeOutil, apiKey, maxIterations);
-  }
-  return {
-    reponse: "Aucun fournisseur IA configuré. Ajoute NVIDIA_KEY_NEMOTRON, POLLINATIONS_API_KEY ou ANTHROPIC_API_KEY dans .env.local.",
-    actions: [],
-  };
+
+  return { reponse: "Terminé.", actions: actionsEffectuees };
 }
 
 async function runViaPollinations(
@@ -295,4 +316,173 @@ async function runViaClaude(
   }
 
   return { reponse: "Terminé.", actions: actionsEffectuees };
+}
+
+// ── OpenAI runner (non-streaming, pour runAgent) ──────────────────────────
+async function runViaOpenAI(
+  systemPrompt: string,
+  messages: Array<{ role: "user" | "assistant"; content: string }>,
+  tools: AgentTool[],
+  tenantId: string,
+  executeOutil: ToolExecutor,
+  maxIterations: number
+): Promise<AgentResult> {
+  const actionsEffectuees: string[] = [];
+  const conversation: any[] = [{ role: "system", content: systemPrompt }, ...messages];
+
+  for (let i = 0; i < maxIterations; i++) {
+    const result = await completionWithToolsOpenAI(conversation, tools, 2000);
+    if (result.stopReason === "end_turn") {
+      return { reponse: result.text ?? "Terminé.", actions: actionsEffectuees };
+    }
+    if (result.stopReason === "tool_use" && result.toolCalls?.length) {
+      conversation.push({
+        role: "assistant", content: null,
+        tool_calls: result.toolCalls.map((tc) => ({
+          id: tc.id, type: "function",
+          function: { name: tc.name, arguments: JSON.stringify(tc.arguments) },
+        })),
+      });
+      for (const tc of result.toolCalls) {
+        const { succes, resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
+        actionsEffectuees.push(resultat);
+        conversation.push({ role: "tool", tool_call_id: tc.id, content: resultat });
+      }
+      continue;
+    }
+    break;
+  }
+  return { reponse: "Terminé.", actions: actionsEffectuees };
+}
+
+// ── Streaming agent — SSE avec vrai streaming OpenAI ─────────────────────
+export function runAgentStream(
+  systemPrompt: string,
+  messages: Array<{ role: "user" | "assistant"; content: string | any[] }>,
+  tools: AgentTool[],
+  tenantId: string,
+  executeOutil: ToolExecutor,
+  maxIterations = 4
+): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    async start(controller) {
+      const send = (data: object) =>
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+
+      try {
+        const actionsEffectuees: string[] = [];
+        const conversation: any[] = [{ role: "system", content: systemPrompt }, ...messages];
+
+        for (let iter = 0; iter < maxIterations; iter++) {
+          // ── Vrai streaming OpenAI ──────────────────────────────────────
+          if (hasOpenAI()) {
+            const openAIRes = await streamWithOpenAI(conversation, tools);
+            if (!openAIRes.ok) throw new Error(`OpenAI ${openAIRes.status}`);
+
+            const reader = openAIRes.body!.getReader();
+            const decoder = new TextDecoder();
+            let buf = "";
+            const tcAcc: Record<number, { id: string; name: string; args: string }> = {};
+            let hasToolCalls = false;
+            const pendingToolCalls: ToolCall[] = [];
+
+            outer: while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              buf += decoder.decode(value, { stream: true });
+              const lines = buf.split("\n");
+              buf = lines.pop() ?? "";
+
+              for (const line of lines) {
+                if (!line.startsWith("data: ")) continue;
+                const raw = line.slice(6).trim();
+                if (raw === "[DONE]") break outer;
+                let chunk: any;
+                try { chunk = JSON.parse(raw); } catch { continue; }
+
+                const delta = chunk.choices?.[0]?.delta;
+                const finishReason = chunk.choices?.[0]?.finish_reason;
+
+                if (delta?.content) send({ type: "token", text: delta.content });
+
+                if (delta?.tool_calls) {
+                  hasToolCalls = true;
+                  for (const tc of delta.tool_calls) {
+                    const idx = tc.index ?? 0;
+                    if (!tcAcc[idx]) tcAcc[idx] = { id: "", name: "", args: "" };
+                    if (tc.id) tcAcc[idx].id = tc.id;
+                    if (tc.function?.name) tcAcc[idx].name += tc.function.name;
+                    if (tc.function?.arguments) tcAcc[idx].args += tc.function.arguments;
+                  }
+                }
+
+                if (finishReason === "tool_calls") {
+                  for (const tc of Object.values(tcAcc)) {
+                    let args: Record<string, any> = {};
+                    try { args = JSON.parse(tc.args); } catch {}
+                    pendingToolCalls.push({ id: tc.id, name: tc.name, arguments: args });
+                  }
+                  break outer;
+                }
+                if (finishReason === "stop") break outer;
+              }
+            }
+
+            if (!hasToolCalls) break;
+
+            conversation.push({
+              role: "assistant", content: null,
+              tool_calls: pendingToolCalls.map((tc) => ({
+                id: tc.id, type: "function",
+                function: { name: tc.name, arguments: JSON.stringify(tc.arguments) },
+              })),
+            });
+            for (const tc of pendingToolCalls) {
+              const { resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
+              actionsEffectuees.push(resultat);
+              conversation.push({ role: "tool", tool_call_id: tc.id, content: resultat });
+            }
+            continue;
+          }
+
+          // ── Fallback non-streaming — chaîne auto ───────────────────────
+          const result = await completionWithToolsAuto(conversation, tools, 2000, true);
+
+          if (result.stopReason === "end_turn") {
+            const words = (result.text ?? "").match(/\S+\s*/g) ?? [];
+            for (const w of words) {
+              send({ type: "token", text: w });
+              await new Promise((r) => setTimeout(r, 18));
+            }
+            break;
+          }
+
+          if (result.stopReason === "tool_use" && result.toolCalls?.length) {
+            conversation.push({
+              role: "assistant", content: null,
+              tool_calls: result.toolCalls.map((tc) => ({
+                id: tc.id, type: "function",
+                function: { name: tc.name, arguments: JSON.stringify(tc.arguments) },
+              })),
+            });
+            for (const tc of result.toolCalls) {
+              const { resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
+              actionsEffectuees.push(resultat);
+              conversation.push({ role: "tool", tool_call_id: tc.id, content: resultat });
+            }
+          } else {
+            break;
+          }
+        }
+
+        send({ type: "done", actions: actionsEffectuees });
+      } catch (err: any) {
+        send({ type: "error", text: err?.message ?? "Erreur AXIA" });
+      }
+
+      controller.close();
+    },
+  });
 }
