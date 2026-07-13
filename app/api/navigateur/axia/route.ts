@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { pwSession } from "@/lib/playwright-session";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
@@ -45,6 +46,12 @@ Réponds UNIQUEMENT en JSON valide (sans markdown ni backticks) :
 }`;
 
 export async function POST(req: NextRequest) {
+  if (process.env.VERCEL) {
+    return NextResponse.json(
+      { error: "Navigateur AXIA disponible uniquement en local — non supporté sur Vercel serverless.", available: false },
+      { status: 503 }
+    );
+  }
   try {
     const body = await req.json();
     const { instruction, history = [], preview = false, executeActions = null } = body;

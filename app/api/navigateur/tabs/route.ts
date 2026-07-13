@@ -14,11 +14,18 @@ function state(screenshot: string | null) {
   };
 }
 
+const NOT_AVAILABLE = () => NextResponse.json(
+  { error: "Navigateur disponible uniquement en local.", available: false, tabs: [], screenshot: null, ready: false },
+  { status: 503 }
+);
+
 export async function GET() {
+  if (process.env.VERCEL) return NOT_AVAILABLE();
   return NextResponse.json(state(null));
 }
 
 export async function POST(req: NextRequest) {
+  if (process.env.VERCEL) return NOT_AVAILABLE();
   try {
     const body = await req.json().catch(() => ({}));
     const id = await pwSession.newTab(body.url || "https://www.google.com");
@@ -30,6 +37,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  if (process.env.VERCEL) return NOT_AVAILABLE();
   try {
     const { id } = await req.json();
     pwSession.setActiveTab(id);
@@ -41,6 +49,7 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (process.env.VERCEL) return NOT_AVAILABLE();
   try {
     const { id } = await req.json();
     await pwSession.closeTab(id);

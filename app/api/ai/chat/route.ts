@@ -1,5 +1,7 @@
 // API Route — Chat IA avec Claude
 import { NextResponse } from "next/server";
+
+export const maxDuration = 60;
 import { auth } from "@/lib/auth";
 import { chatAvecIA } from "@/lib/anthropic";
 import { z } from "zod";

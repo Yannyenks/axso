@@ -3,7 +3,13 @@ import { pwSession } from "@/lib/playwright-session";
 
 export const runtime = "nodejs";
 
+const NOT_AVAILABLE = () => NextResponse.json(
+  { error: "Navigateur disponible uniquement en local — non supporté sur Vercel.", available: false },
+  { status: 503 }
+);
+
 export async function POST(req: NextRequest) {
+  if (process.env.VERCEL) return NOT_AVAILABLE();
   try {
     const { type, params } = await req.json();
     await pwSession.action(type, params || {});

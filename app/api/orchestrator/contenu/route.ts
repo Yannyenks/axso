@@ -1,5 +1,7 @@
 // Orchestrateur Contenu — génère automatiquement visuels + posts pour les produits
 import { NextRequest, NextResponse } from "next/server";
+
+export const maxDuration = 60;
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 

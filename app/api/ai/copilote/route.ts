@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Anthropic from "@anthropic-ai/sdk";
+
+export const maxDuration = 60;
 import { OUTILS_COPILOTE } from "@/lib/ai-agent";
 import { hasFreeLLM, completionWithToolsFreeLLM, type ChatMessage, type ToolDefinition } from "@/lib/llm-client";
 import { slugify } from "@/lib/utils";
