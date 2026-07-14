@@ -51,6 +51,7 @@ model Tenant {
   themes      Theme[]
   wallet       Wallet?
   postsSociaux PostSocial[]
+  affiliationLiens AffiliationLien[]
 }
 
 // =====================
@@ -86,6 +87,9 @@ model Produit {
   fichierNom      String?  // Nom du fichier affiché
   fichierTaille   Int?     // Taille en octets
   instructionsTelechargement String?
+  // Affiliation
+  affiliationActive   Boolean @default(false)
+  tauxCommissionAff   Float?  // ex: 0.20 = 20% pour l'affilieur (sur le prix HT commission Axso)
   // Dropshipping
   prixFournisseur Float?   // Prix d'achat fournisseur
   urlFournisseur  String?  // URL source produit fournisseur
@@ -100,6 +104,7 @@ model Produit {
   avis           Avis[]
   wishlist       Wishlist[]
   telechargements Telechargement[]
+  affiliationLiens AffiliationLien[]
 
   @@unique([tenantId, slug])
 }
@@ -199,6 +204,10 @@ model Commande {
   paiementStatut   String   @default("pending")
   methodePaiement  String
   flutterwaveRef   String?
+  stripePaymentIntentId String?
+  stripeChargeId   String?
+  codeAffiliation  String?  // code du lien d'affiliation utilisé
+  affilieurId      String?  // tenantId de l'affilieur
   codePromoId      String?
   noteClient       String?
   numeroSuivi      String?
@@ -214,6 +223,7 @@ model Commande {
   commission Commission?
   escrow     Escrow?
   codePromo  CodePromo?      @relation(fields: [codePromoId], references: [id])
+  affiliationCommission AffiliationCommission?
 }
 
 // =====================
@@ -767,6 +777,51 @@ model PixelEvent {
   sessionId  String?
   userAgent  String?
   createdAt  DateTime @default(now())
+}
+
+// =====================
+// AFFILIATION
+// =====================
+model AffiliationLien {
+  id          String   @id @default(cuid())
+  tenantId    String   // boutique qui propose le produit
+  affilieurId String   // tenantId de l'affilieur (celui qui partage le lien)
+  produitId   String?  // null = lien boutique entière
+  code        String   @unique // ex: "JEAN-AB12"
+  clics       Int      @default(0)
+  conversions Int      @default(0)
+  montantGenere Float  @default(0)
+  actif       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  produit  Produit?  @relation(fields: [produitId], references: [id])
+  commissions AffiliationCommission[]
+
+  @@index([affilieurId])
+  @@index([tenantId])
+}
+
+model AffiliationCommission {
+  id              String   @id @default(cuid())
+  lienId          String
+  commandeId      String   @unique
+  tenantId        String   // boutique qui a vendu
+  affilieurId     String   // celui qui reçoit la commission
+  montantCommande Float
+  taux            Float    // ex: 0.20
+  montantGagne    Float    // montant net reçu par l'affilieur
+  devise          String
+  statut          String   @default("pending") // pending | capturee | payee | annulee
+  payeeAt         DateTime?
+  createdAt       DateTime @default(now())
+
+  lien     AffiliationLien @relation(fields: [lienId], references: [id])
+  commande Commande        @relation(fields: [commandeId], references: [id])
+
+  @@index([affilieurId])
+  @@index([tenantId])
 }
 
 // =====================
