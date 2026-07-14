@@ -1,64 +1,142 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Save, Trash2, X, Plus, Sparkles, Loader2, Package, ImageIcon, Tag, BarChart2, Globe, Eye, ExternalLink } from "lucide-react";
+import {
+  ArrowLeft, Save, Trash2, X, Plus, Sparkles, Loader2,
+  Package, Image as ImageIcon, Tag, BarChart2, Globe,
+  Upload, Video, FileText, Truck, Download, ExternalLink, Info, Zap,
+} from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { formatMontant } from "@/lib/utils";
 
 const CATEGORIES = [
   "Mode & Vêtements", "Beauté & Cosmétiques", "Alimentation & Épicerie",
   "Artisanat & Art", "Électronique", "Maison & Décoration",
-  "Santé & Bien-être", "Sport & Loisirs", "Autre",
+  "Santé & Bien-être", "Sport & Loisirs", "Formation & Cours",
+  "Logiciel & App", "Musique & Audio", "Photo & Vidéo", "Autre",
 ];
 
-type Produit = {
-  id: string; nom: string; slug: string; description: string | null;
-  prix: number; prixCompare: number | null; stock: number; sku: string | null;
-  images: string[]; categorie: string | null; tags: string[];
-  actif: boolean; featured: boolean; poids: number | null;
-  metaTitle: string | null; metaDesc: string | null;
+const TYPES_PRODUIT = [
+  { id: "physique",     icon: Package,  label: "Physique",      desc: "Stock, livraison, poids",                 color: "#F5A623" },
+  { id: "digital",      icon: Download, label: "Digital",       desc: "PDF, vidéo, logiciel — livré par email",  color: "#7c3aed" },
+  { id: "dropshipping", icon: Truck,    label: "Dropshipping",  desc: "Fournisseur externe, envoi direct",       color: "#34d399" },
+] as const;
+
+function formatTaille(octets: number) {
+  if (octets < 1024) return `${octets} o`;
+  if (octets < 1024 * 1024) return `${(octets / 1024).toFixed(1)} Ko`;
+  return `${(octets / 1024 / 1024).toFixed(1)} Mo`;
+}
+
+type FormState = {
+  nom: string; slug: string; description: string;
+  prix: string; prixCompare: string; stock: string; sku: string;
+  categorie: string; tags: string[]; images: string[]; videos: string[];
+  actif: boolean; featured: boolean; poids: string;
+  metaTitle: string; metaDesc: string;
   type: "physique" | "digital" | "dropshipping";
-  ventes: number; vues: number; devise?: string;
-  _count: { avis: number; lignesCommande: number };
+  fichierUrl: string; fichierNom: string; fichierTaille: number; instructionsTelechargement: string;
+  prixFournisseur: string; urlFournisseur: string; nomFournisseur: string;
 };
 
 export default function EditProduitPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const [produit, setProduit] = useState<Produit | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [genIA, setGenIA] = useState(false);
+  const [genImage, setGenImage] = useState(false);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [uploadingFichier, setUploadingFichier] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [imageInput, setImageInput] = useState("");
-  const [form, setForm] = useState<Partial<Produit>>({});
+  const [stats, setStats] = useState({ ventes: 0, vues: 0, avis: 0, commandes: 0 });
+  const [devise, setDevise] = useState("FCFA");
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+  const digitalFileRef = useRef<HTMLInputElement>(null);
+
+  const [form, setFormState] = useState<FormState>({
+    nom: "", slug: "", description: "", prix: "", prixCompare: "", stock: "0", sku: "",
+    categorie: "", tags: [], images: [], videos: [],
+    actif: true, featured: false, poids: "",
+    metaTitle: "", metaDesc: "",
+    type: "physique",
+    fichierUrl: "", fichierNom: "", fichierTaille: 0, instructionsTelechargement: "",
+    prixFournisseur: "", urlFournisseur: "", nomFournisseur: "",
+  });
 
   useEffect(() => {
     fetch(`/api/produits/${id}`)
       .then(r => r.json())
       .then(d => {
-        setProduit(d.produit);
-        setForm(d.produit);
+        const p = d.produit;
+        setStats({ ventes: p.ventes ?? 0, vues: p.vues ?? 0, avis: p._count?.avis ?? 0, commandes: p._count?.lignesCommande ?? 0 });
+        setDevise(p.devise ?? "FCFA");
+        setFormState({
+          nom: p.nom ?? "",
+          slug: p.slug ?? "",
+          description: p.description ?? "",
+          prix: p.prix?.toString() ?? "",
+          prixCompare: p.prixCompare?.toString() ?? "",
+          stock: p.stock?.toString() ?? "0",
+          sku: p.sku ?? "",
+          categorie: p.categorie ?? "",
+          tags: p.tags ?? [],
+          images: p.images ?? [],
+          videos: p.videos ?? [],
+          actif: p.actif ?? true,
+          featured: p.featured ?? false,
+          poids: p.poids?.toString() ?? "",
+          metaTitle: p.metaTitle ?? "",
+          metaDesc: p.metaDesc ?? "",
+          type: p.type ?? "physique",
+          fichierUrl: p.fichierUrl ?? "",
+          fichierNom: p.fichierNom ?? "",
+          fichierTaille: p.fichierTaille ?? 0,
+          instructionsTelechargement: p.instructionsTelechargement ?? "",
+          prixFournisseur: p.prixFournisseur?.toString() ?? "",
+          urlFournisseur: p.urlFournisseur ?? "",
+          nomFournisseur: p.nomFournisseur ?? "",
+        });
         setLoading(false);
       });
   }, [id]);
 
   function set(field: string, value: any) {
-    setForm(f => ({ ...f, [field]: value }));
+    setFormState(f => ({ ...f, [field]: value }));
   }
 
-  function ajouterTag() {
-    const t = tagInput.trim().toLowerCase();
-    if (t && !(form.tags || []).includes(t)) set("tags", [...(form.tags || []), t]);
-    setTagInput("");
+  const marge = form.prixFournisseur && form.prix
+    ? Math.round((1 - parseFloat(form.prixFournisseur) / parseFloat(form.prix)) * 100) : null;
+
+  async function uploadMedia(file: File, type: "image" | "video") {
+    const fd = new FormData(); fd.append("file", file);
+    setUploadingMedia(true);
+    try {
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur upload");
+      if (type === "image") set("images", [...form.images, data.url]);
+      else set("videos", [...form.videos, data.url]);
+      toast.success(`${type === "image" ? "Image" : "Vidéo"} uploadée`);
+    } catch (e: any) { toast.error(e.message); }
+    finally { setUploadingMedia(false); }
   }
 
-  function ajouterImage() {
-    const url = imageInput.trim();
-    if (url && !(form.images || []).includes(url)) set("images", [...(form.images || []), url]);
-    setImageInput("");
+  async function uploadFichierDigital(file: File) {
+    const fd = new FormData(); fd.append("file", file);
+    setUploadingFichier(true);
+    try {
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur upload");
+      set("fichierUrl", data.url); set("fichierNom", file.name); set("fichierTaille", file.size);
+      toast.success("Fichier digital uploadé !");
+    } catch (e: any) { toast.error(e.message); }
+    finally { setUploadingFichier(false); }
   }
 
   async function genererDescription() {
@@ -66,8 +144,7 @@ export default function EditProduitPage() {
     setGenIA(true);
     try {
       const res = await fetch("/api/ai/description", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nom: form.nom, categorie: form.categorie }),
       });
       const data = await res.json();
@@ -76,214 +153,403 @@ export default function EditProduitPage() {
     finally { setGenIA(false); }
   }
 
+  async function genererImageIA() {
+    if (!form.nom) { toast.error("Entrez d'abord le nom du produit"); return; }
+    setGenImage(true);
+    try {
+      const prompt = `${form.nom}, ${form.categorie || "produit"}, professional product photo, clean white background, studio lighting, 4K, sharp`;
+      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=800&nologo=true&model=flux&enhance=true&seed=${Math.floor(Math.random() * 999999)}`;
+      set("images", [...form.images, url]);
+      toast.success("Image IA générée !");
+    } catch { toast.error("Erreur génération"); }
+    finally { setGenImage(false); }
+  }
+
   async function sauvegarder() {
+    if (!form.nom || !form.prix) { toast.error("Nom et prix obligatoires"); return; }
     setSaving(true);
     try {
+      const payload: any = {
+        nom: form.nom, slug: form.slug, description: form.description || null,
+        prix: parseFloat(form.prix),
+        prixCompare: form.prixCompare ? parseFloat(form.prixCompare) : null,
+        stock: form.type === "digital" ? 99999 : parseInt(form.stock) || 0,
+        sku: form.sku || null, categorie: form.categorie || null,
+        tags: form.tags, images: form.images, videos: form.videos,
+        actif: form.actif, featured: form.featured, type: form.type,
+        metaTitle: form.metaTitle || null, metaDesc: form.metaDesc || null,
+      };
+      if (form.type === "physique") payload.poids = form.poids ? parseFloat(form.poids) : null;
+      if (form.type === "digital") {
+        payload.fichierUrl = form.fichierUrl || null;
+        payload.fichierNom = form.fichierNom || null;
+        payload.fichierTaille = form.fichierTaille || null;
+        payload.instructionsTelechargement = form.instructionsTelechargement || null;
+      }
+      if (form.type === "dropshipping") {
+        payload.prixFournisseur = form.prixFournisseur ? parseFloat(form.prixFournisseur) : null;
+        payload.urlFournisseur = form.urlFournisseur || null;
+        payload.nomFournisseur = form.nomFournisseur || null;
+      }
       const res = await fetch(`/api/produits/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          prix: typeof form.prix === "string" ? parseFloat(form.prix as any) : form.prix,
-          prixCompare: form.prixCompare ? parseFloat(form.prixCompare as any) : null,
-          stock: typeof form.stock === "string" ? parseInt(form.stock as any) : form.stock,
-          poids: form.poids ? parseFloat(form.poids as any) : null,
-        }),
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur");
-      setProduit(data.produit);
       toast.success("Produit mis à jour !");
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setSaving(false);
-    }
+    } catch (e: any) { toast.error(e.message); }
+    finally { setSaving(false); }
   }
 
   async function supprimer() {
     if (!confirm("Supprimer ce produit définitivement ?")) return;
     setDeleting(true);
     const res = await fetch(`/api/produits/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      toast.success("Produit supprimé");
-      router.push("/dashboard/produits");
-    } else {
-      toast.error("Erreur lors de la suppression");
-      setDeleting(false);
-    }
+    if (res.ok) { toast.success("Produit supprimé"); router.push("/dashboard/produits"); }
+    else { toast.error("Erreur lors de la suppression"); setDeleting(false); }
   }
+
+  const inputClass = "w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50 placeholder:text-gray-400 transition-colors";
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-64">
       <Loader2 size={24} className="animate-spin text-[#F5A623]" />
     </div>
   );
-  if (!produit) return <div className="text-center py-16 text-gray-400">Produit introuvable</div>;
 
   return (
     <div className="max-w-4xl space-y-6">
-      {/* Header */}
+
+      {/* ── Header ── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard/produits" className="w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-white hover:border-[#F5A623]/30 transition-all">
+          <Link href="/dashboard/produits"
+            className="w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:border-[#F5A623]/30 transition-all">
             <ArrowLeft size={16} />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-white font-poppins line-clamp-1">{produit.nom}</h1>
-            <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
-              <span>{produit.ventes} ventes</span>
+            <h1 className="text-xl font-bold text-gray-900 font-poppins line-clamp-1">{form.nom || "Éditer le produit"}</h1>
+            <div className="flex items-center gap-3 text-xs text-gray-400 mt-0.5">
+              <span>{stats.ventes} ventes</span>
               <span>·</span>
-              <span>{produit.vues} vues</span>
+              <span>{stats.vues} vues</span>
               <span>·</span>
-              <span>{produit._count.avis} avis</span>
+              <span>{stats.avis} avis</span>
             </div>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button onClick={supprimer} disabled={deleting}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-all disabled:opacity-50">
-            {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
-            Supprimer
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm border border-red-200 text-red-500 hover:bg-red-50 transition-all disabled:opacity-50">
+            {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />} Supprimer
           </button>
           <button onClick={() => set("actif", !form.actif)}
-            className={`px-4 py-2 rounded-xl text-sm border transition-all ${form.actif ? "bg-green-500/10 border-green-500/30 text-green-400" : "bg-white border-gray-200 text-gray-500"}`}>
-            {form.actif ? "Actif" : "Brouillon"}
+            className={`px-4 py-2 rounded-xl text-sm border transition-all ${form.actif ? "bg-green-50 border-green-200 text-green-600" : "bg-white border-gray-200 text-gray-500"}`}>
+            {form.actif ? "✓ Actif" : "Brouillon"}
           </button>
           <button onClick={sauvegarder} disabled={saving}
-            className="flex items-center gap-2 bg-[#F5A623] text-black font-semibold px-5 py-2 rounded-xl text-sm hover:bg-[#d4820a] transition-all disabled:opacity-50">
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            Enregistrer
+            className="flex items-center gap-2 bg-[#F5A623] text-white font-semibold px-5 py-2 rounded-xl text-sm hover:bg-[#d4820a] transition-all disabled:opacity-50 shadow-lg shadow-[#F5A623]/25">
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Enregistrer
           </button>
         </div>
       </div>
 
+      {/* ── Sélecteur de type ── */}
+      <div className="grid grid-cols-3 gap-3">
+        {TYPES_PRODUIT.map(t => {
+          const Icone = t.icon;
+          const actif = form.type === t.id;
+          return (
+            <button key={t.id} onClick={() => set("type", t.id)}
+              className="flex items-start gap-3 p-4 rounded-2xl border text-left transition-all"
+              style={{
+                borderColor: actif ? `${t.color}50` : "#e5e7eb",
+                background: actif ? `${t.color}08` : "white",
+                boxShadow: actif ? `0 0 20px ${t.color}20` : "none",
+              }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: `${t.color}15` }}>
+                <Icone size={18} style={{ color: t.color }} />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">{t.label}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{t.desc}</p>
+              </div>
+              {actif && (
+                <div className="ml-auto w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: t.color }}>
+                  <span className="text-white text-[10px] font-bold">✓</span>
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Colonne principale */}
+        {/* ── Colonne principale ── */}
         <div className="lg:col-span-2 space-y-5">
-          {/* Infos de base */}
+
+          {/* Infos générales */}
           <div className="bg-white border border-gray-100 rounded-2xl p-6 space-y-4">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-1">
               <Package size={15} className="text-[#F5A623]" />
-              <h2 className="text-white font-semibold text-sm">Informations générales</h2>
+              <h2 className="font-semibold text-gray-800 text-sm">Informations générales</h2>
             </div>
             <div>
-              <label className="text-gray-400 text-xs block mb-1.5">Nom du produit</label>
-              <input value={form.nom || ""} onChange={e => set("nom", e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#F5A623]/50" />
+              <label className="text-gray-400 text-xs block mb-1.5">Nom du produit *</label>
+              <input value={form.nom} onChange={e => set("nom", e.target.value)} maxLength={120} className={inputClass} />
+            </div>
+            <div>
+              <label className="text-gray-400 text-xs block mb-1.5">Slug URL</label>
+              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+                <span className="text-gray-400 text-xs">/produits/</span>
+                <input value={form.slug} onChange={e => set("slug", e.target.value)} className="bg-transparent text-sm text-gray-600 outline-none flex-1" />
+              </div>
             </div>
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-gray-400 text-xs">Description</label>
                 <button onClick={genererDescription} disabled={genIA}
-                  className="flex items-center gap-1.5 text-[#F5A623] text-xs hover:text-[#d4820a] transition-colors disabled:opacity-50">
-                  {genIA ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
-                  Régénérer avec l'IA
+                  className="flex items-center gap-1 text-[#F5A623] text-xs hover:text-[#d4820a] transition-colors disabled:opacity-50">
+                  {genIA ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />} Régénérer avec l'IA
                 </button>
               </div>
-              <textarea value={form.description || ""} onChange={e => set("description", e.target.value)}
-                rows={5} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#F5A623]/50 resize-none" />
+              <textarea value={form.description} onChange={e => set("description", e.target.value)}
+                rows={5} placeholder="Décrivez votre produit..." className={`${inputClass} resize-none`} />
             </div>
           </div>
 
           {/* Prix & Stock */}
           <div className="bg-white border border-gray-100 rounded-2xl p-6 space-y-4">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-1">
               <BarChart2 size={15} className="text-[#F5A623]" />
-              <h2 className="text-white font-semibold text-sm">Prix & Stock</h2>
+              <h2 className="font-semibold text-gray-800 text-sm">Prix & Stock</h2>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-gray-400 text-xs block mb-1.5">Prix de vente</label>
-                <input type="number" value={form.prix ?? ""} onChange={e => set("prix", e.target.value)}
-                  min="0" step="0.01"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#F5A623]/50" />
+                <label className="text-gray-400 text-xs block mb-1.5">Prix de vente *</label>
+                <input type="number" value={form.prix} onChange={e => set("prix", e.target.value)} min="0" className={inputClass} />
               </div>
               <div>
-                <label className="text-gray-400 text-xs block mb-1.5">Prix barré</label>
-                <input type="number" value={form.prixCompare ?? ""} onChange={e => set("prixCompare", e.target.value || null)}
-                  min="0" step="0.01"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#F5A623]/50" />
+                <label className="text-gray-400 text-xs block mb-1.5">Prix barré (promo)</label>
+                <input type="number" value={form.prixCompare} onChange={e => set("prixCompare", e.target.value)} min="0" className={inputClass} />
               </div>
-              <div>
-                <label className="text-gray-400 text-xs block mb-1.5">Stock</label>
-                <input type="number" value={form.stock ?? 0} onChange={e => set("stock", e.target.value)}
-                  min="0" step="1"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#F5A623]/50" />
-              </div>
-              <div>
-                <label className="text-gray-400 text-xs block mb-1.5">SKU / Référence</label>
-                <input value={form.sku || ""} onChange={e => set("sku", e.target.value || null)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#F5A623]/50" />
-              </div>
-            </div>
-          </div>
-
-          {/* Images */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <ImageIcon size={15} className="text-[#F5A623]" />
-              <h2 className="text-white font-semibold text-sm">Images</h2>
-            </div>
-            <div className="flex gap-2">
-              <input value={imageInput} onChange={e => setImageInput(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && ajouterImage()}
-                placeholder="Coller une URL d'image..."
-                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F5A623]/50 placeholder:text-gray-600" />
-              <button onClick={ajouterImage} className="px-4 py-2.5 bg-[#F5A623]/10 border border-[#F5A623]/20 text-[#F5A623] rounded-xl text-sm hover:bg-[#F5A623]/20">
-                <Plus size={16} />
-              </button>
-            </div>
-            {(form.images || []).length > 0 ? (
-              <div className="grid grid-cols-3 gap-3">
-                {(form.images || []).map((img, i) => (
-                  <div key={i} className="relative group aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-200">
-                    <img src={img} alt="" className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = "none")} />
-                    {i === 0 && <div className="absolute bottom-1 left-1 bg-[#F5A623] text-black text-[10px] px-1.5 py-0.5 rounded font-medium">Principale</div>}
-                    <button onClick={() => set("images", (form.images || []).filter((_, j) => j !== i))}
-                      className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <X size={10} className="text-white" />
-                    </button>
+              {form.type !== "digital" && (
+                <>
+                  <div>
+                    <label className="text-gray-400 text-xs block mb-1.5">Stock</label>
+                    <input type="number" value={form.stock} onChange={e => set("stock", e.target.value)} min="0" className={inputClass} />
                   </div>
-                ))}
+                  <div>
+                    <label className="text-gray-400 text-xs block mb-1.5">SKU / Référence</label>
+                    <input value={form.sku} onChange={e => set("sku", e.target.value)} placeholder="SKU-001" className={inputClass} />
+                  </div>
+                </>
+              )}
+            </div>
+            {form.type === "digital" && (
+              <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-2.5 text-purple-700 text-xs flex items-center gap-2">
+                <Info size={12} /> Stock automatiquement illimité pour les produits digitaux
               </div>
-            ) : (
-              <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center">
-                <ImageIcon size={24} className="text-gray-600 mx-auto mb-2" />
-                <p className="text-gray-500 text-xs">Aucune image</p>
+            )}
+            {form.type === "dropshipping" && marge !== null && (
+              <div className={`rounded-xl px-4 py-2.5 text-xs flex items-center gap-2 ${marge >= 30 ? "bg-green-50 border border-green-200 text-green-700" : marge >= 10 ? "bg-yellow-50 border border-yellow-200 text-yellow-700" : "bg-red-50 border border-red-200 text-red-600"}`}>
+                <BarChart2 size={12} /> Marge : {marge}% {marge >= 30 ? "✓ Bonne marge" : marge >= 10 ? "⚠ Marge faible" : "✗ Marge insuffisante"}
               </div>
             )}
           </div>
 
+          {/* Section DROPSHIPPING */}
+          {form.type === "dropshipping" && (
+            <div className="bg-white border border-emerald-200 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Truck size={15} className="text-emerald-500" />
+                <h2 className="font-semibold text-gray-800 text-sm">Informations fournisseur</h2>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-gray-400 text-xs block mb-1.5">Prix fournisseur (coût)</label>
+                  <input type="number" value={form.prixFournisseur} onChange={e => set("prixFournisseur", e.target.value)} placeholder="0" min="0" className={inputClass} />
+                </div>
+                <div>
+                  <label className="text-gray-400 text-xs block mb-1.5">Nom du fournisseur</label>
+                  <input value={form.nomFournisseur} onChange={e => set("nomFournisseur", e.target.value)} placeholder="AliExpress, CJ, ..." className={inputClass} />
+                </div>
+              </div>
+              <div>
+                <label className="text-gray-400 text-xs block mb-1.5">URL produit source</label>
+                <div className="flex gap-2">
+                  <input value={form.urlFournisseur} onChange={e => set("urlFournisseur", e.target.value)}
+                    placeholder="https://aliexpress.com/item/..." className={`${inputClass} flex-1`} />
+                  {form.urlFournisseur && (
+                    <a href={form.urlFournisseur} target="_blank" rel="noopener noreferrer"
+                      className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 hover:text-gray-700 transition-colors">
+                      <ExternalLink size={15} />
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Section DIGITAL */}
+          {form.type === "digital" && (
+            <div className="bg-white border border-purple-200 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center gap-2 mb-1">
+                <FileText size={15} className="text-purple-500" />
+                <h2 className="font-semibold text-gray-800 text-sm">Fichier digital</h2>
+              </div>
+              {!form.fichierUrl ? (
+                <div
+                  className="border-2 border-dashed border-purple-200 rounded-xl p-8 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/50 transition-all"
+                  onClick={() => digitalFileRef.current?.click()}>
+                  {uploadingFichier ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 size={28} className="text-purple-400 animate-spin" />
+                      <p className="text-sm text-purple-500">Upload en cours…</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2">
+                      <Upload size={28} className="text-purple-300" />
+                      <p className="text-sm font-medium text-gray-700">Cliquez pour uploader votre fichier</p>
+                      <p className="text-xs text-gray-400">PDF, ZIP, MP3, MP4, DOCX — max 200 Mo</p>
+                    </div>
+                  )}
+                  <input ref={digitalFileRef} type="file" className="hidden"
+                    accept=".pdf,.zip,.mp3,.mp4,.docx,.xlsx,.wav,.ogg"
+                    onChange={e => e.target.files?.[0] && uploadFichierDigital(e.target.files[0])} />
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-xl p-4">
+                  <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
+                    <FileText size={18} className="text-purple-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate">{form.fichierNom || "Fichier uploadé"}</p>
+                    <p className="text-xs text-gray-400">{form.fichierTaille ? formatTaille(form.fichierTaille) : "Taille inconnue"} · Prêt à l'envoi</p>
+                  </div>
+                  <button onClick={() => { set("fichierUrl", ""); set("fichierNom", ""); set("fichierTaille", 0); }}
+                    className="text-red-400 hover:text-red-600 transition-colors"><X size={16} /></button>
+                </div>
+              )}
+              <div>
+                <label className="text-gray-400 text-xs block mb-1.5">Instructions de téléchargement (optionnel)</label>
+                <textarea value={form.instructionsTelechargement} onChange={e => set("instructionsTelechargement", e.target.value)}
+                  rows={3} placeholder="Ex: Ouvrez le PDF avec Adobe Reader." className={`${inputClass} resize-none`} />
+              </div>
+            </div>
+          )}
+
+          {/* Médias */}
+          <div className="bg-white border border-gray-100 rounded-2xl p-6 space-y-5">
+            <div className="flex items-center gap-2 mb-1">
+              <ImageIcon size={15} className="text-[#F5A623]" />
+              <h2 className="font-semibold text-gray-800 text-sm">Images & Vidéos</h2>
+            </div>
+            {/* Images */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-gray-600 text-xs font-medium">Images</label>
+                <div className="flex gap-2">
+                  <button onClick={genererImageIA} disabled={genImage || !form.nom}
+                    className="flex items-center gap-1.5 text-xs bg-[#F5A623]/10 text-[#F5A623] border border-[#F5A623]/20 px-3 py-1.5 rounded-lg hover:bg-[#F5A623]/20 transition-all disabled:opacity-50">
+                    {genImage ? <Loader2 size={10} className="animate-spin" /> : <Zap size={10} />} Générer avec l'IA
+                  </button>
+                  <button onClick={() => fileInputRef.current?.click()} disabled={uploadingMedia}
+                    className="flex items-center gap-1.5 text-xs bg-gray-50 text-gray-600 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-all">
+                    {uploadingMedia ? <Loader2 size={10} className="animate-spin" /> : <Upload size={10} />} Upload
+                  </button>
+                  <input ref={fileInputRef} type="file" className="hidden" accept="image/*"
+                    onChange={e => e.target.files?.[0] && uploadMedia(e.target.files[0], "image")} />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <input value={imageInput} onChange={e => setImageInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") { const u = imageInput.trim(); if (u) { set("images", [...form.images, u]); setImageInput(""); }}}}
+                  placeholder="Ou collez une URL d'image..."
+                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50 placeholder:text-gray-400" />
+                <button onClick={() => { const u = imageInput.trim(); if (u) { set("images", [...form.images, u]); setImageInput(""); }}}
+                  className="px-3 py-2 bg-[#F5A623]/10 border border-[#F5A623]/20 text-[#F5A623] rounded-xl hover:bg-[#F5A623]/20 transition-all">
+                  <Plus size={15} />
+                </button>
+              </div>
+              {form.images.length > 0 ? (
+                <div className="grid grid-cols-4 gap-2">
+                  {form.images.map((img, i) => (
+                    <div key={i} className="relative group aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-200">
+                      <img src={img} alt="" className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = "none")} />
+                      {i === 0 && <div className="absolute bottom-1 left-1 bg-[#F5A623] text-white text-[9px] px-1.5 py-0.5 rounded font-medium">Principale</div>}
+                      <button onClick={() => set("images", form.images.filter((_, j) => j !== i))}
+                        className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <X size={9} className="text-white" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center">
+                  <p className="text-gray-400 text-xs">Uploadez ou collez des URLs d'images ci-dessus</p>
+                </div>
+              )}
+            </div>
+            {/* Vidéos */}
+            <div className="space-y-3 pt-3 border-t border-gray-100">
+              <div className="flex items-center justify-between">
+                <label className="text-gray-600 text-xs font-medium">Vidéos produit</label>
+                <button onClick={() => videoInputRef.current?.click()} disabled={uploadingMedia}
+                  className="flex items-center gap-1.5 text-xs bg-gray-50 text-gray-600 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-all">
+                  {uploadingMedia ? <Loader2 size={10} className="animate-spin" /> : <Video size={10} />} Upload vidéo
+                </button>
+                <input ref={videoInputRef} type="file" className="hidden" accept="video/mp4,video/webm"
+                  onChange={e => e.target.files?.[0] && uploadMedia(e.target.files[0], "video")} />
+              </div>
+              {(form.videos ?? []).length > 0 ? (
+                <div className="space-y-2">
+                  {form.videos.map((v, i) => (
+                    <div key={i} className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl p-3">
+                      <Video size={14} className="text-gray-400 flex-shrink-0" />
+                      <p className="text-xs text-gray-600 flex-1 truncate">{v}</p>
+                      <button onClick={() => set("videos", form.videos.filter((_, j) => j !== i))}
+                        className="text-red-400 hover:text-red-600"><X size={13} /></button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 text-center py-3">Aucune vidéo</p>
+              )}
+            </div>
+          </div>
+
           {/* SEO */}
           <div className="bg-white border border-gray-100 rounded-2xl p-6 space-y-4">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-1">
               <Globe size={15} className="text-[#F5A623]" />
-              <h2 className="text-white font-semibold text-sm">SEO</h2>
+              <h2 className="font-semibold text-gray-800 text-sm">SEO</h2>
             </div>
             <div>
               <label className="text-gray-400 text-xs block mb-1.5">Titre méta</label>
-              <input value={form.metaTitle || ""} onChange={e => set("metaTitle", e.target.value || null)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#F5A623]/50" />
+              <input value={form.metaTitle} onChange={e => set("metaTitle", e.target.value)} placeholder="Titre pour Google" className={inputClass} />
             </div>
             <div>
               <label className="text-gray-400 text-xs block mb-1.5">Méta description</label>
-              <textarea value={form.metaDesc || ""} onChange={e => set("metaDesc", e.target.value || null)}
-                rows={2} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#F5A623]/50 resize-none" />
+              <textarea value={form.metaDesc} onChange={e => set("metaDesc", e.target.value)} rows={2} placeholder="Description Google..." className={`${inputClass} resize-none`} />
             </div>
           </div>
         </div>
 
-        {/* Colonne latérale */}
+        {/* ── Colonne latérale ── */}
         <div className="space-y-5">
+
           {/* Stats */}
           <div className="bg-white border border-gray-100 rounded-2xl p-5">
-            <h2 className="text-white font-semibold text-sm mb-3">Statistiques</h2>
+            <h2 className="font-semibold text-gray-800 text-sm mb-3">Statistiques</h2>
             <div className="space-y-3">
               {[
-                { label: "Ventes totales", value: produit.ventes, color: "text-[#F5A623]" },
-                { label: "Vues totales", value: produit.vues, color: "text-blue-400" },
-                { label: "Avis reçus", value: produit._count.avis, color: "text-yellow-400" },
+                { label: "Ventes totales", value: stats.ventes, color: "text-[#F5A623]" },
+                { label: "Vues totales", value: stats.vues, color: "text-blue-500" },
+                { label: "Avis reçus", value: stats.avis, color: "text-yellow-500" },
+                { label: "Dans commandes", value: stats.commandes, color: "text-emerald-500" },
               ].map(s => (
                 <div key={s.label} className="flex items-center justify-between">
                   <span className="text-gray-400 text-xs">{s.label}</span>
@@ -295,88 +561,81 @@ export default function EditProduitPage() {
 
           {/* Catégorie & Tags */}
           <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-4">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-1">
               <Tag size={14} className="text-[#F5A623]" />
-              <h2 className="text-white font-semibold text-sm">Catégorie & Tags</h2>
+              <h2 className="font-semibold text-gray-800 text-sm">Catégorie & Tags</h2>
             </div>
-            <div>
-              <label className="text-gray-400 text-xs block mb-1.5">Catégorie</label>
-              <select value={form.categorie || ""} onChange={e => set("categorie", e.target.value || null)}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-white text-sm focus:outline-none">
-                <option value="">Aucune</option>
-                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+            <select value={form.categorie} onChange={e => set("categorie", e.target.value)}
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50">
+              <option value="">Sélectionner...</option>
+              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <div className="flex gap-2">
+              <input value={tagInput} onChange={e => setTagInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); const t = tagInput.trim().toLowerCase(); if (t && !form.tags.includes(t)) set("tags", [...form.tags, t]); setTagInput(""); }}}
+                placeholder="Ajouter un tag..."
+                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-gray-900 text-xs focus:outline-none focus:border-[#F5A623]/50 placeholder:text-gray-400" />
+              <button onClick={() => { const t = tagInput.trim().toLowerCase(); if (t && !form.tags.includes(t)) set("tags", [...form.tags, t]); setTagInput(""); }}
+                className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 hover:text-gray-900 text-xs">+</button>
             </div>
-            <div>
-              <label className="text-gray-400 text-xs block mb-1.5">Tags</label>
-              <div className="flex gap-2">
-                <input value={tagInput} onChange={e => setTagInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); ajouterTag(); } }}
-                  placeholder="Ajouter un tag..."
-                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-[#F5A623]/50 placeholder:text-gray-600" />
-                <button onClick={ajouterTag} className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 hover:text-white text-xs">+</button>
+            {(form.tags ?? []).length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {form.tags.map(t => (
+                  <span key={t} className="flex items-center gap-1 bg-[#F5A623]/10 border border-[#F5A623]/20 text-[#F5A623] text-xs px-2 py-1 rounded-lg">
+                    {t}<button onClick={() => set("tags", form.tags.filter(x => x !== t))}><X size={9} /></button>
+                  </span>
+                ))}
               </div>
-              {(form.tags || []).length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {(form.tags || []).map(t => (
-                    <span key={t} className="flex items-center gap-1 bg-[#F5A623]/10 border border-[#F5A623]/20 text-[#F5A623] text-xs px-2 py-1 rounded-lg">
-                      {t}<button onClick={() => set("tags", (form.tags || []).filter(x => x !== t))}><X size={9} /></button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Type de produit */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
-            <h2 className="text-white font-semibold text-sm mb-1">Type de produit</h2>
-            <div className="grid grid-cols-3 gap-1.5">
-              {([
-                { val: "physique",     label: "📦 Physique",     color: "#F5A623" },
-                { val: "digital",      label: "💾 Digital",      color: "#7c3aed" },
-                { val: "dropshipping", label: "🚚 Drop",         color: "#059669" },
-              ] as const).map(t => (
-                <button
-                  key={t.val}
-                  onClick={() => set("type", t.val)}
-                  className="py-2 rounded-xl text-xs font-semibold transition-all border"
-                  style={{
-                    background: (form as any).type === t.val ? `${t.color}20` : "transparent",
-                    borderColor: (form as any).type === t.val ? `${t.color}60` : "#e5e7eb",
-                    color: (form as any).type === t.val ? t.color : "#9ca3af",
-                  }}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-            {(form as any).type === "digital" && (
-              <p className="text-xs text-purple-400 bg-purple-500/10 rounded-lg px-3 py-2">
-                Paiement Stripe obligatoire • Livraison instantanée par fichier ou lien
-              </p>
             )}
           </div>
 
           {/* Options */}
           <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
-            <h2 className="text-white font-semibold text-sm mb-1">Options</h2>
+            <h2 className="font-semibold text-gray-800 text-sm mb-1">Options</h2>
             {[
               { label: "Produit actif", desc: "Visible sur la boutique", key: "actif" },
               { label: "Mis en avant", desc: "Affiché en page d'accueil", key: "featured" },
             ].map(opt => (
               <div key={opt.key} className="flex items-center justify-between">
                 <div>
-                  <p className="text-white text-sm">{opt.label}</p>
-                  <p className="text-gray-500 text-xs">{opt.desc}</p>
+                  <p className="text-gray-800 text-sm">{opt.label}</p>
+                  <p className="text-gray-400 text-xs">{opt.desc}</p>
                 </div>
                 <button onClick={() => set(opt.key, !(form as any)[opt.key])}
-                  className={`w-11 h-6 rounded-full transition-all relative ${(form as any)[opt.key] ? "bg-[#F5A623]" : "bg-[#333]"}`}>
+                  className={`w-11 h-6 rounded-full transition-all relative ${(form as any)[opt.key] ? "bg-[#F5A623]" : "bg-gray-200"}`}>
                   <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${(form as any)[opt.key] ? "left-5" : "left-0.5"}`} />
                 </button>
               </div>
             ))}
+            {form.type === "physique" && (
+              <div className="pt-2">
+                <label className="text-gray-400 text-xs block mb-1.5">Poids (kg)</label>
+                <input type="number" value={form.poids} onChange={e => set("poids", e.target.value)} placeholder="0.5" min="0" step="0.01"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50" />
+              </div>
+            )}
           </div>
+
+          {/* Aperçu */}
+          {(form.nom || (form.images ?? []).length > 0) && (
+            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+              <p className="text-gray-400 text-xs px-4 pt-3 pb-2">Aperçu boutique</p>
+              <div className="aspect-square bg-gray-50 overflow-hidden">
+                {form.images?.[0]
+                  ? <img src={form.images[0]} alt="" className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center text-3xl">{form.type === "digital" ? "💾" : "📦"}</div>}
+              </div>
+              <div className="p-4">
+                <p className="font-medium text-gray-800 text-sm line-clamp-2">{form.nom || "Nom du produit"}</p>
+                {form.prix && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[#F5A623] font-bold text-sm">{form.prix} {devise}</span>
+                    {form.prixCompare && <span className="text-gray-400 text-xs line-through">{form.prixCompare}</span>}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
