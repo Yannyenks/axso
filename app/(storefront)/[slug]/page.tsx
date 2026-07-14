@@ -468,6 +468,90 @@ export default async function StorefrontPage({ params }: Props) {
         </section>
       )}
 
+      {/* ─── SECTIONS CUSTOM (générées par l'IA ou builder) ─── */}
+      {(cfg.customSections ?? []).filter((s: any) => s.actif !== false).sort((a: any, b: any) => (a.ordre ?? 99) - (b.ordre ?? 99)).map((section: any) => {
+        if (section.type === "features") {
+          return (
+            <section key={section.id} className="py-16 sm:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              {section.config?.titre && (
+                <h2 className="text-3xl font-bold font-playfair text-center mb-12" style={{ color: c.texte }}>{section.config.titre}</h2>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+                {(section.config?.items ?? []).map((item: any, i: number) => (
+                  <div key={i} className="flex flex-col items-center text-center gap-3 p-6 rounded-2xl" style={{ background: `${c.accent}08`, border: `1px solid ${c.accent}15` }}>
+                    <span className="text-3xl">{item.icone}</span>
+                    <p className="font-bold text-sm">{item.titre}</p>
+                    <p className="text-sm" style={{ opacity: 0.6 }}>{item.description}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+        }
+        if (section.type === "gallery") {
+          const images: string[] = section.config?.images ?? [];
+          if (!images.length) return null;
+          return (
+            <section key={section.id} className="py-16 sm:py-20">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {section.config?.titre && (
+                  <h2 className="text-3xl font-bold font-playfair text-center mb-10" style={{ color: c.texte }}>{section.config.titre}</h2>
+                )}
+                <div className={`grid gap-4 ${images.length >= 3 ? "grid-cols-2 sm:grid-cols-3" : images.length === 2 ? "grid-cols-2" : "grid-cols-1 max-w-lg mx-auto"}`}>
+                  {images.map((src: string, i: number) => (
+                    <div key={i} className="aspect-square rounded-2xl overflow-hidden" style={{ border: `1px solid ${c.accent}15` }}>
+                      <img src={src} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+        }
+        if (section.type === "stats") {
+          return (
+            <section key={section.id} className="py-14 sm:py-20" style={{ background: `${c.accent}08` }}>
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
+                  {(section.config?.items ?? []).map((stat: any, i: number) => (
+                    <div key={i}>
+                      <p className="text-4xl font-bold font-playfair" style={{ color: c.accent }}>{stat.valeur}</p>
+                      <p className="text-sm mt-1" style={{ opacity: 0.6 }}>{stat.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+        }
+        if (section.type === "cta-band") {
+          return (
+            <section key={section.id} className="py-16" style={{ background: c.accent }}>
+              <div className="max-w-4xl mx-auto px-4 text-center">
+                <h2 className="text-3xl font-bold font-playfair mb-4" style={{ color: c.fond }}>{section.config?.titre}</h2>
+                {section.config?.texte && <p className="text-lg mb-8" style={{ color: c.fond, opacity: 0.85 }}>{section.config.texte}</p>}
+                {section.config?.ctaTexte && (
+                  <Link href={section.config.ctaLien ?? `/${slug}/produits`}
+                    className="inline-flex px-8 py-4 rounded-2xl font-bold text-sm"
+                    style={{ background: c.fond, color: c.accent }}>
+                    {section.config.ctaTexte}
+                  </Link>
+                )}
+              </div>
+            </section>
+          );
+        }
+        if (section.type === "richtext") {
+          return (
+            <section key={section.id} className="py-16 max-w-3xl mx-auto px-4">
+              {section.config?.titre && <h2 className="text-2xl font-bold font-playfair mb-6" style={{ color: c.texte }}>{section.config.titre}</h2>}
+              {section.config?.texte && <div className="prose prose-sm max-w-none" style={{ color: c.texte, opacity: 0.75 }}>{section.config.texte}</div>}
+            </section>
+          );
+        }
+        return null;
+      })}
+
       {/* ─── FOOTER ─── */}
       <footer className="border-t mt-0" style={{ backgroundColor: c.fond, borderColor: `${c.accent}15` }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">

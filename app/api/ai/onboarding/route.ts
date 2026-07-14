@@ -33,6 +33,11 @@ const schemaExecuter = z.object({
       nationale: z.number(),
       gratuite: z.number(),
     }).optional(),
+    sections: z.array(z.object({
+      type: z.string(),
+      label: z.string(),
+      config: z.record(z.string(), z.any()),
+    })).optional(),
   }),
   compte: z.object({
     name: z.string().min(2),
@@ -79,6 +84,16 @@ export async function POST(request: Request) {
         gratuiteA: plan.livraison.gratuite,
       } : {};
 
+      // Transformer les sections du plan IA en CustomSection pour le themeConfig
+      const customSections = (plan.sections ?? []).map((s: any, i: number) => ({
+        id: `ia-${s.type}-${i}`,
+        type: s.type,
+        label: s.label,
+        actif: true,
+        ordre: i + 1,
+        config: s.config ?? {},
+      }));
+
       // Transaction : créer tenant + user + produits
       const { tenant, produitsCreees } = await prisma.$transaction(async (tx) => {
         const tenant = await tx.tenant.create({
@@ -96,6 +111,9 @@ export async function POST(request: Request) {
             commissionRate: 0.03,
             statut: "active",
             planType: "gratuit",
+            themeConfig: customSections.length > 0
+              ? { customSections }
+              : {},
           },
         });
 

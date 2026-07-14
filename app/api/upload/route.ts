@@ -26,6 +26,9 @@ function getFileCategory(type: string): "image" | "video" | "digital" | null {
 
 export async function POST(req: NextRequest) {
   try {
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      return NextResponse.json({ error: "blob_not_configured" }, { status: 503 });
+    }
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 

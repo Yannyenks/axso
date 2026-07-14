@@ -35,6 +35,16 @@ export function ImageUpload({ value, onChange, onRemove, label, hint, className 
       fd.append("file", file);
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       const data = await res.json();
+      if (res.status === 503 && data.error === "blob_not_configured") {
+        // Fallback : convertir en base64 data URL (stockée en DB)
+        const reader = new FileReader();
+        await new Promise<void>((resolve, reject) => {
+          reader.onload = () => { onChange(reader.result as string); resolve(); };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        return;
+      }
       if (!res.ok) throw new Error(data.error);
       onChange(data.url);
     } catch (err: any) {

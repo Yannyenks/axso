@@ -1,16 +1,15 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
-import Script from "next/script";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useCartStore } from "@/store/cartStore";
 import { formatMontant } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
-  Loader2, CreditCard, Smartphone, Shield, Lock,
+  Loader2, CreditCard, Shield, Lock,
   CheckCircle2, AlertCircle, MessageCircle, Download,
-  Package, Zap, ChevronRight, Phone, MapPin, User, Mail
+  Package, Zap, Phone, MapPin, User, Mail, ArrowLeft
 } from "lucide-react";
-import { CardForm } from "./CardForm";
+import { StripeCheckout } from "./StripeCheckout";
 
 interface Props {
   theme: { fond: string; accent: string; texte: string; surface: string };
@@ -226,74 +225,123 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CHECKOUT DIGITAL — Paiement CinetPay + téléchargement immédiat
+// CHECKOUT DIGITAL — Paiement Stripe · Wallet Axso · Livraison instantanée
 // ═══════════════════════════════════════════════════════════════════════════════
-function CheckoutDigital({ theme, slug, devise, tenantId, nomBoutique, logoUrl, items, total, codePromo, viderPanier }: any) {
+function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codePromo, viderPanier }: any) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [phase, setPhase] = useState<"form" | "paiement">("form");
   const [loading, setLoading] = useState(false);
-  const [operateur, setOperateur] = useState("WAVE");
-  const [methode, setMethode] = useState<"mobilemoney" | "card">("mobilemoney");
+  const [commandeId, setCommandeId] = useState<string | null>(null);
   const [form, setForm] = useState({ nom: "", email: "", telephone: "", pays: "Sénégal" });
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
-  const paysConfig = PAYS_CONFIG[form.pays];
-  useEffect(() => { if (paysConfig?.operateurs[0]) setOperateur(paysConfig.operateurs[0].id); }, [form.pays]);
+  // Code d'affiliation depuis l'URL (?ref=CODE) ou localStorage
+  const codeRef = useMemo(() => {
+    const fromUrl = searchParams?.get("ref") ?? null;
+    if (fromUrl) {
+      try { localStorage.setItem("axso_ref", fromUrl); } catch {}
+      return fromUrl;
+    }
+    try { return localStorage.getItem("axso_ref"); } catch { return null; }
+  }, [searchParams]);
 
   const inp = "w-full px-4 py-3 rounded-xl border text-sm transition-all focus:ring-2 focus:outline-none";
   const inpStyle = { backgroundColor: theme.surface, borderColor: `${theme.accent}30`, color: theme.texte, ["--tw-ring-color" as any]: `${theme.accent}40` };
 
-  async function payer() {
-    if (!form.nom.trim() || !form.telephone.trim() || !form.email.trim()) {
-      toast.error("Nom, email et téléphone obligatoires pour les produits digitaux");
+  async function creerCommande() {
+    if (!form.nom.trim() || !form.email.trim()) {
+      toast.error("Nom et email obligatoires pour les produits digitaux");
       return;
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/paiements/initier", {
+      const res = await fetch("/api/commandes/digital-creer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tenantId, slug,
+          tenantId,
           client: { ...form },
           items: items.map((i: any) => ({ produitId: i.produitId, nom: i.nom, prix: i.prix, quantite: i.quantite, variante: i.variante, imageUrl: i.imageUrl })),
           total, devise, codePromo,
-          methodePaiement: methode,
-          operateur,
-          modeDigital: true, // flag pour escrow immédiat
+          codeAffiliation: codeRef || null,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-
-      if (data.mode === "redirect" && data.paymentUrl) {
-        viderPanier();
-        window.location.href = data.paymentUrl;
-      } else if (data.mode === "demo") {
-        viderPanier();
-        router.push(`/${slug}/confirmation/${data.commandeId}`);
-      } else if (methode === "card") {
-        sessionStorage.setItem(`cmd-${tenantId}`, data.commandeId);
-      }
+      setCommandeId(data.commandeId);
+      setPhase("paiement");
     } catch (e: any) {
-      toast.error(e.message || "Erreur paiement");
+      toast.error(e.message || "Erreur lors de la création de la commande");
     } finally {
       setLoading(false);
     }
   }
 
-  // Carte inline
-  const cmdId = typeof window !== "undefined" ? sessionStorage.getItem(`cmd-${tenantId}`) : null;
-  if (methode === "card" && cmdId) {
+  function onPaiementSucces() {
+    try { localStorage.removeItem("axso_ref"); } catch {}
+    viderPanier();
+    router.push(`/${slug}/confirmation/${commandeId}`);
+  }
+
+  const inp2 = inp; // alias pour lisibilité dans le bloc paiement
+
+  // ── Phase 2 : paiement Stripe ──────────────────────────────────────────────
+  if (phase === "paiement" && commandeId) {
     return (
-      <div className="max-w-lg mx-auto">
-        <button onClick={() => { sessionStorage.removeItem(`cmd-${tenantId}`); setMethode("mobilemoney"); }} className="flex items-center gap-1.5 text-sm opacity-50 hover:opacity-80 mb-4">← Changer de méthode</button>
-        <CardForm theme={theme} commandeId={cmdId} total={total} devise={devise} nomClient={form.nom} email={form.email} telephone={form.telephone}
-          onSuccess={() => { sessionStorage.removeItem(`cmd-${tenantId}`); viderPanier(); router.push(`/${slug}/confirmation/${cmdId}`); }}
-          onCancel={() => { setMethode("mobilemoney"); }} />
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
+        <div className="lg:col-span-3 space-y-5">
+          <button onClick={() => setPhase("form")}
+            className="flex items-center gap-1.5 text-sm opacity-50 hover:opacity-80 transition-opacity">
+            <ArrowLeft size={14} /> Modifier mes informations
+          </button>
+
+          {/* Bandeau digital */}
+          <div className="flex items-start gap-3 p-4 rounded-2xl" style={{ background: `${theme.accent}10`, border: `1px solid ${theme.accent}30` }}>
+            <Zap size={18} style={{ color: theme.accent }} className="flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold" style={{ color: theme.accent }}>Livraison instantanée</p>
+              <p className="text-xs opacity-70 mt-0.5 leading-relaxed">
+                Vos fichiers seront disponibles immédiatement après le paiement.
+              </p>
+            </div>
+          </div>
+
+          {/* Stripe checkout */}
+          <div className="rounded-2xl border p-5" style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}20` }}>
+            <h2 className="font-bold font-playfair text-base mb-4">💳 Paiement sécurisé</h2>
+            <StripeCheckout
+              commandeId={commandeId}
+              montant={total}
+              devise={devise}
+              clientEmail={form.email}
+              clientNom={form.nom}
+              codeAffiliation={codeRef ?? undefined}
+              onSuccess={onPaiementSucces}
+              onError={(msg) => toast.error(msg)}
+            />
+          </div>
+        </div>
+
+        <div className="lg:col-span-2">
+          <div className="lg:sticky lg:top-24 space-y-4">
+            <Recap theme={theme} devise={devise} items={items} total={total} codePromo={codePromo} label="Produits digitaux" />
+            {codeRef && (
+              <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-xl" style={{ background: `${theme.accent}10`, color: theme.accent }}>
+                <CheckCircle2 size={12} /> Code affiliation <span className="font-mono font-bold">{codeRef}</span> appliqué
+              </div>
+            )}
+            <div className="flex items-center gap-2 text-xs opacity-40 justify-center">
+              <Download size={10} /> Téléchargement disponible immédiatement après paiement
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
+  // ── Phase 1 : formulaire ───────────────────────────────────────────────────
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
       <div className="lg:col-span-3 space-y-5">
@@ -314,79 +362,38 @@ function CheckoutDigital({ theme, slug, devise, tenantId, nomBoutique, logoUrl, 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="sm:col-span-2">
               <Field label="Nom complet" required>
-                <input value={form.nom} onChange={e => set("nom", e.target.value)} placeholder="Ex: Aminata Diallo" className={inp} style={inpStyle} />
+                <div className="relative">
+                  <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40" />
+                  <input value={form.nom} onChange={e => set("nom", e.target.value)} placeholder="Ex: Aminata Diallo" className={inp} style={{ ...inpStyle, paddingLeft: "2.25rem" }} />
+                </div>
               </Field>
             </div>
-            <Field label="Email (reçois ton fichier ici)" required>
-              <input type="email" value={form.email} onChange={e => set("email", e.target.value)} placeholder="email@exemple.com" className={inp} style={inpStyle} />
+            <Field label="Email (recevez votre fichier ici)" required>
+              <div className="relative">
+                <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40" />
+                <input type="email" value={form.email} onChange={e => set("email", e.target.value)} placeholder="email@exemple.com" className={inp} style={{ ...inpStyle, paddingLeft: "2.25rem" }} />
+              </div>
             </Field>
-            <Field label="Téléphone" required>
-              <input type="tel" value={form.telephone} onChange={e => set("telephone", e.target.value)} placeholder="+221 77 000 00 00" className={inp} style={inpStyle} />
+            <Field label="Téléphone (optionnel)">
+              <div className="relative">
+                <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40" />
+                <input type="tel" value={form.telephone} onChange={e => set("telephone", e.target.value)} placeholder="+221 77 000 00 00" className={inp} style={{ ...inpStyle, paddingLeft: "2.25rem" }} />
+              </div>
             </Field>
-            <div className="sm:col-span-2">
-              <Field label="Pays">
-                <select value={form.pays} onChange={e => set("pays", e.target.value)} className={inp} style={inpStyle}>
-                  {PAYS_AFRIQUE.map(p => <option key={p}>{p}</option>)}
-                </select>
-              </Field>
-            </div>
+            <Field label="Pays">
+              <select value={form.pays} onChange={e => set("pays", e.target.value)} className={inp} style={inpStyle}>
+                {PAYS_AFRIQUE.map(p => <option key={p} style={{ backgroundColor: theme.surface }}>{p}</option>)}
+              </select>
+            </Field>
           </div>
         </div>
 
-        {/* Méthode paiement */}
-        <div className="rounded-2xl border p-5 space-y-4" style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}20` }}>
-          <h2 className="font-bold font-playfair text-base">💳 Méthode de paiement</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {([
-              { id: "mobilemoney", label: "Mobile Money", desc: "Wave, Orange, MTN…", icon: Smartphone, badge: "Recommandé" },
-              { id: "card", label: "Carte bancaire", desc: "Visa, Mastercard", icon: CreditCard },
-            ] as any[]).map(m => {
-              const Icon = m.icon;
-              const actif = methode === m.id;
-              return (
-                <button key={m.id} onClick={() => setMethode(m.id)}
-                  className="relative flex flex-col items-start gap-2 p-4 rounded-2xl border-2 text-left transition-all"
-                  style={{ borderColor: actif ? theme.accent : `${theme.accent}25`, backgroundColor: actif ? `${theme.accent}10` : "transparent" }}>
-                  {m.badge && <span className="absolute -top-2 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full text-white" style={{ background: theme.accent }}>{m.badge}</span>}
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${theme.accent}18` }}>
-                    <Icon size={16} style={{ color: theme.accent }} />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm">{m.label}</p>
-                    <p className="text-xs opacity-45">{m.desc}</p>
-                  </div>
-                  {actif && <div className="absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: theme.accent }}><CheckCircle2 size={11} className="text-white" /></div>}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Opérateurs Mobile Money */}
-          {methode === "mobilemoney" && paysConfig?.operateurs && (
-            <div>
-              <p className="text-xs opacity-60 mb-2">Opérateur ({form.pays})</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {paysConfig.operateurs.map(op => (
-                  <button key={op.id} onClick={() => setOperateur(op.id)}
-                    className="flex items-center gap-2 p-3 rounded-xl border-2 text-left transition-all"
-                    style={{ borderColor: operateur === op.id ? theme.accent : `${theme.accent}20`, backgroundColor: operateur === op.id ? `${theme.accent}10` : "transparent" }}>
-                    <span className="text-xl">{op.logo}</span>
-                    <span className="text-xs font-semibold">{op.label}</span>
-                    {operateur === op.id && <span className="ml-auto text-xs" style={{ color: theme.accent }}>✓</span>}
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-start gap-2 mt-3 p-3 rounded-xl" style={{ background: `${theme.accent}08` }}>
-                <AlertCircle size={13} style={{ color: theme.accent }} className="mt-0.5 flex-shrink-0" />
-                <p className="text-xs opacity-60 leading-relaxed">Vous recevrez une notification push sur votre téléphone pour valider le paiement.</p>
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-center gap-2 pt-1 border-t text-xs opacity-35" style={{ borderColor: `${theme.accent}10` }}>
-            <Lock size={10} style={{ color: theme.accent }} />
-            Paiement 100% sécurisé via CinetPay · SSL 256-bit
-          </div>
+        {/* Info paiement */}
+        <div className="flex items-center gap-3 p-4 rounded-2xl border" style={{ borderColor: `${theme.accent}15`, background: `${theme.accent}05` }}>
+          <CreditCard size={16} style={{ color: theme.accent }} className="flex-shrink-0" />
+          <p className="text-xs opacity-60 leading-relaxed">
+            Paiement sécurisé par <span className="font-bold" style={{ color: "#635BFF" }}>Stripe</span> · Visa, Mastercard, American Express · Chiffrement SSL 256-bit
+          </p>
         </div>
       </div>
 
@@ -395,11 +402,17 @@ function CheckoutDigital({ theme, slug, devise, tenantId, nomBoutique, logoUrl, 
         <div className="lg:sticky lg:top-24 space-y-4">
           <Recap theme={theme} devise={devise} items={items} total={total} codePromo={codePromo} label="Produits digitaux" />
 
-          <button onClick={payer} disabled={loading}
+          {codeRef && (
+            <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-xl" style={{ background: `${theme.accent}10`, color: theme.accent }}>
+              <CheckCircle2 size={12} /> Code affiliation <span className="font-mono font-bold">{codeRef}</span> appliqué
+            </div>
+          )}
+
+          <button onClick={creerCommande} disabled={loading}
             className="w-full py-4 rounded-2xl font-bold text-base transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-3 shadow-lg"
-            style={{ backgroundColor: theme.accent, color: theme.fond, boxShadow: `0 4px 20px ${theme.accent}40` }}>
+            style={{ backgroundColor: "#635BFF", color: "#fff", boxShadow: "0 4px 20px rgba(99,91,255,0.4)" }}>
             {loading ? <Loader2 size={18} className="animate-spin" /> : <Shield size={16} />}
-            {loading ? "Redirection CinetPay…" : `Payer ${formatMontant(total, devise)}`}
+            {loading ? "Préparation du paiement…" : `Payer ${formatMontant(total, devise)}`}
           </button>
 
           <div className="flex items-center gap-2 text-xs opacity-40 justify-center">

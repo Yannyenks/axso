@@ -16,6 +16,12 @@ export interface PlanLivraison {
   gratuite: number;
 }
 
+export interface PlanSection {
+  type: "features" | "gallery" | "cta-band" | "stats" | "richtext";
+  label: string;
+  config: Record<string, any>;
+}
+
 export interface PlanBoutique {
   nomBoutique: string;
   slug: string;
@@ -26,6 +32,7 @@ export interface PlanBoutique {
   description: string;
   produits: PlanProduit[];
   livraison: PlanLivraison;
+  sections?: PlanSection[];
 }
 
 // Carte devise par code pays ISO2 — couverture mondiale
@@ -65,8 +72,10 @@ Règles strictes :
 - devise : adapte à la devise locale du pays (EUR pour France, USD pour USA, XOF pour Sénégal, GBP pour UK, etc.)
 - themeId : choisis parmi — "noir-obsidien" (mode/luxe/sombre), "violet-cosmos" (beauté/cosmétiques), "terre-et-or" (artisanat/naturel/chaleureux), "kente-royal" (tissu/royal/coloré), "ocean-atlantique" (frais/bleu), "bwiti-forest" (vert/naturel/bio)
 - slug : lettres minuscules, chiffres, tirets seulement (ex: mode-aminata, tech-paris, shop-dubai)
-- Propose 3 produits représentatifs avec des prix réalistes en devise locale
+- Propose 3 à 5 produits représentatifs avec des prix réalistes en devise locale
 - Prix livraison locale adaptés au pays et au contexte (0 si digital)
+- Crée entre 2 et 4 sections pertinentes pour la boutique
+- Pour les sections "gallery", génère 3 descriptions d'images précises en anglais (tu ne mets que le texte descriptif, l'image sera générée automatiquement)
 - Réponds UNIQUEMENT avec le JSON, aucun texte avant ou après
 
 Format JSON attendu :
@@ -82,7 +91,29 @@ Format JSON attendu :
   "produits": [
     { "nom": "...", "description": "...", "prix": 0, "stock": 10, "categorie": "..." }
   ],
-  "livraison": { "locale": 0, "nationale": 0, "gratuite": 0 }
+  "livraison": { "locale": 0, "nationale": 0, "gratuite": 0 },
+  "sections": [
+    {
+      "type": "features",
+      "label": "Nos avantages",
+      "config": {
+        "titre": "Pourquoi nous choisir ?",
+        "items": [
+          { "icone": "🚀", "titre": "Livraison rapide", "description": "..." },
+          { "icone": "✨", "titre": "Qualité garantie", "description": "..." },
+          { "icone": "🔒", "titre": "Paiement sécurisé", "description": "..." }
+        ]
+      }
+    },
+    {
+      "type": "gallery",
+      "label": "Galerie",
+      "config": {
+        "titre": "Notre univers",
+        "imagePrompts": ["detailed description of image 1 in english", "detailed description of image 2 in english", "detailed description of image 3 in english"]
+      }
+    }
+  ]
 }`;
 
 // Tente d'extraire et parser le JSON du texte retourné par le modèle
@@ -135,6 +166,19 @@ export async function analyserBusinessEtCreerPlan(
         i * 7919 + Date.now() % 10000
       ),
     }));
+  }
+
+  // Convertir les imagePrompts des sections gallery en vraies URLs Pollinations
+  if (Array.isArray(plan.sections)) {
+    plan.sections = plan.sections.map((section: any, si: number) => {
+      if (section.type === "gallery" && Array.isArray(section.config?.imagePrompts)) {
+        const images = section.config.imagePrompts.map((prompt: string, pi: number) =>
+          generateProductImageUrl(prompt, si * 1000 + pi * 17 + Date.now() % 5000)
+        );
+        return { ...section, config: { ...section.config, images, imagePrompts: undefined } };
+      }
+      return section;
+    });
   }
 
   return plan;
