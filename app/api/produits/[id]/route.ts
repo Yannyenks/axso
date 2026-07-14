@@ -68,7 +68,18 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!produit) return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
 
     const updateData: any = { ...data };
-    if (data.nom && data.nom !== produit.nom) {
+
+    // Champs non couverts par le spread Zod — appliqués directement depuis le body
+    const CHAMPS_DIRECTS = [
+      "type", "slug", "videos", "fichierUrl", "fichierNom", "fichierTaille",
+      "instructionsTelechargement", "prixFournisseur", "urlFournisseur", "nomFournisseur",
+    ] as const;
+    for (const champ of CHAMPS_DIRECTS) {
+      if (champ in body) updateData[champ] = body[champ];
+    }
+
+    // Régénérer slug si le nom change (sans écraser le slug envoyé explicitement)
+    if (data.nom && data.nom !== produit.nom && !("slug" in body)) {
       const newSlug = slugify(data.nom);
       const slugExiste = await prisma.produit.findFirst({
         where: { tenantId, slug: newSlug, id: { not: id } },
