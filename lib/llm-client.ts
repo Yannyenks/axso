@@ -378,6 +378,69 @@ export function pollinationsAudioUrl(text: string, voice = "nova", model: "eleve
 
 export function hasAnthropic(): boolean { return !!process.env.ANTHROPIC_API_KEY; }
 
+export async function completionWithToolsAnthropic(
+  messages: any[],
+  tools: ToolDefinition[],
+  maxTokens = 2000
+): Promise<CompletionWithToolsResult> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY manquante");
+  const { default: Anthropic } = await import("@anthropic-ai/sdk");
+  const client = new Anthropic({ apiKey });
+
+  const systemMsg = messages.find((m: any) => m.role === "system");
+  const userMessages = messages.filter((m: any) => m.role !== "system");
+  const anthropicTools = tools.map((t) => ({
+    name: t.name,
+    description: t.description,
+    input_schema: t.parameters as any,
+  }));
+
+  const response = await client.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: maxTokens,
+    ...(systemMsg ? { system: systemMsg.content } : {}),
+    tools: anthropicTools,
+    messages: userMessages.map((m: any) => ({ role: m.role as "user" | "assistant", content: m.content })),
+  });
+
+  if (response.stop_reason === "tool_use") {
+    const toolCalls: ToolCall[] = (response.content as any[])
+      .filter((b: any) => b.type === "tool_use")
+      .map((b: any) => ({ id: b.id, name: b.name, arguments: b.input ?? {} }));
+    return { toolCalls, stopReason: "tool_use", provider: "claude-sonnet-4-6" };
+  }
+
+  const text = (response.content as any[])
+    .filter((b: any) => b.type === "text")
+    .map((b: any) => b.text)
+    .join("");
+  return { text, stopReason: "end_turn", provider: "claude-sonnet-4-6" };
+}
+
+export async function completionAnthropic(messages: ChatMessage[], maxTokens = 800): Promise<CompletionResult> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY manquante");
+  const { default: Anthropic } = await import("@anthropic-ai/sdk");
+  const client = new Anthropic({ apiKey });
+
+  const systemMsg = messages.find((m) => m.role === "system");
+  const userMessages = messages.filter((m) => m.role !== "system");
+
+  const response = await client.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: maxTokens,
+    ...(systemMsg ? { system: systemMsg.content } : {}),
+    messages: userMessages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
+  });
+
+  const text = (response.content as any[])
+    .filter((b: any) => b.type === "text")
+    .map((b: any) => b.text)
+    .join("");
+  return { text, provider: "claude-sonnet-4-6" };
+}
+
 // ─── 10. OpenAI ──────────────────────────────────────────────────────────────
 
 export function hasOpenAI(): boolean { return !!process.env.OPENAI_API_KEY; }
@@ -425,6 +488,7 @@ type SimpleProviderFn = () => Promise<CompletionResult>;
 function buildChain(messages: any[], tools: ToolDefinition[], maxTokens: number, fast = false): Array<{ name: string; fn: ProviderFn }> {
   const chain: Array<{ name: string; fn: ProviderFn }> = [];
 
+  if (hasAnthropic()) chain.push({ name: "anthropic", fn: () => completionWithToolsAnthropic(messages, tools, maxTokens) });
   if (hasNVIDIA()) chain.push({ name: "nvidia", fn: () => completionWithToolsNVIDIA(messages, tools, maxTokens, undefined, fast) });
   if (hasGLM()) chain.push({ name: "glm-5.2", fn: () => completionWithToolsGLM(messages, tools, maxTokens) });
   if (hasGroq()) chain.push({ name: "groq", fn: () => completionWithToolsGroq(messages, tools, maxTokens) });
@@ -442,6 +506,7 @@ function buildChain(messages: any[], tools: ToolDefinition[], maxTokens: number,
 
 function buildSimpleChain(messages: ChatMessage[], maxTokens: number): Array<{ name: string; fn: SimpleProviderFn }> {
   const chain: Array<{ name: string; fn: SimpleProviderFn }> = [];
+  if (hasAnthropic()) chain.push({ name: "anthropic", fn: () => completionAnthropic(messages, maxTokens) });
   if (hasNVIDIA()) chain.push({ name: "nvidia", fn: () => completionNVIDIA(messages, maxTokens) });
   if (hasGLM()) chain.push({ name: "glm-5.2", fn: () => completionGLM(messages, maxTokens) });
   if (hasGroq()) chain.push({ name: "groq", fn: () => completionGroq(messages, maxTokens) });
