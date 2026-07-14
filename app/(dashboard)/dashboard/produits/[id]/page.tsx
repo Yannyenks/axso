@@ -18,6 +18,7 @@ type Produit = {
   images: string[]; categorie: string | null; tags: string[];
   actif: boolean; featured: boolean; poids: number | null;
   metaTitle: string | null; metaDesc: string | null;
+  type: "physique" | "digital" | "dropshipping";
   ventes: number; vues: number; devise?: string;
   _count: { avis: number; lignesCommande: number };
 };
@@ -325,6 +326,36 @@ export default function EditProduitPage() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Type de produit */}
+          <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
+            <h2 className="text-white font-semibold text-sm mb-1">Type de produit</h2>
+            <div className="grid grid-cols-3 gap-1.5">
+              {([
+                { val: "physique",     label: "📦 Physique",     color: "#F5A623" },
+                { val: "digital",      label: "💾 Digital",      color: "#7c3aed" },
+                { val: "dropshipping", label: "🚚 Drop",         color: "#059669" },
+              ] as const).map(t => (
+                <button
+                  key={t.val}
+                  onClick={() => set("type", t.val)}
+                  className="py-2 rounded-xl text-xs font-semibold transition-all border"
+                  style={{
+                    background: (form as any).type === t.val ? `${t.color}20` : "transparent",
+                    borderColor: (form as any).type === t.val ? `${t.color}60` : "#e5e7eb",
+                    color: (form as any).type === t.val ? t.color : "#9ca3af",
+                  }}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            {(form as any).type === "digital" && (
+              <p className="text-xs text-purple-400 bg-purple-500/10 rounded-lg px-3 py-2">
+                Paiement Stripe obligatoire • Livraison instantanée par fichier ou lien
+              </p>
+            )}
           </div>
 
           {/* Options */}

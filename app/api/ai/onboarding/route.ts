@@ -27,6 +27,7 @@ const schemaExecuter = z.object({
       stock: z.number().optional(),
       categorie: z.string(),
       imageUrl: z.string().optional(),
+      type: z.enum(["physique", "digital"]).optional(),
     })),
     livraison: z.object({
       locale: z.number(),
@@ -141,6 +142,7 @@ export async function POST(request: Request) {
                 stock: p.stock ?? 10,
                 categorie: p.categorie,
                 images: p.imageUrl ? [p.imageUrl] : [],
+                type: p.type ?? "physique",
                 actif: true,
                 featured: true,
               },

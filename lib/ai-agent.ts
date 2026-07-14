@@ -8,6 +8,7 @@ export interface PlanProduit {
   prix: number;
   stock: number;
   categorie: string;
+  type?: "physique" | "digital";
 }
 
 export interface PlanLivraison {
@@ -73,6 +74,8 @@ Règles strictes :
 - themeId : choisis parmi — "noir-obsidien" (mode/luxe/sombre), "violet-cosmos" (beauté/cosmétiques), "terre-et-or" (artisanat/naturel/chaleureux), "kente-royal" (tissu/royal/coloré), "ocean-atlantique" (frais/bleu), "bwiti-forest" (vert/naturel/bio)
 - slug : lettres minuscules, chiffres, tirets seulement (ex: mode-aminata, tech-paris, shop-dubai)
 - Propose 3 à 5 produits représentatifs avec des prix réalistes en devise locale
+- Si la boutique vend des produits digitaux (ebooks, formations, templates, musique, logiciels, NFT, etc.), mets "type": "digital" sur chaque produit et stock: 999
+- Pour les produits physiques, omets le champ type (il sera "physique" par défaut)
 - Prix livraison locale adaptés au pays et au contexte (0 si digital)
 - Crée entre 2 et 4 sections pertinentes pour la boutique
 - Pour les sections "gallery", génère 3 descriptions d'images précises en anglais (tu ne mets que le texte descriptif, l'image sera générée automatiquement)
@@ -89,7 +92,7 @@ Format JSON attendu :
   "description": "...",
   "messageIA": "Message chaleureux expliquant le plan en 2-3 phrases avec des emojis",
   "produits": [
-    { "nom": "...", "description": "...", "prix": 0, "stock": 10, "categorie": "..." }
+    { "nom": "...", "description": "...", "prix": 0, "stock": 10, "categorie": "...", "type": "physique" }
   ],
   "livraison": { "locale": 0, "nationale": 0, "gratuite": 0 },
   "sections": [
