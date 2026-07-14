@@ -56,9 +56,11 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const hasDigital = commande.lignes.some((l) => l.produit?.type === "digital");
+    const hasDigital      = commande.lignes.some((l) => l.produit?.type === "digital");
+    const hasDropshipping = commande.lignes.some((l) => l.produit?.type === "dropshipping");
 
     if (hasDigital) {
+      // Flux digital : crédite wallet + envoie fichiers
       await traiterPaiementDigital({
         commande: {
           id: commande.id,
@@ -76,8 +78,26 @@ export async function POST(req: NextRequest) {
         })),
         reference: pi.id,
       });
+    } else if (hasDropshipping) {
+      // Flux dropshipping : Stripe → wallet Axso → marchand (déduction coût fournisseur gérée manuellement)
+      await prisma.commande.update({
+        where: { id: commandeId },
+        data: { paiementStatut: "completed", statut: "confirmee" },
+      });
+      const { crediterWallet } = await import("@/lib/affiliation");
+      const COMMISSION_AXSO = 0.03;
+      const net = Math.round(commande.montantTotal * (1 - COMMISSION_AXSO) * 100) / 100;
+      await crediterWallet(
+        commande.tenantId,
+        net,
+        commande.devise,
+        `Vente dropshipping #${commande.id.slice(-6).toUpperCase()}`,
+        commande.id,
+        pi.id,
+        "CREDIT"
+      );
     } else {
-      // Produit physique : escrow 48h
+      // Produit physique payé en ligne : escrow 48h avant libération wallet
       await prisma.commande.update({
         where: { id: commandeId },
         data: { paiementStatut: "completed", statut: "confirmee" },

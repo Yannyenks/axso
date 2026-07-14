@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { notifierClientWhatsApp } from "@/lib/whatsapp";
+import { crediterWallet } from "@/lib/affiliation";
 
 const TRANSITIONS_VALIDES: Record<string, string[]> = {
   en_attente: ["confirmee", "annulee"],
@@ -101,6 +102,25 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
     }
   });
+
+  // Créditer le wallet quand commande physique/COD est livrée
+  if (statut === "livree") {
+    const estCOD = !commande.stripePaymentIntentId && !commande.stripeChargeId;
+    const dejaCredite = commande.paiementStatut === "completed" && commande.escrow?.statut === "released";
+    if (estCOD || !dejaCredite) {
+      const COMMISSION = 0.03;
+      const net = Math.round(commande.montantTotal * (1 - COMMISSION) * 100) / 100;
+      await crediterWallet(
+        commande.tenantId,
+        net,
+        commande.devise,
+        `Vente livrée #${commande.numero}`,
+        id,
+        undefined,
+        "CREDIT"
+      ).catch(() => {});
+    }
+  }
 
   // Notifier le client via WhatsApp
   const { envoyeAuto, whatsappUrl } = await notifierClientWhatsApp({

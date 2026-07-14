@@ -428,8 +428,8 @@ function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codeProm
 // CHECKOUT MIXTE — Avertissement + deux sections
 // ═══════════════════════════════════════════════════════════════════════════════
 function CheckoutMixte({ theme, slug, devise, tenantId, nomBoutique, logoUrl, items, total, codePromo, viderPanier }: any) {
-  const itemsPhysiques = items.filter((i: any) => i.type !== "digital");
-  const itemsDigitaux  = items.filter((i: any) => i.type === "digital");
+  const itemsPhysiques = items.filter((i: any) => i.type === "physique");
+  const itemsDigitaux  = items.filter((i: any) => i.type === "digital" || i.type === "dropshipping");
   const totalPhysique  = itemsPhysiques.reduce((s: number, i: any) => s + i.prix * i.quantite, 0);
   const totalDigital   = itemsDigitaux.reduce((s: number, i: any) => s + i.prix * i.quantite, 0);
   const [section, setSection] = useState<"physique" | "digital">("physique");
@@ -479,12 +479,14 @@ export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoU
   const total = totalAvecReduction();
 
   // Détecter le type du panier
+  // digital + dropshipping → paiement en ligne Stripe
+  // physique → COD livraison
   const typePanier = useMemo(() => {
     if (items.length === 0) return "vide";
-    const aDigital  = items.some(i => i.type === "digital");
-    const aPhysique = items.some(i => i.type !== "digital");
-    if (aDigital && aPhysique) return "mixte";
-    if (aDigital) return "digital";
+    const aEnLigne  = items.some(i => i.type === "digital" || i.type === "dropshipping");
+    const aPhysique = items.some(i => i.type === "physique");
+    if (aEnLigne && aPhysique) return "mixte";
+    if (aEnLigne) return "digital"; // même flow Stripe pour digital + dropshipping
     return "physique";
   }, [items]);
 
@@ -510,7 +512,7 @@ export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoU
         )}
         {typePanier === "digital" && (
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold" style={{ background: `${theme.accent}15`, color: theme.accent, border: `1px solid ${theme.accent}30` }}>
-            <Zap size={14} /> Produit(s) digital(aux) · Paiement en ligne sécurisé · Livraison instantanée
+            <Zap size={14} /> {items.some((i:any) => i.type === "dropshipping") ? "Expédition directe · Paiement en ligne sécurisé" : "Livraison instantanée · Paiement en ligne sécurisé"}
           </div>
         )}
         {typePanier === "mixte" && (
