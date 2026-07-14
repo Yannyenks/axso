@@ -6,6 +6,7 @@ import { z } from "zod";
 
 const schemaUpdate = z.object({
   nom: z.string().min(2).optional(),
+  slug: z.string().optional(),
   description: z.string().optional().nullable(),
   prix: z.number().positive().optional(),
   prixCompare: z.number().positive().optional().nullable(),
@@ -13,6 +14,7 @@ const schemaUpdate = z.object({
   stock: z.number().int().min(0).optional(),
   sku: z.string().optional().nullable(),
   images: z.array(z.string()).optional(),
+  videos: z.array(z.string()).optional(),
   categorie: z.string().optional().nullable(),
   tags: z.array(z.string()).optional(),
   actif: z.boolean().optional(),
@@ -20,6 +22,14 @@ const schemaUpdate = z.object({
   poids: z.number().optional().nullable(),
   metaTitle: z.string().optional().nullable(),
   metaDesc: z.string().optional().nullable(),
+  type: z.enum(["physique", "digital", "dropshipping"]).optional(),
+  fichierUrl: z.string().optional().nullable(),
+  fichierNom: z.string().optional().nullable(),
+  fichierTaille: z.number().optional().nullable(),
+  instructionsTelechargement: z.string().optional().nullable(),
+  prixFournisseur: z.number().optional().nullable(),
+  urlFournisseur: z.string().optional().nullable(),
+  nomFournisseur: z.string().optional().nullable(),
 });
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
