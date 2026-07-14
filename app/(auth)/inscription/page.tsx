@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -224,7 +225,16 @@ function EtapeIA({
       clearInterval(interval);
       if (!res.ok) throw new Error(data.message);
       setPhase("succes");
-      setTimeout(() => router.push("/connexion?inscription=success"), 2500);
+
+      // Connexion automatique puis redirection dashboard
+      const loginResult = await signIn("credentials", {
+        email: compte.email,
+        password: compte.password,
+        redirect: false,
+      });
+      setTimeout(() => {
+        router.push(loginResult?.ok ? "/dashboard" : "/connexion?inscription=success");
+      }, 1500);
     } catch (err: any) {
       clearInterval(interval);
       setErreur(err.message || "Erreur lors de la création");
