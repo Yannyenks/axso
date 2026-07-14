@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { hasNVIDIA, completionNVIDIA, hasFreeLLM, completionFreeLLM, hasPollinations, completionPollinations } from "./llm-client";
+import { completionAuto } from "./llm-client";
 import { generateProductImageUrl, buildProductImagePrompt } from "./image-gen";
 
 export interface PlanProduit {
@@ -96,53 +96,27 @@ export async function analyserBusinessEtCreerPlan(
   description: string
 ): Promise<PlanBoutique & { messageIA: string }> {
 
-  let texte: string;
+  const messages = [
+    { role: "system" as const, content: PROMPT_ANALYSTE },
+    { role: "user" as const, content: description },
+  ];
 
-  // Priorité 1 : NVIDIA NIM DeepSeek V4 Flash (rapide pour JSON structuré)
-  if (hasNVIDIA()) {
-    const result = await completionNVIDIA(
-      [
-        { role: "system", content: PROMPT_ANALYSTE },
-        { role: "user", content: description },
-      ],
-      2000,
-      process.env.NVIDIA_MODEL_DEEPSEEK ?? "deepseek-ai/deepseek-v4-flash"
-    );
-    texte = result.text;
-  } else if (hasPollinations()) {
-    // Priorité 2 : Pollinations Claude Sonnet 5 (meilleure qualité JSON)
-    const result = await completionPollinations(
-      [
-        { role: "system", content: PROMPT_ANALYSTE },
-        { role: "user", content: description },
-      ],
-      2000,
-      "claude-sonnet-5"
-    );
-    texte = result.text;
-  } else if (hasFreeLLM()) {
-    // Priorité 3 : freellmapi (si lancé en local)
-    const result = await completionFreeLLM(
-      [
-        { role: "system", content: PROMPT_ANALYSTE },
-        { role: "user", content: description },
-      ],
-      1500
-    );
-    texte = result.text;
-  } else {
-    // Fallback : Claude Anthropic
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) throw new Error("Aucun fournisseur IA configuré. Ajoute NVIDIA_KEY_DEEPSEEK ou ANTHROPIC_API_KEY dans .env.local");
+  // Essaie jusqu'à 3 fois avec la chaîne de fallback automatique
+  let texte = "";
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const result = await completionAuto(messages, 2000);
+      texte = result.text;
+      // Vérifie que la réponse contient bien du JSON avant d'accepter
+      if (texte.includes("{")) break;
+    } catch (e: any) {
+      lastError = e;
+    }
+  }
 
-    const client = new Anthropic({ apiKey });
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1500,
-      system: PROMPT_ANALYSTE,
-      messages: [{ role: "user", content: description }],
-    });
-    texte = (response.content[0] as any).text;
+  if (!texte || !texte.includes("{")) {
+    throw new Error(lastError?.message ?? "Aucun fournisseur IA disponible — réessaie dans quelques secondes");
   }
 
   const plan = extraireJSON(texte);
