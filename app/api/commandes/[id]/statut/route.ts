@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { notifierClientWhatsApp } from "@/lib/whatsapp";
 
 const TRANSITIONS_VALIDES: Record<string, string[]> = {
   en_attente: ["confirmee", "annulee"],
@@ -22,7 +23,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const commande = await prisma.commande.findUnique({
     where: { id },
-    include: { escrow: true, commission: true, tenant: true },
+    include: { escrow: true, commission: true, tenant: { select: { id: true, slug: true, nomBoutique: true } } },
   });
 
   if (!commande) return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
@@ -101,5 +102,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
   });
 
-  return NextResponse.json({ success: true, statut });
+  // Notifier le client via WhatsApp
+  const { envoyeAuto, whatsappUrl } = await notifierClientWhatsApp({
+    telephone: commande.clientTelephone,
+    statut,
+    numero: commande.numero,
+    boutique: commande.tenant.nomBoutique,
+    slug: commande.tenant.slug,
+    commandeId: id,
+  });
+
+  return NextResponse.json({ success: true, statut, envoyeAuto, whatsappUrl });
 }

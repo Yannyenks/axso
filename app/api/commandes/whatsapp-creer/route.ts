@@ -73,6 +73,9 @@ export async function POST(req: NextRequest) {
 
     const adresseLivraison = [client.adresse, client.ville, client.pays].filter(Boolean).join(", ");
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axso.vercel.app";
+    const lienSuivi = `${appUrl}/${slug}/suivi/${commande.id}`;
+
     const message = [
       `🛍️ *Nouvelle commande — ${tenant.nomBoutique}*`,
       `N° ${commande.numero}`,
@@ -86,6 +89,8 @@ export async function POST(req: NextRequest) {
       ``,
       `*Total à percevoir à la livraison :* ${formatMontant(total, devise)}`,
       codePromo ? `Code promo appliqué : ${codePromo}` : null,
+      ``,
+      `🔍 Suivi commande client : ${lienSuivi}`,
       ``,
       `✅ Merci de confirmer la commande et l'heure de livraison.`,
     ].filter(Boolean).join("\n");
