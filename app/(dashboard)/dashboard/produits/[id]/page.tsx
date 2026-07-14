@@ -109,6 +109,20 @@ export default function EditProduitPage() {
     setFormState(f => ({ ...f, [field]: value }));
   }
 
+  async function changerType(newType: "physique" | "digital" | "dropshipping") {
+    set("type", newType);
+    try {
+      await fetch(`/api/produits/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: newType }),
+      });
+      toast.success(`Type changé → ${newType === "digital" ? "💾 Digital" : newType === "dropshipping" ? "🚚 Dropshipping" : "📦 Physique"}`);
+    } catch {
+      toast.error("Erreur lors du changement de type");
+    }
+  }
+
   const marge = form.prixFournisseur && form.prix
     ? Math.round((1 - parseFloat(form.prixFournisseur) / parseFloat(form.prix)) * 100) : null;
 
@@ -261,7 +275,7 @@ export default function EditProduitPage() {
           const Icone = t.icon;
           const actif = form.type === t.id;
           return (
-            <button key={t.id} onClick={() => set("type", t.id)}
+            <button key={t.id} onClick={() => changerType(t.id)}
               className="flex items-start gap-3 p-4 rounded-2xl border text-left transition-all"
               style={{
                 borderColor: actif ? `${t.color}50` : "#e5e7eb",

@@ -98,6 +98,35 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 }
 
+// PATCH — mise à jour rapide d'un seul champ (type, actif, featured…)
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  const tenantId = (session.user as any)?.tenantId;
+  const { id } = await params;
+
+  const body = await req.json();
+
+  const produit = await prisma.produit.findFirst({ where: { id, tenantId } });
+  if (!produit) return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
+
+  // Champs autorisés pour le PATCH rapide
+  const data: Record<string, any> = {};
+  if (body.type !== undefined && ["physique", "digital", "dropshipping"].includes(body.type)) {
+    data.type = body.type;
+  }
+  if (body.actif !== undefined) data.actif = Boolean(body.actif);
+  if (body.featured !== undefined) data.featured = Boolean(body.featured);
+  if (body.stock !== undefined) data.stock = Number(body.stock);
+
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json({ error: "Aucun champ valide à mettre à jour" }, { status: 400 });
+  }
+
+  const updated = await prisma.produit.update({ where: { id }, data });
+  return NextResponse.json({ produit: updated });
+}
+
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
