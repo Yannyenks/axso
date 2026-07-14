@@ -9,6 +9,7 @@ import {
   IconSourcing, IconCommandes, IconClients, IconWallet, IconRevenus,
   IconMarketing, IconMessages, IconContenus, IconNavigateur, IconLivraisons,
   IconAnalytics, IconConnecteurs, IconAbonnement, IconParametres, IconIA,
+  IconWhatsApp,
 } from "./AppIcons";
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
@@ -23,6 +24,7 @@ const NAV_GROUPS = [
       { href: "/dashboard/sourcing",     label: "Sourcing Drop",Icone: IconSourcing },
       { href: "/dashboard/commandes",    label: "Commandes",    Icone: IconCommandes,   badge: true },
       { href: "/dashboard/clients",      label: "Clients",      Icone: IconClients },
+      { href: "/dashboard/whatsapp",     label: "WhatsApp",     Icone: IconWhatsApp,    badge: true },
     ],
   },
   {

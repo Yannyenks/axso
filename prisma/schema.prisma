@@ -901,18 +901,22 @@ model AgentGoal {
 // MESSAGE RECU (WhatsApp / Instagram DM entrants)
 // =====================
 model MessageRecu {
-  id        String   @id @default(cuid())
-  tenantId  String
-  source    String   // "whatsapp" | "instagram_dm" | "facebook_messenger"
-  de        String   // numéro de téléphone ou FB user id
-  nom       String?  // nom du contact si disponible
-  corps     String   @db.Text
-  lu        Boolean  @default(false)
-  repondu   Boolean  @default(false)
-  payload   Json     @default("{}")
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  tenantId    String
+  source      String   // "whatsapp" | "instagram_dm" | "facebook_messenger"
+  de          String   // numéro de téléphone ou FB user id
+  nom         String?  // nom du contact
+  corps       String   @db.Text
+  lu          Boolean  @default(false)
+  repondu     Boolean  @default(false)
+  direction   String   @default("entrant") // "entrant" | "sortant"
+  waMessageId String?  // ID unique WhatsApp (évite doublons)
+  commandeId  String?  // commande liée si détectée automatiquement
+  payload     Json     @default("{}")
+  createdAt   DateTime @default(now())
 
   @@index([tenantId, source])
+  @@index([tenantId, de])
   @@index([tenantId, lu])
 }
 

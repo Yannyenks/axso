@@ -42,20 +42,42 @@ export async function POST(req: NextRequest) {
           const corps = extraireCorps(msg);
           if (!corps) continue;
 
-          if (tenantId) {
-            await prisma.messageRecu.create({
-              data: {
-                tenantId,
-                source: "whatsapp",
-                de,
-                nom: val.contacts?.find((c: any) => c.wa_id === de)?.profile?.name,
-                corps,
-                payload: msg,
-              },
-            }).catch(() => {});
+          const nom = val.contacts?.find((c: any) => c.wa_id === de)?.profile?.name ?? undefined;
 
-            // Auto-réponse chatbot IA (best-effort, sans bloquer)
-            autoRepondre(tenantId, de, corps, phoneId).catch(() => {});
+          if (tenantId) {
+            // Éviter les doublons via waMessageId
+            const existant = msg.id
+              ? await prisma.messageRecu.findFirst({ where: { waMessageId: msg.id } })
+              : null;
+
+            if (!existant) {
+              // Détecter la commande liée (par numéro de téléphone)
+              const telephone = de.replace(/\D/g, "").slice(-8);
+              const commandeLiee = await prisma.commande.findFirst({
+                where: { tenantId, clientTelephone: { contains: telephone } },
+                orderBy: { createdAt: "desc" },
+                select: { id: true, numero: true, statut: true },
+              }).catch(() => null);
+
+              await prisma.messageRecu.create({
+                data: {
+                  tenantId,
+                  source: "whatsapp",
+                  de,
+                  nom,
+                  corps,
+                  waMessageId: msg.id ?? null,
+                  commandeId: commandeLiee?.id ?? null,
+                  payload: msg,
+                },
+              }).catch(() => {});
+
+              // Auto-confirmation de commande sur mots-clés
+              await detecterEtConfirmerCommande(tenantId, de, corps, commandeLiee, phoneId).catch(() => {});
+
+              // Auto-réponse chatbot IA (best-effort)
+              autoRepondre(tenantId, de, corps, phoneId).catch(() => {});
+            }
           }
 
           // Marquer comme lu côté Meta (best-effort)
@@ -76,6 +98,40 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("[webhook/whatsapp]", err);
     return NextResponse.json({ error: "Erreur" }, { status: 500 });
+  }
+}
+
+const MOTS_CONFIRMATION = ["oui", "confirmer", "confirme", "ok", "1", "yes", "valider", "valide", "d'accord", "accord", "c'est bon", "cest bon"];
+
+async function detecterEtConfirmerCommande(
+  tenantId: string,
+  de: string,
+  message: string,
+  commande: { id: string; numero: string; statut: string } | null,
+  phoneId: string
+) {
+  if (!commande || commande.statut !== "en_attente") return;
+
+  const texte = message.toLowerCase().trim();
+  const estConfirmation = MOTS_CONFIRMATION.some(m => texte === m || texte.startsWith(m + " ") || texte.endsWith(" " + m));
+  if (!estConfirmation) return;
+
+  // Confirmer la commande
+  await prisma.commande.update({ where: { id: commande.id }, data: { statut: "confirmee" } });
+
+  // Envoyer confirmation WhatsApp au client
+  const { notifierClientWhatsApp } = await import("@/lib/whatsapp");
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true, slug: true } });
+  if (tenant) {
+    const numero = de.startsWith("+") ? de : `+${de}`;
+    await notifierClientWhatsApp({
+      telephone: numero,
+      statut: "confirmee",
+      numero: commande.numero,
+      boutique: tenant.nomBoutique,
+      slug: tenant.slug,
+      commandeId: commande.id,
+    });
   }
 }
 
