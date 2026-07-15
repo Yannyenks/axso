@@ -26,6 +26,31 @@ function toAnthropicTools(tools: AgentTool[]): Anthropic.Tool[] {
   }));
 }
 
+// Modèles Claude disponibles par ordre de préférence
+const CLAUDE_MODELS = [
+  "claude-sonnet-4-6",
+  "claude-opus-4-8",
+  "claude-3-5-sonnet-20241022",
+  "claude-3-5-haiku-20241022",
+];
+
+async function callClaudeCreate(client: Anthropic, params: any): Promise<any> {
+  for (const model of CLAUDE_MODELS) {
+    try {
+      return await (client.messages.create as any)({ ...params, model });
+    } catch (err: any) {
+      const msg = err?.message ?? "";
+      // Erreur de modèle → essayer le suivant
+      if (msg.includes("model") || msg.includes("404") || msg.includes("not_found")) {
+        console.warn(`[claude] model ${model} unavailable, trying next`);
+        continue;
+      }
+      throw err; // Autre erreur (auth, rate limit...) → propager
+    }
+  }
+  throw new Error("Aucun modèle Claude disponible");
+}
+
 // ─── Claude direct (non-streaming) — fiable, multi-turn ──────────────────────
 async function runViaClaude(
   systemPrompt: string,
@@ -46,8 +71,7 @@ async function runViaClaude(
   }));
 
   for (let i = 0; i < maxIterations; i++) {
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
+    const response = await callClaudeCreate(client, {
       max_tokens: 8000,
       system: systemPrompt,
       tools: anthropicTools,
@@ -109,7 +133,7 @@ async function runClaudeStream(
 
   for (let iter = 0; iter < maxIterations; iter++) {
     const runner = client.messages.stream({
-      model: "claude-sonnet-4-6",
+      model: CLAUDE_MODELS[0],
       max_tokens: 8000,
       system: systemPrompt,
       tools: anthropicTools,
@@ -286,6 +310,11 @@ export function runAgentStream(
               return;
             } catch (nonStreamErr: any) {
               console.warn("[stream] Claude non-streaming:", nonStreamErr?.message?.slice(0, 80));
+              // Claude configuré mais indisponible — afficher un message propre
+              // plutôt que de tomber sur Pollinations qui peut écrire les instructions système
+              send({ type: "token", text: "Je suis temporairement indisponible. Réessaie dans quelques instants." });
+              finish([]);
+              return;
             }
           }
         }
