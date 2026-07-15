@@ -718,6 +718,8 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
   }
 };
 
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   try {
     const session = await auth();

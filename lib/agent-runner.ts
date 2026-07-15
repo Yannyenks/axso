@@ -205,7 +205,7 @@ export async function runAgent(
   return runViaAuto(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations, fast);
 }
 
-// ── Streaming natif Claude ────────────────────────────────────────────────────
+// ── Streaming natif Claude (async iterator, plus fiable) ─────────────────────
 async function runClaudeStreamInner(
   send: (data: object) => void,
   systemPrompt: string,
@@ -225,8 +225,7 @@ async function runClaudeStreamInner(
   }));
 
   for (let iter = 0; iter < maxIterations; iter++) {
-    // Streaming natif Anthropic
-    const stream = client.messages.stream({
+    const runner = client.messages.stream({
       model: "claude-sonnet-4-6",
       max_tokens: 8000,
       system: systemPrompt,
@@ -234,38 +233,32 @@ async function runClaudeStreamInner(
       messages: conversation,
     });
 
-    let textSoFar = "";
-
-    // Stream les tokens de texte en temps réel
-    stream.on("text", (text) => {
-      textSoFar += text;
-      send({ type: "token", text });
-    });
-
-    // Attendre la fin du stream
-    const finalMessage = await stream.finalMessage();
-    const stopReason = finalMessage.stop_reason;
-
-    if (stopReason === "end_turn") {
-      break;
+    // Async iterator — plus robuste que .on("text") en environnement serverless
+    for await (const event of runner) {
+      if (
+        event.type === "content_block_delta" &&
+        (event as any).delta?.type === "text_delta"
+      ) {
+        send({ type: "token", text: (event as any).delta.text });
+      }
     }
 
-    if (stopReason === "tool_use") {
-      // Ajouter le message assistant complet (avec blocs tool_use)
-      conversation.push({ role: "assistant", content: finalMessage.content });
+    const finalMessage = await runner.finalMessage();
+    const stopReason = finalMessage.stop_reason;
 
-      const toolResults: Anthropic.ToolResultBlockParam[] = [];
+    if (stopReason === "end_turn") break;
+
+    if (stopReason === "tool_use") {
+      conversation.push({ role: "assistant", content: finalMessage.content });
       const toolsToRun = finalMessage.content.filter((b: any) => b.type === "tool_use");
 
-      // Exécuter les outils en parallèle si indépendants
-      const resultats = await Promise.all(
-        toolsToRun.map((block: any) =>
-          executeOutil(block.name, block.input as Record<string, any>, tenantId)
-            .then(r => ({ block, ...r }))
-        )
-      );
-
-      for (const { block, succes, resultat } of resultats) {
+      const toolResults: Anthropic.ToolResultBlockParam[] = [];
+      for (const block of toolsToRun) {
+        const { succes, resultat } = await executeOutil(
+          (block as any).name,
+          (block as any).input ?? {},
+          tenantId
+        );
         actionsEffectuees.push(resultat);
         toolResults.push({
           type: "tool_result",
@@ -274,9 +267,7 @@ async function runClaudeStreamInner(
           is_error: !succes,
         });
       }
-
       conversation.push({ role: "user", content: toolResults });
-      // Continuer la boucle pour la réponse après les outils
       continue;
     }
 
