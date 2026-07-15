@@ -205,7 +205,7 @@ export async function runAgent(
   return runViaAuto(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations, fast);
 }
 
-// ── Streaming natif Claude (async iterator, plus fiable) ─────────────────────
+// ── Streaming natif Claude (pattern canonique Anthropic SDK) ─────────────────
 async function runClaudeStreamInner(
   send: (data: object) => void,
   systemPrompt: string,
@@ -221,10 +221,11 @@ async function runClaudeStreamInner(
 
   let conversation: Anthropic.MessageParam[] = messages.map((m) => ({
     role: m.role as "user" | "assistant",
-    content: m.content as any,
+    content: typeof m.content === "string" ? m.content : (m.content as any),
   }));
 
   for (let iter = 0; iter < maxIterations; iter++) {
+    // Pattern canonique Anthropic SDK : .on("text") + finalMessage()
     const runner = client.messages.stream({
       model: "claude-sonnet-4-6",
       max_tokens: 8000,
@@ -233,15 +234,9 @@ async function runClaudeStreamInner(
       messages: conversation,
     });
 
-    // Async iterator — plus robuste que .on("text") en environnement serverless
-    for await (const event of runner) {
-      if (
-        event.type === "content_block_delta" &&
-        (event as any).delta?.type === "text_delta"
-      ) {
-        send({ type: "token", text: (event as any).delta.text });
-      }
-    }
+    runner.on("text", (text: string) => {
+      send({ type: "token", text });
+    });
 
     const finalMessage = await runner.finalMessage();
     const stopReason = finalMessage.stop_reason;
@@ -297,17 +292,28 @@ export function runAgentStream(
 
         // ── 1. Claude Anthropic — streaming natif (priorité absolue) ─────────
         if (hasAnthropic()) {
+          let tokensSent = false;
+          const sendTracked = (data: object) => {
+            if ((data as any).type === "token") tokensSent = true;
+            send(data);
+          };
           try {
             await runClaudeStreamInner(
-              send, systemPrompt, messages, tools, tenantId,
+              sendTracked, systemPrompt, messages, tools, tenantId,
               executeOutil, maxIterations, actionsEffectuees
             );
             send({ type: "done", actions: actionsEffectuees });
             controller.close();
             return;
           } catch (err: any) {
-            console.warn("[stream] Claude error, fallback:", err?.message?.slice(0, 100));
-            // fall through to OpenAI / auto chain
+            console.warn("[stream] Claude error:", err?.message?.slice(0, 100));
+            if (tokensSent) {
+              // Tokens déjà envoyés — ne pas mixer avec un autre provider
+              send({ type: "done", actions: actionsEffectuees });
+              controller.close();
+              return;
+            }
+            // Aucun token envoyé — fallback propre
           }
         }
 

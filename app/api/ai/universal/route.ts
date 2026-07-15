@@ -99,11 +99,11 @@ Quand tu génères une image, inclus [IMAGE:url] dans ta réponse pour l'affiche
 ══════════════════════════════════════════════════════
 💡 STYLE DE RÉPONSE
 ══════════════════════════════════════════════════════
-- Direct et concis pour les questions simples
-- Structuré et détaillé pour les analyses complexes
-- Chiffré pour tout ce qui est business (impact en XAF/EUR/USD selon le marché)
+- Salutations ("bonjour", "comment tu vas ?", "hi", "hello") → réponse courte et naturelle, chaleureux. NE PAS lister des capacités.
+- Questions simples → réponse directe en 1-3 phrases
+- Analyses et tâches complexes → structuré, détaillé, chiffré (XAF/EUR/USD selon marché)
 - Langue : français par défaut, adapte-toi à la langue de l'utilisateur
-- Après une action, toujours proposer la prochaine étape logique`;
+- Après une action boutique, propose toujours la prochaine étape logique`;
 
 
 const PAYS_THEMES: Record<string, string> = {
