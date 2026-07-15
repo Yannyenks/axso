@@ -1,6 +1,4 @@
-// Boucle agentique partagée — fallback automatique 8 providers
-// Utilisée par tous les agents spécialisés d'Axso
-
+// Boucle agentique partagée — Claude natif en priorité + fallback 8 providers
 import Anthropic from "@anthropic-ai/sdk";
 import {
   hasOpenAI,
@@ -33,44 +31,72 @@ function toAnthropicTools(tools: AgentTool[]): Anthropic.Tool[] {
   }));
 }
 
-function raceTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`timeout:${ms}`)), ms)
-    ),
-  ]);
-}
-
-export async function runAgent(
+// ── Runner Claude natif (non-streaming) avec extended thinking ────────────────
+async function runViaClaude(
   systemPrompt: string,
   messages: Array<{ role: "user" | "assistant"; content: string }>,
   tools: AgentTool[],
   tenantId: string,
   executeOutil: ToolExecutor,
-  maxIterations = 6,
-  fast = false
+  apiKey: string,
+  maxIterations: number
 ): Promise<AgentResult> {
-  // OpenAI streaming (si dispo) → runner dédié
-  if (hasOpenAI()) {
-    try {
-      return await runViaOpenAI(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations);
-    } catch (err: any) {
-      console.warn("[agent] OpenAI error, fallback auto:", err?.message?.slice(0, 80));
+  const client = new Anthropic({ apiKey });
+  const actionsEffectuees: string[] = [];
+  const anthropicTools = toAnthropicTools(tools);
+
+  let conversation: Anthropic.MessageParam[] = messages.map((m) => ({
+    role: m.role,
+    content: m.content,
+  }));
+
+  for (let i = 0; i < maxIterations; i++) {
+    const response = await (client.messages.create as any)({
+      model: "claude-sonnet-4-6",
+      max_tokens: 10000,
+      thinking: { type: "enabled", budget_tokens: 6000 },
+      betas: ["interleaved-thinking-2025-05-14"],
+      system: systemPrompt,
+      tools: anthropicTools,
+      messages: conversation,
+    });
+
+    if (response.stop_reason === "end_turn") {
+      const textBlock = response.content.find((b: any) => b.type === "text");
+      return {
+        reponse: textBlock ? (textBlock as any).text : "Terminé.",
+        actions: actionsEffectuees,
+      };
     }
-  }
-  // Claude Anthropic — avec fallback vers chaîne auto si la clé/crédits ont un problème
-  if (hasAnthropic()) {
-    try {
-      const key = process.env.ANTHROPIC_API_KEY!;
-      return await runViaClaude(systemPrompt, messages, tools, tenantId, executeOutil, key, maxIterations);
-    } catch (err: any) {
-      console.warn("[agent] Claude API error, fallback auto:", err?.message?.slice(0, 80));
-      // fall through to auto chain
+
+    if (response.stop_reason === "tool_use") {
+      // Inclure les blocs thinking dans la conversation (requis par l'API)
+      conversation.push({ role: "assistant", content: response.content });
+      const toolResults: Anthropic.ToolResultBlockParam[] = [];
+
+      for (const block of response.content) {
+        if ((block as any).type === "tool_use") {
+          const { succes, resultat } = await executeOutil(
+            (block as any).name,
+            (block as any).input as Record<string, any>,
+            tenantId
+          );
+          actionsEffectuees.push(resultat);
+          toolResults.push({
+            type: "tool_result",
+            tool_use_id: (block as any).id,
+            content: resultat,
+            is_error: !succes,
+          });
+        }
+      }
+      conversation.push({ role: "user", content: toolResults });
+      continue;
     }
+    break;
   }
-  // Chaîne de fallback automatique (NVIDIA → GLM → Groq → Gemini → Cerebras → SambaNova → Pollinations)
-  return runViaAuto(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations, fast);
+
+  return { reponse: "Terminé.", actions: actionsEffectuees };
 }
 
 // ── Runner générique avec fallback automatique ────────────────────────────────
@@ -87,7 +113,7 @@ async function runViaAuto(
   const conversation: any[] = [{ role: "system", content: systemPrompt }, ...messages];
 
   for (let i = 0; i < maxIterations; i++) {
-    const result = await completionWithToolsAuto(conversation, tools, 2000, fast);
+    const result = await completionWithToolsAuto(conversation, tools, 4000, fast);
 
     if (result.stopReason === "end_turn") {
       return { reponse: result.text ?? "Terminé.", actions: actionsEffectuees };
@@ -114,73 +140,7 @@ async function runViaAuto(
   return { reponse: "Terminé.", actions: actionsEffectuees };
 }
 
-async function runViaClaude(
-  systemPrompt: string,
-  messages: Array<{ role: "user" | "assistant"; content: string }>,
-  tools: AgentTool[],
-  tenantId: string,
-  executeOutil: ToolExecutor,
-  apiKey: string,
-  maxIterations: number
-): Promise<AgentResult> {
-  const client = new Anthropic({ apiKey });
-  const actionsEffectuees: string[] = [];
-  const anthropicTools = toAnthropicTools(tools);
-
-  let conversation: Anthropic.MessageParam[] = messages.map((m) => ({
-    role: m.role,
-    content: m.content,
-  }));
-
-  for (let i = 0; i < maxIterations; i++) {
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 2000,
-      system: systemPrompt,
-      tools: anthropicTools,
-      messages: conversation,
-    });
-
-    if (response.stop_reason === "end_turn") {
-      const textBlock = response.content.find((b) => b.type === "text");
-      return {
-        reponse: textBlock ? (textBlock as any).text : "Terminé.",
-        actions: actionsEffectuees,
-      };
-    }
-
-    if (response.stop_reason === "tool_use") {
-      conversation.push({ role: "assistant", content: response.content });
-      const toolResults: Anthropic.ToolResultBlockParam[] = [];
-
-      for (const block of response.content) {
-        if (block.type === "tool_use") {
-          const { succes, resultat } = await executeOutil(
-            block.name,
-            block.input as Record<string, any>,
-            tenantId
-          );
-          actionsEffectuees.push(resultat);
-          toolResults.push({
-            type: "tool_result",
-            tool_use_id: block.id,
-            content: resultat,
-            is_error: !succes,
-          });
-        }
-      }
-
-      conversation.push({ role: "user", content: toolResults });
-      continue;
-    }
-
-    break;
-  }
-
-  return { reponse: "Terminé.", actions: actionsEffectuees };
-}
-
-// ── OpenAI runner (non-streaming, pour runAgent) ──────────────────────────
+// ── Runner OpenAI (non-streaming) ─────────────────────────────────────────────
 async function runViaOpenAI(
   systemPrompt: string,
   messages: Array<{ role: "user" | "assistant"; content: string }>,
@@ -193,7 +153,7 @@ async function runViaOpenAI(
   const conversation: any[] = [{ role: "system", content: systemPrompt }, ...messages];
 
   for (let i = 0; i < maxIterations; i++) {
-    const result = await completionWithToolsOpenAI(conversation, tools, 2000);
+    const result = await completionWithToolsOpenAI(conversation, tools, 4000);
     if (result.stopReason === "end_turn") {
       return { reponse: result.text ?? "Terminé.", actions: actionsEffectuees };
     }
@@ -217,14 +177,121 @@ async function runViaOpenAI(
   return { reponse: "Terminé.", actions: actionsEffectuees };
 }
 
-// ── Streaming agent — SSE avec vrai streaming OpenAI ─────────────────────
+// ── runAgent (non-streaming) ──────────────────────────────────────────────────
+export async function runAgent(
+  systemPrompt: string,
+  messages: Array<{ role: "user" | "assistant"; content: string }>,
+  tools: AgentTool[],
+  tenantId: string,
+  executeOutil: ToolExecutor,
+  maxIterations = 8,
+  fast = false
+): Promise<AgentResult> {
+  if (hasOpenAI()) {
+    try {
+      return await runViaOpenAI(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations);
+    } catch (err: any) {
+      console.warn("[agent] OpenAI error, fallback:", err?.message?.slice(0, 80));
+    }
+  }
+  if (hasAnthropic()) {
+    try {
+      const key = process.env.ANTHROPIC_API_KEY!;
+      return await runViaClaude(systemPrompt, messages, tools, tenantId, executeOutil, key, maxIterations);
+    } catch (err: any) {
+      console.warn("[agent] Claude error, fallback auto:", err?.message?.slice(0, 80));
+    }
+  }
+  return runViaAuto(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations, fast);
+}
+
+// ── Streaming natif Claude ────────────────────────────────────────────────────
+async function runClaudeStreamInner(
+  send: (data: object) => void,
+  systemPrompt: string,
+  messages: Array<{ role: "user" | "assistant"; content: string | any[] }>,
+  tools: AgentTool[],
+  tenantId: string,
+  executeOutil: ToolExecutor,
+  maxIterations: number,
+  actionsEffectuees: string[]
+): Promise<void> {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+  const anthropicTools = toAnthropicTools(tools);
+
+  let conversation: Anthropic.MessageParam[] = messages.map((m) => ({
+    role: m.role as "user" | "assistant",
+    content: m.content as any,
+  }));
+
+  for (let iter = 0; iter < maxIterations; iter++) {
+    // Streaming natif Anthropic
+    const stream = client.messages.stream({
+      model: "claude-sonnet-4-6",
+      max_tokens: 8000,
+      system: systemPrompt,
+      tools: anthropicTools,
+      messages: conversation,
+    });
+
+    let textSoFar = "";
+
+    // Stream les tokens de texte en temps réel
+    stream.on("text", (text) => {
+      textSoFar += text;
+      send({ type: "token", text });
+    });
+
+    // Attendre la fin du stream
+    const finalMessage = await stream.finalMessage();
+    const stopReason = finalMessage.stop_reason;
+
+    if (stopReason === "end_turn") {
+      break;
+    }
+
+    if (stopReason === "tool_use") {
+      // Ajouter le message assistant complet (avec blocs tool_use)
+      conversation.push({ role: "assistant", content: finalMessage.content });
+
+      const toolResults: Anthropic.ToolResultBlockParam[] = [];
+      const toolsToRun = finalMessage.content.filter((b: any) => b.type === "tool_use");
+
+      // Exécuter les outils en parallèle si indépendants
+      const resultats = await Promise.all(
+        toolsToRun.map((block: any) =>
+          executeOutil(block.name, block.input as Record<string, any>, tenantId)
+            .then(r => ({ block, ...r }))
+        )
+      );
+
+      for (const { block, succes, resultat } of resultats) {
+        actionsEffectuees.push(resultat);
+        toolResults.push({
+          type: "tool_result",
+          tool_use_id: (block as any).id,
+          content: resultat,
+          is_error: !succes,
+        });
+      }
+
+      conversation.push({ role: "user", content: toolResults });
+      // Continuer la boucle pour la réponse après les outils
+      continue;
+    }
+
+    break;
+  }
+}
+
+// ── runAgentStream (streaming SSE) ───────────────────────────────────────────
 export function runAgentStream(
   systemPrompt: string,
   messages: Array<{ role: "user" | "assistant"; content: string | any[] }>,
   tools: AgentTool[],
   tenantId: string,
   executeOutil: ToolExecutor,
-  maxIterations = 4
+  maxIterations = 8
 ): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
 
@@ -237,10 +304,26 @@ export function runAgentStream(
         const actionsEffectuees: string[] = [];
         const conversation: any[] = [{ role: "system", content: systemPrompt }, ...messages];
 
-        for (let iter = 0; iter < maxIterations; iter++) {
-          // ── Vrai streaming OpenAI ──────────────────────────────────────
-          if (hasOpenAI()) {
-            const openAIRes = await streamWithOpenAI(conversation, tools);
+        // ── 1. Claude Anthropic — streaming natif (priorité absolue) ─────────
+        if (hasAnthropic()) {
+          try {
+            await runClaudeStreamInner(
+              send, systemPrompt, messages, tools, tenantId,
+              executeOutil, maxIterations, actionsEffectuees
+            );
+            send({ type: "done", actions: actionsEffectuees });
+            controller.close();
+            return;
+          } catch (err: any) {
+            console.warn("[stream] Claude error, fallback:", err?.message?.slice(0, 100));
+            // fall through to OpenAI / auto chain
+          }
+        }
+
+        // ── 2. OpenAI — streaming natif ───────────────────────────────────────
+        if (hasOpenAI()) {
+          for (let iter = 0; iter < maxIterations; iter++) {
+            const openAIRes = await streamWithOpenAI(conversation, tools, 4000);
             if (!openAIRes.ok) throw new Error(`OpenAI ${openAIRes.status}`);
 
             const reader = openAIRes.body!.getReader();
@@ -306,17 +389,22 @@ export function runAgentStream(
               actionsEffectuees.push(resultat);
               conversation.push({ role: "tool", tool_call_id: tc.id, content: resultat });
             }
-            continue;
           }
 
-          // ── Fallback non-streaming — chaîne auto ───────────────────────
-          const result = await completionWithToolsAuto(conversation, tools, 2000, true);
+          send({ type: "done", actions: actionsEffectuees });
+          controller.close();
+          return;
+        }
+
+        // ── 3. Fallback auto — non-streaming simulé ───────────────────────────
+        for (let iter = 0; iter < maxIterations; iter++) {
+          const result = await completionWithToolsAuto(conversation, tools, 4000, false);
 
           if (result.stopReason === "end_turn") {
             const words = (result.text ?? "").match(/\S+\s*/g) ?? [];
             for (const w of words) {
               send({ type: "token", text: w });
-              await new Promise((r) => setTimeout(r, 18));
+              await new Promise((r) => setTimeout(r, 15));
             }
             break;
           }

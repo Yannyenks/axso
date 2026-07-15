@@ -133,11 +133,15 @@ export function AxiaFloat() {
     window.speechSynthesis.speak(utt);
   }, []); // eslint-disable-line
 
-  // ── API call ──────────────────────────────────────────────────────────────
+  // ── API call (SSE streaming) ───────────────────────────────────────────────
   const callAI = useCallback(async (text: string, historyBefore: Msg[], imgUrl?: string | null) => {
     if (loadingRef.current) return;
     setLoading(true);
     setInterimText("");
+
+    let firstToken = true;
+    let streamingContent = "";
+    let finalActions: string[] = [];
 
     try {
       const res = await fetch("/api/ai/universal", {
@@ -146,24 +150,76 @@ export function AxiaFloat() {
         body: JSON.stringify({
           messages: historyBefore.map(m => ({ role: m.role, content: m.content })),
           imageUrl: imgUrl ?? undefined,
-          fast: true,
+          fast: false,
+          stream: true,
         }),
       });
-      const data = await res.json();
-      const raw  = data.reponse || data.message || "Je n'ai pas pu répondre.";
-      const { text: txt, images } = parseContent(raw);
-      const reply: Msg = { role: "assistant", content: txt, images, actions: data.actions };
-      setMessages(prev => [...prev, reply]);
 
-      if (voiceModeRef.current) {
-        speakThenListen(txt);
+      if (!res.ok || !res.body) throw new Error("Réponse invalide");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+
+      outer: while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split("\n");
+        buf = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          let evt: any;
+          try { evt = JSON.parse(line.slice(6)); } catch { continue; }
+
+          if (evt.type === "token") {
+            streamingContent += evt.text as string;
+            if (firstToken) {
+              firstToken = false;
+              setLoading(false);
+              setMessages(prev => [...prev, { role: "assistant", content: streamingContent }]);
+            } else {
+              setMessages(prev => {
+                const next = [...prev];
+                next[next.length - 1] = { ...next[next.length - 1], content: streamingContent };
+                return next;
+              });
+            }
+          } else if (evt.type === "done") {
+            finalActions = (evt.actions as string[]) ?? [];
+          } else if (evt.type === "error") {
+            throw new Error((evt.text as string) || "Erreur AXIA");
+          }
+        }
       }
+
+      // Finalize: parse images, attach actions
+      const { text: txt, images } = parseContent(streamingContent || "Je n'ai pas pu répondre.");
+      setMessages(prev => {
+        const next = [...prev];
+        if (!firstToken) {
+          next[next.length - 1] = { role: "assistant", content: txt, images, actions: finalActions };
+        } else {
+          next.push({ role: "assistant", content: txt, images, actions: finalActions });
+        }
+        return next;
+      });
+
+      if (voiceModeRef.current) speakThenListen(txt);
+
     } catch {
-      const err: Msg = { role: "assistant", content: "Erreur de connexion. Réessaie dans un instant." };
-      setMessages(prev => [...prev, err]);
-      if (voiceModeRef.current) {
-        setVoicePhase("idle");
-      }
+      const errMsg = "Erreur de connexion. Réessaie dans un instant.";
+      setMessages(prev => {
+        const next = [...prev];
+        if (!firstToken && next[next.length - 1]?.role === "assistant") {
+          next[next.length - 1] = { role: "assistant", content: errMsg };
+        } else {
+          next.push({ role: "assistant", content: errMsg });
+        }
+        return next;
+      });
+      if (voiceModeRef.current) setVoicePhase("idle");
     } finally {
       setLoading(false);
     }
