@@ -498,7 +498,6 @@ function buildChain(messages: any[], tools: ToolDefinition[], maxTokens: number,
   if (hasSambaNova()) chain.push({ name: "sambanova", fn: () => completionWithToolsSambaNova(messages, tools, maxTokens) });
   if (hasOpenRouter()) chain.push({ name: "openrouter", fn: () => completionWithToolsOpenRouter(messages, tools, maxTokens) });
   if (hasFreeLLM()) chain.push({ name: "freellm", fn: () => completionWithToolsFreeLLM(messages, tools, maxTokens) });
-  // Pollinations toujours en dernier recours (sans clé)
   chain.push({ name: "pollinations", fn: () => completionWithToolsPollinations(messages, tools, maxTokens) });
 
   return chain;

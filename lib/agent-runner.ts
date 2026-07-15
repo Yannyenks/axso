@@ -53,14 +53,23 @@ export async function runAgent(
 ): Promise<AgentResult> {
   // OpenAI streaming (si dispo) → runner dédié
   if (hasOpenAI()) {
-    return runViaOpenAI(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations);
+    try {
+      return await runViaOpenAI(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations);
+    } catch (err: any) {
+      console.warn("[agent] OpenAI error, fallback auto:", err?.message?.slice(0, 80));
+    }
   }
-  // Claude Anthropic (si dispo) → runner dédié (format différent)
+  // Claude Anthropic — avec fallback vers chaîne auto si la clé/crédits ont un problème
   if (hasAnthropic()) {
-    const key = process.env.ANTHROPIC_API_KEY!;
-    return runViaClaude(systemPrompt, messages, tools, tenantId, executeOutil, key, maxIterations);
+    try {
+      const key = process.env.ANTHROPIC_API_KEY!;
+      return await runViaClaude(systemPrompt, messages, tools, tenantId, executeOutil, key, maxIterations);
+    } catch (err: any) {
+      console.warn("[agent] Claude API error, fallback auto:", err?.message?.slice(0, 80));
+      // fall through to auto chain
+    }
   }
-  // Tous les autres : chaîne de fallback automatique (NVIDIA → Groq → Gemini → … → Pollinations)
+  // Chaîne de fallback automatique (NVIDIA → GLM → Groq → Gemini → Cerebras → SambaNova → Pollinations)
   return runViaAuto(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations, fast);
 }
 
