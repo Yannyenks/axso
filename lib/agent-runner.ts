@@ -309,12 +309,11 @@ export function runAgentStream(
               finish(actionsEffectuees);
               return;
             } catch (nonStreamErr: any) {
-              console.warn("[stream] Claude non-streaming:", nonStreamErr?.message?.slice(0, 80));
-              // Claude configuré mais indisponible — afficher un message propre
-              // plutôt que de tomber sur Pollinations qui peut écrire les instructions système
-              send({ type: "token", text: "Je suis temporairement indisponible. Réessaie dans quelques instants." });
-              finish([]);
-              return;
+              const errMsg = (nonStreamErr?.message ?? "").slice(0, 200);
+              const errStatus = (nonStreamErr as any)?.status ?? 0;
+              console.error("[AXIA Claude error]", errStatus, errMsg);
+              // Injecter le code d'erreur dans le prompt de fallback
+              (globalThis as any).__axiaClaudeError = `${errStatus}: ${errMsg}`;
             }
           }
         }
@@ -378,23 +377,17 @@ export function runAgentStream(
           return;
         }
 
-        // ── 3. Auto-chain (simulation mot-à-mot) ──────────────────────────
-        const conversation: any[] = [{ role: "system", content: systemPrompt }, ...messages];
-        for (let iter = 0; iter < maxIterations; iter++) {
-          const result = await completionWithToolsAuto(conversation, tools, 4000, false);
-          if (result.stopReason === "end_turn") {
-            const words = (result.text ?? "").match(/\S+\s*/g) ?? [];
-            for (const w of words) { send({ type: "token", text: w }); await new Promise((r) => setTimeout(r, 12)); }
-            break;
-          }
-          if (result.stopReason === "tool_use" && result.toolCalls?.length) {
-            conversation.push({ role: "assistant", content: null, tool_calls: result.toolCalls.map(tc => ({ id: tc.id, type: "function", function: { name: tc.name, arguments: JSON.stringify(tc.arguments) } })) });
-            for (const tc of result.toolCalls) {
-              const { resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
-              actionsEffectuees.push(resultat);
-              conversation.push({ role: "tool", tool_call_id: tc.id, content: resultat });
-            }
-          } else break;
+        // ── 3. Fallback conversationnel sans outils (évite le welcome-list) ─────
+        const fallbackSystem = "Tu es AXIA, l'assistant IA d'Axso. Réponds naturellement, avec intelligence et profondeur, dans la langue de l'utilisateur.";
+        const fallbackMsgs = messages.map((m) => ({
+          role: m.role as "user" | "assistant",
+          content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
+        }));
+        const conversation: any[] = [{ role: "system", content: fallbackSystem }, ...fallbackMsgs];
+        const result = await completionWithToolsAuto(conversation, [], 4000, false);
+        if (result.stopReason === "end_turn" && result.text) {
+          const words = result.text.match(/\S+\s*/g) ?? [];
+          for (const w of words) { send({ type: "token", text: w }); await new Promise((r) => setTimeout(r, 12)); }
         }
         finish(actionsEffectuees);
 
