@@ -488,29 +488,29 @@ type SimpleProviderFn = () => Promise<CompletionResult>;
 function buildChain(messages: any[], tools: ToolDefinition[], maxTokens: number, fast = false): Array<{ name: string; fn: ProviderFn }> {
   const chain: Array<{ name: string; fn: ProviderFn }> = [];
 
-  if (hasAnthropic()) chain.push({ name: "anthropic", fn: () => completionWithToolsAnthropic(messages, tools, maxTokens) });
+  if (hasGemini()) chain.push({ name: "gemini", fn: () => completionWithToolsGemini(messages, tools, maxTokens) });
+  if (hasGroq()) chain.push({ name: "groq", fn: () => completionWithToolsGroq(messages, tools, maxTokens) });
   if (hasNVIDIA()) chain.push({ name: "nvidia", fn: () => completionWithToolsNVIDIA(messages, tools, maxTokens, undefined, fast) });
   if (hasGLM()) chain.push({ name: "glm-5.2", fn: () => completionWithToolsGLM(messages, tools, maxTokens) });
-  if (hasGroq()) chain.push({ name: "groq", fn: () => completionWithToolsGroq(messages, tools, maxTokens) });
-  if (hasGemini()) chain.push({ name: "gemini", fn: () => completionWithToolsGemini(messages, tools, maxTokens) });
   if (hasCerebras()) chain.push({ name: "cerebras", fn: () => completionWithToolsCerebras(messages, tools, maxTokens) });
   if (hasTogether()) chain.push({ name: "together", fn: () => completionWithToolsTogether(messages, tools, maxTokens) });
   if (hasSambaNova()) chain.push({ name: "sambanova", fn: () => completionWithToolsSambaNova(messages, tools, maxTokens) });
   if (hasOpenRouter()) chain.push({ name: "openrouter", fn: () => completionWithToolsOpenRouter(messages, tools, maxTokens) });
   if (hasFreeLLM()) chain.push({ name: "freellm", fn: () => completionWithToolsFreeLLM(messages, tools, maxTokens) });
   chain.push({ name: "pollinations", fn: () => completionWithToolsPollinations(messages, tools, maxTokens) });
+  if (hasAnthropic()) chain.push({ name: "anthropic", fn: () => completionWithToolsAnthropic(messages, tools, maxTokens) });
 
   return chain;
 }
 
 function buildSimpleChain(messages: ChatMessage[], maxTokens: number): Array<{ name: string; fn: SimpleProviderFn }> {
   const chain: Array<{ name: string; fn: SimpleProviderFn }> = [];
-  if (hasAnthropic()) chain.push({ name: "anthropic", fn: () => completionAnthropic(messages, maxTokens) });
+  if (hasGemini()) chain.push({ name: "gemini", fn: () => completionGemini(messages, maxTokens) });
+  if (hasGroq()) chain.push({ name: "groq", fn: () => completionGroq(messages, maxTokens) });
   if (hasNVIDIA()) chain.push({ name: "nvidia", fn: () => completionNVIDIA(messages, maxTokens) });
   if (hasGLM()) chain.push({ name: "glm-5.2", fn: () => completionGLM(messages, maxTokens) });
-  if (hasGroq()) chain.push({ name: "groq", fn: () => completionGroq(messages, maxTokens) });
-  if (hasGemini()) chain.push({ name: "gemini", fn: () => completionGemini(messages, maxTokens) });
   chain.push({ name: "pollinations", fn: () => completionPollinations(messages, maxTokens) });
+  if (hasAnthropic()) chain.push({ name: "anthropic", fn: () => completionAnthropic(messages, maxTokens) });
   return chain;
 }
 

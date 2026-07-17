@@ -230,6 +230,33 @@ export async function runAgent(
   maxIterations = 8,
   _fast = false
 ): Promise<AgentResult> {
+  // Auto-chain first (Gemini → Groq → NVIDIA → ... → Pollinations)
+  try {
+    const conversation: any[] = [{ role: "system", content: systemPrompt }, ...messages];
+    const actionsEffectuees: string[] = [];
+    for (let i = 0; i < maxIterations; i++) {
+      const result = await completionWithToolsAuto(conversation, tools, 4000, false);
+      if (result.stopReason === "end_turn") return { reponse: result.text ?? "", actions: actionsEffectuees };
+      if (result.stopReason === "tool_use" && result.toolCalls?.length) {
+        conversation.push({ role: "assistant", content: null, tool_calls: result.toolCalls.map(tc => ({ id: tc.id, type: "function", function: { name: tc.name, arguments: JSON.stringify(tc.arguments) } })) });
+        for (const tc of result.toolCalls) {
+          const { resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
+          actionsEffectuees.push(resultat);
+          conversation.push({ role: "tool", tool_call_id: tc.id, content: resultat });
+        }
+        continue;
+      }
+      break;
+    }
+    return { reponse: "", actions: actionsEffectuees };
+  } catch (err: any) {
+    console.warn("[agent] auto-chain:", err?.message?.slice(0, 80));
+  }
+  if (hasOpenAI()) {
+    try { return await runViaOpenAI(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations); }
+    catch (err: any) { console.warn("[agent] OpenAI:", err?.message?.slice(0, 80)); }
+  }
+  // Anthropic en dernier recours
   if (hasAnthropic()) {
     try {
       return await runViaClaude(systemPrompt, messages, tools, tenantId, executeOutil, process.env.ANTHROPIC_API_KEY!, maxIterations);
@@ -237,28 +264,7 @@ export async function runAgent(
       console.warn("[agent] Claude:", err?.message?.slice(0, 80));
     }
   }
-  if (hasOpenAI()) {
-    try { return await runViaOpenAI(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations); }
-    catch (err: any) { console.warn("[agent] OpenAI:", err?.message?.slice(0, 80)); }
-  }
-  // Auto-chain fallback
-  const conversation: any[] = [{ role: "system", content: systemPrompt }, ...messages];
-  const actionsEffectuees: string[] = [];
-  for (let i = 0; i < maxIterations; i++) {
-    const result = await completionWithToolsAuto(conversation, tools, 4000, false);
-    if (result.stopReason === "end_turn") return { reponse: result.text ?? "", actions: actionsEffectuees };
-    if (result.stopReason === "tool_use" && result.toolCalls?.length) {
-      conversation.push({ role: "assistant", content: null, tool_calls: result.toolCalls.map(tc => ({ id: tc.id, type: "function", function: { name: tc.name, arguments: JSON.stringify(tc.arguments) } })) });
-      for (const tc of result.toolCalls) {
-        const { resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
-        actionsEffectuees.push(resultat);
-        conversation.push({ role: "tool", tool_call_id: tc.id, content: resultat });
-      }
-      continue;
-    }
-    break;
-  }
-  return { reponse: "", actions: actionsEffectuees };
+  return { reponse: "", actions: [] };
 }
 
 // ─── runAgentStream (SSE streaming) ──────────────────────────────────────────
@@ -285,52 +291,34 @@ export function runAgentStream(
       try {
         const actionsEffectuees: string[] = [];
 
-        // ── 1. Claude natif streaming ─────────────────────────────────────
-        if (hasAnthropic()) {
-          let tokensSent = false;
-          const sendTracked = (data: object) => {
-            if ((data as any).type === "token") tokensSent = true;
-            send(data);
-          };
+        // ── 1. Fallback conversationnel (Gemini → Groq → NVIDIA → Pollinations) ─
+        {
+          const isFirstMessage = messages.filter(m => m.role === "assistant").length === 0;
+          const fallbackSystem = `Tu es AXIA, l'assistant IA de la plateforme e-commerce Axso.
+Tu réponds exactement comme Claude : directement, intelligemment, naturellement.
+${!isFirstMessage ? "NE te présente pas — la conversation est déjà commencée. Réponds directement à la question." : ""}
+Tu peux parler de tout : e-commerce, business, stratégie, tech, finance, vie quotidienne. Aucune limite.
+Contexte e-commerce : Afrique (Wave, Orange Money, MTN) + Europe. WhatsApp = canal principal.
+Réponds dans la langue de l'utilisateur. Sois direct, utile, précis.`;
+
+          const fallbackMsgs: ChatMessage[] = [
+            { role: "system", content: fallbackSystem },
+            ...messages.map((m) => ({
+              role: m.role as "user" | "assistant",
+              content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
+            })),
+          ];
 
           try {
-            await runClaudeStream(sendTracked, systemPrompt, messages, tools, tenantId, executeOutil, maxIterations, actionsEffectuees);
+            const fallbackResult = await completionAuto(fallbackMsgs, 3000);
+            if (fallbackResult.text) {
+              const words = fallbackResult.text.match(/\S+\s*/g) ?? [];
+              for (const w of words) { send({ type: "token", text: w }); await new Promise((r) => setTimeout(r, 8)); }
+            }
             finish(actionsEffectuees);
             return;
-          } catch (streamErr: any) {
-            console.warn("[stream] Claude streaming:", streamErr?.message?.slice(0, 80));
-
-            if (tokensSent) {
-              // Des tokens ont déjà été envoyés — terminer proprement
-              finish(actionsEffectuees);
-              return;
-            }
-
-            // Aucun token envoyé — fallback Claude non-streaming + simulation
-            try {
-              const msgList = messages.map((m) => ({
-                role: m.role as "user" | "assistant",
-                content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
-              }));
-              const result = await runViaClaude(systemPrompt, msgList, tools, tenantId, executeOutil, process.env.ANTHROPIC_API_KEY!, maxIterations);
-
-              if (result.reponse) {
-                const words = result.reponse.match(/\S+\s*/g) ?? [];
-                for (const w of words) {
-                  send({ type: "token", text: w });
-                  await new Promise((r) => setTimeout(r, 8));
-                }
-              }
-              actionsEffectuees.push(...result.actions);
-              finish(actionsEffectuees);
-              return;
-            } catch (nonStreamErr: any) {
-              const errMsg = (nonStreamErr?.message ?? "").slice(0, 200);
-              const errStatus = (nonStreamErr as any)?.status ?? 0;
-              console.error("[AXIA Claude error]", errStatus, errMsg);
-              // Injecter le code d'erreur dans le prompt de fallback
-              (globalThis as any).__axiaClaudeError = `${errStatus}: ${errMsg}`;
-            }
+          } catch (fallbackErr: any) {
+            console.warn("[stream] fallback chain:", fallbackErr?.message?.slice(0, 80));
           }
         }
 
@@ -393,26 +381,35 @@ export function runAgentStream(
           return;
         }
 
-        // ── 3. Fallback conversationnel (Groq/Gemini/NVIDIA sans tools) ───────
-        const isFirstMessage = messages.filter(m => m.role === "assistant").length === 0;
-        const fallbackSystem = `Tu es AXIA, l'assistant IA de la plateforme e-commerce Axso.
-Tu réponds exactement comme Claude : directement, intelligemment, naturellement.
-${!isFirstMessage ? "NE te présente pas — la conversation est déjà commencée. Réponds directement à la question." : ""}
-Tu peux parler de tout : e-commerce, business, stratégie, tech, finance, vie quotidienne. Aucune limite.
-Contexte e-commerce : Afrique (Wave, Orange Money, MTN) + Europe. WhatsApp = canal principal.
-Réponds dans la langue de l'utilisateur. Sois direct, utile, précis.`;
-
-        const fallbackMsgs: ChatMessage[] = [
-          { role: "system", content: fallbackSystem },
-          ...messages.map((m) => ({
-            role: m.role as "user" | "assistant",
-            content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
-          })),
-        ];
-        const fallbackResult = await completionAuto(fallbackMsgs, 3000);
-        if (fallbackResult.text) {
-          const words = fallbackResult.text.match(/\S+\s*/g) ?? [];
-          for (const w of words) { send({ type: "token", text: w }); await new Promise((r) => setTimeout(r, 8)); }
+        // ── 3. Claude natif streaming (dernier recours) ───────────────────
+        if (hasAnthropic()) {
+          let tokensSent = false;
+          const sendTracked = (data: object) => {
+            if ((data as any).type === "token") tokensSent = true;
+            send(data);
+          };
+          try {
+            await runClaudeStream(sendTracked, systemPrompt, messages, tools, tenantId, executeOutil, maxIterations, actionsEffectuees);
+            finish(actionsEffectuees);
+            return;
+          } catch (streamErr: any) {
+            console.warn("[stream] Claude streaming:", streamErr?.message?.slice(0, 80));
+            if (tokensSent) { finish(actionsEffectuees); return; }
+            try {
+              const msgList = messages.map((m) => ({
+                role: m.role as "user" | "assistant",
+                content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
+              }));
+              const result = await runViaClaude(systemPrompt, msgList, tools, tenantId, executeOutil, process.env.ANTHROPIC_API_KEY!, maxIterations);
+              if (result.reponse) {
+                const words = result.reponse.match(/\S+\s*/g) ?? [];
+                for (const w of words) { send({ type: "token", text: w }); await new Promise((r) => setTimeout(r, 8)); }
+              }
+              actionsEffectuees.push(...result.actions);
+            } catch (nonStreamErr: any) {
+              console.error("[AXIA Claude error]", (nonStreamErr as any)?.status ?? 0, (nonStreamErr?.message ?? "").slice(0, 200));
+            }
+          }
         }
         finish(actionsEffectuees);
 
