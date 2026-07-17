@@ -1,8 +1,8 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import {
   Search, Sparkles, Globe, ShoppingBag, Package, ExternalLink,
-  Send, Loader2, Star, MapPin, TrendingUp, Clock, ChevronRight,
+  Star, MapPin, TrendingUp, Clock, ChevronRight,
 } from "lucide-react";
 
 const FOURNISSEURS = [
@@ -122,14 +122,6 @@ const FOURNISSEURS = [
 
 const CATEGORIES = ["Toutes", "Mode", "Tech", "Maison", "Beauté", "Alimentation", "Sport", "Bijoux"];
 
-interface AXIAMsg { role: "user" | "axia"; content: string }
-
-const SUGGESTIONS = [
-  "Meilleurs fournisseurs pour l'Afrique de l'Ouest",
-  "Je veux vendre des vêtements en France",
-  "Produits tendance dropshipping Moyen-Orient",
-  "Comment négocier avec un fournisseur Alibaba ?",
-];
 
 function StarRating({ note }: { note: number }) {
   return (
@@ -147,11 +139,6 @@ function StarRating({ note }: { note: number }) {
 export default function SourcingPage() {
   const [search, setSearch]       = useState("");
   const [categorie, setCategorie] = useState("Toutes");
-  const [messages, setMessages]   = useState<AXIAMsg[]>([]);
-  const [inputIA, setInputIA]     = useState("");
-  const [loadingIA, setLoadingIA] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
-
   const filtres = FOURNISSEURS.filter(f => {
     const q = search.toLowerCase();
     const ok = !q || f.nom.toLowerCase().includes(q) || f.description.toLowerCase().includes(q)
@@ -159,29 +146,6 @@ export default function SourcingPage() {
     return ok && (categorie === "Toutes" || f.categories.includes(categorie));
   });
 
-  const askAxia = async (question: string) => {
-    const q = question.trim();
-    if (!q || loadingIA) return;
-    setInputIA("");
-    const msgs: AXIAMsg[] = [...messages, { role: "user", content: q }];
-    setMessages(msgs);
-    setLoadingIA(true);
-    try {
-      const ctx = `[Module Sourcing Dropshipping] ${q}\n\nFournisseurs disponibles : ${FOURNISSEURS.map(f => `${f.nom} (${f.pays}) — ${f.categories.join(", ")}`).join("; ")}`;
-      const res = await fetch("/api/ai/universal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: [{ role: "user", content: ctx }], fast: false }),
-      });
-      const data = await res.json();
-      setMessages(prev => [...prev, { role: "axia", content: data.reponse || "Je n'ai pas pu répondre." }]);
-    } catch {
-      setMessages(prev => [...prev, { role: "axia", content: "Erreur de connexion. Réessaie." }]);
-    } finally {
-      setLoadingIA(false);
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
-    }
-  };
 
   return (
     <div className="space-y-5" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
@@ -237,10 +201,7 @@ export default function SourcingPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-        {/* ── Colonne gauche: filtres + grille ──────────────────── */}
-        <div className="lg:col-span-2 space-y-4">
+      <div className="space-y-4">
 
           {/* Filtres */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
@@ -358,125 +319,10 @@ export default function SourcingPage() {
                   <ShoppingBag size={22} style={{ color: "#FDBA74" }} />
                 </div>
                 <p className="text-gray-600 font-semibold text-sm">Aucun fournisseur trouvé</p>
-                <p className="text-gray-400 text-xs mt-1">Demandez à AXIA de vous en recommander un</p>
+                <p className="text-gray-400 text-xs mt-1">Modifiez votre recherche ou vos filtres</p>
               </div>
             )}
           </div>
-        </div>
-
-        {/* ── Chat AXIA ──────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden"
-          style={{ maxHeight: "calc(100vh - 160px)", minHeight: 480 }}>
-
-          {/* Header chat */}
-          <div className="px-4 py-3.5 flex-shrink-0"
-            style={{ background: "linear-gradient(135deg,#F97316,#EA580C)" }}>
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                <Sparkles size={14} className="text-white" />
-              </div>
-              <div>
-                <p className="text-white text-sm font-bold leading-none">AXIA Sourcing</p>
-                <p className="text-white/60 text-[10px] mt-0.5">Agent IA • Fournisseurs mondiaux</p>
-              </div>
-              <div className="ml-auto flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-white/60 text-[10px]">En ligne</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3" style={{ minHeight: 0 }}>
-            {messages.length === 0 && (
-              <div className="space-y-3">
-                <div className="flex gap-2">
-                  <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center mt-0.5"
-                    style={{ background: "linear-gradient(135deg,#F97316,#EA580C)" }}>
-                    <Sparkles size={10} className="text-white" />
-                  </div>
-                  <div className="bg-orange-50 border border-orange-100 rounded-2xl rounded-bl-sm px-3.5 py-2.5 text-sm text-gray-700 leading-relaxed">
-                    Bonjour ! Je suis AXIA, votre agent sourcing. Quel type de produit cherchez-vous à importer ?
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1.5 pl-8">
-                  {SUGGESTIONS.map(s => (
-                    <button key={s} onClick={() => askAxia(s)}
-                      className="text-xs text-left px-3 py-2 rounded-xl border transition-all text-gray-600"
-                      style={{ borderColor: "#F3F4F6", background: "#FAFAFA" }}
-                      onMouseEnter={e => {
-                        (e.currentTarget as HTMLElement).style.borderColor = "#FDBA74";
-                        (e.currentTarget as HTMLElement).style.background = "#FFF7ED";
-                        (e.currentTarget as HTMLElement).style.color = "#C2410C";
-                      }}
-                      onMouseLeave={e => {
-                        (e.currentTarget as HTMLElement).style.borderColor = "#F3F4F6";
-                        (e.currentTarget as HTMLElement).style.background = "#FAFAFA";
-                        (e.currentTarget as HTMLElement).style.color = "#6B7280";
-                      }}>
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {messages.map((m, i) => (
-              <div key={i} className={`flex gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                {m.role === "axia" && (
-                  <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center mt-0.5"
-                    style={{ background: "linear-gradient(135deg,#F97316,#EA580C)" }}>
-                    <Sparkles size={10} className="text-white" />
-                  </div>
-                )}
-                <div className="max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap"
-                  style={m.role === "user"
-                    ? { background: "linear-gradient(135deg,#F97316,#EA580C)", color: "white", borderBottomRightRadius: 4 }
-                    : { background: "#FFF7ED", border: "1px solid #FDBA74", color: "#1f2937", borderBottomLeftRadius: 4 }}>
-                  {m.content}
-                </div>
-              </div>
-            ))}
-
-            {loadingIA && (
-              <div className="flex gap-2 justify-start">
-                <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center"
-                  style={{ background: "linear-gradient(135deg,#F97316,#EA580C)" }}>
-                  <Sparkles size={10} className="text-white" />
-                </div>
-                <div className="bg-orange-50 border border-orange-100 rounded-2xl rounded-bl-sm px-4 py-3">
-                  <div className="flex gap-1 items-center">
-                    {[0, 1, 2].map(j => (
-                      <div key={j} className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-bounce"
-                        style={{ animationDelay: `${j * 150}ms` }} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={bottomRef} />
-          </div>
-
-          {/* Input */}
-          <div className="px-3 py-3 border-t border-gray-100 flex-shrink-0">
-            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 transition-all"
-              onFocusCapture={e => (e.currentTarget.style.borderColor = "#FDBA74")}
-              onBlurCapture={e => (e.currentTarget.style.borderColor = "#e5e7eb")}>
-              <input
-                value={inputIA}
-                onChange={e => setInputIA(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); askAxia(inputIA); } }}
-                placeholder="Demandez à AXIA…"
-                className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none"
-              />
-              <button onClick={() => askAxia(inputIA)} disabled={!inputIA.trim() || loadingIA}
-                className="w-7 h-7 rounded-full flex items-center justify-center transition-all disabled:opacity-40"
-                style={{ background: "linear-gradient(135deg,#F97316,#EA580C)" }}>
-                <Send size={11} className="text-white" />
-              </button>
-            </div>
-          </div>
-        </div>
 
       </div>
     </div>
