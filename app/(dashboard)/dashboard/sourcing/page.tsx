@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import {
-  Search, Sparkles, Globe, ShoppingBag, Package, ExternalLink,
+  Search, Globe, ShoppingBag, Package, ExternalLink,
   Star, MapPin, TrendingUp, Clock, ChevronRight,
 } from "lucide-react";
 
@@ -166,13 +166,8 @@ export default function SourcingPage() {
                 Sourcing & Fournisseurs
               </h1>
               <p className="text-gray-400 text-sm mt-1.5 max-w-md leading-relaxed">
-                Les meilleurs fournisseurs dropshipping mondiaux, recommandés par AXIA selon votre marché.
+                Les meilleurs fournisseurs dropshipping mondiaux, vérifiés par l'équipe Axso.
               </p>
-            </div>
-            <div className="flex items-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg"
-              style={{ background: "linear-gradient(135deg,#F97316,#EA580C)", boxShadow: "0 4px 14px rgba(249,115,22,0.3)" }}>
-              <Sparkles size={13} />
-              AXIA Sourcing
             </div>
           </div>
 
