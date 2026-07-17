@@ -1,8 +1,8 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Sparkles, X, Mic, MicOff, Send, Volume2, VolumeX,
-  Phone, Paperclip, ChevronDown, Zap, Image as ImageIcon,
+  Sparkles, X, Mic, Send, Volume2, VolumeX,
+  Phone, Paperclip, ChevronDown, Zap, Image as ImageIcon, Trash2, Copy, Check,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -14,6 +14,34 @@ interface Msg {
   imageUrl?: string;
   images?: string[];
   actions?: string[];
+}
+
+// ── Markdown renderer léger ───────────────────────────────────────────────────
+function renderMarkdown(raw: string): string {
+  let s = raw
+    // Code blocks
+    .replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) =>
+      `<pre class="axia-pre"><code class="axia-code">${code.replace(/</g,"&lt;").replace(/>/g,"&gt;").trim()}</code></pre>`)
+    // Inline code
+    .replace(/`([^`\n]+)`/g, '<code class="axia-inline-code">$1</code>')
+    // Bold
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    // Italic
+    .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
+    // Headings
+    .replace(/^### (.+)$/gm, '<p class="axia-h3">$1</p>')
+    .replace(/^## (.+)$/gm,  '<p class="axia-h2">$1</p>')
+    .replace(/^# (.+)$/gm,   '<p class="axia-h1">$1</p>')
+    // Unordered lists
+    .replace(/^[-•] (.+)$/gm, '<li class="axia-li">$1</li>')
+    // Ordered lists
+    .replace(/^\d+\. (.+)$/gm, '<li class="axia-li axia-ol">$1</li>')
+    // Paragraphs / line breaks
+    .replace(/\n\n+/g, '</p><p class="axia-p">')
+    .replace(/\n/g, '<br/>');
+  // Wrap list items
+  s = s.replace(/(<li class="axia-li[^"]*">[\s\S]*?<\/li>)+/g, m => `<ul class="axia-ul">${m}</ul>`);
+  return `<p class="axia-p">${s}</p>`;
 }
 
 // ── Utils ─────────────────────────────────────────────────────────────────────
@@ -82,7 +110,8 @@ export function AxiaFloat() {
   const [loading, setLoading]     = useState(false);
   const [ttsOn, setTtsOn]         = useState(true);
   const [pendingImage, setPendingImage] = useState<string | null>(null);
-  const [interimText, setInterimText]   = useState("");   // live transcript while listening
+  const [interimText, setInterimText]   = useState("");
+  const [copiedIdx, setCopiedIdx]       = useState<number | null>(null);
 
   const bottomRef    = useRef<HTMLDivElement>(null);
   const voiceScrollRef = useRef<HTMLDivElement>(null);
@@ -541,6 +570,12 @@ export function AxiaFloat() {
                 style={{ background: "rgba(124,58,237,0.3)" }}>
                 <Phone size={12} className="text-white" />
               </button>
+              <button onClick={() => { if (messages.length > 0 && confirm("Effacer la conversation ?")) setMessages([]); }}
+                title="Effacer la conversation"
+                className="w-7 h-7 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(255,255,255,0.08)" }}>
+                <Trash2 size={11} className="text-white/60" />
+              </button>
               <button onClick={() => setOpen(false)}
                 className="w-7 h-7 rounded-full flex items-center justify-center"
                 style={{ background: "rgba(255,255,255,0.08)" }}>
@@ -595,11 +630,24 @@ export function AxiaFloat() {
                       </div>
                     )}
                     {text && (
-                      <div className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
-                        isUser ? "rounded-br-sm text-white" : "rounded-bl-sm bg-white border border-gray-100 text-gray-800 shadow-sm"
-                      }`}
-                        style={isUser ? { background: "linear-gradient(135deg,#1a0533,#4c1d95)" } : {}}>
-                        {text}
+                      <div className="relative group">
+                        <div className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                          isUser ? "rounded-br-sm text-white" : "rounded-bl-sm bg-white border border-gray-100 text-gray-800 shadow-sm"
+                        }`}
+                          style={isUser ? { background: "linear-gradient(135deg,#1a0533,#4c1d95)" } : {}}>
+                          {isUser
+                            ? <span className="whitespace-pre-wrap">{text}</span>
+                            : <div className="axia-md" dangerouslySetInnerHTML={{ __html: renderMarkdown(text) }} />
+                          }
+                        </div>
+                        {!isUser && (
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(text); setCopiedIdx(i); setTimeout(() => setCopiedIdx(null), 1500); }}
+                            className="absolute -bottom-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center"
+                            title="Copier">
+                            {copiedIdx === i ? <Check size={10} className="text-green-600" /> : <Copy size={10} className="text-gray-500" />}
+                          </button>
+                        )}
                       </div>
                     )}
                     {allImages.length > 0 && (
@@ -721,6 +769,23 @@ export function AxiaFloat() {
         @keyframes axiaWave { to { transform: scaleY(0.15); } }
         @keyframes axiaSpeak { to { transform: scaleY(0.2); } }
         @keyframes axiaRing { 0%,100%{transform:scale(1);opacity:0.22} 50%{transform:scale(1.06);opacity:0.1} }
+
+        /* Markdown styles */
+        .axia-md { line-height: 1.6; }
+        .axia-md .axia-p { margin: 0 0 6px 0; }
+        .axia-md .axia-p:last-child { margin-bottom: 0; }
+        .axia-md .axia-h1 { font-size: 15px; font-weight: 700; margin: 10px 0 4px; }
+        .axia-md .axia-h2 { font-size: 14px; font-weight: 700; margin: 8px 0 3px; }
+        .axia-md .axia-h3 { font-size: 13px; font-weight: 600; margin: 6px 0 2px; color: #4c1d95; }
+        .axia-md .axia-ul { margin: 4px 0 4px 4px; padding: 0; list-style: none; }
+        .axia-md .axia-li { position: relative; padding-left: 14px; margin: 2px 0; }
+        .axia-md .axia-li::before { content: "•"; position: absolute; left: 2px; color: #7c3aed; font-weight: bold; }
+        .axia-md .axia-li.axia-ol::before { content: "→"; }
+        .axia-md .axia-pre { background: #f3f0ff; border: 1px solid #e9d5ff; border-radius: 8px; padding: 10px 12px; margin: 8px 0; overflow-x: auto; }
+        .axia-md .axia-code { font-family: 'Monaco','Menlo','Consolas',monospace; font-size: 12px; color: #4c1d95; white-space: pre; }
+        .axia-md .axia-inline-code { background: #f3f0ff; border: 1px solid #e9d5ff; border-radius: 4px; padding: 1px 5px; font-family: 'Monaco','Menlo',monospace; font-size: 11px; color: #6d28d9; }
+        .axia-md strong { font-weight: 600; color: #1f2937; }
+        .axia-md em { font-style: italic; color: #4b5563; }
       `}</style>
     </>
   );
