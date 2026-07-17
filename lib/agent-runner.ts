@@ -115,7 +115,7 @@ async function runViaClaude(
   return { reponse: "", actions: actionsEffectuees };
 }
 
-// ─── Claude streaming natif ───────────────────────────────────────────────────
+// ─── Claude streaming natif (essaie chaque modèle) ──────────────────────────
 async function runClaudeStream(
   send: (data: object) => void,
   systemPrompt: string,
@@ -133,9 +133,23 @@ async function runClaudeStream(
     content: typeof m.content === "string" ? m.content : (m.content as any),
   }));
 
+  // Choisir le premier modèle disponible
+  let activeModel = CLAUDE_MODELS[0];
+  for (const m of CLAUDE_MODELS) {
+    try {
+      await client.messages.create({ model: m, max_tokens: 1, messages: [{ role: "user", content: "x" }] });
+      activeModel = m;
+      break;
+    } catch (e: any) {
+      const msg = e?.message ?? "";
+      if (msg.includes("model") || msg.includes("not_found") || e?.status === 404) continue;
+      break; // Auth error ou autre → utiliser le premier quand même
+    }
+  }
+
   for (let iter = 0; iter < maxIterations; iter++) {
     const runner = client.messages.stream({
-      model: CLAUDE_MODELS[0],
+      model: activeModel,
       max_tokens: 8000,
       system: systemPrompt,
       tools: anthropicTools,
@@ -379,18 +393,26 @@ export function runAgentStream(
           return;
         }
 
-        // ── 3. Fallback conversationnel simple (completionAuto = sans tools, clean) ─
+        // ── 3. Fallback conversationnel (Groq/Gemini/NVIDIA sans tools) ───────
+        const isFirstMessage = messages.filter(m => m.role === "assistant").length === 0;
+        const fallbackSystem = `Tu es AXIA, l'assistant IA de la plateforme e-commerce Axso.
+Tu réponds exactement comme Claude : directement, intelligemment, naturellement.
+${!isFirstMessage ? "NE te présente pas — la conversation est déjà commencée. Réponds directement à la question." : ""}
+Tu peux parler de tout : e-commerce, business, stratégie, tech, finance, vie quotidienne. Aucune limite.
+Contexte e-commerce : Afrique (Wave, Orange Money, MTN) + Europe. WhatsApp = canal principal.
+Réponds dans la langue de l'utilisateur. Sois direct, utile, précis.`;
+
         const fallbackMsgs: ChatMessage[] = [
-          { role: "system", content: "Tu es AXIA, l'assistant IA d'Axso. Réponds naturellement, avec intelligence et profondeur, dans la langue de l'utilisateur." },
+          { role: "system", content: fallbackSystem },
           ...messages.map((m) => ({
             role: m.role as "user" | "assistant",
             content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
           })),
         ];
-        const fallbackResult = await completionAuto(fallbackMsgs, 2000);
+        const fallbackResult = await completionAuto(fallbackMsgs, 3000);
         if (fallbackResult.text) {
           const words = fallbackResult.text.match(/\S+\s*/g) ?? [];
-          for (const w of words) { send({ type: "token", text: w }); await new Promise((r) => setTimeout(r, 12)); }
+          for (const w of words) { send({ type: "token", text: w }); await new Promise((r) => setTimeout(r, 8)); }
         }
         finish(actionsEffectuees);
 
