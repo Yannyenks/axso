@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import Anthropic from "@anthropic-ai/sdk";
 
 export const maxDuration = 60;
 import { OUTILS_COPILOTE } from "@/lib/ai-agent";
-import { hasFreeLLM, completionWithToolsFreeLLM, type ChatMessage, type ToolDefinition } from "@/lib/llm-client";
+import { type ToolDefinition } from "@/lib/llm-client";
+import { runAgent } from "@/lib/agent-runner";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
 
@@ -124,107 +124,6 @@ async function executerOutil(
   }
 }
 
-// Boucle agentique via freellmapi (format OpenAI tool calling)
-async function copiloteViaFreeLLM(
-  messages: Array<{ role: "user" | "assistant"; content: string }>,
-  tenantId: string
-): Promise<{ reponse: string; actions: string[] }> {
-  const actionsEffectuees: string[] = [];
-
-  // Format OpenAI : system message séparé, puis historique
-  let conversation: ChatMessage[] = [
-    { role: "system", content: PROMPT_COPILOTE },
-    ...messages,
-  ];
-
-  for (let i = 0; i < 5; i++) {
-    const result = await completionWithToolsFreeLLM(conversation, OUTILS_UNIVERSELS, 1500);
-
-    if (result.stopReason === "end_turn") {
-      return { reponse: result.text ?? "Action effectuée.", actions: actionsEffectuees };
-    }
-
-    if (result.stopReason === "tool_use" && result.toolCalls?.length) {
-      // Ajouter la réponse assistant avec les tool calls dans l'historique
-      const assistantMsg: any = {
-        role: "assistant",
-        content: null,
-        tool_calls: result.toolCalls.map((tc) => ({
-          id: tc.id,
-          type: "function",
-          function: { name: tc.name, arguments: JSON.stringify(tc.arguments) },
-        })),
-      };
-      conversation.push(assistantMsg);
-
-      // Exécuter chaque outil et ajouter les résultats
-      for (const tc of result.toolCalls) {
-        const { succes, resultat } = await executerOutil(tc.name, tc.arguments, tenantId);
-        actionsEffectuees.push(resultat);
-        conversation.push({
-          role: "tool" as any,
-          content: resultat,
-          tool_call_id: tc.id,
-        } as any);
-      }
-      continue;
-    }
-
-    break;
-  }
-
-  return { reponse: "Action effectuée.", actions: actionsEffectuees };
-}
-
-// Boucle agentique via Claude Anthropic (format natif — fallback)
-async function copiloteViaClaude(
-  messages: Array<{ role: "user" | "assistant"; content: string }>,
-  tenantId: string,
-  apiKey: string
-): Promise<{ reponse: string; actions: string[] }> {
-  const client = new Anthropic({ apiKey });
-  const actionsEffectuees: string[] = [];
-
-  let messagesEnCours: Anthropic.MessageParam[] = messages.map((m) => ({
-    role: m.role,
-    content: m.content,
-  }));
-
-  for (let i = 0; i < 5; i++) {
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1500,
-      system: PROMPT_COPILOTE,
-      tools: OUTILS_COPILOTE,
-      messages: messagesEnCours,
-    });
-
-    if (response.stop_reason === "end_turn") {
-      const textBlock = response.content.find((b) => b.type === "text");
-      return { reponse: textBlock ? (textBlock as any).text : "Action effectuée.", actions: actionsEffectuees };
-    }
-
-    if (response.stop_reason === "tool_use") {
-      messagesEnCours.push({ role: "assistant", content: response.content });
-      const toolResults: Anthropic.ToolResultBlockParam[] = [];
-
-      for (const block of response.content) {
-        if (block.type === "tool_use") {
-          const { succes, resultat } = await executerOutil(block.name, block.input as Record<string, any>, tenantId);
-          actionsEffectuees.push(resultat);
-          toolResults.push({ type: "tool_result", tool_use_id: block.id, content: resultat, is_error: !succes });
-        }
-      }
-
-      messagesEnCours.push({ role: "user", content: toolResults });
-      continue;
-    }
-
-    break;
-  }
-
-  return { reponse: "Action effectuée.", actions: actionsEffectuees };
-}
 
 export async function POST(request: Request) {
   try {
@@ -237,22 +136,15 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { messages } = schema.parse(body);
 
-    let reponse: string;
-    let actions: string[];
-
-    // Priorité : freellmapi → fallback Claude
-    if (hasFreeLLM()) {
-      ({ reponse, actions } = await copiloteViaFreeLLM(messages, tenantId));
-    } else {
-      const apiKey = process.env.ANTHROPIC_API_KEY;
-      if (!apiKey) {
-        return NextResponse.json({
-          reponse: "Aucun fournisseur IA configuré. Ajoute FREELLMAPI_KEY ou ANTHROPIC_API_KEY dans .env.local.",
-          actions: [],
-        });
-      }
-      ({ reponse, actions } = await copiloteViaClaude(messages, tenantId, apiKey));
-    }
+    // Utilise runAgent : Claude → Groq → Gemini → NVIDIA → Pollinations (fallback automatique)
+    const { reponse, actions } = await runAgent(
+      PROMPT_COPILOTE,
+      messages,
+      OUTILS_UNIVERSELS,
+      tenantId,
+      executerOutil,
+      5
+    );
 
     return NextResponse.json({ reponse, actions });
   } catch (err) {
