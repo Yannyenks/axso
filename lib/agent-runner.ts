@@ -6,8 +6,10 @@ import {
   streamWithOpenAI,
   hasAnthropic,
   completionWithToolsAuto,
+  completionAuto,
   type ToolDefinition,
   type ToolCall,
+  type ChatMessage,
 } from "./llm-client";
 
 export type AgentTool = ToolDefinition;
@@ -377,16 +379,17 @@ export function runAgentStream(
           return;
         }
 
-        // ── 3. Fallback conversationnel sans outils (évite le welcome-list) ─────
-        const fallbackSystem = "Tu es AXIA, l'assistant IA d'Axso. Réponds naturellement, avec intelligence et profondeur, dans la langue de l'utilisateur.";
-        const fallbackMsgs = messages.map((m) => ({
-          role: m.role as "user" | "assistant",
-          content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
-        }));
-        const conversation: any[] = [{ role: "system", content: fallbackSystem }, ...fallbackMsgs];
-        const result = await completionWithToolsAuto(conversation, [], 4000, false);
-        if (result.stopReason === "end_turn" && result.text) {
-          const words = result.text.match(/\S+\s*/g) ?? [];
+        // ── 3. Fallback conversationnel simple (completionAuto = sans tools, clean) ─
+        const fallbackMsgs: ChatMessage[] = [
+          { role: "system", content: "Tu es AXIA, l'assistant IA d'Axso. Réponds naturellement, avec intelligence et profondeur, dans la langue de l'utilisateur." },
+          ...messages.map((m) => ({
+            role: m.role as "user" | "assistant",
+            content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
+          })),
+        ];
+        const fallbackResult = await completionAuto(fallbackMsgs, 2000);
+        if (fallbackResult.text) {
+          const words = fallbackResult.text.match(/\S+\s*/g) ?? [];
           for (const w of words) { send({ type: "token", text: w }); await new Promise((r) => setTimeout(r, 12)); }
         }
         finish(actionsEffectuees);
