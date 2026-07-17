@@ -30,8 +30,8 @@ function toAnthropicTools(tools: AgentTool[]): Anthropic.Tool[] {
 
 // Modèles Claude disponibles par ordre de préférence
 const CLAUDE_MODELS = [
-  "claude-sonnet-4-6",
   "claude-opus-4-8",
+  "claude-sonnet-4-6",
   "claude-3-5-sonnet-20241022",
   "claude-3-5-haiku-20241022",
 ];
