@@ -514,7 +514,9 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
           select: { id: true, nom: true, prix: true, categorie: true, images: true, ventes: true, stock: true, description: true },
         });
         const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true } });
-        return { succes: true, resultat: `[LISTE PRODUITS — utilise pour répondre à la demande, ne recopie pas] ${JSON.stringify({ devise: tenant?.devise, produits })}` };
+        const dev3 = tenant?.devise ?? "XAF";
+        const lines = produits.map(p => `- [${p.id}] ${p.nom} | ${p.prix} ${dev3} | stock: ${p.stock} | ventes: ${p.ventes} | image: ${p.images?.length ? "oui" : "non"}`).join("\n");
+        return { succes: true, resultat: `${produits.length} produit(s) (${dev3}):\n${lines || "aucun"}` };
       }
 
       case "enrichir_produit": {
@@ -544,8 +546,10 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
           prisma.commande.count({ where: { tenantId, statut: { in: ["confirmee", "livree"] } } }),
           prisma.client.count({ where: { tenantId } }),
         ]);
-        const data = { boutique: tenant, top_produits: produits, commandes_confirmees: nbCommandes, nb_clients: nbClients };
-        return { succes: true, resultat: `[CONTEXTE INTERNE — NE PAS RÉPÉTER À L'UTILISATEUR] ${JSON.stringify(data)} [Utilise ces données pour répondre à la question de l'utilisateur directement.]` };
+        const devise = tenant?.devise ?? "XAF";
+        const prodLines = produits.map(p => `- ${p.nom} (${p.prix} ${devise}, ${p.ventes} ventes, image: ${p.images?.length ? "oui" : "non"})`).join("\n");
+        const ctx = `Boutique: ${tenant?.nomBoutique} | Pays: ${tenant?.pays ?? "?"} | Devise: ${devise} | Catégorie: ${tenant?.categorie ?? "?"}\nProduits actifs (${produits.length}):\n${prodLines || "aucun"}\nCommandes confirmées: ${nbCommandes} | Clients inscrits: ${nbClients}`;
+        return { succes: true, resultat: ctx };
       }
 
       case "modifier_boutique": {
@@ -605,8 +609,8 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         ]);
         const conf = commandes.filter(c => ["confirmee", "livree"].includes(c.statut));
         const ca = conf.reduce((s, c) => s + c.montantTotal, 0);
-        const statsData = { periode: args.periode, devise: tenant?.devise, ca: Math.round(ca), commandes: commandes.length, confirmees: conf.length, taux_conversion: commandes.length ? Math.round(conf.length / commandes.length * 100) : 0, panier_moyen: conf.length ? Math.round(ca / conf.length) : 0, nouveaux_clients: clients };
-        return { succes: true, resultat: `[DONNÉES STATS — utilise pour rédiger une analyse claire, ne recopie pas le JSON] ${JSON.stringify(statsData)}` };
+        const dev = tenant?.devise ?? "XAF";
+        return { succes: true, resultat: `Stats ${args.periode} — CA: ${Math.round(ca)} ${dev} | Commandes: ${commandes.length} (${conf.length} confirmées) | Taux conversion: ${commandes.length ? Math.round(conf.length / commandes.length * 100) : 0}% | Panier moyen: ${conf.length ? Math.round(ca / conf.length) : 0} ${dev} | Nouveaux clients: ${clients}` };
       }
 
       case "rapport_complet": {
@@ -619,8 +623,9 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         ]);
         const conf = commandes.filter(c => ["confirmee", "livree"].includes(c.statut));
         const ca = conf.reduce((s, c) => s + c.montantTotal, 0);
-        const rapportData = { boutique: tenant?.nomBoutique, devise: tenant?.devise, ca_30j: Math.round(ca), commandes_30j: commandes.length, confirmees_30j: conf.length, taux_conversion: commandes.length ? Math.round(conf.length / commandes.length * 100) : 0, total_clients: clients._count, ltv_total: Math.round(clients._sum.totalDepense ?? 0), top_produits: topProduits };
-        return { succes: true, resultat: `[RAPPORT COMPLET — rédige une analyse business structurée avec ces chiffres, ne recopie pas le JSON] ${JSON.stringify(rapportData)}` };
+        const dev2 = tenant?.devise ?? "XAF";
+        const topStr = topProduits.map(p => `${p.nom} (${p.ventes} ventes, ${p.prix} ${dev2})`).join(", ");
+        return { succes: true, resultat: `Rapport 30j — ${tenant?.nomBoutique} | CA: ${Math.round(ca)} ${dev2} | Commandes: ${commandes.length} (${conf.length} confirmées) | Taux: ${commandes.length ? Math.round(conf.length / commandes.length * 100) : 0}% | Clients total: ${clients._count} | LTV cumulé: ${Math.round(clients._sum.totalDepense ?? 0)} ${dev2} | Top produits: ${topStr || "aucun"}` };
       }
 
       case "produits_performance": {
@@ -636,7 +641,8 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         else if (args.segment === "nouveaux") where.createdAt = { gte: new Date(Date.now() - 7 * 86400000) };
         const orderBy: any = args.tri === "depense_desc" ? { totalDepense: "desc" } : args.tri === "commandes_desc" ? { totalCommandes: "desc" } : { createdAt: "desc" };
         const clients = await prisma.client.findMany({ where, orderBy, take: args.limite ?? 15, select: { id: true, nom: true, email: true, totalCommandes: true, totalDepense: true, createdAt: true } });
-        return { succes: true, resultat: `[LISTE CLIENTS — utilise pour répondre, ne recopie pas le JSON brut] ${JSON.stringify(clients)}` };
+        const clientLines = clients.map((c: any) => `- ${c.nom} (${c.email}) | ${c.totalCommandes} commandes | ${c.totalDepense} dépensé`).join("\n");
+        return { succes: true, resultat: `${clients.length} client(s):\n${clientLines || "aucun"}` };
       }
 
       case "envoyer_email_client": {

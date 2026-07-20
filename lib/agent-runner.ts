@@ -230,6 +230,8 @@ export async function runAgent(
           actionsEffectuees.push(resultat);
           conversation.push({ role: "tool", tool_call_id: tc.id, content: resultat });
         }
+        const originalQ = messages.find(m => m.role === "user");
+        if (originalQ) conversation.push({ role: "user", content: `Tu as les informations nécessaires. Réponds maintenant directement à ma question : "${originalQ.content}"` });
         continue;
       }
       break;
@@ -329,6 +331,15 @@ export function runAgentStream(
               const { succes, resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
               actionsEffectuees.push(resultat);
               conversation.push({ role: "tool", tool_call_id: tc.id, content: resultat });
+            }
+            // Re-ancrage : force le modèle à revenir sur la question originale
+            // sans ce message, Gemini/Groq répètent les données de l'outil au lieu de répondre
+            const originalQuestion = messages.find(m => m.role === "user");
+            if (originalQuestion) {
+              conversation.push({
+                role: "user",
+                content: `Tu as les informations nécessaires. Réponds maintenant directement à ma question : "${typeof originalQuestion.content === "string" ? originalQuestion.content : "ma demande"}"`,
+              });
             }
             continue;
           }
