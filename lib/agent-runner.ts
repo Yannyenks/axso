@@ -108,37 +108,52 @@ async function claudeSynthesisStream(
 ): Promise<void> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
   const anthropicTools = toAnthropicTools(tools);
-  let conversation = [...claudeMessages];
 
-  for (let iter = 0; iter < 8; iter++) {
-    const runner = client.messages.stream({
-      model: CLAUDE_MODELS[0],
-      max_tokens: 4000,
-      system: systemPrompt,
-      tools: anthropicTools.length > 0 ? anthropicTools : undefined,
-      messages: conversation,
-    } as any);
+  // Essaie chaque modèle Claude dans l'ordre jusqu'au succès
+  for (const model of CLAUDE_MODELS) {
+    let conversation = [...claudeMessages];
+    try {
+      for (let iter = 0; iter < 8; iter++) {
+        const params: any = {
+          model,
+          max_tokens: 4000,
+          system: systemPrompt,
+          messages: conversation,
+        };
+        if (anthropicTools.length > 0) params.tools = anthropicTools;
 
-    runner.on("text", (text: string) => send({ type: "token", text }));
-    const finalMsg = await runner.finalMessage();
+        const runner = client.messages.stream(params);
+        runner.on("text", (text: string) => send({ type: "token", text }));
+        const finalMsg = await runner.finalMessage();
 
-    if (finalMsg.stop_reason === "end_turn") break;
+        if (finalMsg.stop_reason === "end_turn") return;
 
-    if (finalMsg.stop_reason === "tool_use") {
-      conversation.push({ role: "assistant", content: finalMsg.content });
-      const toolResults: Anthropic.ToolResultBlockParam[] = [];
-      for (const block of finalMsg.content) {
-        if ((block as any).type === "tool_use") {
-          const { succes, resultat } = await executeOutil((block as any).name, (block as any).input ?? {}, tenantId);
-          actionsEffectuees.push(resultat);
-          toolResults.push({ type: "tool_result", tool_use_id: (block as any).id, content: resultat, is_error: !succes });
+        if (finalMsg.stop_reason === "tool_use") {
+          conversation.push({ role: "assistant", content: finalMsg.content });
+          const toolResults: Anthropic.ToolResultBlockParam[] = [];
+          for (const block of finalMsg.content) {
+            if ((block as any).type === "tool_use") {
+              const { succes, resultat } = await executeOutil((block as any).name, (block as any).input ?? {}, tenantId);
+              actionsEffectuees.push(resultat);
+              toolResults.push({ type: "tool_result", tool_use_id: (block as any).id, content: resultat, is_error: !succes });
+            }
+          }
+          conversation.push({ role: "user", content: toolResults });
+          continue;
         }
+        return;
       }
-      conversation.push({ role: "user", content: toolResults });
-      continue;
+      return; // succès avec ce modèle
+    } catch (e: any) {
+      const msg = (e?.message ?? "").toLowerCase();
+      if (msg.includes("model") || msg.includes("not_found") || msg.includes("404") || e?.status === 404) {
+        console.warn(`[claude-stream] model ${model} indisponible, essai suivant`);
+        continue;
+      }
+      throw e; // erreur auth/quota → propager
     }
-    break;
   }
+  throw new Error("Aucun modèle Claude disponible pour la synthèse");
 }
 
 // ─── runAgent (non-streaming) ─────────────────────────────────────────────────
@@ -183,23 +198,28 @@ export async function runAgent(
     console.warn("[agent] phase1:", err?.message?.slice(0, 80));
   }
 
-  // Phase 2 — Synthesis with Claude
+  // Phase 2 — Synthesis with Claude (essaie chaque modèle dans l'ordre)
   const originalQ = messages[messages.length - 1]?.content ?? "";
   if (hasAnthropic()) {
-    try {
-      const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
-      const synthMsg = buildSynthesisUserMessage(originalQ, toolResults);
-      const prevMessages: Anthropic.MessageParam[] = messages.slice(0, -1).map(m => ({ role: m.role, content: m.content }));
-      const response = await (client.messages.create as any)({
-        model: CLAUDE_MODELS[0],
-        max_tokens: 4000,
-        system: systemPrompt,
-        messages: [...prevMessages, { role: "user", content: synthMsg }],
-      });
-      const t = response.content?.find((b: any) => b.type === "text");
-      return { reponse: t?.text ?? "", actions: actionsEffectuees };
-    } catch (err: any) {
-      console.warn("[agent] claude synthesis:", err?.message?.slice(0, 80));
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+    const synthMsg = buildSynthesisUserMessage(originalQ, toolResults);
+    const prevMessages: Anthropic.MessageParam[] = messages.slice(0, -1).map(m => ({ role: m.role, content: m.content }));
+    for (const model of CLAUDE_MODELS) {
+      try {
+        const response = await (client.messages.create as any)({
+          model,
+          max_tokens: 4000,
+          system: systemPrompt,
+          messages: [...prevMessages, { role: "user", content: synthMsg }],
+        });
+        const t = response.content?.find((b: any) => b.type === "text");
+        return { reponse: t?.text ?? "", actions: actionsEffectuees };
+      } catch (err: any) {
+        const msg = (err?.message ?? "").toLowerCase();
+        if (msg.includes("model") || msg.includes("not_found") || err?.status === 404) continue;
+        console.warn("[agent] claude:", err?.message?.slice(0, 80));
+        break;
+      }
     }
   }
 
@@ -279,6 +299,13 @@ export function runAgentStream(
               actionsEffectuees.push(resultat);
               toolResults.push(resultat);
               conversation.push({ role: "tool", tool_call_id: tc.id, content: resultat });
+            }
+            // Re-ancrage de sécurité : si Claude synthesis échoue et qu'on tombe
+            // sur le texte de phase 1, il sera au moins ancré sur la vraie question
+            const origQ = messages[messages.length - 1];
+            if (origQ) {
+              const q = typeof origQ.content === "string" ? origQ.content : JSON.stringify(origQ.content);
+              conversation.push({ role: "user", content: `Réponds maintenant directement à ma question : "${q}"` });
             }
             continue;
           }
