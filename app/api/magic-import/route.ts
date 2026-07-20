@@ -2,7 +2,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { hasNVIDIA, completionNVIDIA } from "@/lib/llm-client";
 import { generateProductImageUrl, buildProductImagePrompt } from "@/lib/image-gen";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
@@ -58,24 +57,9 @@ export async function POST(request: Request) {
     const pays = tenant?.pays || "SN";
     const devise = tenant?.devise || "XOF";
 
-    if (!hasNVIDIA()) {
-      return NextResponse.json({ message: "NVIDIA NIM non configuré. Vérifiez NVIDIA_KEY_DEEPSEEK dans .env.local" }, { status: 503 });
-    }
+    return NextResponse.json({ message: "Génération IA temporairement indisponible. Utilisez l'import manuel." }, { status: 503 });
 
-    // DeepSeek V4 Flash — rapide pour JSON structuré
-    const model = process.env.NVIDIA_MODEL_DEEPSEEK ?? "deepseek-ai/deepseek-v4-flash";
-    const result = await completionNVIDIA(
-      [{ role: "user", content: buildPrompt(body.description, body.nombreProduits, pays, devise) }],
-      6000,
-      model
-    );
-
-    const jsonMatch = result.text.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      return NextResponse.json({ message: "L'IA n'a pas retourné de catalogue JSON valide" }, { status: 500 });
-    }
-
-    let produits: any[] = JSON.parse(jsonMatch[0]);
+    let produits: any[] = [];
 
     // Ajouter URLs images Flux (instantané — chargées par le navigateur)
     produits = produits.map((p, i) => {

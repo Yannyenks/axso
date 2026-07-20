@@ -5,7 +5,6 @@ import { headers } from "next/headers";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Header } from "@/components/dashboard/Header";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
-import { AxiaFloat } from "@/components/dashboard/AxiaFloat";
 import {
   IconAxia, IconProduits, IconMarketing, IconClients, IconLivraisons, IconAnalytics,
 } from "@/components/dashboard/AppIcons";
@@ -46,9 +45,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </main>
         </div>
       </div>
-
-      {/* ─── Bouton flottant AXIA (global) ──────────────────────── */}
-      <AxiaFloat />
 
       {/* ─── Mobile : bottom nav + feed social ──────────────────── */}
       <div className="md:hidden flex flex-col min-h-screen bg-[#f0f2f8] text-gray-900">

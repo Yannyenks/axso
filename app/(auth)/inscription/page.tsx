@@ -10,7 +10,16 @@ import {
   ArrowRight, ArrowLeft, Check, Loader2, Store, Sparkles,
   Bot, Send, CheckCircle2, Package, Truck, Palette, AlertCircle,
 } from "lucide-react";
-import type { PlanBoutique } from "@/lib/ai-agent";
+interface PlanBoutique {
+  nomBoutique: string;
+  categorie: string;
+  pays: string;
+  devise: string;
+  description?: string;
+  themeId: string;
+  produits: { nom: string; prix: number }[];
+  livraison?: { locale: number; national: number };
+}
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
