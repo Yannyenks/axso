@@ -1,4 +1,13 @@
-// Agent AXIA — Claude natif prioritaire, multi-provider fallback
+/**
+ * Agent AXIA — Architecture split-inference
+ *
+ * Phase 1 — Tool execution : Gemini → Groq → NVIDIA → … (rapide, gratuit)
+ *   Les modèles bon marché excellent à appeler des fonctions structurées.
+ *
+ * Phase 2 — Response generation : Claude streaming natif (qualité maximale)
+ *   Claude reçoit le contexte des outils et génère la réponse finale.
+ *   Si Claude est indisponible → fallback sur le texte de Phase 1.
+ */
 import Anthropic from "@anthropic-ai/sdk";
 import {
   hasOpenAI,
@@ -7,7 +16,6 @@ import {
   completionWithToolsAuto,
   type ToolDefinition,
   type ToolCall,
-  type ChatMessage,
 } from "./llm-client";
 
 export type AgentTool = ToolDefinition;
@@ -26,7 +34,6 @@ function toAnthropicTools(tools: AgentTool[]): Anthropic.Tool[] {
   }));
 }
 
-// Modèles Claude disponibles par ordre de préférence
 const CLAUDE_MODELS = [
   "claude-opus-4-8",
   "claude-sonnet-4-6",
@@ -34,24 +41,22 @@ const CLAUDE_MODELS = [
   "claude-3-5-haiku-20241022",
 ];
 
-async function callClaudeCreate(client: Anthropic, params: any): Promise<any> {
-  for (const model of CLAUDE_MODELS) {
-    try {
-      return await (client.messages.create as any)({ ...params, model });
-    } catch (err: any) {
-      const msg = err?.message ?? "";
-      // Erreur de modèle → essayer le suivant
-      if (msg.includes("model") || msg.includes("404") || msg.includes("not_found")) {
-        console.warn(`[claude] model ${model} unavailable, trying next`);
-        continue;
-      }
-      throw err; // Autre erreur (auth, rate limit...) → propager
-    }
-  }
-  throw new Error("Aucun modèle Claude disponible");
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
+
+/** Construit le message de synthèse final pour Claude à partir du contexte outil */
+function buildSynthesisUserMessage(
+  originalQuestion: string,
+  toolResults: string[]
+): string {
+  if (toolResults.length === 0) return originalQuestion;
+  const ctx = toolResults.join("\n\n");
+  return `${originalQuestion}\n\n---\nContexte obtenu (utilise-le pour répondre, ne le répète pas) :\n${ctx}`;
 }
 
-// ─── Claude direct (non-streaming) — fiable, multi-turn ──────────────────────
+// ─── Claude direct (non-streaming) ───────────────────────────────────────────
+
 async function runViaClaude(
   systemPrompt: string,
   messages: Array<{ role: "user" | "assistant"; content: string }>,
@@ -64,45 +69,22 @@ async function runViaClaude(
   const client = new Anthropic({ apiKey });
   const actionsEffectuees: string[] = [];
   const anthropicTools = toAnthropicTools(tools);
-
-  let conversation: Anthropic.MessageParam[] = messages.map((m) => ({
-    role: m.role,
-    content: m.content,
-  }));
+  let conversation: Anthropic.MessageParam[] = messages.map((m) => ({ role: m.role, content: m.content }));
 
   for (let i = 0; i < maxIterations; i++) {
-    const response = await callClaudeCreate(client, {
-      max_tokens: 8000,
-      system: systemPrompt,
-      tools: anthropicTools,
-      messages: conversation,
-    });
-
+    const response = await (client.messages.create as any)({ model: CLAUDE_MODELS[0], max_tokens: 8000, system: systemPrompt, tools: anthropicTools, messages: conversation });
     if (response.stop_reason === "end_turn") {
-      const textBlock = response.content.find((b: any) => b.type === "text");
-      return {
-        reponse: textBlock ? (textBlock as any).text : "",
-        actions: actionsEffectuees,
-      };
+      const t = response.content.find((b: any) => b.type === "text");
+      return { reponse: t ? (t as any).text : "", actions: actionsEffectuees };
     }
-
     if (response.stop_reason === "tool_use") {
       conversation.push({ role: "assistant", content: response.content });
       const toolResults: Anthropic.ToolResultBlockParam[] = [];
       for (const block of response.content) {
         if ((block as any).type === "tool_use") {
-          const { succes, resultat } = await executeOutil(
-            (block as any).name,
-            (block as any).input as Record<string, any>,
-            tenantId
-          );
+          const { succes, resultat } = await executeOutil((block as any).name, (block as any).input ?? {}, tenantId);
           actionsEffectuees.push(resultat);
-          toolResults.push({
-            type: "tool_result",
-            tool_use_id: (block as any).id,
-            content: resultat,
-            is_error: !succes,
-          });
+          toolResults.push({ type: "tool_result", tool_use_id: (block as any).id, content: resultat, is_error: !succes });
         }
       }
       conversation.push({ role: "user", content: toolResults });
@@ -113,59 +95,43 @@ async function runViaClaude(
   return { reponse: "", actions: actionsEffectuees };
 }
 
-// ─── Claude streaming natif (essaie chaque modèle) ──────────────────────────
-async function runClaudeStream(
+// ─── Claude streaming natif (Phase 2 de runAgentStream) ──────────────────────
+
+async function claudeSynthesisStream(
   send: (data: object) => void,
   systemPrompt: string,
-  messages: Array<{ role: "user" | "assistant"; content: string | any[] }>,
+  claudeMessages: Anthropic.MessageParam[],
   tools: AgentTool[],
   tenantId: string,
   executeOutil: ToolExecutor,
-  maxIterations: number,
   actionsEffectuees: string[]
 ): Promise<void> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
   const anthropicTools = toAnthropicTools(tools);
-  let conversation: Anthropic.MessageParam[] = messages.map((m) => ({
-    role: m.role as "user" | "assistant",
-    content: typeof m.content === "string" ? m.content : (m.content as any),
-  }));
+  let conversation = [...claudeMessages];
 
-  const activeModel = CLAUDE_MODELS[0];
-
-  for (let iter = 0; iter < maxIterations; iter++) {
+  for (let iter = 0; iter < 8; iter++) {
     const runner = client.messages.stream({
-      model: activeModel,
-      max_tokens: 8000,
+      model: CLAUDE_MODELS[0],
+      max_tokens: 4000,
       system: systemPrompt,
-      tools: anthropicTools,
+      tools: anthropicTools.length > 0 ? anthropicTools : undefined,
       messages: conversation,
-    });
+    } as any);
 
     runner.on("text", (text: string) => send({ type: "token", text }));
-
     const finalMsg = await runner.finalMessage();
-    const stopReason = finalMsg.stop_reason;
 
-    if (stopReason === "end_turn") break;
+    if (finalMsg.stop_reason === "end_turn") break;
 
-    if (stopReason === "tool_use") {
+    if (finalMsg.stop_reason === "tool_use") {
       conversation.push({ role: "assistant", content: finalMsg.content });
       const toolResults: Anthropic.ToolResultBlockParam[] = [];
       for (const block of finalMsg.content) {
         if ((block as any).type === "tool_use") {
-          const { succes, resultat } = await executeOutil(
-            (block as any).name,
-            (block as any).input ?? {},
-            tenantId
-          );
+          const { succes, resultat } = await executeOutil((block as any).name, (block as any).input ?? {}, tenantId);
           actionsEffectuees.push(resultat);
-          toolResults.push({
-            type: "tool_result",
-            tool_use_id: (block as any).id,
-            content: resultat,
-            is_error: !succes,
-          });
+          toolResults.push({ type: "tool_result", tool_use_id: (block as any).id, content: resultat, is_error: !succes });
         }
       }
       conversation.push({ role: "user", content: toolResults });
@@ -175,38 +141,8 @@ async function runClaudeStream(
   }
 }
 
-// ─── Fallback OpenAI (non-streaming) ─────────────────────────────────────────
-async function runViaOpenAI(
-  systemPrompt: string,
-  messages: Array<{ role: "user" | "assistant"; content: string }>,
-  tools: AgentTool[],
-  tenantId: string,
-  executeOutil: ToolExecutor,
-  maxIterations: number
-): Promise<AgentResult> {
-  const actionsEffectuees: string[] = [];
-  const conversation: any[] = [{ role: "system", content: systemPrompt }, ...messages];
-  for (let i = 0; i < maxIterations; i++) {
-    const result = await completionWithToolsOpenAI(conversation, tools, 4000);
-    if (result.stopReason === "end_turn") return { reponse: result.text ?? "", actions: actionsEffectuees };
-    if (result.stopReason === "tool_use" && result.toolCalls?.length) {
-      conversation.push({
-        role: "assistant", content: null,
-        tool_calls: result.toolCalls.map((tc) => ({ id: tc.id, type: "function", function: { name: tc.name, arguments: JSON.stringify(tc.arguments) } })),
-      });
-      for (const tc of result.toolCalls) {
-        const { resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
-        actionsEffectuees.push(resultat);
-        conversation.push({ role: "tool", tool_call_id: tc.id, content: resultat });
-      }
-      continue;
-    }
-    break;
-  }
-  return { reponse: "", actions: actionsEffectuees };
-}
-
 // ─── runAgent (non-streaming) ─────────────────────────────────────────────────
+
 export async function runAgent(
   systemPrompt: string,
   messages: Array<{ role: "user" | "assistant"; content: string }>,
@@ -216,54 +152,71 @@ export async function runAgent(
   maxIterations = 8,
   _fast = false
 ): Promise<AgentResult> {
-  // Auto-chain first (Gemini → Groq → NVIDIA → ... → Pollinations)
+  const actionsEffectuees: string[] = [];
+  const toolResults: string[] = [];
+
+  // Phase 1 — Tool execution (cheap models)
   try {
     const conversation: any[] = [{ role: "system", content: systemPrompt }, ...messages];
-    const actionsEffectuees: string[] = [];
+    let toolsUsed = false;
+
     for (let i = 0; i < maxIterations; i++) {
       const result = await completionWithToolsAuto(conversation, tools, 4000, false);
-      if (result.stopReason === "end_turn") return { reponse: result.text ?? "", actions: actionsEffectuees };
+      if (result.stopReason === "end_turn") {
+        if (!toolsUsed) return { reponse: result.text ?? "", actions: actionsEffectuees };
+        break;
+      }
       if (result.stopReason === "tool_use" && result.toolCalls?.length) {
+        toolsUsed = true;
         conversation.push({ role: "assistant", content: null, tool_calls: result.toolCalls.map(tc => ({ id: tc.id, type: "function", function: { name: tc.name, arguments: JSON.stringify(tc.arguments) } })) });
         for (const tc of result.toolCalls) {
           const { resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
           actionsEffectuees.push(resultat);
+          toolResults.push(resultat);
           conversation.push({ role: "tool", tool_call_id: tc.id, content: resultat });
         }
-        const originalQ = messages.find(m => m.role === "user");
-        if (originalQ) conversation.push({ role: "user", content: `Tu as les informations nécessaires. Réponds maintenant directement à ma question : "${originalQ.content}"` });
         continue;
       }
       break;
     }
-    // Boucle épuisée — demander résumé si des outils ont été utilisés
-    if (actionsEffectuees.length > 0) {
-      conversation.push({ role: "user", content: "Résume brièvement ce que tu viens d'accomplir." });
-      try {
-        const s = await completionWithToolsAuto(conversation, [], 800);
-        return { reponse: s.text ?? "Actions effectuées avec succès.", actions: actionsEffectuees };
-      } catch {}
-    }
-    return { reponse: "", actions: actionsEffectuees };
   } catch (err: any) {
-    console.warn("[agent] auto-chain:", err?.message?.slice(0, 80));
+    console.warn("[agent] phase1:", err?.message?.slice(0, 80));
   }
-  if (hasOpenAI()) {
-    try { return await runViaOpenAI(systemPrompt, messages, tools, tenantId, executeOutil, maxIterations); }
-    catch (err: any) { console.warn("[agent] OpenAI:", err?.message?.slice(0, 80)); }
-  }
-  // Anthropic en dernier recours
+
+  // Phase 2 — Synthesis with Claude
+  const originalQ = messages[messages.length - 1]?.content ?? "";
   if (hasAnthropic()) {
     try {
-      return await runViaClaude(systemPrompt, messages, tools, tenantId, executeOutil, process.env.ANTHROPIC_API_KEY!, maxIterations);
+      const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+      const synthMsg = buildSynthesisUserMessage(originalQ, toolResults);
+      const prevMessages: Anthropic.MessageParam[] = messages.slice(0, -1).map(m => ({ role: m.role, content: m.content }));
+      const response = await (client.messages.create as any)({
+        model: CLAUDE_MODELS[0],
+        max_tokens: 4000,
+        system: systemPrompt,
+        messages: [...prevMessages, { role: "user", content: synthMsg }],
+      });
+      const t = response.content?.find((b: any) => b.type === "text");
+      return { reponse: t?.text ?? "", actions: actionsEffectuees };
     } catch (err: any) {
-      console.warn("[agent] Claude:", err?.message?.slice(0, 80));
+      console.warn("[agent] claude synthesis:", err?.message?.slice(0, 80));
     }
   }
-  return { reponse: "", actions: [] };
+
+  // Fallback — OpenAI
+  if (hasOpenAI()) {
+    try {
+      const conv: any[] = [{ role: "system", content: systemPrompt }, ...messages];
+      const r = await completionWithToolsOpenAI(conv, [], 2000);
+      return { reponse: r.text ?? "", actions: actionsEffectuees };
+    } catch {}
+  }
+
+  return { reponse: "", actions: actionsEffectuees };
 }
 
 // ─── runAgentStream (SSE streaming) ──────────────────────────────────────────
+
 export function runAgentStream(
   systemPrompt: string,
   messages: Array<{ role: "user" | "assistant"; content: string | any[] }>,
@@ -289,9 +242,11 @@ export function runAgentStream(
       };
 
       const actionsEffectuees: string[] = [];
+      const toolResults: string[] = [];
+      let toolsWereUsed = false;
+      let phase1Text = "";
 
-      // ── 1. completionWithToolsAuto multi-turn (Gemini → Groq → NVIDIA → … → Anthropic) ──
-      // Gère le tool use complet + simule le streaming mot par mot
+      // ── Phase 1 : Tool execution (Gemini → Groq → NVIDIA → …) ──────────────
       try {
         const conversation: any[] = [
           { role: "system", content: systemPrompt },
@@ -305,80 +260,80 @@ export function runAgentStream(
           const result = await completionWithToolsAuto(conversation, tools, 4000);
 
           if (result.stopReason === "end_turn") {
-            const text = result.text ?? "";
-            if (text) {
-              const chunks = text.match(/\S+\s*/g) ?? [];
-              for (const chunk of chunks) {
-                send({ type: "token", text: chunk });
-                await new Promise(r => setTimeout(r, 5));
-              }
-            }
-            finish(actionsEffectuees);
-            return;
+            phase1Text = result.text ?? "";
+            break;
           }
 
           if (result.stopReason === "tool_use" && result.toolCalls?.length) {
+            toolsWereUsed = true;
             conversation.push({
               role: "assistant",
               content: null,
               tool_calls: result.toolCalls.map(tc => ({
-                id: tc.id,
-                type: "function",
+                id: tc.id, type: "function",
                 function: { name: tc.name, arguments: JSON.stringify(tc.arguments) },
               })),
             });
             for (const tc of result.toolCalls) {
               const { succes, resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
               actionsEffectuees.push(resultat);
+              toolResults.push(resultat);
               conversation.push({ role: "tool", tool_call_id: tc.id, content: resultat });
-            }
-            // Re-ancrage : force le modèle à revenir sur la question originale
-            // sans ce message, Gemini/Groq répètent les données de l'outil au lieu de répondre
-            const originalQuestion = messages.find(m => m.role === "user");
-            if (originalQuestion) {
-              conversation.push({
-                role: "user",
-                content: `Tu as les informations nécessaires. Réponds maintenant directement à ma question : "${typeof originalQuestion.content === "string" ? originalQuestion.content : "ma demande"}"`,
-              });
             }
             continue;
           }
           break;
         }
-
-        // Boucle épuisée sans end_turn — demander un résumé final
-        if (actionsEffectuees.length > 0) {
-          conversation.push({ role: "user", content: "Résume brièvement ce que tu viens d'accomplir." });
-          try {
-            const summary = await completionWithToolsAuto(conversation, [], 1000);
-            const text = summary.text ?? "";
-            if (text) {
-              const chunks = text.match(/\S+\s*/g) ?? [];
-              for (const chunk of chunks) { send({ type: "token", text: chunk }); await new Promise(r => setTimeout(r, 5)); }
-            }
-          } catch {}
-        }
-        finish(actionsEffectuees);
-        return;
-
-      } catch (primaryErr: any) {
-        console.warn("[stream] primary chain failed:", primaryErr?.message?.slice(0, 100));
+      } catch (err: any) {
+        console.warn("[stream] phase1 failed:", err?.message?.slice(0, 100));
       }
 
-      // ── 2. Claude natif streaming (dernier recours absolu) ────────────────
+      // ── Phase 2 : Réponse finale avec Claude (streaming natif) ───────────────
       if (hasAnthropic()) {
         try {
-          await runClaudeStream(send, systemPrompt, messages, tools, tenantId, executeOutil, maxIterations, actionsEffectuees);
+          const originalQuestion = (() => {
+            const last = messages[messages.length - 1];
+            if (!last) return "";
+            return typeof last.content === "string" ? last.content : JSON.stringify(last.content);
+          })();
+
+          // Conversation propre pour Claude : historique + question enrichie du contexte outil
+          const prevMessages: Anthropic.MessageParam[] = messages.slice(0, -1)
+            .filter(m => m.role !== "system" as any)
+            .map(m => ({
+              role: m.role as "user" | "assistant",
+              content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
+            }));
+
+          const synthesisMsg = buildSynthesisUserMessage(originalQuestion, toolResults);
+          const claudeMessages: Anthropic.MessageParam[] = [
+            ...prevMessages,
+            { role: "user", content: synthesisMsg },
+          ];
+
+          await claudeSynthesisStream(send, systemPrompt, claudeMessages, [], tenantId, executeOutil, actionsEffectuees);
           finish(actionsEffectuees);
           return;
-        } catch (claudeErr: any) {
-          console.error("[stream] Claude also failed:", (claudeErr as any)?.message?.slice(0, 100));
+        } catch (err: any) {
+          console.warn("[stream] claude synthesis failed:", err?.message?.slice(0, 100));
         }
       }
 
-      // ── 3. Réponse de secours — jamais de silence total ───────────────────
-      send({ type: "token", text: "Service IA momentanément indisponible. Réessaie dans quelques secondes." });
-      finish([]);
+      // ── Fallback : streamer le résultat de Phase 1 mot par mot ───────────────
+      if (phase1Text) {
+        const chunks = phase1Text.match(/\S+\s*/g) ?? [];
+        for (const chunk of chunks) { send({ type: "token", text: chunk }); await sleep(5); }
+        finish(actionsEffectuees);
+        return;
+      }
+
+      // ── Dernier recours : résumé des actions ou message d'erreur ─────────────
+      if (actionsEffectuees.length > 0) {
+        send({ type: "token", text: "Actions effectuées avec succès." });
+      } else {
+        send({ type: "token", text: "Service IA momentanément indisponible. Réessaie dans quelques secondes." });
+      }
+      finish(actionsEffectuees);
     },
   });
 }
