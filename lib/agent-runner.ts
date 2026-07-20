@@ -280,143 +280,88 @@ export function runAgentStream(
 
   return new ReadableStream({
     async start(controller) {
-      const send = (data: object) =>
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
-
+      let closed = false;
+      const send = (data: object) => {
+        if (closed) return;
+        try { controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`)); } catch {}
+      };
       const finish = (actions: string[]) => {
+        if (closed) return;
+        closed = true;
         try { send({ type: "done", actions }); } catch {}
         try { controller.close(); } catch {}
       };
 
+      const actionsEffectuees: string[] = [];
+
+      // ── 1. completionWithToolsAuto multi-turn (Gemini → Groq → NVIDIA → … → Anthropic) ──
+      // Gère le tool use complet + simule le streaming mot par mot
       try {
-        const actionsEffectuees: string[] = [];
+        const conversation: any[] = [
+          { role: "system", content: systemPrompt },
+          ...messages.map(m => ({
+            role: m.role,
+            content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
+          })),
+        ];
 
-        // ── 1. Fallback conversationnel (Gemini → Groq → NVIDIA → Pollinations) ─
-        {
-          const isFirstMessage = messages.filter(m => m.role === "assistant").length === 0;
-          const fallbackSystem = `Tu es AXIA, l'assistant IA de la plateforme e-commerce Axso.
-Tu réponds exactement comme Claude : directement, intelligemment, naturellement.
-${!isFirstMessage ? "NE te présente pas — la conversation est déjà commencée. Réponds directement à la question." : ""}
-Tu peux parler de tout : e-commerce, business, stratégie, tech, finance, vie quotidienne. Aucune limite.
-Contexte e-commerce : Afrique (Wave, Orange Money, MTN) + Europe. WhatsApp = canal principal.
-Réponds dans la langue de l'utilisateur. Sois direct, utile, précis.`;
+        for (let iter = 0; iter < maxIterations; iter++) {
+          const result = await completionWithToolsAuto(conversation, tools, 4000);
 
-          const fallbackMsgs: ChatMessage[] = [
-            { role: "system", content: fallbackSystem },
-            ...messages.map((m) => ({
-              role: m.role as "user" | "assistant",
-              content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
-            })),
-          ];
-
-          try {
-            const fallbackResult = await completionAuto(fallbackMsgs, 3000);
-            if (fallbackResult.text) {
-              const words = fallbackResult.text.match(/\S+\s*/g) ?? [];
-              for (const w of words) { send({ type: "token", text: w }); await new Promise((r) => setTimeout(r, 8)); }
+          if (result.stopReason === "end_turn") {
+            const text = result.text ?? "";
+            if (text) {
+              const chunks = text.match(/\S+\s*/g) ?? [];
+              for (const chunk of chunks) {
+                send({ type: "token", text: chunk });
+                await new Promise(r => setTimeout(r, 5));
+              }
             }
             finish(actionsEffectuees);
             return;
-          } catch (fallbackErr: any) {
-            console.warn("[stream] fallback chain:", fallbackErr?.message?.slice(0, 80));
           }
-        }
 
-        // ── 2. OpenAI streaming natif ─────────────────────────────────────
-        if (hasOpenAI()) {
-          const conversation: any[] = [{ role: "system", content: systemPrompt }, ...messages];
-          for (let iter = 0; iter < maxIterations; iter++) {
-            const openAIRes = await streamWithOpenAI(conversation, tools, 4000);
-            if (!openAIRes.ok) throw new Error(`OpenAI ${openAIRes.status}`);
-            const reader = openAIRes.body!.getReader();
-            const decoder = new TextDecoder();
-            let buf = "";
-            const tcAcc: Record<number, { id: string; name: string; args: string }> = {};
-            let hasTC = false;
-            const pendingTC: ToolCall[] = [];
-
-            outer: while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              buf += decoder.decode(value, { stream: true });
-              const lines = buf.split("\n"); buf = lines.pop() ?? "";
-              for (const line of lines) {
-                if (!line.startsWith("data: ")) continue;
-                const raw = line.slice(6).trim();
-                if (raw === "[DONE]") break outer;
-                let chunk: any; try { chunk = JSON.parse(raw); } catch { continue; }
-                const delta = chunk.choices?.[0]?.delta;
-                const finishReason = chunk.choices?.[0]?.finish_reason;
-                if (delta?.content) send({ type: "token", text: delta.content });
-                if (delta?.tool_calls) {
-                  hasTC = true;
-                  for (const tc of delta.tool_calls) {
-                    const idx = tc.index ?? 0;
-                    if (!tcAcc[idx]) tcAcc[idx] = { id: "", name: "", args: "" };
-                    if (tc.id) tcAcc[idx].id = tc.id;
-                    if (tc.function?.name) tcAcc[idx].name += tc.function.name;
-                    if (tc.function?.arguments) tcAcc[idx].args += tc.function.arguments;
-                  }
-                }
-                if (finishReason === "tool_calls") {
-                  for (const tc of Object.values(tcAcc)) {
-                    let args: Record<string, any> = {}; try { args = JSON.parse(tc.args); } catch {}
-                    pendingTC.push({ id: tc.id, name: tc.name, arguments: args });
-                  }
-                  break outer;
-                }
-                if (finishReason === "stop") break outer;
-              }
-            }
-
-            if (!hasTC) break;
-            conversation.push({ role: "assistant", content: null, tool_calls: pendingTC.map((tc) => ({ id: tc.id, type: "function", function: { name: tc.name, arguments: JSON.stringify(tc.arguments) } })) });
-            for (const tc of pendingTC) {
-              const { resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
+          if (result.stopReason === "tool_use" && result.toolCalls?.length) {
+            conversation.push({
+              role: "assistant",
+              content: null,
+              tool_calls: result.toolCalls.map(tc => ({
+                id: tc.id,
+                type: "function",
+                function: { name: tc.name, arguments: JSON.stringify(tc.arguments) },
+              })),
+            });
+            for (const tc of result.toolCalls) {
+              const { succes, resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
               actionsEffectuees.push(resultat);
               conversation.push({ role: "tool", tool_call_id: tc.id, content: resultat });
             }
+            continue;
           }
+          break;
+        }
+
+        finish(actionsEffectuees);
+        return;
+
+      } catch (primaryErr: any) {
+        console.warn("[stream] primary chain failed:", primaryErr?.message?.slice(0, 100));
+      }
+
+      // ── 2. Claude natif streaming (dernier recours absolu) ────────────────
+      if (hasAnthropic()) {
+        try {
+          await runClaudeStream(send, systemPrompt, messages, tools, tenantId, executeOutil, maxIterations, actionsEffectuees);
           finish(actionsEffectuees);
           return;
+        } catch (claudeErr: any) {
+          console.error("[stream] Claude also failed:", (claudeErr as any)?.message?.slice(0, 100));
         }
-
-        // ── 3. Claude natif streaming (dernier recours) ───────────────────
-        if (hasAnthropic()) {
-          let tokensSent = false;
-          const sendTracked = (data: object) => {
-            if ((data as any).type === "token") tokensSent = true;
-            send(data);
-          };
-          try {
-            await runClaudeStream(sendTracked, systemPrompt, messages, tools, tenantId, executeOutil, maxIterations, actionsEffectuees);
-            finish(actionsEffectuees);
-            return;
-          } catch (streamErr: any) {
-            console.warn("[stream] Claude streaming:", streamErr?.message?.slice(0, 80));
-            if (tokensSent) { finish(actionsEffectuees); return; }
-            try {
-              const msgList = messages.map((m) => ({
-                role: m.role as "user" | "assistant",
-                content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
-              }));
-              const result = await runViaClaude(systemPrompt, msgList, tools, tenantId, executeOutil, process.env.ANTHROPIC_API_KEY!, maxIterations);
-              if (result.reponse) {
-                const words = result.reponse.match(/\S+\s*/g) ?? [];
-                for (const w of words) { send({ type: "token", text: w }); await new Promise((r) => setTimeout(r, 8)); }
-              }
-              actionsEffectuees.push(...result.actions);
-            } catch (nonStreamErr: any) {
-              console.error("[AXIA Claude error]", (nonStreamErr as any)?.status ?? 0, (nonStreamErr?.message ?? "").slice(0, 200));
-            }
-          }
-        }
-        finish(actionsEffectuees);
-
-      } catch (err: any) {
-        try { send({ type: "error", text: err?.message ?? "Erreur AXIA" }); } catch {}
-        try { controller.close(); } catch {}
       }
+
+      // ── 3. Réponse de secours — jamais de silence total ───────────────────
+      send({ type: "token", text: "Service IA momentanément indisponible. Réessaie dans quelques secondes." });
+      finish([]);
     },
   });
 }

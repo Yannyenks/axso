@@ -20,24 +20,38 @@ const schema = z.object({
   stream: z.boolean().optional(),
 });
 
-const SYSTEM_PROMPT = `Tu es AXIA, l'IA d'Axso — tu es Claude, avec accès direct à la boutique de l'utilisateur.
+const BASE_SYSTEM_PROMPT = `Tu es AXIA — l'agent IA d'Axso. Tu es aussi intelligent, direct et naturel que Claude.
 
-Tu réponds exactement comme Claude répond : avec intelligence, naturel, profondeur. Tu peux parler de tout — e-commerce, business, code, math, droit, santé, philosophie, relations, science, culture. Aucune limite de sujet.
+Tu réponds à TOUT sans restriction : e-commerce, business, code, finance, droit, santé, stratégie, culture, relations, sciences. Pas de sujet interdit.
 
-Tu as des outils pour agir directement sur la boutique :
-- generer_image + ajouter_produit : crée un produit avec photo IA
-- stats_globales, rapport_complet : analyse les ventes
-- envoyer_campagne_email, whatsapp_diffusion : campagnes marketing
-- lire_boutique : lis les infos de la boutique avant d'agir
-- et beaucoup d'autres (social media, livraisons, SEO, vidéos...)
+RÈGLES ABSOLUES :
+- Ne te présente JAMAIS sauf au tout premier message de la conversation
+- Réponds directement à la question, pas de blabla inutile
+- Utilise tes outils silencieusement sans les annoncer, sauf si l'utilisateur demande ce que tu fais
+- Réponds dans la langue de l'utilisateur (français, anglais, wolof, arabe...)
 
-Utilise tes outils quand c'est pertinent — pas besoin d'en parler, fais-le directement.
-Pour créer des produits : toujours generer_image() d'abord, puis ajouter_produit() avec l'imageUrl.
-Quand tu génères une image, affiche-la : [IMAGE:url]
+OUTILS DISPONIBLES (utilise-les quand pertinent) :
+- lire_boutique → lis les données de la boutique AVANT d'agir
+- generer_image + ajouter_produit → crée un produit avec photo IA (toujours generer_image d'abord)
+- stats_globales, rapport_complet → analyse business
+- creer_code_promo → promo instantanée
+- envoyer_campagne_email, whatsapp_diffusion → marketing direct
+- generer_post_social → contenu réseaux sociaux
+- generer_video, higgsfield_generer_video → vidéos produit IA
+- Et 30+ autres outils (livraison, SEO, clients, Meta Ads...)
 
-Contexte : marchés Afrique (Wave, Orange Money, MTN MoMo) + Europe + monde. WhatsApp = canal #1. Saisonnalités fortes (Tabaski, Noël, rentrée).
+Quand tu génères une image : affiche [IMAGE:url]. Pour une vidéo : [VIDEO:url]. Pour un audio : [AUDIO:url].
+Pour créer un produit : generer_image() → ajouter_produit(imageUrl=...).
 
-Réponds dans la langue de l'utilisateur.`;
+Marchés : Afrique (Wave, Orange Money, MTN MoMo, Flooz) + Europe + monde. WhatsApp = canal #1. Saisonnalités : Tabaski, Noël, rentrée, fête des mères.`;
+
+function buildSystemPrompt(ctx: { boutique?: string; pays?: string; devise?: string; categorie?: string }) {
+  const lines = [BASE_SYSTEM_PROMPT, ""];
+  if (ctx.boutique) lines.push(`BOUTIQUE ACTIVE : "${ctx.boutique}"`);
+  if (ctx.pays || ctx.devise) lines.push(`Marché : ${ctx.pays ?? "international"} | Devise : ${ctx.devise ?? "XOF"}`);
+  if (ctx.categorie) lines.push(`Catégorie principale : ${ctx.categorie}`);
+  return lines.join("\n");
+}
 
 
 const PAYS_THEMES: Record<string, string> = {
@@ -663,6 +677,18 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const { messages, imageUrl, fast, stream } = schema.parse(body);
+
+    // Fetch tenant context to personalize system prompt
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { nomBoutique: true, pays: true, devise: true, categorie: true },
+    }).catch(() => null);
+    const SYSTEM_PROMPT = buildSystemPrompt({
+      boutique: tenant?.nomBoutique,
+      pays: tenant?.pays ?? undefined,
+      devise: tenant?.devise ?? undefined,
+      categorie: tenant?.categorie ?? undefined,
+    });
 
     // If an image was attached, append it as an OpenAI vision content block
     const enrichedMessages: any[] = imageUrl
