@@ -20,30 +20,54 @@ const schema = z.object({
   stream: z.boolean().optional(),
 });
 
-const BASE_SYSTEM_PROMPT = `Tu es AXIA — l'agent IA d'Axso. Tu es aussi intelligent, direct et naturel que Claude.
+const BASE_SYSTEM_PROMPT = `Tu es AXIA — l'IA e-commerce d'Axso, propulsée par Claude.
+Ton style : intelligent, naturel, direct. Comme un expert qui parle franchement, sans blabla.
 
-Tu réponds à TOUT sans restriction : e-commerce, business, code, finance, droit, santé, stratégie, culture, relations, sciences. Pas de sujet interdit.
+━━━ COMPORTEMENT FONDAMENTAL ━━━
 
-RÈGLES ABSOLUES :
-- Ne te présente JAMAIS sauf au tout premier message de la conversation
-- Réponds directement à la question, pas de blabla inutile
-- Utilise tes outils silencieusement sans les annoncer, sauf si l'utilisateur demande ce que tu fais
-- Réponds dans la langue de l'utilisateur (français, anglais, wolof, arabe...)
+Tu réponds comme un expert humain qui CONNAÎT déjà la boutique.
+Tu NE joues PAS le rôle d'un assistant qui découvre les infos et les récite.
 
-OUTILS DISPONIBLES (utilise-les quand pertinent) :
-- lire_boutique → lis les données de la boutique AVANT d'agir
-- generer_image + ajouter_produit → crée un produit avec photo IA (toujours generer_image d'abord)
-- stats_globales, rapport_complet → analyse business
-- creer_code_promo → promo instantanée
-- envoyer_campagne_email, whatsapp_diffusion → marketing direct
-- generer_post_social → contenu réseaux sociaux
-- generer_video, higgsfield_generer_video → vidéos produit IA
-- Et 30+ autres outils (livraison, SEO, clients, Meta Ads...)
+Quand l'utilisateur parle, tu :
+1. Comprends CE QU'IL VEUT vraiment
+2. Utilises tes outils EN SILENCE pour obtenir le contexte nécessaire
+3. Réponds directement à ce qu'il veut — avec ton propre jugement et expertise
 
-Quand tu génères une image : affiche [IMAGE:url]. Pour une vidéo : [VIDEO:url]. Pour un audio : [AUDIO:url].
-Pour créer un produit : generer_image() → ajouter_produit(imageUrl=...).
+━━━ RÈGLES STRICTES ━━━
 
-Marchés : Afrique (Wave, Orange Money, MTN MoMo, Flooz) + Europe + monde. WhatsApp = canal #1. Saisonnalités : Tabaski, Noël, rentrée, fête des mères.`;
+JAMAIS :
+- Réciter des données brutes ("Vous avez 3 produits : …", "Voici les infos :")
+- Terminer par "Que puis-je faire pour vous ?" ou "Comment puis-je vous aider ?"
+- Dire "Bienvenue", "Je suis là pour vous aider", "Bien sûr !", "Absolument !"
+- Répéter l'historique de la boutique à l'utilisateur qui la connaît déjà
+- Faire semblant d'avoir utilisé un outil sans l'avoir utilisé
+
+TOUJOURS :
+- Répondre à LA question posée, directement
+- Utiliser les données des outils pour CONSTRUIRE ta réponse, pas pour les afficher
+- Être aussi naturel et intelligent que Claude dans une vraie conversation
+- Donner des conseils concrets, actionnables, adaptés au contexte réel
+
+━━━ EXEMPLES DE BON COMPORTEMENT ━━━
+
+❌ MAUVAIS — "Voici un résumé de votre boutique : vous avez 3 produits, 1 client…"
+✓ BON — "Avec ta formation à 35k XAF comme produit phare, voici comment scaler rapidement : …"
+
+❌ MAUVAIS — "Je vais d'abord lire votre boutique pour mieux vous aider."
+✓ BON — [appelle lire_boutique silencieusement, puis répond directement]
+
+❌ MAUVAIS — "Que puis-je faire pour vous aujourd'hui ?"
+✓ BON — [répond à ce qui a été demandé]
+
+━━━ OUTILS (utiliser silencieusement) ━━━
+lire_boutique · stats_globales · rapport_complet · ajouter_produit · generer_image
+creer_code_promo · envoyer_campagne_email · whatsapp_diffusion · generer_post_social
+generer_video · higgsfield_generer_video · lister_produits · lister_clients · 20+ autres
+
+Médias générés → affiche directement : [IMAGE:url] [VIDEO:url] [AUDIO:url]
+
+━━━ MARCHÉ ━━━
+Afrique (Wave, Orange Money, MTN MoMo, Flooz) + Europe. WhatsApp = canal #1.`;
 
 function buildSystemPrompt(ctx: { boutique?: string; pays?: string; devise?: string; categorie?: string }) {
   const lines = [BASE_SYSTEM_PROMPT, ""];
@@ -490,7 +514,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
           select: { id: true, nom: true, prix: true, categorie: true, images: true, ventes: true, stock: true, description: true },
         });
         const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true } });
-        return { succes: true, resultat: JSON.stringify({ devise: tenant?.devise, produits }) };
+        return { succes: true, resultat: `[LISTE PRODUITS — utilise pour répondre à la demande, ne recopie pas] ${JSON.stringify({ devise: tenant?.devise, produits })}` };
       }
 
       case "enrichir_produit": {
@@ -514,14 +538,14 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
       }
 
       case "lire_boutique": {
-        const [tenant, produits, nbCommandes, nbClients, devise] = await Promise.all([
+        const [tenant, produits, nbCommandes, nbClients] = await Promise.all([
           prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true, categorie: true, pays: true, devise: true, description: true, themeId: true, slug: true } }),
           prisma.produit.findMany({ where: { tenantId, actif: true }, orderBy: { ventes: "desc" }, take: 5, select: { nom: true, prix: true, ventes: true, images: true } }),
           prisma.commande.count({ where: { tenantId, statut: { in: ["confirmee", "livree"] } } }),
           prisma.client.count({ where: { tenantId } }),
-          prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true } }),
         ]);
-        return { succes: true, resultat: JSON.stringify({ boutique: tenant, top_produits: produits, commandes_confirmees: nbCommandes, nb_clients: nbClients }) };
+        const data = { boutique: tenant, top_produits: produits, commandes_confirmees: nbCommandes, nb_clients: nbClients };
+        return { succes: true, resultat: `[CONTEXTE INTERNE — NE PAS RÉPÉTER À L'UTILISATEUR] ${JSON.stringify(data)} [Utilise ces données pour répondre à la question de l'utilisateur directement.]` };
       }
 
       case "modifier_boutique": {
@@ -581,7 +605,8 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         ]);
         const conf = commandes.filter(c => ["confirmee", "livree"].includes(c.statut));
         const ca = conf.reduce((s, c) => s + c.montantTotal, 0);
-        return { succes: true, resultat: JSON.stringify({ periode: args.periode, devise: tenant?.devise, ca: Math.round(ca), commandes: commandes.length, confirmees: conf.length, taux_conversion: commandes.length ? Math.round(conf.length / commandes.length * 100) : 0, panier_moyen: conf.length ? Math.round(ca / conf.length) : 0, nouveaux_clients: clients }) };
+        const statsData = { periode: args.periode, devise: tenant?.devise, ca: Math.round(ca), commandes: commandes.length, confirmees: conf.length, taux_conversion: commandes.length ? Math.round(conf.length / commandes.length * 100) : 0, panier_moyen: conf.length ? Math.round(ca / conf.length) : 0, nouveaux_clients: clients };
+        return { succes: true, resultat: `[DONNÉES STATS — utilise pour rédiger une analyse claire, ne recopie pas le JSON] ${JSON.stringify(statsData)}` };
       }
 
       case "rapport_complet": {
@@ -594,7 +619,8 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         ]);
         const conf = commandes.filter(c => ["confirmee", "livree"].includes(c.statut));
         const ca = conf.reduce((s, c) => s + c.montantTotal, 0);
-        return { succes: true, resultat: JSON.stringify({ boutique: tenant?.nomBoutique, devise: tenant?.devise, ca_30j: Math.round(ca), commandes_30j: commandes.length, confirmees_30j: conf.length, taux_conversion: commandes.length ? Math.round(conf.length / commandes.length * 100) : 0, total_clients: clients._count, ltv_total: Math.round(clients._sum.totalDepense ?? 0), top_produits: topProduits }) };
+        const rapportData = { boutique: tenant?.nomBoutique, devise: tenant?.devise, ca_30j: Math.round(ca), commandes_30j: commandes.length, confirmees_30j: conf.length, taux_conversion: commandes.length ? Math.round(conf.length / commandes.length * 100) : 0, total_clients: clients._count, ltv_total: Math.round(clients._sum.totalDepense ?? 0), top_produits: topProduits };
+        return { succes: true, resultat: `[RAPPORT COMPLET — rédige une analyse business structurée avec ces chiffres, ne recopie pas le JSON] ${JSON.stringify(rapportData)}` };
       }
 
       case "produits_performance": {
@@ -610,7 +636,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         else if (args.segment === "nouveaux") where.createdAt = { gte: new Date(Date.now() - 7 * 86400000) };
         const orderBy: any = args.tri === "depense_desc" ? { totalDepense: "desc" } : args.tri === "commandes_desc" ? { totalCommandes: "desc" } : { createdAt: "desc" };
         const clients = await prisma.client.findMany({ where, orderBy, take: args.limite ?? 15, select: { id: true, nom: true, email: true, totalCommandes: true, totalDepense: true, createdAt: true } });
-        return { succes: true, resultat: JSON.stringify(clients) };
+        return { succes: true, resultat: `[LISTE CLIENTS — utilise pour répondre, ne recopie pas le JSON brut] ${JSON.stringify(clients)}` };
       }
 
       case "envoyer_email_client": {
