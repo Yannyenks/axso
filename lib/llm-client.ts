@@ -47,6 +47,22 @@ export interface CompletionWithToolsResult {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+/** Supprime les balises de raisonnement interne que certains modèles incluent dans leurs réponses */
+function cleanModelResponse(text: string): string {
+  return text
+    // DeepSeek / Qwen thinking tags
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .replace(/<thinking>[\s\S]*?<\/thinking>/gi, "")
+    // Llama / Mistral internal monologue markers
+    .replace(/<\|thinking\|>[\s\S]*?<\|\/thinking\|>/gi, "")
+    .replace(/\[INST\][\s\S]*?\[\/INST\]/g, "")
+    // System prompt echoes: certains modèles répètent "RÈGLES ABSOLUES :" etc.
+    .replace(/RÈGLES ABSOLUES\s*:[\s\S]*?(?=\n\n|\z)/g, "")
+    .replace(/OUTILS DISPONIBLES[\s\S]*?(?=\n\n|\z)/g, "")
+    .replace(/BOUTIQUE ACTIVE\s*:.*\n?/g, "")
+    .trim();
+}
+
 function toOpenAITools(tools: ToolDefinition[]) {
   return tools.map((t) => ({
     type: "function",
@@ -118,7 +134,7 @@ async function _openAICompat(
   }
 
   return {
-    text: choice?.message?.content ?? "",
+    text: cleanModelResponse(choice?.message?.content ?? ""),
     stopReason: "end_turn",
     provider: cfg.model,
   };
@@ -146,7 +162,7 @@ async function _openAICompatCompletion(
 
   const data = await res.json();
   return {
-    text: data.choices?.[0]?.message?.content ?? "",
+    text: cleanModelResponse(data.choices?.[0]?.message?.content ?? ""),
     provider: cfg.model,
   };
 }
@@ -179,19 +195,20 @@ export async function completionNVIDIA(messages: ChatMessage[], maxTokens = 600,
   });
   if (!res.ok) { const e = new Error(`NVIDIA ${res.status}`); (e as any).status = res.status; throw e; }
   const data = await res.json();
-  return { text: data.choices?.[0]?.message?.content ?? "", provider: `nvidia:${selectedModel}` };
+  return { text: cleanModelResponse(data.choices?.[0]?.message?.content ?? ""), provider: `nvidia:${selectedModel}` };
 }
 
 export async function completionWithToolsNVIDIA(
   messages: any[], tools: ToolDefinition[], maxTokens = 2000, model?: string, fast = false
 ): Promise<CompletionWithToolsResult> {
-  const { base, selectedModel, apiKey, thinking } = _nvidiaCfg(model, fast);
+  const { base, selectedModel, apiKey } = _nvidiaCfg(model, fast);
+  // Ne PAS activer thinking en mode tool use — les balises <think> contaminent la réponse
   const res = await fetch(`${base}/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
-      model: selectedModel, max_tokens: maxTokens, temperature: 1, top_p: 0.95,
-      messages, tools: toOpenAITools(tools), tool_choice: "auto", ...thinking,
+      model: selectedModel, max_tokens: maxTokens, temperature: 0.7, top_p: 0.95,
+      messages, tools: toOpenAITools(tools), tool_choice: "auto",
     }),
   });
   if (!res.ok) { const txt = await res.text().catch(() => ""); const e = new Error(`NVIDIA ${res.status}: ${txt.slice(0,100)}`); (e as any).status = res.status; throw e; }
@@ -200,7 +217,7 @@ export async function completionWithToolsNVIDIA(
   if (choice?.finish_reason === "tool_calls" && choice.message?.tool_calls?.length) {
     return { toolCalls: parseToolCalls(choice.message.tool_calls), stopReason: "tool_use", provider: `nvidia:${selectedModel}` };
   }
-  return { text: choice?.message?.content ?? "", stopReason: "end_turn", provider: `nvidia:${selectedModel}` };
+  return { text: cleanModelResponse(choice?.message?.content ?? ""), stopReason: "end_turn", provider: `nvidia:${selectedModel}` };
 }
 
 // ─── 1b. NVIDIA NIM — Z-AI GLM-5.2 ──────────────────────────────────────────
