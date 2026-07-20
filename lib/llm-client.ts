@@ -56,10 +56,10 @@ function cleanModelResponse(text: string): string {
     // Llama / Mistral internal monologue markers
     .replace(/<\|thinking\|>[\s\S]*?<\|\/thinking\|>/gi, "")
     .replace(/\[INST\][\s\S]*?\[\/INST\]/g, "")
-    // System prompt echoes: certains modèles répètent "RÈGLES ABSOLUES :" etc.
-    .replace(/RÈGLES ABSOLUES\s*:[\s\S]*?(?=\n\n|\z)/g, "")
-    .replace(/OUTILS DISPONIBLES[\s\S]*?(?=\n\n|\z)/g, "")
-    .replace(/BOUTIQUE ACTIVE\s*:.*\n?/g, "")
+    // System prompt echoes: certains modèles répètent des fragments du system prompt
+    .replace(/RÈGLES ABSOLUES\s*:[\s\S]*?(?=\n\n|$)/gm, "")
+    .replace(/OUTILS DISPONIBLES[\s\S]*?(?=\n\n|$)/gm, "")
+    .replace(/BOUTIQUE ACTIVE\s*:.*$/gm, "")
     .trim();
 }
 
@@ -79,18 +79,6 @@ function parseToolCalls(toolCalls: any[]): ToolCall[] {
       catch { return {}; }
     })(),
   }));
-}
-
-// Retourne true si l'erreur signale des crédits épuisés / quota dépassé → on skip ce provider
-function isQuotaError(err: any): boolean {
-  const msg = String(err?.message ?? "").toLowerCase();
-  const status = err?.status ?? 0;
-  return (
-    status === 429 || status === 402 || status === 401 ||
-    msg.includes("quota") || msg.includes("rate limit") ||
-    msg.includes("insufficient") || msg.includes("billing") ||
-    msg.includes("credit") || msg.includes("exceeded")
-  );
 }
 
 // ─── Générique OpenAI-compatible ──────────────────────────────────────────────
@@ -395,6 +383,43 @@ export function pollinationsAudioUrl(text: string, voice = "nova", model: "eleve
 
 export function hasAnthropic(): boolean { return !!process.env.ANTHROPIC_API_KEY; }
 
+/** Convertit la conversation au format OpenAI (tool/tool_calls) vers le format Anthropic */
+function toAnthropicMessages(messages: any[]): any[] {
+  const result: any[] = [];
+  for (const m of messages) {
+    if (m.role === "system") continue;
+
+    // Message assistant avec tool_calls OpenAI → content blocks Anthropic
+    if (m.role === "assistant" && m.tool_calls?.length) {
+      result.push({
+        role: "assistant",
+        content: m.tool_calls.map((tc: any) => ({
+          type: "tool_use",
+          id: tc.id,
+          name: tc.function?.name ?? tc.name,
+          input: (() => { try { return JSON.parse(tc.function?.arguments ?? "{}"); } catch { return {}; } })(),
+        })),
+      });
+      continue;
+    }
+
+    // Message tool OpenAI → tool_result dans un user block
+    if (m.role === "tool") {
+      const last = result[result.length - 1];
+      const toolResult = { type: "tool_result", tool_use_id: m.tool_call_id, content: String(m.content ?? "") };
+      if (last?.role === "user" && Array.isArray(last.content)) {
+        last.content.push(toolResult);
+      } else {
+        result.push({ role: "user", content: [toolResult] });
+      }
+      continue;
+    }
+
+    result.push({ role: m.role, content: m.content ?? "" });
+  }
+  return result;
+}
+
 export async function completionWithToolsAnthropic(
   messages: any[],
   tools: ToolDefinition[],
@@ -406,7 +431,6 @@ export async function completionWithToolsAnthropic(
   const client = new Anthropic({ apiKey });
 
   const systemMsg = messages.find((m: any) => m.role === "system");
-  const userMessages = messages.filter((m: any) => m.role !== "system");
   const anthropicTools = tools.map((t) => ({
     name: t.name,
     description: t.description,
@@ -418,7 +442,7 @@ export async function completionWithToolsAnthropic(
     max_tokens: maxTokens,
     ...(systemMsg ? { system: systemMsg.content } : {}),
     tools: anthropicTools,
-    messages: userMessages.map((m: any) => ({ role: m.role as "user" | "assistant", content: m.content })),
+    messages: toAnthropicMessages(messages),
   });
 
   if (response.stop_reason === "tool_use") {

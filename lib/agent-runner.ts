@@ -3,10 +3,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import {
   hasOpenAI,
   completionWithToolsOpenAI,
-  streamWithOpenAI,
   hasAnthropic,
   completionWithToolsAuto,
-  completionAuto,
   type ToolDefinition,
   type ToolCall,
   type ChatMessage,
@@ -133,19 +131,7 @@ async function runClaudeStream(
     content: typeof m.content === "string" ? m.content : (m.content as any),
   }));
 
-  // Choisir le premier modèle disponible
-  let activeModel = CLAUDE_MODELS[0];
-  for (const m of CLAUDE_MODELS) {
-    try {
-      await client.messages.create({ model: m, max_tokens: 1, messages: [{ role: "user", content: "x" }] });
-      activeModel = m;
-      break;
-    } catch (e: any) {
-      const msg = e?.message ?? "";
-      if (msg.includes("model") || msg.includes("not_found") || e?.status === 404) continue;
-      break; // Auth error ou autre → utiliser le premier quand même
-    }
-  }
+  const activeModel = CLAUDE_MODELS[0];
 
   for (let iter = 0; iter < maxIterations; iter++) {
     const runner = client.messages.stream({
@@ -248,6 +234,14 @@ export async function runAgent(
       }
       break;
     }
+    // Boucle épuisée — demander résumé si des outils ont été utilisés
+    if (actionsEffectuees.length > 0) {
+      conversation.push({ role: "user", content: "Résume brièvement ce que tu viens d'accomplir." });
+      try {
+        const s = await completionWithToolsAuto(conversation, [], 800);
+        return { reponse: s.text ?? "Actions effectuées avec succès.", actions: actionsEffectuees };
+      } catch {}
+    }
     return { reponse: "", actions: actionsEffectuees };
   } catch (err: any) {
     console.warn("[agent] auto-chain:", err?.message?.slice(0, 80));
@@ -341,6 +335,18 @@ export function runAgentStream(
           break;
         }
 
+        // Boucle épuisée sans end_turn — demander un résumé final
+        if (actionsEffectuees.length > 0) {
+          conversation.push({ role: "user", content: "Résume brièvement ce que tu viens d'accomplir." });
+          try {
+            const summary = await completionWithToolsAuto(conversation, [], 1000);
+            const text = summary.text ?? "";
+            if (text) {
+              const chunks = text.match(/\S+\s*/g) ?? [];
+              for (const chunk of chunks) { send({ type: "token", text: chunk }); await new Promise(r => setTimeout(r, 5)); }
+            }
+          } catch {}
+        }
         finish(actionsEffectuees);
         return;
 
