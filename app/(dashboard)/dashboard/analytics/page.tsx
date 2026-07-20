@@ -8,12 +8,12 @@ import {
   Eye,
   ShoppingCart,
   TrendingUp,
-  Users,
   Star,
   ArrowUpRight,
   ArrowDownRight,
   Minus,
   Calendar,
+  Package,
 } from "lucide-react";
 
 export default async function AnalyticsPage() {
@@ -100,17 +100,16 @@ export default async function AnalyticsPage() {
   const getVal = (arr: typeof analyticsParType, type: string) =>
     arr.find((a) => a.type === type)?._sum.valeur || 0;
 
-  const pageViews = getVal(analyticsParType, "page_view");
-  const productViews = getVal(analyticsParType, "product_view");
-  const addToCart = getVal(analyticsParType, "add_to_cart");
-
-  const pageViewsPrev = getVal(analyticsParTypePrecedent, "page_view");
+  const pageViews      = getVal(analyticsParType, "page_view");
+  const productViews   = getVal(analyticsParType, "product_view");
+  const addToCart      = getVal(analyticsParType, "add_to_cart");
+  const pageViewsPrev  = getVal(analyticsParTypePrecedent, "page_view");
   const productViewsPrev = getVal(analyticsParTypePrecedent, "product_view");
-  const addToCartPrev = getVal(analyticsParTypePrecedent, "add_to_cart");
+  const addToCartPrev  = getVal(analyticsParTypePrecedent, "add_to_cart");
 
-  const revenuActuel = commandesPeriode._sum.montantTotal || 0;
-  const revenuPrecedent = commandesPrecedente._sum.montantTotal || 0;
-  const commandesActuel = commandesPeriode._count;
+  const revenuActuel       = commandesPeriode._sum.montantTotal || 0;
+  const revenuPrecedent    = commandesPrecedente._sum.montantTotal || 0;
+  const commandesActuel    = commandesPeriode._count;
   const commandesPrecedentCount = commandesPrecedente._count;
 
   const delta = (current: number, previous: number) => {
@@ -119,155 +118,123 @@ export default async function AnalyticsPage() {
   };
 
   const tauxConversion = pageViews > 0 ? ((commandesActuel / pageViews) * 100).toFixed(1) : "0";
-  const panier = commandesActuel > 0 ? revenuActuel / commandesActuel : 0;
+
+  const statutStyles: Record<string, { label: string; badgeClass: string }> = {
+    en_attente:     { label: "En attente",     badgeClass: "bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]" },
+    confirmee:      { label: "Confirmée",      badgeClass: "bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]" },
+    en_preparation: { label: "En préparation", badgeClass: "bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]" },
+    en_livraison:   { label: "En livraison",   badgeClass: "bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]" },
+    livree:         { label: "Livrée",         badgeClass: "bg-[#ECFDF5] text-[#16A34A] border border-[#BBF7D0]" },
+    annulee:        { label: "Annulée",        badgeClass: "bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]" },
+  };
+
+  const totalCommandes = statutDistribution.reduce((s, x) => s + x._count, 0);
 
   const kpis = [
     {
       label: "Chiffre d'affaires",
       valeur: formatMontant(revenuActuel, tenant?.devise || "XOF"),
       delta: delta(revenuActuel, revenuPrecedent),
-      couleur: "#10b981",
-      bg: "#10b98115",
+      accent: "#16A34A",
       icone: TrendingUp,
     },
     {
       label: "Commandes",
       valeur: commandesActuel.toString(),
       delta: delta(commandesActuel, commandesPrecedentCount),
-      couleur: "#60a5fa",
-      bg: "#60a5fa15",
+      accent: "#2563EB",
       icone: ShoppingCart,
     },
     {
       label: "Visiteurs",
       valeur: Math.round(pageViews).toLocaleString("fr-FR"),
       delta: delta(pageViews, pageViewsPrev),
-      couleur: "#F5A623",
-      bg: "#F5A62315",
+      accent: "#F5A623",
       icone: Eye,
     },
     {
       label: "Conversion",
       valeur: `${tauxConversion}%`,
-      delta: null,
-      couleur: "#a78bfa",
-      bg: "#a78bfa15",
+      delta: null as number | null,
+      accent: "#7C3AED",
       icone: BarChart3,
     },
   ];
 
-  const statutLabels: Record<string, { label: string; color: string; bg: string }> = {
-    en_attente:    { label: "En attente",     color: "#f59e0b", bg: "#f59e0b15" },
-    confirmee:     { label: "Confirmée",      color: "#60a5fa", bg: "#60a5fa15" },
-    en_preparation:{ label: "En préparation", color: "#a78bfa", bg: "#a78bfa15" },
-    en_livraison:  { label: "En livraison",   color: "#F5A623", bg: "#F5A62315" },
-    livree:        { label: "Livrée",         color: "#10b981", bg: "#10b98115" },
-    annulee:       { label: "Annulée",        color: "#f87171", bg: "#f8717115" },
-  };
-
-  const totalCommandes = statutDistribution.reduce((s, x) => s + x._count, 0);
-
   return (
     <div className="space-y-6">
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 font-poppins">Analytics</h1>
-          <p className="text-gray-500 text-sm mt-1">Activité réelle de votre boutique</p>
+          <h1 className="text-2xl font-bold text-[#111111] font-poppins">Analytics</h1>
+          <p className="text-[#717171] text-sm mt-1">Activité réelle de votre boutique</p>
         </div>
-        <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-4 py-2 shadow-sm">
-          <Calendar size={14} className="text-gray-400" />
-          <span className="text-gray-700 text-sm font-medium">30 derniers jours</span>
-          <span
-            className="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: "#F5A62320", color: "#F5A623" }}
-          >
-            comparaison J-30
+        <div className="flex items-center gap-2 bg-white border border-[#E8E8E8] rounded-xl px-4 py-2">
+          <Calendar size={14} className="text-[#717171]" />
+          <span className="text-[#111111] text-sm font-medium">30 derniers jours</span>
+          <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]">
+            vs J-30
           </span>
         </div>
       </div>
 
-      {/* ── 4 KPI cards ── */}
+      {/* 4 KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((k, i) => {
           const Icon = k.icone;
           const d = k.delta;
           return (
-            <div
-              key={i}
-              className="bg-white shadow-sm border border-gray-100 rounded-2xl p-5 hover:shadow-md hover:border-gray-200 transition-all duration-200"
-            >
-              {/* Icon + delta */}
+            <div key={i} className="bg-white border border-[#E8E8E8] rounded-2xl p-5">
               <div className="flex items-center justify-between mb-4">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: k.bg }}
-                >
-                  <Icon size={18} style={{ color: k.couleur }} />
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#F4F4F4]">
+                  <Icon size={16} style={{ color: k.accent }} />
                 </div>
                 {d !== null && (
-                  <div
-                    className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg ${
-                      d > 0
-                        ? "text-emerald-600 bg-emerald-50"
-                        : d < 0
-                        ? "text-red-500 bg-red-50"
-                        : "text-gray-400 bg-gray-50"
-                    }`}
-                  >
-                    {d > 0 ? (
-                      <ArrowUpRight size={12} />
-                    ) : d < 0 ? (
-                      <ArrowDownRight size={12} />
-                    ) : (
-                      <Minus size={12} />
-                    )}
+                  <div className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg ${
+                    d > 0 ? "bg-[#ECFDF5] text-[#16A34A] border border-[#BBF7D0]"
+                    : d < 0 ? "bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]"
+                    : "bg-[#F4F4F4] text-[#717171] border border-[#E8E8E8]"
+                  }`}>
+                    {d > 0 ? <ArrowUpRight size={12} /> : d < 0 ? <ArrowDownRight size={12} /> : <Minus size={12} />}
                     {Math.abs(d)}%
                   </div>
                 )}
               </div>
-              {/* Valeur */}
-              <p className="text-2xl font-bold text-gray-900 font-poppins leading-tight">
-                {k.valeur}
-              </p>
-              <p className="text-gray-400 text-xs mt-1">{k.label}</p>
+              <p className="text-2xl font-bold text-[#111111] font-poppins leading-tight">{k.valeur}</p>
+              <p className="text-[#717171] text-xs mt-1">{k.label}</p>
               {d !== null && (
-                <p className="text-gray-400 text-[10px] mt-2 border-t border-gray-50 pt-2">
-                  vs. 30 jours précédents
-                </p>
+                <p className="text-[#717171] text-[10px] mt-2 border-t border-[#F3F3F3] pt-2">vs. 30 jours précédents</p>
               )}
             </div>
           );
         })}
       </div>
 
-      {/* ── Graphique des ventes ── */}
-      <div className="bg-white shadow-sm border border-gray-100 rounded-2xl p-6 hover:shadow-md transition-all duration-200">
-        <div className="flex items-center justify-between mb-1">
-          <h2 className="text-gray-900 font-semibold text-base">Évolution du chiffre d'affaires</h2>
-        </div>
-        <p className="text-gray-400 text-xs mb-4">Revenus journaliers des 30 derniers jours (commandes complétées)</p>
+      {/* Graphique des ventes */}
+      <div className="bg-white border border-[#E8E8E8] rounded-2xl p-6">
+        <h2 className="text-sm font-semibold text-[#111111] mb-1">Évolution du chiffre d'affaires</h2>
+        <p className="text-[#717171] text-xs mb-5">Revenus journaliers des 30 derniers jours (commandes complétées)</p>
         <SalesChart donnees={donnees30Jours} devise={tenant?.devise || "XOF"} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* ── Top produits ── */}
-        <div className="bg-white shadow-sm border border-gray-100 rounded-2xl p-6 hover:shadow-md hover:border-gray-200 transition-all duration-200">
+        {/* Top produits */}
+        <div className="bg-white border border-[#E8E8E8] rounded-2xl p-6">
           <div className="flex items-center gap-2 mb-5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#F5A62315" }}>
-              <TrendingUp size={15} style={{ color: "#F5A623" }} />
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-[#F4F4F4]">
+              <TrendingUp size={15} className="text-[#F5A623]" />
             </div>
             <div>
-              <h3 className="text-gray-900 font-semibold text-sm">Top produits</h3>
-              <p className="text-gray-400 text-xs">Classés par nombre de ventes</p>
+              <h3 className="text-sm font-semibold text-[#111111]">Top produits</h3>
+              <p className="text-[#717171] text-xs">Classés par nombre de ventes</p>
             </div>
           </div>
           {topProduits.length === 0 ? (
-            <div className="py-10 flex flex-col items-center gap-2 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center">
-                <ShoppingCart size={20} className="text-gray-300" />
+            <div className="py-10 flex flex-col items-center gap-3 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-[#F4F4F4] border border-[#E8E8E8] flex items-center justify-center">
+                <Package size={20} className="text-[#717171]" />
               </div>
-              <p className="text-gray-400 text-sm">Aucune vente pour le moment</p>
+              <p className="text-[#717171] text-sm">Aucune vente pour le moment</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -276,45 +243,35 @@ export default async function AnalyticsPage() {
                 const pct = Math.round((p.ventes / maxVentes) * 100);
                 return (
                   <div key={p.id} className="flex items-center gap-3">
-                    {/* Rang */}
                     <div
                       className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold"
                       style={
-                        i === 0
-                          ? { backgroundColor: "#F5A62320", color: "#F5A623" }
-                          : i === 1
-                          ? { backgroundColor: "#9ca3af20", color: "#6b7280" }
-                          : i === 2
-                          ? { backgroundColor: "#cd7c2820", color: "#cd7c28" }
-                          : { backgroundColor: "#f3f4f6", color: "#9ca3af" }
+                        i === 0 ? { backgroundColor: "#FFFBEB", color: "#D97706" }
+                        : i === 1 ? { backgroundColor: "#F4F4F4", color: "#717171" }
+                        : i === 2 ? { backgroundColor: "#FEF2F2", color: "#DC2626" }
+                        : { backgroundColor: "#F4F4F4", color: "#717171" }
                       }
                     >
                       {i + 1}
                     </div>
-                    {/* Image */}
-                    <div className="w-9 h-9 rounded-xl bg-gray-50 overflow-hidden flex-shrink-0 border border-gray-100">
+                    <div className="w-9 h-9 rounded-xl bg-[#F4F4F4] overflow-hidden flex-shrink-0 border border-[#E8E8E8]">
                       {p.images[0] ? (
                         <img src={p.images[0]} alt={p.nom} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xs text-gray-300">
-                          —
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package size={14} className="text-[#717171]" />
                         </div>
                       )}
                     </div>
-                    {/* Nom + barre */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-gray-800 text-sm font-medium truncate">{p.nom}</p>
-                      <div className="w-full bg-gray-100 rounded-full h-1.5 mt-1.5">
-                        <div
-                          className="h-1.5 rounded-full transition-all duration-500"
-                          style={{ width: `${pct}%`, backgroundColor: "#F5A623" }}
-                        />
+                      <p className="text-[#111111] text-sm font-medium truncate">{p.nom}</p>
+                      <div className="w-full bg-[#F4F4F4] rounded-full h-1.5 mt-1.5">
+                        <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, backgroundColor: "#F5A623" }} />
                       </div>
                     </div>
-                    {/* Ventes */}
                     <div className="text-right flex-shrink-0">
-                      <p className="text-gray-900 text-sm font-bold font-poppins">{p.ventes}</p>
-                      <p className="text-gray-400 text-[10px]">ventes</p>
+                      <p className="text-[#111111] text-sm font-bold font-poppins">{p.ventes}</p>
+                      <p className="text-[#717171] text-[10px]">ventes</p>
                     </div>
                   </div>
                 );
@@ -323,52 +280,49 @@ export default async function AnalyticsPage() {
           )}
         </div>
 
-        {/* ── Distribution statuts ── */}
-        <div className="bg-white shadow-sm border border-gray-100 rounded-2xl p-6 hover:shadow-md hover:border-gray-200 transition-all duration-200">
+        {/* Distribution statuts */}
+        <div className="bg-white border border-[#E8E8E8] rounded-2xl p-6">
           <div className="flex items-center gap-2 mb-5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#60a5fa15" }}>
-              <BarChart3 size={15} style={{ color: "#60a5fa" }} />
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-[#F4F4F4]">
+              <BarChart3 size={15} className="text-[#2563EB]" />
             </div>
             <div>
-              <h3 className="text-gray-900 font-semibold text-sm">Statuts des commandes</h3>
-              <p className="text-gray-400 text-xs">{totalCommandes} commandes au total</p>
+              <h3 className="text-sm font-semibold text-[#111111]">Statuts des commandes</h3>
+              <p className="text-[#717171] text-xs">{totalCommandes} commandes au total</p>
             </div>
           </div>
           {totalCommandes === 0 ? (
-            <div className="py-10 flex flex-col items-center gap-2 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center">
-                <BarChart3 size={20} className="text-gray-300" />
+            <div className="py-10 flex flex-col items-center gap-3 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-[#F4F4F4] border border-[#E8E8E8] flex items-center justify-center">
+                <BarChart3 size={20} className="text-[#717171]" />
               </div>
-              <p className="text-gray-400 text-sm">Aucune commande pour le moment</p>
+              <p className="text-[#717171] text-sm">Aucune commande pour le moment</p>
             </div>
           ) : (
             <div className="space-y-3">
               {statutDistribution
                 .sort((a, b) => b._count - a._count)
                 .map((s) => {
-                  const info = statutLabels[s.statut] || { label: s.statut, color: "#9ca3af", bg: "#9ca3af15" };
+                  const info = statutStyles[s.statut] ?? { label: s.statut, badgeClass: "bg-[#F4F4F4] text-[#717171] border border-[#E8E8E8]" };
                   const pct = Math.round((s._count / totalCommandes) * 100);
+                  const barColor = s.statut === "livree" ? "#16A34A"
+                    : s.statut === "annulee" ? "#DC2626"
+                    : s.statut === "en_attente" ? "#D97706"
+                    : s.statut === "confirmee" ? "#2563EB"
+                    : "#717171";
                   return (
                     <div key={s.statut}>
                       <div className="flex items-center justify-between mb-1.5">
+                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${info.badgeClass}`}>
+                          {info.label}
+                        </span>
                         <div className="flex items-center gap-2">
-                          <span
-                            className="text-xs font-medium px-2.5 py-1 rounded-full"
-                            style={{ backgroundColor: info.bg, color: info.color }}
-                          >
-                            {info.label}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-900 text-sm font-bold font-poppins">{s._count}</span>
-                          <span className="text-gray-400 text-xs">({pct}%)</span>
+                          <span className="text-[#111111] text-sm font-bold font-poppins">{s._count}</span>
+                          <span className="text-[#717171] text-xs">({pct}%)</span>
                         </div>
                       </div>
-                      <div className="w-full bg-gray-100 rounded-full h-2">
-                        <div
-                          className="h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${pct}%`, backgroundColor: info.color }}
-                        />
+                      <div className="w-full bg-[#F4F4F4] rounded-full h-1.5">
+                        <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, backgroundColor: barColor }} />
                       </div>
                     </div>
                   );
@@ -378,50 +332,44 @@ export default async function AnalyticsPage() {
         </div>
       </div>
 
-      {/* ── Entonnoir de conversion ── */}
-      <div className="bg-white shadow-sm border border-gray-100 rounded-2xl p-6 hover:shadow-md hover:border-gray-200 transition-all duration-200">
-        <div className="flex items-center justify-between mb-5">
+      {/* Entonnoir de conversion */}
+      <div className="bg-white border border-[#E8E8E8] rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
           <div>
-            <h3 className="text-gray-900 font-semibold">Entonnoir de conversion</h3>
-            <p className="text-gray-400 text-xs mt-0.5">30 derniers jours</p>
+            <h3 className="text-sm font-semibold text-[#111111]">Entonnoir de conversion</h3>
+            <p className="text-[#717171] text-xs mt-0.5">30 derniers jours</p>
           </div>
-          <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-4 py-2">
-            <span className="text-gray-500 text-sm">Taux global</span>
-            <span className="font-bold text-gray-900 font-poppins text-lg">{tauxConversion}%</span>
+          <div className="flex items-center gap-2 bg-[#F4F4F4] border border-[#E8E8E8] rounded-xl px-4 py-2">
+            <span className="text-[#717171] text-sm">Taux global</span>
+            <span className="font-bold text-[#111111] font-poppins text-lg">{tauxConversion}%</span>
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "Visites",        val: Math.round(pageViews),    color: "#F5A623" },
-            { label: "Vues produits",  val: Math.round(productViews), color: "#a78bfa" },
-            { label: "Ajouts panier",  val: Math.round(addToCart),    color: "#60a5fa" },
-            { label: "Achats",         val: commandesActuel,          color: "#10b981" },
+            { label: "Visites",       val: Math.round(pageViews),    color: "#F5A623" },
+            { label: "Vues produits", val: Math.round(productViews), color: "#7C3AED" },
+            { label: "Ajouts panier", val: Math.round(addToCart),    color: "#2563EB" },
+            { label: "Achats",        val: commandesActuel,          color: "#16A34A" },
           ].map((step, i) => {
             const heightPct = pageViews > 0 ? Math.max(8, (step.val / Math.max(pageViews, 1)) * 100) : 8;
-            const ratio = i > 0 && pageViews > 0
-              ? ((step.val / pageViews) * 100).toFixed(1)
-              : null;
+            const ratio = i > 0 && pageViews > 0 ? ((step.val / pageViews) * 100).toFixed(1) : null;
             return (
               <div key={i} className="flex flex-col items-center gap-2">
-                {/* Barre visuelle */}
                 <div
-                  className="w-full rounded-xl flex items-end justify-center overflow-hidden"
-                  style={{ height: "72px", backgroundColor: `${step.color}10`, border: `1px solid ${step.color}20` }}
+                  className="w-full rounded-xl flex items-end justify-center overflow-hidden border border-[#E8E8E8]"
+                  style={{ height: "72px", backgroundColor: "#F4F4F4" }}
                 >
                   <div
-                    className="w-full rounded-b-xl transition-all duration-700"
-                    style={{ height: `${heightPct}%`, backgroundColor: `${step.color}50` }}
+                    className="w-full rounded-b-xl"
+                    style={{ height: `${heightPct}%`, backgroundColor: step.color, opacity: 0.4 }}
                   />
                 </div>
-                <p className="text-gray-900 font-bold font-poppins text-lg leading-tight">
+                <p className="text-[#111111] font-bold font-poppins text-lg leading-tight">
                   {step.val.toLocaleString("fr-FR")}
                 </p>
-                <p className="text-gray-500 text-xs text-center">{step.label}</p>
+                <p className="text-[#717171] text-xs text-center">{step.label}</p>
                 {ratio !== null && (
-                  <span
-                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                    style={{ backgroundColor: `${step.color}15`, color: step.color }}
-                  >
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#F4F4F4] text-[#717171] border border-[#E8E8E8]">
                     {ratio}%
                   </span>
                 )}
@@ -431,54 +379,43 @@ export default async function AnalyticsPage() {
         </div>
       </div>
 
-      {/* ── Derniers avis ── */}
+      {/* Derniers avis */}
       {derniersAvis.length > 0 && (
-        <div className="bg-white shadow-sm border border-gray-100 rounded-2xl p-6 hover:shadow-md hover:border-gray-200 transition-all duration-200">
+        <div className="bg-white border border-[#E8E8E8] rounded-2xl p-6">
           <div className="flex items-center gap-2 mb-5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#F5A62315" }}>
-              <Star size={15} style={{ color: "#F5A623" }} />
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-[#F4F4F4]">
+              <Star size={15} className="text-[#F5A623]" />
             </div>
             <div>
-              <h3 className="text-gray-900 font-semibold text-sm">Derniers avis clients</h3>
-              <p className="text-gray-400 text-xs">Les 5 plus récents</p>
+              <h3 className="text-sm font-semibold text-[#111111]">Derniers avis clients</h3>
+              <p className="text-[#717171] text-xs">Les 5 plus récents</p>
             </div>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {derniersAvis.map((a) => (
-              <div
-                key={a.id}
-                className="flex items-start gap-3 p-3.5 rounded-xl bg-gray-50 border border-gray-100"
-              >
-                <div className="w-9 h-9 rounded-xl bg-white border border-gray-100 overflow-hidden flex-shrink-0">
+              <div key={a.id} className="flex items-start gap-3 p-3.5 rounded-xl bg-[#F4F4F4] border border-[#E8E8E8]">
+                <div className="w-9 h-9 rounded-xl bg-white border border-[#E8E8E8] overflow-hidden flex-shrink-0">
                   {a.produit.images[0] ? (
-                    <img
-                      src={a.produit.images[0]}
-                      alt={a.produit.nom}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={a.produit.images[0]} alt={a.produit.nom} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xs text-gray-300">
-                      —
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package size={12} className="text-[#717171]" />
                     </div>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-gray-500 text-xs truncate mb-1">{a.produit.nom}</p>
+                  <p className="text-[#717171] text-xs truncate mb-1">{a.produit.nom}</p>
                   <div className="flex items-center gap-0.5 mb-1">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
                         size={11}
-                        className={
-                          i < a.note
-                            ? "text-[#F5A623] fill-[#F5A623]"
-                            : "text-gray-200 fill-gray-200"
-                        }
+                        className={i < a.note ? "text-[#F5A623] fill-[#F5A623]" : "text-[#E8E8E8] fill-[#E8E8E8]"}
                       />
                     ))}
                   </div>
                   {a.commentaire && (
-                    <p className="text-gray-500 text-xs line-clamp-2">{a.commentaire}</p>
+                    <p className="text-[#717171] text-xs line-clamp-2">{a.commentaire}</p>
                   )}
                 </div>
               </div>

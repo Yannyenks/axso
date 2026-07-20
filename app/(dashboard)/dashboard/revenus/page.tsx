@@ -34,10 +34,10 @@ export default async function RevenusPage() {
     }),
   ]);
 
-  const revenu30j = commandes30j.reduce((s, c) => s + c.montantTotal, 0);
-  const revenu7j = commandes7j.reduce((s, c) => s + c.montantTotal, 0);
+  const revenu30j       = commandes30j.reduce((s, c) => s + c.montantTotal, 0);
+  const revenu7j        = commandes7j.reduce((s, c) => s + c.montantTotal, 0);
   const totalCommissions = commissions.reduce((s, c) => s + c.montantCommission, 0);
-  const revenuNet = revenu30j - totalCommissions;
+  const revenuNet       = revenu30j - totalCommissions;
 
   // Regrouper par jour (14 derniers jours)
   const parJour: Record<string, number> = {};
@@ -53,122 +53,100 @@ export default async function RevenusPage() {
       label: "Revenu 30 jours",
       value: formatMontant(revenu30j, tenant.devise),
       icon: DollarSign,
-      color: "#F5A623",
-      bg: "#F5A62312",
+      accent: "#F5A623",
       description: "Commandes complétées",
     },
     {
       label: "Revenu 7 jours",
       value: formatMontant(revenu7j, tenant.devise),
       icon: TrendingUp,
-      color: "#10b981",
-      bg: "#10b98112",
+      accent: "#16A34A",
       description: "Cette semaine",
     },
     {
       label: "Commissions Axso",
       value: formatMontant(totalCommissions, tenant.devise),
       icon: TrendingDown,
-      color: "#ef4444",
-      bg: "#ef444412",
+      accent: "#DC2626",
       description: "Frais de plateforme",
     },
     {
       label: "Revenu net",
       value: formatMontant(Math.max(0, revenuNet), tenant.devise),
       icon: Wallet,
-      color: "#7c3aed",
-      bg: "#7c3aed12",
+      accent: "#7C3AED",
       description: "Après commissions",
     },
   ];
 
   return (
     <div className="space-y-6">
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 font-poppins">Revenus</h1>
-          <p className="text-gray-500 text-sm mt-1">Analyse financière de votre boutique</p>
-        </div>
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-[#111111] font-poppins">Revenus</h1>
+        <p className="text-[#717171] text-sm mt-1">Analyse financière de votre boutique</p>
       </div>
 
-      {/* ── Hero card : revenu net ── */}
-      <div
-        className="bg-white shadow-sm border border-gray-100 rounded-2xl p-8 hover:shadow-md transition-all duration-200"
-        style={{ background: "linear-gradient(135deg, #fff 60%, #F5A62308 100%)" }}
-      >
-        <div className="flex items-center gap-3 mb-2">
-          <div
-            className="w-11 h-11 rounded-xl flex items-center justify-center"
-            style={{ backgroundColor: "#F5A62315" }}
-          >
-            <DollarSign size={22} style={{ color: "#F5A623" }} />
+      {/* Hero card */}
+      <div className="bg-white border border-[#E8E8E8] rounded-2xl p-8">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#F4F4F4]">
+            <DollarSign size={20} className="text-[#F5A623]" />
           </div>
-          <div>
-            <p className="text-gray-400 text-xs uppercase tracking-wider font-medium">
-              Chiffre d'affaires · 30 jours
-            </p>
-          </div>
+          <p className="text-[#717171] text-xs uppercase tracking-wider font-semibold">
+            Chiffre d'affaires · 30 jours
+          </p>
         </div>
-        <p className="text-5xl font-bold text-gray-900 font-poppins mt-4 mb-1">
+        <p className="text-5xl font-bold text-[#111111] font-poppins mb-2">
           {formatMontant(revenu30j, tenant.devise)}
         </p>
-        <p className="text-gray-400 text-sm">
+        <p className="text-[#717171] text-sm">
           Revenu net après commissions :{" "}
-          <span className="font-semibold" style={{ color: "#10b981" }}>
+          <span className="font-semibold text-[#16A34A]">
             {formatMontant(Math.max(0, revenuNet), tenant.devise)}
           </span>
         </p>
       </div>
 
-      {/* ── 4 metric cards ── */}
+      {/* 4 metric cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {metriques.map((m, i) => {
           const Icone = m.icon;
           return (
-            <div
-              key={i}
-              className="bg-white shadow-sm border border-gray-100 rounded-2xl p-5 hover:shadow-md hover:border-gray-200 transition-all duration-200"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: m.bg, border: `1px solid ${m.color}25` }}
-                >
-                  <Icone size={16} style={{ color: m.color }} />
-                </div>
+            <div key={i} className="bg-white border border-[#E8E8E8] rounded-2xl p-5">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#F4F4F4] mb-4">
+                <Icone size={16} style={{ color: m.accent }} />
               </div>
-              <p className="text-gray-900 text-xl font-bold font-poppins">{m.value}</p>
-              <p className="text-gray-500 text-xs mt-1">{m.label}</p>
-              <p className="text-gray-400 text-[10px] mt-0.5">{m.description}</p>
+              <p className="text-[#111111] text-xl font-bold font-poppins">{m.value}</p>
+              <p className="text-[#717171] text-xs mt-1">{m.label}</p>
+              <p className="text-[#717171] text-[10px] mt-0.5">{m.description}</p>
             </div>
           );
         })}
       </div>
 
-      {/* ── Graphique barres 14j ── */}
-      <div className="bg-white shadow-sm border border-gray-100 rounded-2xl p-6 hover:shadow-md hover:border-gray-200 transition-all duration-200">
-        <div className="flex items-center justify-between mb-5">
+      {/* Graphique barres 14j */}
+      <div className="bg-white border border-[#E8E8E8] rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
           <div>
-            <h2 className="text-gray-900 font-semibold">Revenus journaliers</h2>
-            <p className="text-gray-400 text-xs mt-0.5">14 derniers jours</p>
+            <h2 className="text-sm font-semibold text-[#111111]">Revenus journaliers</h2>
+            <p className="text-[#717171] text-xs mt-0.5">14 derniers jours</p>
           </div>
           {jours.length > 0 && (
             <div className="text-right">
-              <p className="text-gray-900 font-bold font-poppins text-lg">
+              <p className="text-[#111111] font-bold font-poppins text-lg">
                 {formatMontant(jours.reduce((s, [, v]) => s + v, 0), tenant.devise)}
               </p>
-              <p className="text-gray-400 text-xs">sur la période</p>
+              <p className="text-[#717171] text-xs">sur la période</p>
             </div>
           )}
         </div>
         {jours.length === 0 ? (
           <div className="h-48 flex flex-col items-center justify-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center">
-              <BarChart3 size={20} className="text-gray-300" />
+            <div className="w-12 h-12 rounded-2xl bg-[#F4F4F4] border border-[#E8E8E8] flex items-center justify-center">
+              <BarChart3 size={20} className="text-[#717171]" />
             </div>
-            <p className="text-gray-400 text-sm">Pas encore de données</p>
+            <p className="text-[#717171] text-sm">Pas encore de données</p>
           </div>
         ) : (
           <div className="flex items-end gap-2 h-48">
@@ -181,20 +159,15 @@ export default async function RevenusPage() {
               return (
                 <div key={date} className="flex-1 flex flex-col items-center gap-2 group">
                   <div
-                    className="relative w-full rounded-t-lg transition-all duration-300 group-hover:opacity-80 cursor-default"
-                    style={{
-                      height: `${hauteur}%`,
-                      backgroundColor: "#F5A623",
-                      minHeight: "4px",
-                    }}
+                    className="relative w-full rounded-t-lg cursor-default"
+                    style={{ height: `${hauteur}%`, backgroundColor: "#F5A623", minHeight: "4px", opacity: 0.85 }}
                     title={formatMontant(revenu, tenant.devise)}
                   >
-                    {/* Tooltip au hover */}
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#111111] text-white text-[10px] px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
                       {formatMontant(revenu, tenant.devise)}
                     </div>
                   </div>
-                  <span className="text-gray-400 text-[10px] text-center leading-tight">{jour}</span>
+                  <span className="text-[#717171] text-[10px] text-center leading-tight">{jour}</span>
                 </div>
               );
             })}
@@ -202,52 +175,53 @@ export default async function RevenusPage() {
         )}
       </div>
 
-      {/* ── Répartition des revenus ── */}
-      <div className="bg-white shadow-sm border border-gray-100 rounded-2xl p-6 hover:shadow-md hover:border-gray-200 transition-all duration-200">
-        <h2 className="text-gray-900 font-semibold mb-5">Répartition des revenus</h2>
+      {/* Répartition des revenus */}
+      <div className="bg-white border border-[#E8E8E8] rounded-2xl p-6">
+        <h2 className="text-sm font-semibold text-[#111111] mb-5">Répartition des revenus</h2>
         <div className="space-y-1">
           {[
             {
               label: "Revenu brut (30j)",
               montant: revenu30j,
-              color: "#F5A623",
               sign: "+",
+              signClass: "bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]",
+              amountClass: "#F5A623",
               description: "Total des commandes complétées",
             },
             {
               label: "Commission Axso (3%)",
               montant: totalCommissions,
-              color: "#ef4444",
               sign: "−",
+              signClass: "bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]",
+              amountClass: "#DC2626",
               description: "Frais de plateforme prélevés",
             },
             {
               label: "Revenu net",
               montant: Math.max(0, revenuNet),
-              color: "#10b981",
               sign: "=",
+              signClass: "bg-[#ECFDF5] text-[#16A34A] border border-[#BBF7D0]",
+              amountClass: "#16A34A",
               description: "Ce que vous empochez",
+              highlight: true,
             },
-          ].map((ligne, i) => (
+          ].map((ligne) => (
             <div
               key={ligne.label}
               className={`flex items-center justify-between p-4 rounded-xl ${
-                i === 2 ? "border border-gray-100 bg-gray-50" : ""
+                ligne.highlight ? "bg-[#F4F4F4] border border-[#E8E8E8]" : ""
               }`}
             >
               <div className="flex items-center gap-3">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm"
-                  style={{ backgroundColor: `${ligne.color}15`, color: ligne.color }}
-                >
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm border ${ligne.signClass}`}>
                   {ligne.sign}
                 </div>
                 <div>
-                  <p className="text-gray-700 text-sm font-medium">{ligne.label}</p>
-                  <p className="text-gray-400 text-xs">{ligne.description}</p>
+                  <p className="text-[#111111] text-sm font-medium">{ligne.label}</p>
+                  <p className="text-[#717171] text-xs">{ligne.description}</p>
                 </div>
               </div>
-              <span className="font-bold text-base font-poppins" style={{ color: ligne.color }}>
+              <span className="font-bold text-base font-poppins" style={{ color: ligne.amountClass }}>
                 {formatMontant(ligne.montant, tenant.devise)}
               </span>
             </div>
@@ -255,32 +229,25 @@ export default async function RevenusPage() {
         </div>
       </div>
 
-      {/* ── Navigation sous-modules ── */}
+      {/* Navigation sous-modules */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Link href="/dashboard/revenus/commissions">
-          <div className="bg-white shadow-sm border border-gray-100 rounded-2xl p-6 hover:shadow-md hover:border-gray-200 transition-all duration-200 group cursor-pointer">
+          <div className="bg-white border border-[#E8E8E8] rounded-2xl p-6 hover:border-[#D0D0D0] transition-colors group cursor-pointer">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: "#7c3aed12" }}
-                >
-                  <BarChart3 size={20} style={{ color: "#7c3aed" }} />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#F4F4F4]">
+                  <BarChart3 size={18} className="text-[#7C3AED]" />
                 </div>
                 <div>
-                  <p className="text-gray-900 font-semibold group-hover:text-[#F5A623] transition-colors">
-                    Commissions
-                  </p>
-                  <p className="text-gray-400 text-sm mt-0.5">
-                    Détail des frais Axso prélevés
-                  </p>
+                  <p className="text-[#111111] font-semibold text-sm">Commissions</p>
+                  <p className="text-[#717171] text-sm mt-0.5">Détail des frais Axso prélevés</p>
                 </div>
               </div>
-              <ArrowRight size={18} className="text-gray-300 group-hover:text-[#F5A623] group-hover:translate-x-1 transition-all duration-200" />
+              <ArrowRight size={16} className="text-[#717171] group-hover:text-[#111111] group-hover:translate-x-0.5 transition-all duration-200" />
             </div>
-            <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-              <span className="text-gray-400 text-xs">Total prélevé</span>
-              <span className="font-bold text-sm font-poppins" style={{ color: "#7c3aed" }}>
+            <div className="mt-4 pt-4 border-t border-[#E8E8E8] flex items-center justify-between">
+              <span className="text-[#717171] text-xs">Total prélevé</span>
+              <span className="font-bold text-sm font-poppins text-[#7C3AED]">
                 {formatMontant(totalCommissions, tenant.devise)}
               </span>
             </div>
@@ -288,29 +255,22 @@ export default async function RevenusPage() {
         </Link>
 
         <Link href="/dashboard/analytics">
-          <div className="bg-white shadow-sm border border-gray-100 rounded-2xl p-6 hover:shadow-md hover:border-gray-200 transition-all duration-200 group cursor-pointer">
+          <div className="bg-white border border-[#E8E8E8] rounded-2xl p-6 hover:border-[#D0D0D0] transition-colors group cursor-pointer">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: "#F5A62312" }}
-                >
-                  <TrendingUp size={20} style={{ color: "#F5A623" }} />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#F4F4F4]">
+                  <TrendingUp size={18} className="text-[#F5A623]" />
                 </div>
                 <div>
-                  <p className="text-gray-900 font-semibold group-hover:text-[#F5A623] transition-colors">
-                    Analytics complètes
-                  </p>
-                  <p className="text-gray-400 text-sm mt-0.5">
-                    Visites, conversions, entonnoir
-                  </p>
+                  <p className="text-[#111111] font-semibold text-sm">Analytics complètes</p>
+                  <p className="text-[#717171] text-sm mt-0.5">Visites, conversions, entonnoir</p>
                 </div>
               </div>
-              <ArrowRight size={18} className="text-gray-300 group-hover:text-[#F5A623] group-hover:translate-x-1 transition-all duration-200" />
+              <ArrowRight size={16} className="text-[#717171] group-hover:text-[#111111] group-hover:translate-x-0.5 transition-all duration-200" />
             </div>
-            <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-              <span className="text-gray-400 text-xs">Période analysée</span>
-              <span className="font-bold text-sm font-poppins text-gray-700">30 jours</span>
+            <div className="mt-4 pt-4 border-t border-[#E8E8E8] flex items-center justify-between">
+              <span className="text-[#717171] text-xs">Période analysée</span>
+              <span className="font-bold text-sm font-poppins text-[#111111]">30 jours</span>
             </div>
           </div>
         </Link>

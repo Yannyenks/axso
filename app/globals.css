@@ -1,19 +1,43 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Variables CSS Axso */
+/* ── Design System Axso — Ultra Minimal ─────────────────────────────────── */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111111;
 
-  /* Palette Axso */
+  /* Surfaces */
+  --bg:      #F5F5F5;
+  --surface: #FFFFFF;
+
+  /* Borders */
+  --border:       #E8E8E8;
+  --border-light: #F3F3F3;
+
+  /* Text hierarchy */
+  --text-1: #111111;
+  --text-2: #666666;
+  --text-3: #AAAAAA;
+
+  /* Brand accent — un seul */
+  --accent:      #F5A623;
+  --accent-dark: #D4911A;
+  --accent-bg:   rgba(245,166,35,0.08);
+
+  /* Semantic */
+  --success:    #16A34A;
+  --success-bg: #ECFDF5;
+  --warning:    #D97706;
+  --warning-bg: #FFFBEB;
+  --error:      #DC2626;
+  --error-bg:   #FEF2F2;
+
+  /* Legacy — gardés pour la landing */
   --axso-amber: #F5A623;
   --axso-amber-dark: #D4911A;
   --axso-amber-light: #FFD280;
   --axso-navy: #1B2A4A;
   --axso-or: #F5A623;
-  --axso-violet: #7c3aed;
-  --axso-terre: #c2622d;
 
   /* Police principale : Poppins */
   --font-poppins: 'Poppins', 'Century Gothic', system-ui, sans-serif;
@@ -53,12 +77,92 @@ html {
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--text-1);
   font-family: var(--font-poppins);
-  font-size: 1rem;
-  line-height: 1.6;
+  font-size: 0.9375rem;
+  line-height: 1.55;
   font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Dashboard utility classes ───────────────────────────────────────────── */
+.ax-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.ax-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.ax-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 10px;
+  padding: 7px 14px;
+  transition: all 0.15s;
+  cursor: pointer;
+  border: none;
+  font-family: var(--font-poppins);
+}
+
+.ax-btn-primary {
+  background: var(--text-1);
+  color: #fff;
+}
+.ax-btn-primary:hover { background: #333; }
+
+.ax-btn-secondary {
+  background: var(--surface);
+  color: var(--text-1);
+  border: 1px solid var(--border);
+}
+.ax-btn-secondary:hover { background: var(--bg); }
+
+.ax-badge-success {
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid #BBF7D0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.ax-badge-warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid #FDE68A;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.ax-badge-error {
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid #FECACA;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.ax-badge-neutral {
+  background: var(--bg);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
 }
 
 /* Force Poppins partout */

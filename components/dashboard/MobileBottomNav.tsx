@@ -3,220 +3,189 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, Package, ShoppingCart,
-  X, BarChart3, TrendingUp, Megaphone, Truck, Star,
-  Settings, Bike, Palette, Globe2, Film, Calendar,
-  Search, MessageSquare, Store, Paintbrush, CreditCard,
-  Wallet, Package2, Bot, Zap
+  LayoutDashboard, Package, ShoppingBag, TrendingUp, X,
+  Store, Paintbrush, Palette, Wallet, CreditCard,
+  Megaphone, Globe2, Film, Calendar, Radio, Search,
+  Truck, Bike, Package2, BarChart3, Settings, Plug,
+  Users, MessageCircle, Star, Layers, Globe,
 } from "lucide-react";
-import {
-  IconAccueil, IconProduits, IconAxia, IconCommandes,
-} from "@/components/dashboard/AppIcons";
 
-// ─── Groupes complets (tous les modules) ─────────────────────────────────────
-const GROUPS = [
-  {
-    label: "Intelligence IA", color: "#7c3aed",
-    items: [
-      { href: "/dashboard/ia",        label: "AXIA — Chat IA",    icon: Zap },
-      { href: "/dashboard/studio",    label: "Studio Contenu",    icon: Film },
-      { href: "/dashboard/scheduler", label: "Planificateur",     icon: Calendar },
-    ],
-  },
-  {
-    label: "Boutique", color: "#F5A623",
-    items: [
-      { href: "/dashboard",            label: "Accueil",           icon: LayoutDashboard },
-      { href: "/dashboard/produits",   label: "Produits",          icon: Package },
-      { href: "/dashboard/commandes",  label: "Commandes",         icon: ShoppingCart },
-      { href: "/dashboard/clients",    label: "Clients",           icon: Bot },
-      { href: "/dashboard/avis",       label: "Avis clients",      icon: Star },
-    ],
-  },
-  {
-    label: "Design", color: "#ec4899",
-    items: [
-      { href: "/dashboard/boutique",   label: "Ma Boutique",       icon: Store },
-      { href: "/dashboard/builder",    label: "Constructeur",      icon: Paintbrush },
-      { href: "/dashboard/themes",     label: "Thèmes",            icon: Palette },
-    ],
-  },
-  {
-    label: "Finance", color: "#34d399",
-    items: [
-      { href: "/dashboard/wallet",     label: "Wallet Axso",       icon: Wallet },
-      { href: "/dashboard/paiements",  label: "Paiements",         icon: CreditCard },
-      { href: "/dashboard/revenus",    label: "Revenus",           icon: TrendingUp },
-    ],
-  },
-  {
-    label: "Croissance", color: "#f472b6",
-    items: [
-      { href: "/dashboard/marketing",    label: "Marketing",        icon: Megaphone },
-      { href: "/dashboard/publicite",    label: "Publicité Ads",    icon: Megaphone },
-      { href: "/dashboard/sms",          label: "SMS / WhatsApp",   icon: MessageSquare },
-      { href: "/dashboard/feeds",        label: "Flux Produits",    icon: Globe2 },
-      { href: "/dashboard/veille",       label: "Veille Concurr.",  icon: Search },
-      { href: "/dashboard/dropshipping", label: "Dropshipping",     icon: Package2 },
-    ],
-  },
-  {
-    label: "Logistique", color: "#fb923c",
-    items: [
-      { href: "/dashboard/livraison",  label: "Livraison",         icon: Truck },
-      { href: "/dashboard/livreurs",   label: "Livreurs",          icon: Bike },
-    ],
-  },
-  {
-    label: "Analytiques", color: "#a78bfa",
-    items: [
-      { href: "/dashboard/analytics",  label: "Analytics",         icon: BarChart3 },
-      { href: "/dashboard/parametres", label: "Paramètres",        icon: Settings },
-    ],
-  },
+const TABS = [
+  { href: "/dashboard",           label: "Accueil",   Icon: LayoutDashboard, exact: true },
+  { href: "/dashboard/produits",  label: "Produits",  Icon: Package },
+  { href: "/dashboard/commandes", label: "Ventes",    Icon: ShoppingBag },
+  { href: "/dashboard/revenus",   label: "Revenus",   Icon: TrendingUp },
 ];
 
-// ─── 4 onglets principaux (+ bouton Plus) ────────────────────────────────────
-const MAIN_TABS = [
-  { href: "/dashboard",           label: "Accueil",   AppIcon: IconAccueil,   exact: true },
-  { href: "/dashboard/produits",  label: "Produits",  AppIcon: IconProduits },
-  { href: "/dashboard/ia",        label: "AXIA",      AppIcon: null },  // bouton central spécial
-  { href: "/dashboard/commandes", label: "Commandes", AppIcon: IconCommandes },
+const ALL_MODULES = [
+  {
+    label: "Boutique", color: "#111111",
+    items: [
+      { href: "/dashboard",            label: "Accueil",         Icon: LayoutDashboard },
+      { href: "/dashboard/boutique",   label: "Ma boutique",     Icon: Store },
+      { href: "/dashboard/builder",    label: "Constructeur",    Icon: Paintbrush },
+      { href: "/dashboard/themes",     label: "Thèmes",          Icon: Palette },
+      { href: "/dashboard/produits",   label: "Produits",        Icon: Package },
+      { href: "/dashboard/sourcing",   label: "Sourcing",        Icon: Layers },
+    ],
+  },
+  {
+    label: "Commerce", color: "#111111",
+    items: [
+      { href: "/dashboard/commandes",    label: "Commandes",     Icon: ShoppingBag },
+      { href: "/dashboard/clients",      label: "Clients",       Icon: Users },
+      { href: "/dashboard/whatsapp",     label: "WhatsApp",      Icon: MessageCircle },
+      { href: "/dashboard/avis",         label: "Avis",          Icon: Star },
+      { href: "/dashboard/dropshipping", label: "Dropshipping",  Icon: Package2 },
+      { href: "/dashboard/affiliation",  label: "Affiliation",   Icon: Globe },
+    ],
+  },
+  {
+    label: "Finance", color: "#F5A623",
+    items: [
+      { href: "/dashboard/wallet",     label: "Wallet",          Icon: Wallet },
+      { href: "/dashboard/paiements",  label: "Paiements",       Icon: CreditCard },
+      { href: "/dashboard/revenus",    label: "Revenus",         Icon: TrendingUp },
+      { href: "/dashboard/abonnement", label: "Abonnement",      Icon: CreditCard },
+    ],
+  },
+  {
+    label: "Marketing", color: "#111111",
+    items: [
+      { href: "/dashboard/marketing",  label: "Marketing",       Icon: Megaphone },
+      { href: "/dashboard/messages",   label: "Social",          Icon: Globe2 },
+      { href: "/dashboard/studio",     label: "Studio",          Icon: Film },
+      { href: "/dashboard/scheduler",  label: "Planificateur",   Icon: Calendar },
+      { href: "/dashboard/publicite",  label: "Publicité",       Icon: Radio },
+      { href: "/dashboard/veille",     label: "Veille",          Icon: Search },
+    ],
+  },
+  {
+    label: "Logistique", color: "#111111",
+    items: [
+      { href: "/dashboard/livraison",  label: "Livraisons",      Icon: Truck },
+      { href: "/dashboard/livreurs",   label: "Livreurs",        Icon: Bike },
+      { href: "/dashboard/analytics",  label: "Analytics",       Icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Système", color: "#111111",
+    items: [
+      { href: "/dashboard/connecteurs",label: "Connecteurs",     Icon: Plug },
+      { href: "/dashboard/parametres", label: "Paramètres",      Icon: Settings },
+    ],
+  },
 ];
 
 export function MobileBottomNav() {
   const pathname = usePathname();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const isActive = (href: string, exact = false) =>
-    exact ? pathname === href : pathname.startsWith(href) && pathname !== "/dashboard" || (exact && pathname === href);
+    exact ? pathname === href : pathname.startsWith(href);
 
   return (
     <>
-      {/* ── Bottom tab bar ── */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/96 backdrop-blur-xl border-t border-gray-100"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)", boxShadow: "0 -4px 24px rgba(0,0,0,0.07)" }}>
-        <div className="flex items-end justify-around px-1 pt-2 pb-2">
-
-          {MAIN_TABS.map((tab) => {
-            const isCenter = tab.AppIcon === null;
-            const active = tab.href === "/dashboard"
-              ? pathname === "/dashboard"
-              : pathname.startsWith(tab.href);
-
-            if (isCenter) {
-              return (
-                <Link key={tab.href} href={tab.href} className="flex flex-col items-center -mt-6">
-                  <div className="transition-transform active:scale-95 hover:scale-105"
-                    style={{ filter: "drop-shadow(0 4px 12px rgba(124,58,237,0.4))" }}>
-                    <IconAxia size={54} />
-                  </div>
-                  <span className="text-[10px] font-bold mt-1" style={{ color: active ? "#7c3aed" : "#9ca3af" }}>
-                    AXIA
-                  </span>
-                </Link>
-              );
-            }
-
-            const AppIcon = tab.AppIcon!;
+      {/* Tab bar */}
+      <nav
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#E8E8E8]"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        <div className="flex items-stretch">
+          {TABS.map(({ href, label, Icon, exact }) => {
+            const on = exact ? pathname === href : pathname.startsWith(href);
             return (
-              <Link key={tab.href} href={tab.href}
-                className="flex flex-col items-center gap-1 px-2 py-1 rounded-xl transition-all">
-                <div className={`transition-all duration-150 ${active ? "scale-100" : "scale-90 opacity-60"}`}>
-                  <AppIcon size={30} />
-                </div>
-                <span className="text-[10px] font-semibold" style={{ color: active ? "#F5A623" : "#9ca3af" }}>
-                  {tab.label}
-                </span>
-                {active && <div className="w-1 h-1 rounded-full bg-[#F5A623] -mt-0.5"/>}
+              <Link
+                key={href}
+                href={href}
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 relative transition-all"
+                style={{ color: on ? "#111111" : "#AAAAAA" }}
+              >
+                {on && (
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#111111] rounded-full" />
+                )}
+                <Icon size={20} strokeWidth={on ? 2.2 : 1.7} />
+                <span className="text-[10px]" style={{ fontWeight: on ? 700 : 400 }}>{label}</span>
               </Link>
             );
           })}
 
-          {/* Bouton "Plus" */}
+          {/* Plus */}
           <button
-            onClick={() => setDrawerOpen(true)}
-            className="flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all"
+            onClick={() => setOpen(true)}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 relative"
+            style={{ color: open ? "#111111" : "#AAAAAA" }}
           >
-            <div className={`w-8 h-8 flex items-center justify-center rounded-xl transition-all ${drawerOpen ? "bg-[#F5A623]/12" : ""}`}>
-              <div className="flex flex-col gap-[3px]">
-                <div className="flex gap-[3px]">
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: drawerOpen ? "#F5A623" : "#9ca3af" }}/>
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: drawerOpen ? "#F5A623" : "#9ca3af" }}/>
-                </div>
-                <div className="flex gap-[3px]">
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: drawerOpen ? "#F5A623" : "#9ca3af" }}/>
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: drawerOpen ? "#F5A623" : "#9ca3af" }}/>
-                </div>
-              </div>
+            <div className="grid grid-cols-2 gap-[3px] w-5 h-5">
+              {[0,1,2,3].map(i => (
+                <div key={i} className="rounded-[2px]"
+                  style={{ background: open ? "#111111" : "#AAAAAA", width: 8, height: 8 }} />
+              ))}
             </div>
-            <span className="text-[10px] font-semibold" style={{ color: drawerOpen ? "#F5A623" : "#9ca3af" }}>
-              Plus
-            </span>
+            <span className="text-[10px]">Plus</span>
           </button>
         </div>
       </nav>
 
-      {/* ── Drawer "Tous les modules" ── */}
-      {drawerOpen && (
-        <div className="md:hidden fixed inset-0 z-[60] flex flex-col justify-end"
-          onClick={(e) => { if (e.target === e.currentTarget) setDrawerOpen(false); }}
-          style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }}>
-
-          <div className="bg-white rounded-t-3xl overflow-hidden"
-            style={{ maxHeight: "82vh", boxShadow: "0 -8px 40px rgba(0,0,0,0.15)" }}>
-
-            {/* Handle + header */}
-            <div className="px-5 pt-3 pb-4 border-b border-gray-100">
-              <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4"/>
+      {/* All modules drawer */}
+      {open && (
+        <div
+          className="md:hidden fixed inset-0 z-[60] flex flex-col justify-end"
+          style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(6px)" }}
+          onClick={e => { if (e.target === e.currentTarget) setOpen(false); }}
+        >
+          <div
+            className="bg-white rounded-t-2xl overflow-hidden"
+            style={{ maxHeight: "84vh", boxShadow: "0 -8px 40px rgba(0,0,0,0.12)" }}
+          >
+            {/* Handle */}
+            <div className="pt-3 pb-4 px-5 border-b border-[#F3F3F3]">
+              <div className="w-8 h-1 bg-[#E8E8E8] rounded-full mx-auto mb-4" />
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-bold text-gray-900">Tous les modules</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Accédez à toutes les fonctionnalités</p>
+                  <p className="text-[15px] font-bold text-[#111111]">Tous les modules</p>
+                  <p className="text-[11px] text-[#AAAAAA] mt-0.5">Navigation complète</p>
                 </div>
-                <button onClick={() => setDrawerOpen(false)}
-                  className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-xl text-gray-500">
-                  <X size={16}/>
+                <button
+                  onClick={() => setOpen(false)}
+                  className="w-8 h-8 rounded-xl bg-[#F5F5F5] flex items-center justify-center text-[#666666]"
+                >
+                  <X size={15} />
                 </button>
               </div>
             </div>
 
-            {/* Modules par groupe */}
-            <div className="overflow-y-auto pb-8" style={{ maxHeight: "calc(82vh - 90px)" }}>
-              {GROUPS.map((group) => (
-                <div key={group.label} className="px-4 pt-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-1.5 h-3 rounded-full" style={{ background: group.color }}/>
-                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">{group.label}</p>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 mb-2">
-                    {group.items.map((item) => {
-                      const Icon = item.icon;
-                      const active = item.href === "/dashboard"
-                        ? pathname === "/dashboard"
-                        : pathname.startsWith(item.href);
+            {/* Modules */}
+            <div className="overflow-y-auto pb-10" style={{ maxHeight: "calc(84vh - 88px)" }}>
+              {ALL_MODULES.map(section => (
+                <div key={section.label} className="px-4 pt-5">
+                  <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#BBBBBB] mb-3">
+                    {section.label}
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {section.items.map(({ href, label, Icon }) => {
+                      const on = href === "/dashboard" ? pathname === href : pathname.startsWith(href);
                       return (
                         <Link
-                          key={item.href}
-                          href={item.href}
-                          onClick={() => setDrawerOpen(false)}
-                          className="flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all"
+                          key={href}
+                          href={href}
+                          onClick={() => setOpen(false)}
+                          className="flex flex-col items-center gap-2 p-3 rounded-2xl transition-all"
                           style={{
-                            background: active ? group.color + "15" : "#f9fafb",
-                            border: `1px solid ${active ? group.color + "40" : "#f3f4f6"}`,
+                            background: on ? "#111111" : "#F5F5F5",
+                            border: `1px solid ${on ? "#111111" : "#EBEBEB"}`,
                           }}
                         >
                           <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                            style={{ background: active ? group.color + "20" : "white", border: `1px solid ${active ? group.color + "30" : "#e5e7eb"}` }}>
-                            <Icon size={17} style={{ color: active ? group.color : "#6b7280" }}/>
+                            style={{ background: on ? "rgba(255,255,255,0.15)" : "white", border: "1px solid rgba(0,0,0,0.06)" }}>
+                            <Icon size={17} style={{ color: on ? "white" : "#555555" }} strokeWidth={1.8} />
                           </div>
-                          <span className="text-[10px] font-semibold text-center leading-tight"
-                            style={{ color: active ? group.color : "#6b7280" }}>
-                            {item.label}
+                          <span
+                            className="text-[10px] font-semibold text-center leading-tight"
+                            style={{ color: on ? "white" : "#555555" }}
+                          >
+                            {label}
                           </span>
-                          {active && (
-                            <div className="w-1 h-1 rounded-full" style={{ background: group.color }}/>
-                          )}
                         </Link>
                       );
                     })}
