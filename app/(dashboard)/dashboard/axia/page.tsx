@@ -75,10 +75,10 @@ export default function AxiaPage() {
     setStreaming(true);
 
     try {
-      const res = await fetch("/api/axia/chat", {
+      const res = await fetch("/api/ai/universal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history }),
+        body: JSON.stringify({ messages: history, stream: true }),
       });
       if (!res.ok) throw new Error("Erreur API");
 
@@ -118,19 +118,19 @@ export default function AxiaPage() {
     }
   }
 
-  async function callOutil(type: string, params: object) {
+  async function callOutil(prompt: string) {
     setLoading(true);
     setResult("");
     setCopied(false);
     try {
-      const res = await fetch("/api/axia/outils", {
+      const res = await fetch("/api/ai/universal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, params }),
+        body: JSON.stringify({ messages: [{ role: "user", content: prompt }] }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.erreur || "Erreur");
-      setResult(data.resultat || "");
+      if (!res.ok) throw new Error(data.message || "Erreur");
+      setResult(data.reponse || "");
     } catch (err: any) {
       toast.error(err.message || "Erreur IA");
     } finally {
@@ -307,7 +307,8 @@ export default function AxiaPage() {
                 <input value={wNiche} onChange={e => setWNiche(e.target.value)}
                   placeholder="Niche ou marché (ex: mode africaine, tech, cosmétiques…)"
                   className={inputCls} />
-                <button onClick={() => callOutil("winners", { niche: wNiche, pays: "Afrique de l'Ouest" })}
+                <button onClick={() => callOutil(`Trouve 3 produits gagnants à vendre en ligne maintenant.\nNiche : ${wNiche || "e-commerce général"}\nPays cible : Afrique de l'Ouest\nPour chaque produit : nom, pourquoi ça marche, prix source / prix vente / marge brute, canal marketing principal. Format : liste numérotée, concis.`)}
+
                   disabled={loading || !wNiche.trim()}
                   className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white disabled:opacity-50"
                   style={{ background: "#111111" }}>
@@ -338,7 +339,8 @@ export default function AxiaPage() {
                 <textarea value={rCtx} onChange={e => setRCtx(e.target.value)}
                   placeholder="Contexte : produit ciblé, promotion, raison d'inactivité…"
                   rows={3} className={inputCls + " resize-none"} />
-                <button onClick={() => callOutil("relance", { canal: rCanal, contexte: rCtx })}
+                <button onClick={() => callOutil(`Rédige un message de relance ${rCanal === "gmail" ? "email (objet + corps)" : "WhatsApp court avec emojis"} pour un client VIP inactif.\nContexte : ${rCtx || "Client n'a pas commandé depuis 30 jours"}.\nStyle : chaleureux, personnalisé, avec offre attractive. Réponds uniquement avec le message.`)}
+
                   disabled={loading}
                   className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white disabled:opacity-50"
                   style={{ background: "#111111" }}>
@@ -359,7 +361,8 @@ export default function AxiaPage() {
                 <input value={cCible} onChange={e => setCCible(e.target.value)}
                   placeholder="Cible (ex: femmes 25-40 ans, entrepreneurs…)"
                   className={inputCls} />
-                <button onClick={() => callOutil("copywriting", { produit: cProduit, cible: cCible })}
+                <button onClick={() => callOutil(`Rédige une publicité Facebook/Instagram percutante.\nProduit : ${cProduit}\nCible : ${cCible || "femmes entrepreneurs africaines 25-45 ans"}\nFormat : Accroche (hook) + Corps + CTA. Avec emojis stratégiques, style africain authentique. Donne 2 variantes distinctes.`)}
+
                   disabled={loading || !cProduit.trim()}
                   className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white disabled:opacity-50"
                   style={{ background: "#111111" }}>
