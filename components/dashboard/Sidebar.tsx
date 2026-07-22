@@ -105,7 +105,7 @@ export function Sidebar() {
             {collapsed && <div className="mx-3 my-1 border-t border-[#F0F0F0]" />}
 
             <div className="px-2 space-y-px">
-              {section.items.map(({ href, label, Icon, exact, dot, accent }) => {
+              {section.items.map(({ href, label, Icon, exact = false, dot = false, accent = false }: any) => {
                 const on = active(href, exact);
                 return (
                   <Link
