@@ -14,7 +14,7 @@ const TABS = [
   { href: "/dashboard",           label: "Accueil",   Icon: LayoutDashboard, exact: true },
   { href: "/dashboard/produits",  label: "Produits",  Icon: Package },
   { href: "/dashboard/commandes", label: "Ventes",    Icon: ShoppingBag },
-  { href: "/dashboard/revenus",   label: "Revenus",   Icon: TrendingUp },
+  { href: "/dashboard/axia",      label: "AXIA",      Icon: Bot },
 ];
 
 const ALL_MODULES = [

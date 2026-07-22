@@ -12,6 +12,12 @@ import {
 
 const NAV = [
   {
+    group: "Intelligence",
+    items: [
+      { href: "/dashboard/axia",       label: "AXIA IA",       Icon: Bot, accent: true },
+    ],
+  },
+  {
     group: "Boutique",
     items: [
       { href: "/dashboard",            label: "Accueil",       Icon: LayoutDashboard, exact: true },
@@ -51,12 +57,6 @@ const NAV = [
       { href: "/dashboard/dropshipping",label: "Dropshipping", Icon: Package2 },
       { href: "/dashboard/analytics",  label: "Analytics",     Icon: BarChart3 },
       { href: "/dashboard/avis",       label: "Avis",          Icon: Star },
-    ],
-  },
-  {
-    group: "Intelligence",
-    items: [
-      { href: "/dashboard/axia",        label: "AXIA IA",       Icon: Bot, accent: true },
     ],
   },
   {
