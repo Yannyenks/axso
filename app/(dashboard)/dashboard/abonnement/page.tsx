@@ -4,14 +4,7 @@ import { redirect } from "next/navigation";
 import { Check, X, CreditCard, Zap, Crown, HelpCircle, Globe } from "lucide-react";
 import { PlanBadge } from "@/components/dashboard/PlanBadge";
 import AbonnementActions from "./AbonnementActions";
-const PAYS_DEVISES: Record<string, string> = {
-  SN: "XOF", CI: "XOF", BJ: "XOF", BF: "XOF", ML: "XOF", NE: "XOF", TG: "XOF",
-  CM: "XAF", GA: "XAF", CG: "XAF", CD: "CDF", TD: "XAF",
-  GN: "GNF", MR: "MRO",
-  NG: "NGN", GH: "GHS", KE: "KES", TZ: "TZS", UG: "UGX", RW: "RWF",
-  ET: "ETB", MA: "MAD", TN: "TND", DZ: "DZD", EG: "EGP",
-  FR: "EUR", BE: "EUR", CA: "CAD", US: "USD",
-};
+import { PAYS_DEVISES } from "@/lib/ai-agent";
 import { convertirDepuisXAF } from "@/lib/paiement-securite";
 
 // ─── Plans Axso ──────────────────────────────────────────────────────────────
