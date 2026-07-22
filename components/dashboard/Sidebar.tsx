@@ -53,6 +53,7 @@ const NAV_GROUPS = [
     label: "Opérations",
     items: [
       { href: "/dashboard/livraison",    label: "Livraisons",   Icone: IconLivraisons },
+      { href: "/dashboard/dropshipping", label: "Dropshipping", Icone: IconSourcing },
       { href: "/dashboard/analytics",    label: "Analytics",    Icone: IconAnalytics },
     ],
   },
