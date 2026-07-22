@@ -5,7 +5,6 @@ import { headers } from "next/headers";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Header } from "@/components/dashboard/Header";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
-import { AxiaFloat } from "@/components/dashboard/AxiaFloat";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -34,8 +33,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </main>
         </div>
       </div>
-
-      <AxiaFloat />
 
       {/* ── Mobile ──────────────────────────────────────────────────── */}
       <div className="md:hidden min-h-screen bg-[#F5F5F5] text-[#111111] pb-20">

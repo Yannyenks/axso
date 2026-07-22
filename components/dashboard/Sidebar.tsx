@@ -7,8 +7,7 @@ import {
   ShoppingBag, Users, MessageCircle, Wallet, TrendingUp,
   Megaphone, Globe2, Film, Globe, Truck, BarChart3,
   Plug, CreditCard, Settings, ChevronLeft, ChevronRight,
-  Star, Bike, Search, Calendar, Tv2, Package2, Radio,
-  FileText, Bell,
+  Star, Bike, Search, Calendar, Package2, Radio, Bot,
 } from "lucide-react";
 
 const NAV = [
@@ -52,6 +51,12 @@ const NAV = [
       { href: "/dashboard/dropshipping",label: "Dropshipping", Icon: Package2 },
       { href: "/dashboard/analytics",  label: "Analytics",     Icon: BarChart3 },
       { href: "/dashboard/avis",       label: "Avis",          Icon: Star },
+    ],
+  },
+  {
+    group: "Intelligence",
+    items: [
+      { href: "/dashboard/axia",        label: "AXIA IA",       Icon: Bot, accent: true },
     ],
   },
   {

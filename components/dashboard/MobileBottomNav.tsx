@@ -7,7 +7,7 @@ import {
   Store, Paintbrush, Palette, Wallet, CreditCard,
   Megaphone, Globe2, Film, Calendar, Radio, Search,
   Truck, Bike, Package2, BarChart3, Settings, Plug,
-  Users, MessageCircle, Star, Layers, Globe,
+  Users, MessageCircle, Star, Layers, Globe, Bot,
 } from "lucide-react";
 
 const TABS = [
@@ -66,6 +66,12 @@ const ALL_MODULES = [
       { href: "/dashboard/livraison",  label: "Livraisons",      Icon: Truck },
       { href: "/dashboard/livreurs",   label: "Livreurs",        Icon: Bike },
       { href: "/dashboard/analytics",  label: "Analytics",       Icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Intelligence", color: "#F5A623",
+    items: [
+      { href: "/dashboard/axia",        label: "AXIA IA",         Icon: Bot },
     ],
   },
   {
