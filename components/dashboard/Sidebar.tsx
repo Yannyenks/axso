@@ -1,70 +1,67 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChevronLeft, ChevronRight, Zap } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, Store, Paintbrush, Package, Layers,
-  ShoppingBag, Users, MessageCircle, Wallet, TrendingUp,
-  Megaphone, Globe2, Film, Globe, Truck, BarChart3,
-  Plug, CreditCard, Settings, ChevronLeft, ChevronRight,
-  Star, Bike, Search, Calendar, Package2, Radio, Bot,
-} from "lucide-react";
+  IconAxia, IconAccueil, IconBoutique, IconBuilder, IconProduits,
+  IconSourcing, IconCommandes, IconClients, IconWallet, IconRevenus,
+  IconMarketing, IconMessages, IconContenus, IconNavigateur, IconLivraisons,
+  IconAnalytics, IconConnecteurs, IconAbonnement, IconParametres, IconIA,
+  IconWhatsApp,
+} from "./AppIcons";
 
-const NAV = [
+// ─── Navigation ───────────────────────────────────────────────────────────────
+const NAV_GROUPS = [
   {
-    group: "Intelligence",
+    label: "Intelligence",
     items: [
-      { href: "/dashboard/axia",       label: "AXIA IA",       Icon: Bot, accent: true },
+      { href: "/dashboard/axia",         label: "AXIA IA",      Icone: IconIA,          highlight: true },
     ],
   },
   {
-    group: "Boutique",
+    label: "Boutique",
     items: [
-      { href: "/dashboard",            label: "Accueil",       Icon: LayoutDashboard, exact: true },
-      { href: "/dashboard/boutique",   label: "Ma boutique",   Icon: Store },
-      { href: "/dashboard/builder",    label: "Constructeur",  Icon: Paintbrush },
-      { href: "/dashboard/produits",   label: "Produits",      Icon: Package },
-      { href: "/dashboard/sourcing",   label: "Sourcing",      Icon: Layers },
-      { href: "/dashboard/commandes",  label: "Commandes",     Icon: ShoppingBag, dot: true },
-      { href: "/dashboard/clients",    label: "Clients",       Icon: Users },
-      { href: "/dashboard/whatsapp",   label: "WhatsApp",      Icon: MessageCircle, dot: true },
+      { href: "/dashboard",              label: "Accueil",      Icone: IconAccueil,     exact: true },
+      { href: "/dashboard/boutique",     label: "Ma boutique",  Icone: IconBoutique },
+      { href: "/dashboard/builder",      label: "Constructeur", Icone: IconBuilder },
+      { href: "/dashboard/produits",     label: "Produits",     Icone: IconProduits },
+      { href: "/dashboard/sourcing",     label: "Sourcing Drop",Icone: IconSourcing },
+      { href: "/dashboard/commandes",    label: "Commandes",    Icone: IconCommandes,   badge: true },
+      { href: "/dashboard/clients",      label: "Clients",      Icone: IconClients },
+      { href: "/dashboard/whatsapp",     label: "WhatsApp",     Icone: IconWhatsApp,    badge: true },
     ],
   },
   {
-    group: "Finance",
+    label: "Finance",
     items: [
-      { href: "/dashboard/wallet",     label: "Wallet",        Icon: Wallet, accent: true },
-      { href: "/dashboard/revenus",    label: "Revenus",       Icon: TrendingUp },
-      { href: "/dashboard/paiements",  label: "Paiements",     Icon: CreditCard },
+      { href: "/dashboard/wallet",       label: "Wallet",       Icone: IconWallet,      highlight: true },
+      { href: "/dashboard/revenus",      label: "Revenus",      Icone: IconRevenus },
     ],
   },
   {
-    group: "Croissance",
+    label: "Croissance",
     items: [
-      { href: "/dashboard/marketing",  label: "Marketing",     Icon: Megaphone },
-      { href: "/dashboard/messages",   label: "Social",        Icon: Globe2, dot: true },
-      { href: "/dashboard/studio",     label: "Studio",        Icon: Film },
-      { href: "/dashboard/scheduler",  label: "Planificateur", Icon: Calendar },
-      { href: "/dashboard/publicite",  label: "Publicité",     Icon: Radio },
-      { href: "/dashboard/veille",     label: "Veille",        Icon: Search },
+      { href: "/dashboard/marketing",    label: "Marketing",    Icone: IconMarketing },
+      { href: "/dashboard/messages",     label: "Axsocial",     Icone: IconMessages,    badge: true },
+      { href: "/dashboard/studio",       label: "Contenus",     Icone: IconContenus },
+      { href: "/dashboard/navigateur",   label: "Navigateur",   Icone: IconNavigateur },
     ],
   },
   {
-    group: "Opérations",
+    label: "Opérations",
     items: [
-      { href: "/dashboard/livraison",  label: "Livraisons",    Icon: Truck },
-      { href: "/dashboard/livreurs",   label: "Livreurs",      Icon: Bike },
-      { href: "/dashboard/dropshipping",label: "Dropshipping", Icon: Package2 },
-      { href: "/dashboard/analytics",  label: "Analytics",     Icon: BarChart3 },
-      { href: "/dashboard/avis",       label: "Avis",          Icon: Star },
+      { href: "/dashboard/livraison",    label: "Livraisons",   Icone: IconLivraisons },
+      { href: "/dashboard/analytics",    label: "Analytics",    Icone: IconAnalytics },
     ],
   },
   {
-    group: "Système",
+    label: "Système",
     items: [
-      { href: "/dashboard/connecteurs",label: "Connecteurs",   Icon: Plug },
-      { href: "/dashboard/abonnement", label: "Abonnement",    Icon: CreditCard },
-      { href: "/dashboard/parametres", label: "Paramètres",    Icon: Settings },
+      { href: "/dashboard/connecteurs",  label: "Connecteurs",  Icone: IconConnecteurs },
+      { href: "/dashboard/abonnement",   label: "Abonnement",   Icone: IconAbonnement },
+      { href: "/dashboard/parametres",   label: "Paramètres",   Icone: IconParametres },
     ],
   },
 ];
@@ -73,58 +70,89 @@ export function Sidebar() {
   const pathname  = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
-  const active = (href: string, exact = false) =>
-    exact ? pathname === href : pathname.startsWith(href);
+  const isActive = (href: string, exact = false) =>
+    exact ? pathname === href : (href !== "/dashboard" ? pathname.startsWith(href) : pathname === href);
 
   return (
     <aside
-      className="flex flex-col bg-white border-r border-[#E8E8E8] transition-all duration-300 relative flex-shrink-0"
-      style={{ width: collapsed ? 60 : 220 }}
+      className={cn(
+        "flex flex-col bg-white border-r border-gray-100 transition-all duration-300 relative shadow-sm",
+        collapsed ? "w-[68px]" : "w-[230px]"
+      )}
+      style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}
     >
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-2" style={{ scrollbarWidth: "none" }}>
-        {NAV.map((section) => (
-          <div key={section.group} className="mb-1">
+      {/* Brand accent strip */}
+      <div className={cn(
+        "flex items-center justify-center border-b border-gray-100 transition-all",
+        collapsed ? "px-3 py-3" : "px-4 py-3"
+      )}>
+        <div className="flex items-center gap-2">
+          <IconAxia size={collapsed ? 32 : 28} />
+          {!collapsed && (
+            <span className="text-[13px] font-black tracking-tight text-gray-800">
+              axso
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 py-3 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
+        {NAV_GROUPS.map((group) => (
+          <div key={group.label} className="mb-1">
             {!collapsed && (
-              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#BBBBBB] px-4 pt-3 pb-1">
-                {section.group}
+              <p className="text-[9.5px] font-black text-gray-300 uppercase tracking-[0.2em] px-4 pt-3 pb-1.5">
+                {group.label}
               </p>
             )}
-            {collapsed && <div className="mx-3 my-1 border-t border-[#F0F0F0]" />}
+            {collapsed && <div className="my-1 mx-3 border-t border-gray-100" />}
 
-            <div className="px-2 space-y-px">
-              {section.items.map(({ href, label, Icon, exact = false, dot = false, accent = false }: any) => {
-                const on = active(href, exact);
+            <div className="px-2 space-y-0.5">
+              {group.items.map((item) => {
+                const { Icone } = item;
+                const actif     = isActive(item.href, (item as any).exact);
+                const isWallet  = item.href === "/dashboard/wallet";
+
                 return (
                   <Link
-                    key={href}
-                    href={href}
-                    title={collapsed ? label : undefined}
-                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all duration-100 group relative"
-                    style={{
-                      background: on ? "#F5F5F5" : "transparent",
-                      color: on ? "#111111" : "#888888",
-                    }}
-                  >
-                    {on && (
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-[#111111] rounded-r-full" />
+                    key={item.href}
+                    href={item.href}
+                    title={collapsed ? item.label : undefined}
+                    className={cn(
+                      "flex items-center gap-2.5 px-2 py-1.5 rounded-xl transition-all duration-150 group",
+                      actif
+                        ? "bg-gray-100 shadow-sm"
+                        : "hover:bg-gray-50",
+                      collapsed && "justify-center"
                     )}
-                    <Icon
-                      size={16}
-                      strokeWidth={on ? 2.2 : 1.8}
-                      className="flex-shrink-0 transition-colors"
-                      style={{ color: on ? "#111111" : accent ? "#F5A623" : "inherit" }}
-                    />
+                  >
+                    {/* Icône squircle OS */}
+                    <div
+                      className={cn(
+                        "flex-shrink-0 transition-all duration-200",
+                        actif ? "scale-95" : "group-hover:scale-105",
+                        !actif && "opacity-80 group-hover:opacity-100"
+                      )}
+                    >
+                      <Icone size={collapsed ? 30 : 26} />
+                    </div>
+
+                    {/* Label */}
                     {!collapsed && (
-                      <span
-                        className="text-[12.5px] truncate flex-1 transition-colors"
-                        style={{ fontWeight: on ? 600 : 450 }}
-                      >
-                        {label}
+                      <span className={cn(
+                        "text-[12.5px] font-medium flex-1 truncate transition-colors",
+                        actif ? "text-gray-900 font-semibold" : "text-gray-500 group-hover:text-gray-800"
+                      )}>
+                        {item.label}
                       </span>
                     )}
-                    {!collapsed && dot && !on && (
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#F5A623] flex-shrink-0" />
+
+                    {/* Badges */}
+                    {!collapsed && (item as any).badge && (
+                      <span className="ml-auto w-2 h-2 rounded-full bg-[#F5A623] flex-shrink-0" />
+                    )}
+                    {!collapsed && isWallet && !actif && (
+                      <Zap size={10} className="text-[#F5A623] ml-auto flex-shrink-0" />
                     )}
                   </Link>
                 );
@@ -134,10 +162,10 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Collapse */}
+      {/* Collapse toggle */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-4 w-6 h-6 bg-white border border-[#E8E8E8] rounded-full flex items-center justify-center text-[#AAAAAA] hover:text-[#111111] hover:border-[#CCCCCC] transition-all z-10 shadow-sm"
+        className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-[#F5A623] hover:border-[#F5A623]/40 transition-all z-10 shadow-sm"
       >
         {collapsed ? <ChevronRight size={11} /> : <ChevronLeft size={11} />}
       </button>
