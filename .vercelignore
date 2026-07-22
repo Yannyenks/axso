@@ -1,0 +1,10 @@
+AXIA/
+freellmapi/
+app/(dashboard)/dashboard/produits/digital/
+app/api/affiliation/affilies/
+app/api/affiliation/programmes/
+app/api/affiliation/stats/
+app/api/dropshipping/
+app/api/livraison-digitale/
+app/api/produits-digitaux/
+bun.lock
