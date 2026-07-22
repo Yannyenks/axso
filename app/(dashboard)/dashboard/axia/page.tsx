@@ -74,13 +74,18 @@ export default function AxiaPage() {
     setInput("");
     setStreaming(true);
 
+    // Strip leading assistant messages — LLM APIs require first message to be user
+    const toSend = history
+      .map(m => ({ role: m.role, content: m.content }))
+      .slice(history.findIndex(m => m.role === "user"));
+
     try {
       const res = await fetch("/api/ai/universal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history, stream: true }),
+        body: JSON.stringify({ messages: toSend, fast: false, stream: true }),
       });
-      if (!res.ok) throw new Error("Erreur API");
+      if (!res.ok || !res.body) throw new Error(`Erreur ${res.status}`);
 
       const reader = res.body!.getReader();
       const dec = new TextDecoder();
