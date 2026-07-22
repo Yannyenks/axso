@@ -81,18 +81,6 @@ export function Sidebar() {
       className="flex flex-col bg-white border-r border-[#E8E8E8] transition-all duration-300 relative flex-shrink-0"
       style={{ width: collapsed ? 60 : 220 }}
     >
-      {/* Brand */}
-      <div className="flex items-center border-b border-[#E8E8E8] px-3 py-3" style={{ minHeight: 56 }}>
-        <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-[#111111] flex items-center justify-center flex-shrink-0">
-            <img src="/logo.png" alt="axso" className="w-5 h-5 object-contain invert" />
-          </div>
-          {!collapsed && (
-            <span className="text-[13px] font-black tracking-tight text-[#111111] truncate">axso</span>
-          )}
-        </Link>
-      </div>
-
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-2" style={{ scrollbarWidth: "none" }}>
         {NAV.map((section) => (
@@ -149,7 +137,7 @@ export function Sidebar() {
       {/* Collapse */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-14 w-6 h-6 bg-white border border-[#E8E8E8] rounded-full flex items-center justify-center text-[#AAAAAA] hover:text-[#111111] hover:border-[#CCCCCC] transition-all z-10 shadow-sm"
+        className="absolute -right-3 top-4 w-6 h-6 bg-white border border-[#E8E8E8] rounded-full flex items-center justify-center text-[#AAAAAA] hover:text-[#111111] hover:border-[#CCCCCC] transition-all z-10 shadow-sm"
       >
         {collapsed ? <ChevronRight size={11} /> : <ChevronLeft size={11} />}
       </button>
