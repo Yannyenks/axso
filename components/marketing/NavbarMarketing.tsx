@@ -24,7 +24,7 @@ export function NavbarMarketing() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const onEnter = () => { clearTimeout(collapseRef.current); setHovered(true); };
+  const onEnter = () => { if (collapseRef.current) clearTimeout(collapseRef.current); setHovered(true); };
   const onLeave = () => { collapseRef.current = setTimeout(() => setHovered(false), 320); };
 
   return (
