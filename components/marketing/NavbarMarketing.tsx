@@ -187,115 +187,116 @@ export function NavbarMarketing() {
           </div>
         </div>
 
-        {/* ── Mobile island ────────────────────────────────────────────── */}
+        {/* ── Mobile island — s'expand en place (vrai Dynamic Island) ── */}
         <div
           className="ax-mobile"
           style={{
+            flexDirection: "column",
             pointerEvents: "auto",
-            alignItems: "center",
             background: "#080808",
-            borderRadius: "999px",
-            padding: "7px 10px 7px 16px",
+            borderRadius: mobileOpen ? "28px" : "999px",
             width: "calc(100vw - 28px)",
-            boxShadow: "0 10px 40px rgba(0,0,0,.38), 0 2px 8px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.06)",
-            gap: "8px",
-          }}
-        >
-          <Link href="/" style={{ display:"flex", alignItems:"center", textDecoration:"none", flexShrink:0 }}>
-            <img src="/logo.png" alt="axso" style={{ height:"34px", filter:"brightness(0) invert(1)", objectFit:"contain" }} />
-          </Link>
-          <div style={{ flex: 1 }} />
-          <Link href="/inscription" style={{
-            padding: "7px 16px", borderRadius: "999px",
-            fontSize: "12.5px", fontWeight: 700,
-            color: "#080808", background: "#F5A623",
-            textDecoration: "none", whiteSpace: "nowrap",
-            boxShadow: "0 2px 10px rgba(245,166,35,.4)",
-          }}>
-            Commencer
-          </Link>
-          <button
-            onClick={() => setMobileOpen(v => !v)}
-            style={{
-              width: "36px", height: "36px", borderRadius: "50%",
-              border: "1px solid rgba(255,255,255,.14)",
-              background: mobileOpen ? "rgba(255,255,255,.1)" : "rgba(255,255,255,.05)",
-              color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", flexShrink: 0,
-              transition: "background .2s, transform .25s cubic-bezier(.34,1.56,.64,1)",
-              transform: mobileOpen ? "rotate(90deg)" : "none",
-            }}
-            aria-label="Menu"
-          >
-            {mobileOpen ? <X size={15} /> : <Menu size={15} />}
-          </button>
-        </div>
-
-        {/* ── Mobile dropdown sheet ────────────────────────────────────── */}
-        <div
-          className="ax-mobile"
-          style={{
-            width: "calc(100vw - 28px)",
-            maxHeight: mobileOpen ? "480px" : "0",
             overflow: "hidden",
-            transition: "max-height .45s cubic-bezier(.34,1.56,.64,1), opacity .3s ease",
-            opacity: mobileOpen ? 1 : 0,
-            pointerEvents: mobileOpen ? "auto" : "none",
-            marginTop: mobileOpen ? "6px" : "0",
+            boxShadow: mobileOpen
+              ? "0 20px 60px rgba(0,0,0,.55), 0 4px 14px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.07)"
+              : "0 10px 40px rgba(0,0,0,.38), 0 2px 8px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.06)",
+            transition: "border-radius .5s cubic-bezier(.34,1.56,.64,1), box-shadow .4s ease",
           }}
         >
-          <div style={{
-            width: "100%",
-            background: "#0d0d0d",
-            borderRadius: "24px",
-            padding: "12px",
-            boxShadow: "0 16px 48px rgba(0,0,0,.45)",
-            animation: mobileOpen ? "axSheetOpen .35s cubic-bezier(.34,1.56,.64,1) both" : "none",
-          }}>
-            {LIENS.map((l, i) => (
-              <a
-                key={l.href} href={l.href}
-                onClick={() => setMobileOpen(false)}
-                className="ax-ml"
-                style={{
-                  display: "block",
-                  padding: "13px 16px",
-                  borderRadius: "14px",
-                  fontSize: "15px", fontWeight: 500,
-                  color: "rgba(255,255,255,.65)",
-                  textDecoration: "none",
-                  transition: "background .15s, color .15s",
-                  animation: mobileOpen ? `axFadeUp .3s ease ${i * 0.06}s both` : "none",
-                }}
-              >
-                {l.label}
-              </a>
-            ))}
-            <div style={{
-              borderTop: "1px solid rgba(255,255,255,.08)",
-              marginTop: "10px", paddingTop: "10px",
-              display: "flex", gap: "8px",
-              animation: mobileOpen ? `axFadeUp .3s ease ${LIENS.length * 0.06}s both` : "none",
+          {/* ── Ligne du haut — toujours visible ── */}
+          <div style={{ display:"flex", alignItems:"center", padding:"7px 10px 7px 16px", gap:"8px" }}>
+            <Link href="/" style={{ display:"flex", alignItems:"center", textDecoration:"none", flexShrink:0 }}>
+              <img src="/logo.png" alt="axso" style={{
+                height: mobileOpen ? "38px" : "34px",
+                filter:"brightness(0) invert(1)", objectFit:"contain",
+                transition: "height .4s cubic-bezier(.34,1.56,.64,1)",
+              }} />
+            </Link>
+            <div style={{ flex: 1 }} />
+            {/* CTA masqué quand ouvert */}
+            <Link href="/inscription" style={{
+              padding: "7px 16px", borderRadius: "999px",
+              fontSize: "12.5px", fontWeight: 700,
+              color: "#080808", background: "#F5A623",
+              textDecoration: "none", whiteSpace: "nowrap",
+              boxShadow: "0 2px 10px rgba(245,166,35,.4)",
+              opacity: mobileOpen ? 0 : 1,
+              transform: mobileOpen ? "scale(.75)" : "scale(1)",
+              transition: "opacity .2s ease, transform .3s cubic-bezier(.34,1.56,.64,1)",
+              pointerEvents: mobileOpen ? "none" : "auto",
             }}>
-              <Link href="/connexion" onClick={() => setMobileOpen(false)} style={{
-                flex: 1, display: "block", textAlign: "center",
-                padding: "13px", borderRadius: "16px",
-                border: "1px solid rgba(255,255,255,.12)",
-                fontSize: "14px", fontWeight: 600,
-                color: "rgba(255,255,255,.55)", textDecoration: "none",
-              }}>
-                Connexion
-              </Link>
-              <Link href="/inscription" onClick={() => setMobileOpen(false)} style={{
-                flex: 2, display: "block", textAlign: "center",
-                padding: "13px", borderRadius: "16px",
-                fontSize: "14px", fontWeight: 700,
-                color: "#080808", background: "#F5A623",
-                textDecoration: "none",
-                boxShadow: "0 4px 18px rgba(245,166,35,.45)",
-              }}>
-                Créer ma boutique
-              </Link>
+              Commencer
+            </Link>
+            <button
+              onClick={() => setMobileOpen(v => !v)}
+              style={{
+                width: "36px", height: "36px", borderRadius: "50%",
+                border: "1px solid rgba(255,255,255,.15)",
+                background: mobileOpen ? "rgba(255,255,255,.12)" : "rgba(255,255,255,.06)",
+                color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", flexShrink: 0,
+                transition: "background .2s, transform .45s cubic-bezier(.34,1.56,.64,1)",
+                transform: mobileOpen ? "rotate(45deg)" : "none",
+              }}
+              aria-label="Menu"
+            >
+              {mobileOpen ? <X size={15} /> : <Menu size={15} />}
+            </button>
+          </div>
+
+          {/* ── Contenu expandable ── */}
+          <div style={{
+            maxHeight: mobileOpen ? "420px" : "0",
+            opacity: mobileOpen ? 1 : 0,
+            overflow: "hidden",
+            transition: "max-height .5s cubic-bezier(.34,1.56,.64,1), opacity .3s ease",
+          }}>
+            <div style={{ padding: "0 12px 16px" }}>
+              <div style={{ borderTop: "1px solid rgba(255,255,255,.08)", paddingTop: "10px" }}>
+                {LIENS.map((l, i) => (
+                  <a
+                    key={l.href} href={l.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="ax-ml"
+                    style={{
+                      display: "block",
+                      padding: "13px 10px",
+                      borderRadius: "14px",
+                      fontSize: "15px", fontWeight: 500,
+                      color: "rgba(255,255,255,.65)",
+                      textDecoration: "none",
+                      transition: "background .15s, color .15s",
+                      animation: mobileOpen ? `axFadeUp .32s ease ${i * 0.07}s both` : "none",
+                    }}
+                  >
+                    {l.label}
+                  </a>
+                ))}
+                <div style={{
+                  display: "flex", gap: "8px", marginTop: "12px",
+                  animation: mobileOpen ? `axFadeUp .32s ease ${LIENS.length * 0.07}s both` : "none",
+                }}>
+                  <Link href="/connexion" onClick={() => setMobileOpen(false)} style={{
+                    flex: 1, display: "block", textAlign: "center",
+                    padding: "13px", borderRadius: "16px",
+                    border: "1px solid rgba(255,255,255,.13)",
+                    fontSize: "14px", fontWeight: 600,
+                    color: "rgba(255,255,255,.55)", textDecoration: "none",
+                  }}>
+                    Connexion
+                  </Link>
+                  <Link href="/inscription" onClick={() => setMobileOpen(false)} style={{
+                    flex: 2, display: "block", textAlign: "center",
+                    padding: "13px", borderRadius: "16px",
+                    fontSize: "14px", fontWeight: 700,
+                    color: "#080808", background: "#F5A623",
+                    textDecoration: "none",
+                    boxShadow: "0 4px 20px rgba(245,166,35,.5)",
+                  }}>
+                    Créer ma boutique
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>
