@@ -51,7 +51,7 @@ function PostCard({ post, onDelete, onStatut }: { post: Post; onDelete: (id: str
   const date = new Date(post.planifieLe);
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
+    <div className="ax-card overflow-hidden hover:-translate-y-0.5 transition-all">
       {post.imageUrl && (
         <div className="aspect-video overflow-hidden">
           <img src={post.imageUrl} alt="" className="w-full h-full object-cover" />
@@ -68,19 +68,19 @@ function PostCard({ post, onDelete, onStatut }: { post: Post; onDelete: (id: str
           </span>
         </div>
 
-        <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">{post.contenu}</p>
+        <p className="text-[13px] text-[#444] leading-relaxed line-clamp-3">{post.contenu}</p>
 
         {post.hashtags?.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {post.hashtags.slice(0, 4).map(h => (
-              <span key={h} className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">#{h}</span>
+              <span key={h} className="text-[11px] px-2 py-0.5 rounded-full bg-[#F5F5F7] text-[#888]">#{h}</span>
             ))}
             {post.hashtags.length > 4 && <span className="text-[11px] text-gray-400">+{post.hashtags.length - 4}</span>}
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-1 border-t border-gray-50">
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+        <div className="flex items-center justify-between pt-1 border-t border-[#F3F3F3]">
+          <div className="flex items-center gap-1.5 text-[11.5px] text-[#AAAAAA]">
             <Clock size={11} />
             <span>{date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} à {date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
           </div>
@@ -225,14 +225,9 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
-            <Calendar size={22} className="text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 font-poppins">Social Media Scheduler</h1>
-            <p className="text-gray-400 text-sm">Planifiez vos posts avec l'IA — Instagram, TikTok, Facebook…</p>
-          </div>
+        <div>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Scheduler Social</h1>
+          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">Planifiez vos posts avec l'IA — Instagram, TikTok, Facebook…</p>
         </div>
         <button onClick={() => setShowModal(true)}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-all"
@@ -248,9 +243,9 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
           { label: "Planifiés", val: stats.planifies, color: "#F5A623" },
           { label: "Publiés", val: stats.publie, color: "#34d399" },
         ].map(s => (
-          <div key={s.label} className="bg-white border border-gray-100 rounded-2xl p-5">
-            <p className="text-3xl font-bold mb-1" style={{ color: s.color }}>{s.val}</p>
-            <p className="text-xs text-gray-400">{s.label}</p>
+          <div key={s.label} className="ax-card p-5">
+            <p className="text-[22px] font-bold mb-1 tabular-nums" style={{ color: s.color, fontVariantNumeric: "tabular-nums" }}>{s.val}</p>
+            <p className="text-[12px] text-[#AAAAAA]">{s.label}</p>
           </div>
         ))}
       </div>
@@ -285,10 +280,10 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
           <Loader2 size={28} className="text-gray-400 animate-spin" />
         </div>
       ) : postsFiltres.length === 0 ? (
-        <div className="bg-white border border-dashed border-gray-200 rounded-2xl p-16 text-center">
-          <Calendar size={40} className="text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Aucun post planifié</h3>
-          <p className="text-gray-400 text-sm mb-6">L'IA peut générer et planifier vos posts en quelques secondes</p>
+        <div className="bg-[#F9F9F9] border border-dashed border-[#E8E8E8] rounded-[20px] p-16 text-center">
+          <Calendar size={40} className="text-[#CCCCCC] mx-auto mb-4" />
+          <h3 className="text-[14px] font-semibold text-[#111111] mb-2">Aucun post planifié</h3>
+          <p className="text-[12.5px] text-[#AAAAAA] mb-6">L'IA peut générer et planifier vos posts en quelques secondes</p>
           <button onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white mx-auto transition-all"
             style={{ background: "linear-gradient(135deg, #E1306C, #833AB4)" }}>
@@ -308,17 +303,17 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-900">Nouveau post planifié</h2>
+            <div className="flex items-center justify-between p-6 border-b border-[#F3F3F3]">
+              <h2 className="text-[15px] font-bold text-[#111111]">Nouveau post planifié</h2>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-700"><X size={20} /></button>
             </div>
 
             <div className="p-6 space-y-5">
               {/* Mode toggle */}
-              <div className="flex gap-1 p-1 bg-gray-100 rounded-xl">
+              <div className="flex gap-1 p-1 bg-[#F5F5F7] rounded-xl">
                 {[{ id: true, label: "✨ Générer avec l'IA" }, { id: false, label: "✏️ Manuel" }].map(m => (
                   <button key={String(m.id)} onClick={() => setAiMode(m.id)}
-                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${aiMode === m.id ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}>
+                    className={`flex-1 py-2 rounded-lg text-[13px] font-semibold transition-all ${aiMode === m.id ? "bg-white text-[#111111] shadow-sm" : "text-[#AAAAAA]"}`}>
                     {m.label}
                   </button>
                 ))}
@@ -326,7 +321,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
 
               {/* Plateforme */}
               <div>
-                <label className="text-gray-600 text-sm font-medium block mb-2">Plateforme</label>
+                <label className="text-[12px] font-semibold text-[#555] block mb-2">Plateforme</label>
                 <div className="flex gap-2 flex-wrap">
                   {PLATEFORMES.map(p => (
                     <button key={p.id} onClick={() => setForm(f => ({ ...f, plateforme: p.id }))}
@@ -342,10 +337,10 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
               {aiMode && (
                 <div className="space-y-3">
                   <div>
-                    <label className="text-gray-600 text-sm font-medium block mb-2">Que voulez-vous promouvoir ?</label>
+                    <label className="text-[12px] font-semibold text-[#555] block mb-2">Que voulez-vous promouvoir ?</label>
                     <textarea value={form.aiPrompt} onChange={e => setForm(f => ({ ...f, aiPrompt: e.target.value }))}
                       rows={3} placeholder="Ex: Nouvelle collection de robes wax printemps 2024, promo -20% ce weekend..."
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#F5A623]/50 resize-none" />
+                      className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC] resize-none" />
                   </div>
                   <button onClick={genererAvecIA} disabled={generating || !form.aiPrompt.trim()}
                     className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-50"
@@ -363,7 +358,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
                   )}
                   <div className="space-y-2">
                     <textarea value={form.contenu} onChange={e => setForm(f => ({ ...f, contenu: e.target.value }))}
-                      rows={6} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#F5A623]/50 resize-none" />
+                      rows={6} className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-3 py-2 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 transition-all resize-none" />
                     {form.hashtags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {form.hashtags.slice(0, 6).map(h => (
@@ -378,18 +373,18 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
               {/* Contenu manuel */}
               {!aiMode && !form.contenu && (
                 <div>
-                  <label className="text-gray-600 text-sm font-medium block mb-2">Contenu du post</label>
+                  <label className="text-[12px] font-semibold text-[#555] block mb-2">Contenu du post</label>
                   <textarea value={form.contenu} onChange={e => setForm(f => ({ ...f, contenu: e.target.value }))}
                     rows={5} placeholder="Rédigez votre post..."
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#F5A623]/50 resize-none" />
+                    className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC] resize-none" />
                 </div>
               )}
 
               {/* Date */}
               <div>
-                <label className="text-gray-600 text-sm font-medium block mb-2">Date et heure de publication</label>
+                <label className="text-[12px] font-semibold text-[#555] block mb-2">Date et heure de publication</label>
                 <input type="datetime-local" value={form.planifieLe} onChange={e => setForm(f => ({ ...f, planifieLe: e.target.value }))}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50" />
+                  className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all" />
               </div>
 
               <div className="flex gap-2">

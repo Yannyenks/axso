@@ -63,15 +63,15 @@ const PAYS_LABELS: Record<string, string> = {
 
 function MetricCard({ icon: Icone, label, value, sub, color }: any) {
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-5">
+    <div className="ax-card p-5">
       <div className="flex items-start justify-between mb-3">
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: color + "15" }}>
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: color + "15", border: `1px solid ${color}25` }}>
           <Icone size={16} style={{ color }} />
         </div>
       </div>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
-      <p className="text-xs text-gray-400 mt-0.5">{label}</p>
-      {sub && <p className="text-xs mt-1 font-medium" style={{ color }}>{sub}</p>}
+      <p className="text-[20px] font-bold text-[#111111] tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>{value}</p>
+      <p className="text-[12px] text-[#AAAAAA] mt-0.5">{label}</p>
+      {sub && <p className="text-[11.5px] mt-1 font-semibold" style={{ color }}>{sub}</p>}
     </div>
   );
 }
@@ -83,15 +83,15 @@ function CampagneCard({ c, onStatut, onDelete }: { c: Campagne; onStatut: (id: s
   const txConv = c.clics > 0 ? ((c.conversions / c.clics) * 100).toFixed(1) : "0";
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md transition-shadow">
+    <div className="ax-card p-5">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style={{ background: plat?.color + "15" }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style={{ background: plat?.color + "15", border: `1px solid ${plat?.color}25` }}>
             {plat?.icon}
           </div>
           <div>
-            <p className="font-semibold text-gray-900 text-sm">{c.nom}</p>
-            <p className="text-xs text-gray-400">{plat?.label} · {c.objectif}</p>
+            <p className="text-[13px] font-semibold text-[#111111]">{c.nom}</p>
+            <p className="text-[11.5px] text-[#AAAAAA]">{plat?.label} · {c.objectif}</p>
           </div>
         </div>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ color: statut.color, background: statut.bg }}>
@@ -106,9 +106,9 @@ function CampagneCard({ c, onStatut, onDelete }: { c: Campagne; onStatut: (id: s
       )}
 
       {c.titreAd && (
-        <div className="mb-4 bg-gray-50 rounded-xl p-3 border border-gray-100">
-          <p className="text-sm font-semibold text-gray-800">{c.titreAd}</p>
-          {c.descriptionAd && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{c.descriptionAd}</p>}
+        <div className="mb-4 bg-[#F9F9F9] rounded-xl p-3 border border-[#F3F3F3]">
+          <p className="text-[13px] font-semibold text-[#222]">{c.titreAd}</p>
+          {c.descriptionAd && <p className="text-[12px] text-[#666] mt-1 line-clamp-2">{c.descriptionAd}</p>}
         </div>
       )}
 
@@ -120,9 +120,9 @@ function CampagneCard({ c, onStatut, onDelete }: { c: Campagne; onStatut: (id: s
           { label: "CTR", val: `${ctr}%` },
           { label: "Conv.", val: c.conversions },
         ].map(m => (
-          <div key={m.label} className="text-center bg-gray-50 rounded-xl p-2">
-            <p className="text-sm font-bold text-gray-800">{m.val}</p>
-            <p className="text-[10px] text-gray-400">{m.label}</p>
+          <div key={m.label} className="text-center bg-[#F9F9F9] rounded-xl p-2">
+            <p className="text-[13px] font-bold text-[#222]">{m.val}</p>
+            <p className="text-[10.5px] text-[#AAAAAA]">{m.label}</p>
           </div>
         ))}
       </div>
@@ -311,20 +311,15 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
 
   const campagnesFiltrees = campagnes.filter(c => filterPlat === "tous" || c.plateforme === filterPlat);
 
-  const inputClass = "w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50";
+  const inputClass = "w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]";
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-            <Megaphone size={22} className="text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 font-poppins">Publicité</h1>
-            <p className="text-gray-400 text-sm">Gérez vos campagnes Meta, Google et TikTok</p>
-          </div>
+        <div>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Publicité</h1>
+          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">Gérez vos campagnes Meta, Google et TikTok</p>
         </div>
         <button onClick={() => setShowModal(true)}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-all"
@@ -360,10 +355,10 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 size={28} className="text-gray-400 animate-spin" /></div>
       ) : campagnesFiltrees.length === 0 ? (
-        <div className="bg-white border border-dashed border-gray-200 rounded-2xl p-16 text-center">
-          <Megaphone size={40} className="text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Aucune campagne</h3>
-          <p className="text-gray-400 text-sm mb-6">Créez votre première campagne et laissez l'IA générer les créatifs</p>
+        <div className="bg-[#F9F9F9] border border-dashed border-[#E8E8E8] rounded-[20px] p-16 text-center">
+          <Megaphone size={40} className="text-[#CCCCCC] mx-auto mb-4" />
+          <h3 className="text-[14px] font-semibold text-[#111111] mb-2">Aucune campagne</h3>
+          <p className="text-[12.5px] text-[#AAAAAA] mb-6">Créez votre première campagne et laissez l'IA générer les créatifs</p>
           <button onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white mx-auto"
             style={{ background: "linear-gradient(135deg, #1877F2, #4285F4)" }}>
@@ -396,10 +391,10 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+            <div className="flex items-center justify-between p-6 border-b border-[#F3F3F3]">
               <div>
-                <h2 className="text-lg font-bold text-gray-900">Nouvelle campagne</h2>
-                <p className="text-sm text-gray-400">L'IA génère les créatifs automatiquement</p>
+                <h2 className="text-[15px] font-bold text-[#111111]">Nouvelle campagne</h2>
+                <p className="text-[12px] text-[#AAAAAA]">L'IA génère les créatifs automatiquement</p>
               </div>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-700"><X size={20} /></button>
             </div>
@@ -407,7 +402,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
             <div className="p-6 space-y-5">
               {/* Plateforme */}
               <div>
-                <label className="text-gray-600 text-sm font-medium block mb-2">Plateforme</label>
+                <label className="text-[12px] font-semibold text-[#555] block mb-2">Plateforme</label>
                 <div className="grid grid-cols-3 gap-3">
                   {PLATEFORMES.map(p => (
                     <button key={p.id} onClick={() => setForm(f => ({ ...f, plateforme: p.id }))}
@@ -439,22 +434,22 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
               {/* Infos campagne */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="text-gray-500 text-xs block mb-1.5">Nom de la campagne *</label>
+                  <label className="ax-label block mb-1.5">Nom de la campagne *</label>
                   <input value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))} placeholder="Ex: Soldes Ramadan 2024" className={inputClass} />
                 </div>
                 <div>
-                  <label className="text-gray-500 text-xs block mb-1.5">Budget total *</label>
+                  <label className="ax-label block mb-1.5">Budget total *</label>
                   <input type="number" value={form.budget} onChange={e => setForm(f => ({ ...f, budget: e.target.value }))} placeholder="50000" className={inputClass} />
                 </div>
                 <div>
-                  <label className="text-gray-500 text-xs block mb-1.5">Budget journalier</label>
+                  <label className="ax-label block mb-1.5">Budget journalier</label>
                   <input type="number" value={form.budgetJour} onChange={e => setForm(f => ({ ...f, budgetJour: e.target.value }))} placeholder="5000" className={inputClass} />
                 </div>
               </div>
 
               {/* Objectif */}
               <div>
-                <label className="text-gray-600 text-sm font-medium block mb-2">Objectif</label>
+                <label className="text-[12px] font-semibold text-[#555] block mb-2">Objectif</label>
                 <div className="grid grid-cols-4 gap-2">
                   {OBJECTIFS.map(o => {
                     const Icone = o.icon;
@@ -471,7 +466,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
 
               {/* Ciblage pays */}
               <div>
-                <label className="text-gray-600 text-sm font-medium block mb-2">Pays cibles</label>
+                <label className="text-[12px] font-semibold text-[#555] block mb-2">Pays cibles</label>
                 <div className="flex flex-wrap gap-2">
                   {PAYS_AFRIQUE.map(p => (
                     <button key={p}
@@ -504,7 +499,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
               )}
 
               <div>
-                <label className="text-gray-500 text-xs block mb-1.5">URL de destination</label>
+                <label className="ax-label block mb-1.5">URL de destination</label>
                 <input value={form.urlDestination} onChange={e => setForm(f => ({ ...f, urlDestination: e.target.value }))} placeholder="https://votre-boutique.axso.africa" className={inputClass} />
               </div>
 

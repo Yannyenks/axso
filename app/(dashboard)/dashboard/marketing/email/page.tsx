@@ -157,14 +157,22 @@ export default function EmailMarketingPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Email Marketing</h1>
-          <p className="text-gray-400 text-sm mt-0.5">Envoyez des campagnes directement depuis Axso</p>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Email Marketing</h1>
+          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">Envoyez des campagnes directement depuis Axso</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setOnglet("composer")} className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${onglet === "composer" ? "bg-[#F5A623] text-white" : "bg-gray-100 text-gray-600"}`}>
+          <button onClick={() => setOnglet("composer")}
+            className="px-3.5 py-2 rounded-full text-[12px] font-semibold transition-all"
+            style={onglet === "composer"
+              ? { background: "#111111", color: "#FFFFFF", border: "1px solid #111111" }
+              : { background: "#FFFFFF", color: "#888888", border: "1px solid #E8E8E8" }}>
             Composer
           </button>
-          <button onClick={() => { setOnglet("historique"); charger(); }} className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${onglet === "historique" ? "bg-[#F5A623] text-white" : "bg-gray-100 text-gray-600"}`}>
+          <button onClick={() => { setOnglet("historique"); charger(); }}
+            className="px-3.5 py-2 rounded-full text-[12px] font-semibold transition-all"
+            style={onglet === "historique"
+              ? { background: "#111111", color: "#FFFFFF", border: "1px solid #111111" }
+              : { background: "#FFFFFF", color: "#888888", border: "1px solid #E8E8E8" }}>
             Historique ({historique.length})
           </button>
         </div>
@@ -199,7 +207,7 @@ export default function EmailMarketingPage() {
           {/* Panneau gauche — formulaire */}
           <div className="space-y-5">
             {/* Segment */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-5">
+            <div className="ax-card p-5">
               <label className="text-sm font-bold text-gray-700 mb-3 block">Destinataires</label>
               <div className="space-y-2">
                 {SEGMENTS.map((s) => (
@@ -219,7 +227,7 @@ export default function EmailMarketingPage() {
             </div>
 
             {/* Templates */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-5">
+            <div className="ax-card p-5">
               <label className="text-sm font-bold text-gray-700 mb-3 block">Template</label>
               <div className="grid grid-cols-2 gap-2">
                 {TEMPLATES.map((t) => (
@@ -238,7 +246,7 @@ export default function EmailMarketingPage() {
 
           {/* Panneau droit — éditeur */}
           <div className="space-y-4">
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-4">
+            <div className="ax-card p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-bold text-gray-700">Contenu de la campagne</h2>
                 <button
@@ -257,7 +265,7 @@ export default function EmailMarketingPage() {
                   value={sujet}
                   onChange={(e) => setSujet(e.target.value)}
                   placeholder="Ex: 🔥 Offre spéciale pour vous !"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/60"
+                  className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-2.5 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all"
                 />
               </div>
 
@@ -268,7 +276,7 @@ export default function EmailMarketingPage() {
                   onChange={(e) => setCorps(e.target.value)}
                   placeholder="Bonjour {prenom},&#10;&#10;Votre message ici..."
                   rows={8}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/60 resize-none"
+                  className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-2.5 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all resize-none"
                 />
               </div>
 

@@ -114,14 +114,9 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-            <MessageSquare size={22} className="text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 font-poppins">SMS & WhatsApp</h1>
-            <p className="text-gray-400 text-sm">Envoyez des campagnes SMS à vos clients</p>
-          </div>
+        <div>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">SMS & WhatsApp</h1>
+          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">Envoyez des campagnes SMS à vos clients</p>
         </div>
         <button onClick={() => setShowModal(true)}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white"
@@ -153,14 +148,14 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
         ].map(s => {
           const Icone = s.icon;
           return (
-            <div key={s.label} className="bg-white border border-gray-100 rounded-2xl p-5">
+            <div key={s.label} className="ax-card p-5">
               <div className="flex items-center gap-3 mb-1">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: s.color + "15" }}>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: s.color + "15", border: `1px solid ${s.color}25` }}>
                   <Icone size={16} style={{ color: s.color }} />
                 </div>
-                <p className="text-2xl font-bold text-gray-900">{s.val}</p>
+                <p className="text-[20px] font-bold text-[#111111] tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>{s.val}</p>
               </div>
-              <p className="text-xs text-gray-400">{s.label}</p>
+              <p className="text-[12px] text-[#AAAAAA]">{s.label}</p>
             </div>
           );
         })}
@@ -168,20 +163,20 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
 
       {/* Historique */}
       {histoCampagnes.length > 0 && (
-        <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-gray-100">
-            <h2 className="font-semibold text-gray-800 text-sm">Campagnes récentes</h2>
+        <div className="ax-card overflow-hidden">
+          <div className="px-5 py-4 border-b border-[#F3F3F3]">
+            <h2 className="text-[13px] font-semibold text-[#111111]">Campagnes récentes</h2>
           </div>
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-[#F9F9F9]">
             {histoCampagnes.slice(0, 5).map((c: any) => (
-              <div key={c.id} className="flex items-center justify-between px-5 py-3">
+              <div key={c.id} className="flex items-center justify-between px-5 py-3 hover:bg-[#FAFAFA] transition-colors">
                 <div>
-                  <p className="text-sm font-medium text-gray-800">{c.nom}</p>
-                  <p className="text-xs text-gray-400">{c.segment} · {new Date(c.createdAt).toLocaleDateString("fr-FR")}</p>
+                  <p className="text-[13px] font-medium text-[#222]">{c.nom}</p>
+                  <p className="text-[11.5px] text-[#AAAAAA]">{c.segment} · {new Date(c.createdAt).toLocaleDateString("fr-FR")}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-gray-500">{c.nbEnvoyes} envoyés</span>
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${c.statut === "envoye" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                  <span className={`text-[10.5px] font-semibold px-2.5 py-1 rounded-full border ${c.statut === "envoye" ? "bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0]" : "bg-[#F5F5F7] text-[#888] border-[#EBEBEB]"}`}>
                     {c.statut === "envoye" ? "✓ Envoyé" : "Brouillon"}
                   </span>
                 </div>
@@ -196,14 +191,14 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-900">Nouvelle campagne SMS</h2>
+            <div className="flex items-center justify-between p-6 border-b border-[#F3F3F3]">
+              <h2 className="text-[15px] font-bold text-[#111111]">Nouvelle campagne SMS</h2>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-700"><X size={20} /></button>
             </div>
             <div className="p-6 space-y-5">
               {/* Segment */}
               <div>
-                <label className="text-gray-600 text-sm font-medium block mb-2">Destinataires</label>
+                <label className="text-[12px] font-semibold text-[#555] block mb-2">Destinataires</label>
                 <div className="grid grid-cols-2 gap-2">
                   {SEGMENTS.map(s => (
                     <button key={s.id} onClick={() => setForm(f => ({ ...f, segment: s.id }))}
@@ -220,15 +215,15 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
 
               {/* Nom */}
               <div>
-                <label className="text-gray-500 text-xs block mb-1.5">Nom de la campagne *</label>
+                <label className="ax-label block mb-1.5">Nom de la campagne *</label>
                 <input value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))}
                   placeholder="Ex: Promo Tabaski 2024"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-green-400" />
+                  className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]" />
               </div>
 
               {/* Templates */}
               <div>
-                <label className="text-gray-600 text-sm font-medium block mb-2">Templates</label>
+                <label className="text-[12px] font-semibold text-[#555] block mb-2">Templates</label>
                 <div className="grid grid-cols-2 gap-2">
                   {TEMPLATES.map(t => (
                     <button key={t.label} onClick={() => setForm(f => ({ ...f, message: t.template }))}
@@ -264,7 +259,7 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
                 </div>
                 <textarea value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
                   rows={4} maxLength={160} placeholder="Votre message SMS... ({{nom}} sera remplacé par le prénom du client)"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-green-400 resize-none" />
+                  className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC] resize-none" />
                 <p className="text-[11px] text-gray-400 mt-1">Utilisez <code className="bg-gray-100 px-1 rounded">{"{{nom}}"}</code> pour personnaliser · 1 SMS = 160 caractères</p>
               </div>
 

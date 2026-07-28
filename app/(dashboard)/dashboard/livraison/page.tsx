@@ -45,8 +45,8 @@ export default async function LivraisonPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 font-poppins">Livraisons</h1>
-          <p className="text-gray-400 text-sm mt-1">Suivi et assignation des expéditions</p>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Livraisons</h1>
+          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">Suivi et assignation des expéditions</p>
         </div>
         <a
           href="/dashboard/livreurs"
@@ -65,7 +65,7 @@ export default async function LivraisonPage() {
         ].map((m, i) => {
           const Icone = m.icon;
           return (
-            <div key={i} className="bg-white border border-gray-100 rounded-2xl p-5">
+            <div key={i} className="ax-card p-5">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${m.color}15`, border: `1px solid ${m.color}30` }}>
                   <Icone size={16} style={{ color: m.color }} />
@@ -78,16 +78,17 @@ export default async function LivraisonPage() {
         })}
       </div>
 
-      <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
-        <div className="p-5 border-b border-gray-100">
-          <h2 className="text-gray-800 font-semibold">Commandes actives</h2>
+      <div className="ax-card overflow-hidden">
+        <div className="px-5 py-4 border-b border-[#F3F3F3] flex items-center justify-between">
+          <h2 className="text-[13px] font-semibold text-[#111111]">Commandes actives</h2>
+          <span className="text-[11px] text-[#AAAAAA]">{commandes.length} commandes</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100">
+              <tr className="border-b border-[#F3F3F3]">
                 {["Commande", "Client", "Adresse", "Livreur", "Statut", "Date", "Action"].map((h) => (
-                  <th key={h} className="text-left text-gray-400 font-medium px-4 py-3">{h}</th>
+                  <th key={h} className="text-left ax-label px-4 py-3">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -97,10 +98,10 @@ export default async function LivraisonPage() {
               ) : commandes.slice(0, 30).map((cmd) => {
                 const st = STATUT_CONFIG[cmd.statut] || STATUT_CONFIG.en_attente;
                 return (
-                  <tr key={cmd.id} className="border-b border-[#111] hover:bg-[#151515]">
-                    <td className="px-4 py-3 text-[#F5A623] font-mono text-xs">{cmd.numero}</td>
-                    <td className="px-4 py-3 text-gray-700">{cmd.clientNom}</td>
-                    <td className="px-4 py-3 text-gray-400 text-xs max-w-[160px] truncate">{cmd.adresseLivraison}, {cmd.ville}</td>
+                  <tr key={cmd.id} className="border-b border-[#F9F9F9] hover:bg-[#FAFAFA] transition-colors">
+                    <td className="px-4 py-3 text-[#F5A623] font-mono text-[12px] font-bold">{cmd.numero}</td>
+                    <td className="px-4 py-3 text-[13px] font-medium text-[#222]">{cmd.clientNom}</td>
+                    <td className="px-4 py-3 text-[11.5px] text-[#AAAAAA] max-w-[160px] truncate">{cmd.adresseLivraison}, {cmd.ville}</td>
                     <td className="px-4 py-3">
                       <AssignerLivreur
                         commandeId={cmd.id}
@@ -115,7 +116,7 @@ export default async function LivraisonPage() {
                         {st.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">{formatDate(cmd.createdAt)}</td>
+                    <td className="px-4 py-3 text-[11.5px] text-[#AAAAAA]">{formatDate(cmd.createdAt)}</td>
                     <td className="px-4 py-3">
                       {cmd.statut === "confirmee" && (
                         <form action={async () => {

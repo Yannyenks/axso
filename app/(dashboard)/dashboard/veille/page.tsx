@@ -115,14 +115,9 @@ Format: liste claire avec emojis. Adapté marché africain.`,
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-500 to-blue-500 flex items-center justify-center">
-            <Search size={22} className="text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 font-poppins">Veille Concurrentielle IA</h1>
-            <p className="text-gray-400 text-sm">Surveillez vos concurrents, détectez les opportunités</p>
-          </div>
+        <div>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Veille Concurrentielle</h1>
+          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">Surveillez vos concurrents, détectez les opportunités</p>
         </div>
         <button onClick={() => setShowModal(true)}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white"
@@ -140,14 +135,14 @@ Format: liste claire avec emojis. Adapté marché africain.`,
         ].map(s => {
           const Icone = s.icon;
           return (
-            <div key={s.label} className="bg-white border border-gray-100 rounded-2xl p-5">
+            <div key={s.label} className="ax-card p-5">
               <div className="flex items-center gap-3 mb-1">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: s.color + "15" }}>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: s.color + "15", border: `1px solid ${s.color}25` }}>
                   <Icone size={16} style={{ color: s.color }} />
                 </div>
-                <p className="text-2xl font-bold text-gray-900">{s.val}</p>
+                <p className="text-[20px] font-bold text-[#111111] tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>{s.val}</p>
               </div>
-              <p className="text-xs text-gray-400">{s.label}</p>
+              <p className="text-[12px] text-[#AAAAAA]">{s.label}</p>
             </div>
           );
         })}
@@ -157,10 +152,10 @@ Format: liste claire avec emojis. Adapté marché africain.`,
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 size={28} className="text-gray-400 animate-spin" /></div>
       ) : items.length === 0 ? (
-        <div className="bg-white border border-dashed border-gray-200 rounded-2xl p-16 text-center">
-          <Search size={40} className="text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Aucun concurrent dans le radar</h3>
-          <p className="text-gray-400 text-sm mb-6">L'IA analyse vos concurrents et identifie les opportunités de marché</p>
+        <div className="bg-[#F9F9F9] border border-dashed border-[#E8E8E8] rounded-[20px] p-16 text-center">
+          <Search size={40} className="text-[#CCCCCC] mx-auto mb-4" />
+          <h3 className="text-[14px] font-semibold text-[#111111] mb-2">Aucun concurrent dans le radar</h3>
+          <p className="text-[12.5px] text-[#AAAAAA] mb-6">L'IA analyse vos concurrents et identifie les opportunités de marché</p>
           <button onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white mx-auto"
             style={{ background: "linear-gradient(135deg, #ef4444, #f97316)" }}>
@@ -170,13 +165,13 @@ Format: liste claire avec emojis. Adapté marché africain.`,
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map(item => (
-            <div key={item.id} className="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-md transition-shadow">
+            <div key={item.id} className="ax-card p-5 hover:-translate-y-0.5 transition-all">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-xl">🕵️</div>
                   <div>
-                    <p className="font-semibold text-gray-900 text-sm">{item.nomConcurrent}</p>
-                    {item.categorie && <p className="text-xs text-gray-400">{item.categorie}</p>}
+                    <p className="text-[13px] font-semibold text-[#111111]">{item.nomConcurrent}</p>
+                    {item.categorie && <p className="text-[11.5px] text-[#AAAAAA]">{item.categorie}</p>}
                   </div>
                 </div>
                 <button onClick={() => supprimer(item.id)} className="text-gray-300 hover:text-red-400 transition-colors">
@@ -184,9 +179,9 @@ Format: liste claire avec emojis. Adapté marché africain.`,
                 </button>
               </div>
               {item.produitNom && (
-                <div className="flex items-center justify-between mb-3 bg-gray-50 rounded-xl px-3 py-2">
-                  <span className="text-xs text-gray-600">{item.produitNom}</span>
-                  {item.prixDetecte && <span className="text-xs font-bold text-gray-900">{item.prixDetecte.toLocaleString()} XOF</span>}
+                <div className="flex items-center justify-between mb-3 bg-[#F9F9F9] rounded-xl px-3 py-2 border border-[#F3F3F3]">
+                  <span className="text-[12px] text-[#666]">{item.produitNom}</span>
+                  {item.prixDetecte && <span className="text-[12px] font-bold text-[#111111]">{item.prixDetecte.toLocaleString()} XOF</span>}
                 </div>
               )}
               {item.urlConcurrent && (
@@ -196,9 +191,9 @@ Format: liste claire avec emojis. Adapté marché africain.`,
                 </a>
               )}
               {item.descriptionNote && (
-                <p className="text-xs text-gray-500 leading-relaxed line-clamp-4 bg-blue-50 border border-blue-200 rounded-xl p-3">{item.descriptionNote}</p>
+                <p className="text-[12px] text-[#555] leading-relaxed line-clamp-4 bg-[#FFFBEB] border border-[#FDE68A]/40 rounded-xl p-3">{item.descriptionNote}</p>
               )}
-              <p className="text-[10px] text-gray-300 mt-3">Ajouté le {new Date(item.detectedAt).toLocaleDateString("fr-FR")}</p>
+              <p className="text-[10.5px] text-[#CCCCCC] mt-3">Ajouté le {new Date(item.detectedAt).toLocaleDateString("fr-FR")}</p>
             </div>
           ))}
         </div>
@@ -209,8 +204,8 @@ Format: liste claire avec emojis. Adapté marché africain.`,
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
           onClick={e => { if (e.target === e.currentTarget) { setShowModal(false); setRapport(""); } }}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-900">Analyser un concurrent</h2>
+            <div className="flex items-center justify-between p-6 border-b border-[#F3F3F3]">
+              <h2 className="text-[15px] font-bold text-[#111111]">Analyser un concurrent</h2>
               <button onClick={() => { setShowModal(false); setRapport(""); }} className="text-gray-400 hover:text-gray-700"><X size={20} /></button>
             </div>
             <div className="p-6 space-y-5">
@@ -245,17 +240,17 @@ Format: liste claire avec emojis. Adapté marché africain.`,
                   { label: "Produit observé", field: "produitNom", placeholder: "Robe Ankara" },
                 ].map(f => (
                   <div key={f.field}>
-                    <label className="text-gray-500 text-xs block mb-1">{f.label}</label>
+                    <label className="ax-label block mb-1">{f.label}</label>
                     <input value={(form as any)[f.field]} onChange={e => setForm(p => ({ ...p, [f.field]: e.target.value }))}
                       placeholder={f.placeholder}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-orange-400" />
+                      className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-3 py-2.5 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]" />
                   </div>
                 ))}
                 <div>
-                  <label className="text-gray-500 text-xs block mb-1">Prix observé (XOF)</label>
+                  <label className="ax-label block mb-1">Prix observé (XOF)</label>
                   <input type="number" value={form.prixDetecte} onChange={e => setForm(f => ({ ...f, prixDetecte: e.target.value }))}
                     placeholder="25000"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-orange-400" />
+                    className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-3 py-2.5 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]" />
                 </div>
               </div>
 

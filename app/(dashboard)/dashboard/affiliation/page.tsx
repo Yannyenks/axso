@@ -42,12 +42,12 @@ function copier(texte: string, setCopied: (v: boolean) => void) {
 
 function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: string; color: string }) {
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
+    <div className="ax-card p-5">
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${color}`}>
         <Icon size={18} />
       </div>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
-      <p className="text-sm text-gray-500 mt-0.5">{label}</p>
+      <p className="text-[20px] font-bold text-[#111111] tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>{value}</p>
+      <p className="text-[12px] text-[#AAAAAA] mt-0.5">{label}</p>
     </div>
   );
 }
@@ -81,21 +81,19 @@ export default function AffiliationPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-48 text-gray-400">
+      <div className="flex items-center justify-center h-48 text-[#AAAAAA]">
         Chargement...
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Share2 size={22} className="text-[#1B4FD8]" /> Affiliation
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Affiliation</h1>
+          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">
             Partagez des produits, gagnez des commissions automatiquement
           </p>
         </div>
@@ -111,15 +109,15 @@ export default function AffiliationPage() {
 
       {/* Mes liens */}
       <div>
-        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Link2 size={18} /> Mes liens d'affiliation
+        <h2 className="text-[13px] font-semibold text-[#111111] mb-4 flex items-center gap-2">
+          <Link2 size={15} className="text-[#AAAAAA]" /> Mes liens d'affiliation
         </h2>
 
         {liens.length === 0 ? (
-          <div className="bg-gray-50 border border-dashed border-gray-200 rounded-2xl p-8 text-center">
-            <Share2 size={32} className="text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 font-medium">Aucun lien encore</p>
-            <p className="text-gray-400 text-sm mt-1">
+          <div className="bg-[#F9F9F9] border border-dashed border-[#E8E8E8] rounded-[20px] p-8 text-center">
+            <Share2 size={32} className="text-[#CCCCCC] mx-auto mb-3" />
+            <p className="text-[13px] font-semibold text-[#111111]">Aucun lien encore</p>
+            <p className="text-[12px] text-[#AAAAAA] mt-1">
               Allez sur la page d'un produit digital et cliquez "Obtenir mon lien d'affiliation"
             </p>
           </div>
@@ -133,7 +131,7 @@ export default function AffiliationPage() {
               const isCopied = copiedId === lien.id;
 
               return (
-                <div key={lien.id} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                <div key={lien.id} className="ax-card p-4">
                   <div className="flex items-start gap-3">
                     {lien.produit?.images?.[0] && (
                       <img
@@ -144,41 +142,41 @@ export default function AffiliationPage() {
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="font-semibold text-gray-900 text-sm">
+                        <p className="text-[13px] font-semibold text-[#111111]">
                           {lien.produit?.nom ?? lien.tenant.nomBoutique}
                         </p>
                         <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">
                           {taux} commission
                         </span>
                       </div>
-                      <p className="text-xs text-gray-400 mt-0.5">{lien.tenant.nomBoutique} · Code: <span className="font-mono font-bold text-[#1B4FD8]">{lien.code}</span></p>
+                      <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{lien.tenant.nomBoutique} · Code: <span className="font-mono font-bold text-[#F5A623]">{lien.code}</span></p>
 
                       {/* URL */}
                       <div className="mt-2 flex items-center gap-2">
-                        <div className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-500 font-mono truncate">
+                        <div className="flex-1 bg-[#F9F9F9] border border-[#E8E8E8] rounded-lg px-3 py-1.5 text-[11.5px] text-[#AAAAAA] font-mono truncate">
                           {url}
                         </div>
                         <button
                           onClick={() => { copier(url, (v) => { if (v) setCopiedId(lien.id); }); }}
                           className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                             isCopied
-                              ? "bg-green-100 text-green-700"
-                              : "bg-[#1B4FD8] text-white hover:bg-[#1440BE]"
+                              ? "bg-[#F0FDF4] text-[#16A34A]"
+                              : "bg-[#111111] text-white hover:bg-[#222222]"
                           }`}
                         >
                           {isCopied ? <><CheckCheck size={12} /> Copié</> : <><Copy size={12} /> Copier</>}
                         </button>
                         <a href={url} target="_blank" rel="noopener noreferrer"
-                          className="flex-shrink-0 p-1.5 text-gray-400 hover:text-[#1B4FD8] transition-colors">
+                          className="flex-shrink-0 p-1.5 text-[#CCCCCC] hover:text-[#F5A623] transition-colors">
                           <ExternalLink size={14} />
                         </a>
                       </div>
 
                       {/* Métriques */}
-                      <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
+                      <div className="mt-2 flex items-center gap-4 text-[11.5px] text-[#AAAAAA]">
                         <span className="flex items-center gap-1"><Eye size={11} /> {lien.clics} clics</span>
                         <span className="flex items-center gap-1"><ShoppingBag size={11} /> {lien.conversions} ventes</span>
-                        <span className="flex items-center gap-1 text-green-600 font-semibold">
+                        <span className="flex items-center gap-1 text-[#16A34A] font-semibold">
                           <DollarSign size={11} /> {lien.montantGenere.toLocaleString()} gagné
                         </span>
                       </div>
@@ -194,37 +192,37 @@ export default function AffiliationPage() {
       {/* Historique commissions */}
       {commissions.length > 0 && (
         <div>
-          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <TrendingUp size={18} /> Historique des commissions
+          <h2 className="text-[13px] font-semibold text-[#111111] mb-4 flex items-center gap-2">
+            <TrendingUp size={15} className="text-[#AAAAAA]" /> Historique des commissions
           </h2>
-          <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+          <div className="ax-card overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
+              <thead className="bg-[#F9F9F9] border-b border-[#F3F3F3]">
                 <tr>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Produit</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Commande</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Taux</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Gagné</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Statut</th>
+                  <th className="text-left px-4 py-3 ax-label">Produit</th>
+                  <th className="text-left px-4 py-3 ax-label">Commande</th>
+                  <th className="text-right px-4 py-3 ax-label">Taux</th>
+                  <th className="text-right px-4 py-3 ax-label">Gagné</th>
+                  <th className="text-right px-4 py-3 ax-label">Statut</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-[#F9F9F9]">
                 {commissions.map((c) => (
-                  <tr key={c.id} className="hover:bg-gray-50/50">
+                  <tr key={c.id} className="hover:bg-[#FAFAFA] transition-colors">
                     <td className="px-4 py-3">
-                      <p className="font-medium text-gray-800">{c.lien.produit?.nom ?? c.lien.tenant.nomBoutique}</p>
-                      <p className="text-xs text-gray-400">{c.lien.tenant.nomBoutique}</p>
+                      <p className="text-[13px] font-medium text-[#222]">{c.lien.produit?.nom ?? c.lien.tenant.nomBoutique}</p>
+                      <p className="text-[11.5px] text-[#AAAAAA]">{c.lien.tenant.nomBoutique}</p>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-500">#{c.commande.numero}</td>
-                    <td className="px-4 py-3 text-right text-gray-600">{Math.round(c.taux * 100)}%</td>
-                    <td className="px-4 py-3 text-right font-bold text-green-600">
+                    <td className="px-4 py-3 font-mono text-[12px] text-[#F5A623] font-bold">#{c.commande.numero}</td>
+                    <td className="px-4 py-3 text-right text-[13px] text-[#666]">{Math.round(c.taux * 100)}%</td>
+                    <td className="px-4 py-3 text-right font-bold text-[#16A34A]">
                       +{c.montantGagne.toLocaleString()} {c.devise}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10.5px] font-semibold ${
                         c.statut === "capturee" || c.statut === "payee"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-amber-100 text-amber-700"
+                          ? "bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]"
+                          : "bg-[#FFFBEB] text-[#B45309] border border-[#FDE68A]"
                       }`}>
                         {c.statut === "capturee" ? "Confirmée" : c.statut === "payee" ? "Payée" : "En attente"}
                       </span>

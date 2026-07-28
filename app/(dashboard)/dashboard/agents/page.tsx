@@ -84,7 +84,7 @@ function OrchestratorPanel({ onClose }: { onClose: () => void }) {
           <BrainCircuit size={18} className="text-white"/>
         </div>
         <div>
-          <p className="font-bold text-gray-900">Mode Autonome</p>
+          <p className="font-bold text-[#111111]">Mode Autonome</p>
           <p className="text-xs text-purple-600">AXIA coordonne tout en arrière-plan</p>
         </div>
         <button onClick={onClose} className="ml-auto text-xs text-gray-400 hover:text-gray-700 px-3 py-1.5 rounded-xl hover:bg-gray-100 transition-all">
@@ -131,11 +131,11 @@ function OrchestratorPanel({ onClose }: { onClose: () => void }) {
             </div>
           )}
           {objectifs.length === 0 ? (
-            <div className="text-center py-6 text-gray-400 text-xs bg-gray-50 rounded-2xl">Aucun objectif défini</div>
+            <div className="text-center py-6 text-[#AAAAAA] text-xs bg-[#F9F9F9] rounded-2xl">Aucun objectif défini</div>
           ) : objectifs.map((obj: any) => {
             const pct = obj.cible > 0 ? Math.min(100, Math.round((obj.actuel / obj.cible) * 100)) : 0;
             return (
-              <div key={obj.id} className="bg-white border border-gray-100 rounded-2xl p-3 mb-2">
+              <div key={obj.id} className="ax-card p-3 mb-2">
                 <div className="flex justify-between mb-1.5">
                   <p className="text-sm font-semibold text-gray-800">{obj.titre}</p>
                   <span className="text-xs font-bold" style={{ color: pct >= 100 ? "#16a34a" : "#7c3aed" }}>{pct}%</span>
@@ -224,13 +224,13 @@ export default function AgentsPage() {
     <div className="h-full flex flex-col min-h-0 bg-gray-50/50">
 
       {/* ── Header ── */}
-      <div className="flex-shrink-0 flex items-center gap-4 px-6 py-4 bg-white border-b border-gray-100">
+      <div className="flex-shrink-0 flex items-center gap-4 px-6 py-4 bg-white border-b border-[#F3F3F3]">
         <div style={{ filter: `drop-shadow(0 0 14px ${meta.glow})` }}>
           <AgentAvatar3D agentId="axia" size={46} pulse={loading}/>
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-gray-900">AXIA</h1>
+            <h1 className="text-[18px] font-bold text-[#111111]">AXIA</h1>
             <span className="text-xs font-bold px-2.5 py-0.5 rounded-full text-white" style={{ background: `linear-gradient(135deg, ${meta.color}, ${meta.color}bb)` }}>
               Agent IA
             </span>
@@ -239,7 +239,7 @@ export default function AgentsPage() {
               En ligne
             </span>
           </div>
-          <p className="text-sm text-gray-400 mt-0.5">Marketing · Stocks · Revenus · Analytics · Livraisons · Clients</p>
+          <p className="text-[12px] text-[#AAAAAA] mt-0.5">Marketing · Stocks · Revenus · Analytics · Livraisons · Clients</p>
         </div>
 
         <button
@@ -273,7 +273,7 @@ export default function AgentsPage() {
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Que voulez-vous faire ?</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {SUGGESTIONS.map((cat) => (
-                    <div key={cat.cat} className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+                    <div key={cat.cat} className="ax-card overflow-hidden">
                       <button
                         onClick={() => setCatOuverte(catOuverte === cat.cat ? null : cat.cat)}
                         className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all"
