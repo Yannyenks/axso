@@ -14,7 +14,7 @@ export function NavbarMarketing() {
   const [scrolled,    setScrolled]    = useState(false);
   const [hovered,     setHovered]     = useState(false);
   const [mobileOpen,  setMobileOpen]  = useState(false);
-  const collapseRef   = useRef<ReturnType<typeof setTimeout>>();
+  const collapseRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isExpanded    = !scrolled || hovered;
 
   /* ── scroll listener ── */
