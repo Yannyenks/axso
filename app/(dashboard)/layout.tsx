@@ -6,9 +6,7 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Header } from "@/components/dashboard/Header";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 
-// Aucune route en full-bleed — le plein écran du navigateur est géré côté client
 const FULLBLEED_ROUTES: string[] = [];
-const WIDE_ROUTES: string[] = [];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
