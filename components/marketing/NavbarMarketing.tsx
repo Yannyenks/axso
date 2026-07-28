@@ -45,6 +45,10 @@ export function NavbarMarketing() {
         .ax-nl:hover  { color:#fff !important; background:rgba(255,255,255,.1) !important; }
         .ax-cta:hover { transform:scale(1.05) !important; box-shadow:0 6px 26px rgba(245,166,35,.7) !important; }
         .ax-ml:hover  { background:rgba(255,255,255,.08) !important; color:#fff !important; }
+        .ax-desktop { display:none; }
+        @media (min-width:768px) { .ax-desktop { display:flex; } }
+        .ax-mobile  { display:flex; }
+        @media (min-width:768px) { .ax-mobile  { display:none; } }
       `}</style>
 
       <nav
@@ -70,10 +74,10 @@ export function NavbarMarketing() {
 
         {/* ── Desktop island ───────────────────────────────────────────── */}
         <div
+          className="ax-desktop"
           onMouseEnter={onEnter}
           onMouseLeave={onLeave}
           style={{
-            display: "none",
             alignItems: "center",
             pointerEvents: "auto",
             background: "#080808",
@@ -90,7 +94,6 @@ export function NavbarMarketing() {
             overflow: "hidden",
             position: "relative",
           }}
-          className="md:flex"
         >
           {/* Logo */}
           <Link href="/" style={{ display:"flex", alignItems:"center", flexShrink:0, textDecoration:"none", zIndex:2 }}>
@@ -186,7 +189,7 @@ export function NavbarMarketing() {
 
         {/* ── Mobile island ────────────────────────────────────────────── */}
         <div
-          className="flex md:hidden"
+          className="ax-mobile"
           style={{
             pointerEvents: "auto",
             alignItems: "center",
@@ -230,7 +233,7 @@ export function NavbarMarketing() {
 
         {/* ── Mobile dropdown sheet ────────────────────────────────────── */}
         <div
-          className="flex md:hidden"
+          className="ax-mobile"
           style={{
             width: "calc(100vw - 28px)",
             maxHeight: mobileOpen ? "480px" : "0",
