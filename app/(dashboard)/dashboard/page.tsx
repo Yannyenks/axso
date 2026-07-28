@@ -6,17 +6,16 @@ import { OrdersTable } from "@/components/dashboard/OrdersTable";
 import { formatMontant } from "@/lib/utils";
 import {
   TrendingUp, ShoppingBag, Users, Eye, Package, AlertTriangle,
-  ArrowUpRight, ArrowDownRight, Globe, Plus, MapPin, UserPlus,
-  Star,
+  ArrowUpRight, ArrowDownRight, Globe, Plus, MapPin, Zap,
 } from "lucide-react";
 
-const STATUT_CFG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  en_attente:     { label: "En attente",     color: "#6B7280", bg: "#F9FAFB", border: "#E5E7EB" },
-  confirmee:      { label: "Confirmée",      color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A" },
-  en_preparation: { label: "En préparation", color: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE" },
-  expediee:       { label: "Expédiée",       color: "#3B82F6", bg: "#EFF6FF", border: "#BFDBFE" },
-  livree:         { label: "Livrée",         color: "#16A34A", bg: "#F0FDF4", border: "#BBF7D0" },
-  annulee:        { label: "Annulée",        color: "#DC2626", bg: "#FEF2F2", border: "#FECACA" },
+const STATUT_CFG: Record<string, { label: string; color: string }> = {
+  en_attente:     { label: "En attente",     color: "#6B7280" },
+  confirmee:      { label: "Confirmée",      color: "#F59E0B" },
+  en_preparation: { label: "En préparation", color: "#7C3AED" },
+  expediee:       { label: "Expédiée",       color: "#3B82F6" },
+  livree:         { label: "Livrée",         color: "#16A34A" },
+  annulee:        { label: "Annulée",        color: "#DC2626" },
 };
 
 async function getData(tenantId: string) {
@@ -32,7 +31,7 @@ async function getData(tenantId: string) {
     today, month, prevMonth, pending, visitors, recentOrders,
     lowStock, chartData, tenant, totalClients,
     commandesMois, statutsDist, topVilles, newClients, newClientsPrev,
-    weekRevenu,
+    weekRevenu, todayOrders,
   ] = await Promise.all([
     prisma.commande.aggregate({ where: { tenantId, paiementStatut: "completed", createdAt: { gte: startOfDay } }, _sum: { montantTotal: true }, _count: true }),
     prisma.commande.aggregate({ where: { tenantId, paiementStatut: "completed", createdAt: { gte: startOfMonth } }, _sum: { montantTotal: true }, _count: true }),
@@ -44,10 +43,9 @@ async function getData(tenantId: string) {
     prisma.analytics.findMany({ where: { tenantId, type: "purchase", date: { gte: last30 } }, orderBy: { date: "asc" } }),
     prisma.tenant.findUnique({ where: { id: tenantId } }),
     prisma.client.count({ where: { tenantId } }),
-    // Nouvelles requêtes
     prisma.commande.findMany({
       where: { tenantId, paiementStatut: "completed", createdAt: { gte: startOfMonth } },
-      select: { lignes: { select: { nom: true, prix: true, quantite: true, produitId: true } } },
+      select: { lignes: { select: { nom: true, prix: true, quantite: true, produitId: true, imageUrl: true } } },
     }),
     prisma.commande.groupBy({
       by: ["statut"],
@@ -64,13 +62,14 @@ async function getData(tenantId: string) {
     prisma.client.count({ where: { tenantId, createdAt: { gte: startOfMonth } } }),
     prisma.client.count({ where: { tenantId, createdAt: { gte: startOfPrevMonth, lte: endOfPrevMonth } } }),
     prisma.commande.aggregate({ where: { tenantId, paiementStatut: "completed", createdAt: { gte: startOfWeek } }, _sum: { montantTotal: true } }),
+    prisma.commande.count({ where: { tenantId, createdAt: { gte: startOfDay } } }),
   ]);
 
-  // Top produits calculé depuis les lignes
-  const prodMap: Record<string, { nom: string; revenue: number; qte: number }> = {};
+  // Top produits depuis les lignes (avec images)
+  const prodMap: Record<string, { nom: string; revenue: number; qte: number; img: string | null }> = {};
   (commandesMois as any[]).forEach(cmd => {
     cmd.lignes.forEach((l: any) => {
-      if (!prodMap[l.produitId]) prodMap[l.produitId] = { nom: l.nom, revenue: 0, qte: 0 };
+      if (!prodMap[l.produitId]) prodMap[l.produitId] = { nom: l.nom, revenue: 0, qte: 0, img: l.imageUrl ?? null };
       prodMap[l.produitId].revenue += l.prix * l.quantite;
       prodMap[l.produitId].qte += l.quantite;
     });
@@ -88,16 +87,19 @@ async function getData(tenantId: string) {
   const currCA = month._sum.montantTotal || 0;
   const evol   = prevCA > 0 ? Math.round(((currCA - prevCA) / prevCA) * 100) : null;
   const evolClients = newClientsPrev > 0 ? Math.round(((newClients - newClientsPrev) / newClientsPrev) * 100) : null;
-
-  // Spark 7j (CA)
   const spark7 = chart.slice(-7).map(c => c.montant);
+  // Objectif: battre le mois précédent
+  const goalPct = prevCA > 0 ? Math.min(Math.round((currCA / prevCA) * 100), 120) : (currCA > 0 ? 100 : 0);
 
   return {
     today: today._sum.montantTotal || 0,
     todayCount: today._count,
+    todayOrders,
     month: currCA,
     monthCount: month._count,
+    prevCA,
     evol,
+    goalPct,
     pending,
     visitors: visitors._sum.valeur || 0,
     totalClients,
@@ -109,31 +111,60 @@ async function getData(tenantId: string) {
     spark7,
     topProduits,
     statutsDist: statutsDist as { statut: string; _count: { id: number } }[],
-    topVilles:   topVilles   as { ville: string;  _count: { id: number } }[],
-    devise: tenant?.devise || "XOF",
-    slug: tenant?.slug || "",
+    topVilles:   topVilles   as { ville: string; _count: { id: number } }[],
+    devise:  tenant?.devise || "XOF",
+    slug:    tenant?.slug || "",
     semaine: weekRevenu._sum.montantTotal || 0,
   };
 }
 
-/* ── Sparkline SVG ─────────────────────────────────────────────────────── */
+/* ── Sparkline SVG lisse avec fill ─────────────────────────────────────── */
 function Spark({ data, color = "#F5A623" }: { data: number[]; color?: string }) {
   if (!data.length || data.every(v => v === 0)) return null;
   const max = Math.max(...data, 1);
-  const W = 64, H = 28;
-  const pts = data
-    .map((v, i) => `${(i / Math.max(data.length - 1, 1)) * W},${H - (v / max) * H}`)
-    .join(" ");
+  const W = 70, H = 34;
+  const pts = data.map((v, i) => ({
+    x: (i / Math.max(data.length - 1, 1)) * W,
+    y: H - (v / max) * H * 0.82,
+  }));
+
+  // Courbe de Bézier lisse
+  let pathD = `M ${pts[0].x.toFixed(2)},${pts[0].y.toFixed(2)}`;
+  for (let i = 1; i < pts.length; i++) {
+    const cp = (pts[i - 1].x + pts[i].x) / 2;
+    pathD += ` C ${cp.toFixed(2)},${pts[i-1].y.toFixed(2)} ${cp.toFixed(2)},${pts[i].y.toFixed(2)} ${pts[i].x.toFixed(2)},${pts[i].y.toFixed(2)}`;
+  }
+  const areaD = `${pathD} L ${W},${H} L 0,${H} Z`;
+  const gId = `spk${color.replace("#", "")}`;
+  const last = pts[pts.length - 1];
+
   return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ overflow: "visible" }}>
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.8"
-        strokeLinejoin="round" strokeLinecap="round" opacity={0.75} />
-      {/* Last dot */}
-      {data.length > 1 && (() => {
-        const last = data[data.length - 1];
-        const x = W, y = H - (last / max) * H;
-        return <circle cx={x} cy={y} r="2.5" fill={color} />;
-      })()}
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ overflow: "visible", display: "block" }}>
+      <defs>
+        <linearGradient id={gId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor={color} stopOpacity="0.22" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={areaD} fill={`url(#${gId})`} />
+      <path d={pathD} fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={last.x} cy={last.y} r="2.8" fill={color} stroke="white" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+/* ── Progress ring SVG ─────────────────────────────────────────────────── */
+function ProgressRing({ pct, size = 68, color = "#F5A623" }: { pct: number; size?: number; color?: string }) {
+  const stroke = 5.5, r = (size - stroke * 2) / 2;
+  const circ   = 2 * Math.PI * r;
+  const offset = circ - Math.min(Math.max(pct, 0), 100) / 100 * circ;
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#F5F5F7" strokeWidth={stroke} />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke}
+        strokeDasharray={circ} strokeDashoffset={offset}
+        strokeLinecap="round"
+        transform={`rotate(-90 ${size/2} ${size/2})`} />
     </svg>
   );
 }
@@ -152,21 +183,25 @@ export default async function DashboardPage() {
   const totalCmdsMonth = d.statutsDist.reduce((s, x) => s + x._count.id, 0);
   const maxVille       = d.topVilles[0]?._count.id ?? 1;
   const maxProd        = d.topProduits[0]?.revenue ?? 1;
+  const livrees        = d.statutsDist.find(s => s.statut === "livree")?._count.id ?? 0;
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bonne journée" : "Bonsoir";
 
   return (
     <div className="space-y-5">
 
       {/* ── Greeting + CTA ─────────────────────────────────────────── */}
-      <div className="flex items-center justify-between gap-4 pt-1">
+      <div className="flex items-start justify-between gap-4 pt-1 flex-wrap">
         <div>
           <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">
-            {new Date().getHours() < 12 ? "Bonjour" : new Date().getHours() < 18 ? "Bonne journée" : "Bonsoir"}, {prenom} 👋
+            {greeting}, {prenom} 👋
           </h1>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5 capitalize">
             {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {d.slug && (
             <a href={`/${d.slug}`} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-[12px] font-medium border border-[#E8E8E8] rounded-2xl px-3.5 py-2 bg-white text-[#666666] hover:text-[#111111] hover:border-[#CCCCCC] hover:shadow-sm transition-all">
@@ -178,6 +213,28 @@ export default async function DashboardPage() {
             <Plus size={13} /> Nouveau produit
           </a>
         </div>
+      </div>
+
+      {/* ── Pulse du jour ──────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-[#F0F0F0] bg-white">
+        <div className="flex items-center gap-1.5 text-[11.5px] text-[#555]">
+          <span className="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse flex-shrink-0" />
+          <span className="font-semibold text-[#111]">Aujourd'hui :</span>
+          <span className="font-bold text-[#F5A623]">{formatMontant(d.today, d.devise)}</span>
+        </div>
+        <span className="text-[#E8E8E8]">·</span>
+        <span className="text-[11.5px] text-[#AAAAAA]">{d.todayOrders} commande{d.todayOrders !== 1 ? "s" : ""}</span>
+        <span className="text-[#E8E8E8]">·</span>
+        <span className="text-[11.5px] text-[#AAAAAA]">{d.newClients} nouveau{d.newClients !== 1 ? "x" : ""} client{d.newClients !== 1 ? "s" : ""} ce mois</span>
+        {d.pending > 0 && (
+          <>
+            <span className="text-[#E8E8E8]">·</span>
+            <a href="/dashboard/commandes?statut=en_attente"
+              className="flex items-center gap-1 text-[11.5px] font-semibold text-[#D97706] hover:underline">
+              <Zap size={11} /> {d.pending} en attente
+            </a>
+          </>
+        )}
       </div>
 
       {/* ── KPI Grid ─────────────────────────────────────────────────── */}
@@ -196,26 +253,26 @@ export default async function DashboardPage() {
           value={formatMontant(d.semaine, d.devise)}
           sub={`${d.todayCount} commande${d.todayCount !== 1 ? "s" : ""} aujourd'hui`}
           Icon={ShoppingBag}
-          spark={d.spark7.slice(-3)}
+          spark={d.spark7.slice(-5)}
           sparkColor="#7C3AED"
         />
         <KpiCard
-          label="Clients total"
+          label="Clients"
           value={d.totalClients.toLocaleString("fr-FR")}
           sub={d.evolClients !== null
-            ? `+${d.newClients} nouveaux (${d.evolClients > 0 ? "+" : ""}${d.evolClients}%)`
+            ? `+${d.newClients} ce mois (${d.evolClients > 0 ? "+" : ""}${d.evolClients}%)`
             : `+${d.newClients} nouveaux ce mois`}
           trend={d.evolClients}
           Icon={Users}
-          spark={[d.totalClients - d.newClients * 3, d.totalClients - d.newClients * 2, d.totalClients - d.newClients, d.totalClients]}
+          spark={[d.totalClients - d.newClients * 4, d.totalClients - d.newClients * 3, d.totalClients - d.newClients * 2, d.totalClients - d.newClients, d.totalClients]}
           sparkColor="#0891B2"
         />
         <KpiCard
-          label="Taux de conversion"
+          label="Conversion"
           value={`${conversion}%`}
           sub={`Panier moy. ${formatMontant(panier, d.devise)}`}
           Icon={Eye}
-          spark={d.spark7.map((_, i) => parseFloat(conversion) * (0.7 + i * 0.05))}
+          spark={d.spark7.map((v, i) => v > 0 ? parseFloat(conversion) + i * 0.1 : 0)}
           sparkColor="#16A34A"
         />
       </div>
@@ -227,6 +284,33 @@ export default async function DashboardPage() {
         </div>
 
         <div className="flex flex-col gap-4">
+
+          {/* Objectif mensuel */}
+          <div className="ax-card p-5">
+            <p className="ax-label mb-3">Objectif mensuel</p>
+            <div className="flex items-center gap-4">
+              <div className="relative flex-shrink-0">
+                <ProgressRing pct={d.goalPct} color={d.goalPct >= 100 ? "#16A34A" : "#F5A623"} />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[13px] font-bold text-[#111111]">{Math.min(d.goalPct, 100)}%</span>
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-bold text-[#111111]">
+                  {d.goalPct >= 100 ? "🎉 Objectif atteint !" : "En progression"}
+                </p>
+                <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">
+                  {formatMontant(d.month, d.devise)}
+                </p>
+                {d.prevCA > 0 && (
+                  <p className="text-[11px] text-[#CCCCCC] mt-0.5">
+                    Objectif : {formatMontant(d.prevCA, d.devise)}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
           {d.pending > 0 && (
             <div className="ax-card p-4 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
@@ -234,12 +318,12 @@ export default async function DashboardPage() {
                   <ShoppingBag size={16} className="text-[#D97706]" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[13.5px] font-semibold text-[#111111]">{d.pending} commande{d.pending > 1 ? "s" : ""} en attente</p>
+                  <p className="text-[13px] font-semibold text-[#111111]">{d.pending} commande{d.pending > 1 ? "s" : ""} en attente</p>
                   <p className="text-[11.5px] text-[#AAAAAA]">À traiter en priorité</p>
                 </div>
               </div>
               <a href="/dashboard/commandes?statut=en_attente"
-                className="flex-shrink-0 text-[11.5px] font-semibold text-[#111111] border border-[#E8E8E8] rounded-2xl px-3.5 py-2 hover:bg-[#F5F5F5] hover:border-[#CCC] transition-all">
+                className="flex-shrink-0 text-[11.5px] font-semibold text-[#111111] border border-[#E8E8E8] rounded-2xl px-3 py-1.5 hover:bg-[#F5F5F5] transition-all whitespace-nowrap">
                 Traiter →
               </a>
             </div>
@@ -247,36 +331,34 @@ export default async function DashboardPage() {
 
           {d.lowStock.length > 0 && (
             <div className="ax-card p-4">
-              <div className="flex items-center gap-2.5 mb-3.5">
+              <div className="flex items-center gap-2.5 mb-3">
                 <div className="w-7 h-7 rounded-xl bg-[#FEF2F2] border border-[#FECACA]/60 flex items-center justify-center">
                   <AlertTriangle size={13} className="text-[#DC2626]" />
                 </div>
                 <p className="text-[13px] font-semibold text-[#111111]">Stock critique</p>
-                <span className="ml-auto text-[10.5px] font-bold bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] px-2.5 py-0.5 rounded-full">
-                  {d.lowStock.length} produit{d.lowStock.length > 1 ? "s" : ""}
+                <span className="ml-auto text-[10.5px] font-bold bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] px-2 py-0.5 rounded-full">
+                  {d.lowStock.length}
                 </span>
               </div>
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {d.lowStock.map(p => (
-                  <div key={p.id} className="flex items-center justify-between gap-3 py-1">
-                    <span className="text-[12.5px] text-[#444444] truncate font-medium">{p.nom}</span>
-                    <span className={`text-[11px] font-bold flex-shrink-0 px-2.5 py-0.5 rounded-full border ${
+                  <div key={p.id} className="flex items-center justify-between gap-3">
+                    <span className="text-[12.5px] text-[#444] truncate">{p.nom}</span>
+                    <span className={`text-[10.5px] font-bold px-2 py-0.5 rounded-full border ${
                       p.stock <= 2 ? "bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]" : "bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]"
-                    }`}>
-                      {p.stock} restant{p.stock > 1 ? "s" : ""}
-                    </span>
+                    }`}>{p.stock} restant{p.stock > 1 ? "s" : ""}</span>
                   </div>
                 ))}
               </div>
               <a href="/dashboard/produits?stock=critique"
-                className="flex items-center gap-1 text-[12px] text-[#666666] font-medium mt-4 hover:text-[#111111] transition-colors group">
+                className="flex items-center gap-1 text-[12px] text-[#666] mt-3 hover:text-[#111] transition-colors group">
                 Gérer les stocks <ArrowUpRight size={11} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </a>
             </div>
           )}
 
           <div className="ax-card p-4">
-            <p className="ax-label mb-3.5">Accès rapides</p>
+            <p className="ax-label mb-3">Accès rapides</p>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { href: "/dashboard/produits/nouveau", label: "Nouveau produit", Icon: Package,     color: "#7C3AED", bg: "#F5F3FF" },
@@ -285,12 +367,12 @@ export default async function DashboardPage() {
                 { href: "/dashboard/analytics",        label: "Analytics",       Icon: TrendingUp,   color: "#16A34A", bg: "#ECFDF5" },
               ].map(({ href, label, Icon, color, bg }) => (
                 <a key={href} href={href}
-                  className="flex flex-col items-center gap-2.5 p-3.5 rounded-2xl border border-[#EBEBEB] bg-white hover:border-[#CCC] hover:-translate-y-0.5 hover:shadow-md transition-all group">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+                  className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-[#EBEBEB] bg-white hover:border-[#CCC] hover:-translate-y-0.5 hover:shadow-md transition-all group">
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
                     style={{ background: bg, border: `1px solid ${color}20` }}>
-                    <Icon size={16} style={{ color }} strokeWidth={1.8} />
+                    <Icon size={14} style={{ color }} strokeWidth={1.8} />
                   </div>
-                  <span className="text-[11px] font-semibold text-[#666666] group-hover:text-[#111111] transition-colors text-center leading-tight">{label}</span>
+                  <span className="text-[11px] font-semibold text-[#666] group-hover:text-[#111] transition-colors text-center leading-tight">{label}</span>
                 </a>
               ))}
             </div>
@@ -298,7 +380,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Performance: Top Produits + Statuts + Villes ─────────────── */}
+      {/* ── Performance: Top Produits | Statuts | Villes ─────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         {/* Top Produits */}
@@ -310,15 +392,13 @@ export default async function DashboardPage() {
             </div>
             <a href="/dashboard/produits"
               className="text-[11.5px] font-semibold text-[#666] hover:text-[#111] transition-colors flex items-center gap-1">
-              Tous <ArrowUpRight size={11} />
+              Voir tout <ArrowUpRight size={11} />
             </a>
           </div>
 
           {d.topProduits.length === 0 ? (
             <div className="py-10 flex flex-col items-center gap-3 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-[#F5F5F7] flex items-center justify-center">
-                <Star size={20} className="text-[#CCCCCC]" />
-              </div>
+              <div className="w-12 h-12 rounded-2xl bg-[#F5F5F7] flex items-center justify-center text-[22px]">📦</div>
               <p className="text-[13px] text-[#AAAAAA]">Aucune vente ce mois</p>
             </div>
           ) : (
@@ -326,26 +406,36 @@ export default async function DashboardPage() {
               {d.topProduits.map((p, i) => {
                 const pct = Math.round((p.revenue / maxProd) * 100);
                 const rankColors = ["#F5A623", "#7C3AED", "#3B82F6", "#16A34A", "#6B7280"];
+                const color = rankColors[i] ?? "#AAAAAA";
                 return (
-                  <div key={p.nom} className="group">
-                    <div className="flex items-center gap-3 mb-1.5">
-                      <span className="text-[11px] font-bold w-5 text-center flex-shrink-0"
-                        style={{ color: rankColors[i] ?? "#AAAAAA" }}>
-                        {i + 1}
-                      </span>
+                  <div key={p.nom}>
+                    <div className="flex items-center gap-3 mb-2">
+                      {/* Image ou initiale */}
+                      {p.img ? (
+                        <img src={p.img} alt="" className="w-9 h-9 rounded-xl object-cover flex-shrink-0 border border-[#F0F0F0]" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-[13px] font-bold"
+                          style={{ background: `${color}15`, color, border: `1px solid ${color}25` }}>
+                          {i + 1}
+                        </div>
+                      )}
                       <span className="text-[13px] font-medium text-[#222] truncate flex-1">{p.nom}</span>
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        <span className="text-[11px] text-[#AAAAAA]">{p.qte} vente{p.qte > 1 ? "s" : ""}</span>
-                        <span className="text-[13px] font-bold text-[#111111] tabular-nums"
-                          style={{ fontVariantNumeric: "tabular-nums" }}>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-[13px] font-bold text-[#111111] tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>
                           {formatMontant(p.revenue, d.devise)}
-                        </span>
+                        </p>
+                        <p className="text-[10.5px] text-[#AAAAAA]">{p.qte} vente{p.qte > 1 ? "s" : ""}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 pl-8">
+                    <div className="flex items-center gap-2">
                       <div className="flex-1 h-1.5 bg-[#F5F5F7] rounded-full overflow-hidden">
-                        <div className="h-full rounded-full transition-all duration-700"
-                          style={{ width: `${pct}%`, background: i === 0 ? "linear-gradient(90deg,#F5A623,#FFD280)" : rankColors[i] ?? "#AAAAAA" }} />
+                        <div className="h-full rounded-full"
+                          style={{
+                            width: `${pct}%`,
+                            background: i === 0
+                              ? "linear-gradient(90deg, #F5A623, #FFD280)"
+                              : color,
+                          }} />
                       </div>
                       <span className="text-[10.5px] text-[#CCCCCC] w-8 text-right tabular-nums">{pct}%</span>
                     </div>
@@ -356,46 +446,41 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Statuts + Villes */}
+        {/* Statuts + Villes empilés */}
         <div className="flex flex-col gap-4">
 
           {/* Répartition statuts */}
           <div className="ax-card p-5 flex-1">
-            <div className="mb-4">
-              <h3 className="text-[14px] font-bold text-[#111111] tracking-tight">Statuts commandes</h3>
-              <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">Ce mois · {totalCmdsMonth} total</p>
-            </div>
+            <h3 className="text-[13px] font-semibold text-[#111111] mb-1">Statuts ce mois</h3>
+            <p className="text-[11.5px] text-[#AAAAAA] mb-4">{totalCmdsMonth} commandes</p>
 
             {totalCmdsMonth === 0 ? (
-              <div className="py-6 text-center text-[12px] text-[#AAAAAA]">Aucune commande ce mois</div>
+              <div className="py-6 text-center text-[12px] text-[#AAAAAA]">Aucune commande</div>
             ) : (
               <>
-                {/* Stacked bar */}
-                <div className="flex h-2 rounded-full overflow-hidden mb-4 gap-0.5">
+                {/* Barre empilée */}
+                <div className="flex h-2.5 rounded-full overflow-hidden gap-0.5 mb-4">
                   {Object.entries(STATUT_CFG).map(([key, cfg]) => {
-                    const entry = d.statutsDist.find(s => s.statut === key);
-                    const n = entry?._count.id ?? 0;
+                    const n = d.statutsDist.find(s => s.statut === key)?._count.id ?? 0;
                     if (!n) return null;
-                    const w = (n / totalCmdsMonth) * 100;
-                    return <div key={key} className="h-full rounded-full flex-shrink-0" style={{ width: `${w}%`, background: cfg.color }} />;
+                    return <div key={key} className="h-full rounded-full flex-shrink-0"
+                      style={{ width: `${(n / totalCmdsMonth) * 100}%`, background: cfg.color }} />;
                   })}
                 </div>
-
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {Object.entries(STATUT_CFG).map(([key, cfg]) => {
-                    const entry = d.statutsDist.find(s => s.statut === key);
-                    const n = entry?._count.id ?? 0;
+                    const n = d.statutsDist.find(s => s.statut === key)?._count.id ?? 0;
                     if (!n) return null;
                     const pct = Math.round((n / totalCmdsMonth) * 100);
                     return (
                       <div key={key} className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
                           <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: cfg.color }} />
-                          <span className="text-[12px] text-[#555] truncate">{cfg.label}</span>
+                          <span className="text-[11.5px] text-[#555] truncate">{cfg.label}</span>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className="text-[11px] text-[#AAAAAA]">{pct}%</span>
-                          <span className="text-[12px] font-bold text-[#111111] w-6 text-right tabular-nums">{n}</span>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <span className="text-[10.5px] text-[#CCCCCC]">{pct}%</span>
+                          <span className="text-[12px] font-bold text-[#111] w-6 text-right">{n}</span>
                         </div>
                       </div>
                     );
@@ -411,23 +496,19 @@ export default async function DashboardPage() {
               <div className="flex items-center gap-2 mb-4">
                 <MapPin size={13} className="text-[#AAAAAA]" />
                 <h3 className="text-[13px] font-semibold text-[#111111]">Top villes</h3>
-                <span className="ml-auto text-[10.5px] text-[#AAAAAA]">ce mois</span>
               </div>
               <div className="space-y-3">
                 {d.topVilles.map((v, i) => {
-                  const n   = v._count.id;
-                  const pct = Math.round((n / maxVille) * 100);
+                  const pct = Math.round((v._count.id / maxVille) * 100);
                   return (
                     <div key={v.ville}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[12.5px] font-medium text-[#333] truncate">{v.ville || "Inconnue"}</span>
-                        <span className="text-[12px] font-bold text-[#111111] tabular-nums">{n}</span>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[12px] font-medium text-[#333] truncate">{v.ville || "Inconnue"}</span>
+                        <span className="text-[12px] font-bold text-[#111] tabular-nums">{v._count.id}</span>
                       </div>
-                      <div className="h-1 bg-[#F5F5F7] rounded-full overflow-hidden">
-                        <div className="h-full rounded-full" style={{
-                          width: `${pct}%`,
-                          background: i === 0 ? "#F5A623" : "#E8E8E8",
-                        }} />
+                      <div className="h-1.5 bg-[#F5F5F7] rounded-full overflow-hidden">
+                        <div className="h-full rounded-full"
+                          style={{ width: `${pct}%`, background: i === 0 ? "#F5A623" : "#D0D0D8" }} />
                       </div>
                     </div>
                   );
@@ -438,57 +519,48 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Funnel de conversion ──────────────────────────────────────── */}
+      {/* ── Entonnoir de conversion ───────────────────────────────────── */}
       {d.visitors > 0 && (
         <div className="ax-card p-5">
           <div className="flex items-center justify-between mb-5">
             <div>
               <h3 className="text-[14px] font-bold text-[#111111] tracking-tight">Entonnoir de conversion</h3>
-              <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">Visiteurs → Commandes → Livrées ce mois</p>
+              <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">Ce mois · de la visite à la livraison</p>
             </div>
           </div>
-          <div className="flex items-stretch gap-0">
-            {(() => {
-              const livrees = d.statutsDist.find(s => s.statut === "livree")?._count.id ?? 0;
-              const steps = [
-                { label: "Visiteurs",  value: Math.round(d.visitors), color: "#7C3AED", bg: "#F5F3FF" },
-                { label: "Commandes",  value: d.monthCount,            color: "#F5A623", bg: "#FFF8EC" },
-                { label: "Livrées",    value: livrees,                  color: "#16A34A", bg: "#F0FDF4" },
-              ];
-              const max = steps[0].value || 1;
-              return steps.map((step, i) => {
-                const pct = max > 0 ? Math.round((step.value / max) * 100) : 0;
-                const convPrev = i > 0 && steps[i - 1].value > 0
-                  ? ((step.value / steps[i - 1].value) * 100).toFixed(1)
-                  : null;
-                return (
-                  <div key={step.label} className="flex-1 flex flex-col items-center gap-3 relative">
-                    {/* Connector arrow */}
-                    {i > 0 && (
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-10
-                        text-[11px] font-bold text-[#AAAAAA] bg-white border border-[#EBEBEB]
-                        rounded-full px-2 py-0.5">
-                        {convPrev}%
-                      </div>
-                    )}
-                    {/* Bar */}
-                    <div className="w-full flex flex-col items-center px-3 gap-2">
-                      <div className="w-full bg-[#F5F5F7] rounded-xl overflow-hidden h-3">
-                        <div className="h-full rounded-xl transition-all duration-700"
-                          style={{ width: `${pct}%`, background: step.color }} />
-                      </div>
-                      <div className="flex items-center justify-between w-full">
-                        <span className="text-[11px] text-[#AAAAAA]">{step.label}</span>
-                        <span className="text-[14px] font-bold text-[#111111] tabular-nums"
-                          style={{ fontVariantNumeric: "tabular-nums" }}>
-                          {step.value.toLocaleString("fr-FR")}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              });
-            })()}
+          <div className="grid grid-cols-3 gap-3 relative">
+            {/* Connecteurs */}
+            <div className="absolute top-[22px] left-[33%] right-[33%] flex items-center justify-center pointer-events-none">
+              <div className="flex-1 border-t-2 border-dashed border-[#EBEBEB]" />
+            </div>
+
+            {[
+              { label: "Visiteurs",  value: Math.round(d.visitors), color: "#7C3AED", bg: "#F5F3FF", icon: "👁️",  pct: 100 },
+              { label: "Commandes",  value: d.monthCount,            color: "#F5A623", bg: "#FFF8EC", icon: "🛍️", pct: d.visitors > 0 ? Math.round((d.monthCount / d.visitors) * 100) : 0 },
+              { label: "Livrées",    value: livrees,                  color: "#16A34A", bg: "#F0FDF4", icon: "✅", pct: d.monthCount > 0 ? Math.round((livrees / d.monthCount) * 100) : 0 },
+            ].map((step, i) => (
+              <div key={step.label} className="flex flex-col items-center text-center relative">
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-2 text-[18px]"
+                  style={{ background: step.bg, border: `1px solid ${step.color}20` }}>
+                  {step.icon}
+                </div>
+                <p className="text-[22px] font-bold text-[#111111] tabular-nums leading-none" style={{ fontVariantNumeric: "tabular-nums" }}>
+                  {step.value.toLocaleString("fr-FR")}
+                </p>
+                <p className="text-[11.5px] text-[#AAAAAA] mt-1">{step.label}</p>
+                {i > 0 && (
+                  <span className="absolute -left-5 top-3 text-[10.5px] font-bold px-1.5 py-0.5 rounded-full border"
+                    style={{ color: step.color, background: step.bg, borderColor: `${step.color}30` }}>
+                    {step.pct}%
+                  </span>
+                )}
+                {/* Mini bar */}
+                <div className="mt-3 w-full h-1.5 bg-[#F5F5F7] rounded-full overflow-hidden">
+                  <div className="h-full rounded-full"
+                    style={{ width: `${step.pct}%`, background: step.color }} />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -503,14 +575,9 @@ export default async function DashboardPage() {
 function KpiCard({
   label, value, sub, trend, Icon, accent, spark, sparkColor = "#F5A623",
 }: {
-  label: string;
-  value: string;
-  sub: string;
-  trend?: number | null;
-  Icon: any;
-  accent?: boolean;
-  spark?: number[];
-  sparkColor?: string;
+  label: string; value: string; sub: string;
+  trend?: number | null; Icon: any; accent?: boolean;
+  spark?: number[]; sparkColor?: string;
 }) {
   const up = trend !== null && trend !== undefined && trend > 0;
   const dn = trend !== null && trend !== undefined && trend < 0;
@@ -528,9 +595,9 @@ function KpiCard({
           <Icon size={14} className={accent ? "text-[#F5A623]" : "text-[#888]"} strokeWidth={1.8} />
         </div>
       </div>
-      <p className="text-[24px] font-bold text-[#111111] leading-none tabular-nums tracking-tight">{value}</p>
-      <div className="flex items-end justify-between mt-2">
-        <div className="flex items-center gap-1.5">
+      <p className="text-[22px] font-bold text-[#111111] leading-none tabular-nums tracking-tight mb-2">{value}</p>
+      <div className="flex items-end justify-between gap-2">
+        <div>
           {up && (
             <span className="flex items-center gap-0.5 text-[11px] font-semibold text-[#16A34A] bg-[#ECFDF5] border border-[#BBF7D0] px-2 py-0.5 rounded-full">
               <ArrowUpRight size={10} /> {sub}
@@ -541,10 +608,10 @@ function KpiCard({
               <ArrowDownRight size={10} /> {sub}
             </span>
           )}
-          {!up && !dn && <span className="text-[11.5px] text-[#AAAAAA]">{sub}</span>}
+          {!up && !dn && <span className="text-[11.5px] text-[#AAAAAA] leading-tight block">{sub}</span>}
         </div>
-        {spark && spark.length > 1 && (
-          <div className="flex-shrink-0 opacity-70 group-hover:opacity-100 transition-opacity">
+        {spark && spark.filter(v => v > 0).length > 1 && (
+          <div className="flex-shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
             <Spark data={spark} color={sparkColor} />
           </div>
         )}
