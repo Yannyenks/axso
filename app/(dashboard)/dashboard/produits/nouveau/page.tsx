@@ -228,7 +228,7 @@ export default function NouveauProduitPage() {
     }
   }
 
-  const inputClass = "w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50 placeholder:text-gray-400 transition-colors";
+  const inputClass = "w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 placeholder:text-[#CCCCCC] transition-all";
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -295,17 +295,17 @@ export default function NouveauProduitPage() {
         <div className="lg:col-span-2 space-y-5">
 
           {/* Infos générales */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 space-y-4">
+          <div className="ax-card p-6 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Package size={15} className="text-[#F5A623]" />
-              <h2 className="font-semibold text-gray-800 text-sm">Informations générales</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">Informations générales</h2>
             </div>
             <div>
-              <label className="text-gray-400 text-xs block mb-1.5">Nom du produit *</label>
+              <label className="ax-label block mb-1.5">Nom du produit *</label>
               <input value={form.nom} onChange={e => set("nom", e.target.value)} placeholder="Ex: Robe Wax Premium" maxLength={120} className={inputClass} />
             </div>
             <div>
-              <label className="text-gray-400 text-xs block mb-1.5">Slug URL</label>
+              <label className="ax-label block mb-1.5">Slug URL</label>
               <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
                 <span className="text-gray-400 text-xs">/produits/</span>
                 <input value={form.slug} onChange={e => set("slug", e.target.value)} className="bg-transparent text-sm text-gray-600 outline-none flex-1" />
@@ -327,28 +327,28 @@ export default function NouveauProduitPage() {
           </div>
 
           {/* Prix & Stock */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 space-y-4">
+          <div className="ax-card p-6 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <BarChart2 size={15} className="text-[#F5A623]" />
-              <h2 className="font-semibold text-gray-800 text-sm">Prix & Stock</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">Prix & Stock</h2>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-gray-400 text-xs block mb-1.5">Prix de vente *</label>
+                <label className="ax-label block mb-1.5">Prix de vente *</label>
                 <input type="number" value={form.prix} onChange={e => set("prix", e.target.value)} placeholder="0" min="0" className={inputClass} />
               </div>
               <div>
-                <label className="text-gray-400 text-xs block mb-1.5">Prix barré (promo)</label>
+                <label className="ax-label block mb-1.5">Prix barré (promo)</label>
                 <input type="number" value={form.prixCompare} onChange={e => set("prixCompare", e.target.value)} placeholder="0" min="0" className={inputClass} />
               </div>
               {form.type !== "digital" && (
                 <>
                   <div>
-                    <label className="text-gray-400 text-xs block mb-1.5">Stock initial</label>
+                    <label className="ax-label block mb-1.5">Stock initial</label>
                     <input type="number" value={form.stock} onChange={e => set("stock", e.target.value)} min="0" className={inputClass} />
                   </div>
                   <div>
-                    <label className="text-gray-400 text-xs block mb-1.5">SKU / Référence</label>
+                    <label className="ax-label block mb-1.5">SKU / Référence</label>
                     <input value={form.sku} onChange={e => set("sku", e.target.value)} placeholder="SKU-001" className={inputClass} />
                   </div>
                 </>
@@ -371,20 +371,20 @@ export default function NouveauProduitPage() {
             <div className="bg-white border border-emerald-200 rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-2 mb-1">
                 <Truck size={15} className="text-emerald-500" />
-                <h2 className="font-semibold text-gray-800 text-sm">Informations fournisseur</h2>
+                <h2 className="text-[13px] font-semibold text-[#111111]">Informations fournisseur</h2>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-gray-400 text-xs block mb-1.5">Prix fournisseur (coût)</label>
+                  <label className="ax-label block mb-1.5">Prix fournisseur (coût)</label>
                   <input type="number" value={form.prixFournisseur} onChange={e => set("prixFournisseur", e.target.value)} placeholder="0" min="0" className={inputClass} />
                 </div>
                 <div>
-                  <label className="text-gray-400 text-xs block mb-1.5">Nom du fournisseur</label>
+                  <label className="ax-label block mb-1.5">Nom du fournisseur</label>
                   <input value={form.nomFournisseur} onChange={e => set("nomFournisseur", e.target.value)} placeholder="AliExpress, CJ, ..." className={inputClass} />
                 </div>
               </div>
               <div>
-                <label className="text-gray-400 text-xs block mb-1.5">URL produit source</label>
+                <label className="ax-label block mb-1.5">URL produit source</label>
                 <div className="flex gap-2">
                   <input value={form.urlFournisseur} onChange={e => set("urlFournisseur", e.target.value)}
                     placeholder="https://aliexpress.com/item/..." className={`${inputClass} flex-1`} />
@@ -404,7 +404,7 @@ export default function NouveauProduitPage() {
             <div className="bg-white border border-purple-200 rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-2 mb-1">
                 <FileText size={15} className="text-purple-500" />
-                <h2 className="font-semibold text-gray-800 text-sm">Fichier digital *</h2>
+                <h2 className="text-[13px] font-semibold text-[#111111]">Fichier digital *</h2>
               </div>
 
               {!form.fichierUrl ? (
@@ -443,7 +443,7 @@ export default function NouveauProduitPage() {
               )}
 
               <div>
-                <label className="text-gray-400 text-xs block mb-1.5">Instructions de téléchargement (optionnel)</label>
+                <label className="ax-label block mb-1.5">Instructions de téléchargement (optionnel)</label>
                 <textarea value={form.instructionsTelechargement} onChange={e => set("instructionsTelechargement", e.target.value)}
                   rows={3} placeholder="Ex: Ouvrez le PDF avec Adobe Reader. Mot de passe: AXSO2024"
                   className={`${inputClass} resize-none`} />
@@ -452,10 +452,10 @@ export default function NouveauProduitPage() {
           )}
 
           {/* Médias : Images + Vidéos */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 space-y-5">
+          <div className="ax-card p-6 space-y-5">
             <div className="flex items-center gap-2 mb-1">
               <ImageIcon size={15} className="text-[#F5A623]" />
-              <h2 className="font-semibold text-gray-800 text-sm">Images & Vidéos</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">Images & Vidéos</h2>
             </div>
 
             {/* Images */}
@@ -534,17 +534,17 @@ export default function NouveauProduitPage() {
           </div>
 
           {/* SEO */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 space-y-4">
+          <div className="ax-card p-6 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Globe size={15} className="text-[#F5A623]" />
-              <h2 className="font-semibold text-gray-800 text-sm">SEO</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">SEO</h2>
             </div>
             <div>
-              <label className="text-gray-400 text-xs block mb-1.5">Titre méta</label>
+              <label className="ax-label block mb-1.5">Titre méta</label>
               <input value={form.metaTitle} onChange={e => set("metaTitle", e.target.value)} placeholder="Titre pour Google" className={inputClass} />
             </div>
             <div>
-              <label className="text-gray-400 text-xs block mb-1.5">Méta description</label>
+              <label className="ax-label block mb-1.5">Méta description</label>
               <textarea value={form.metaDesc} onChange={e => set("metaDesc", e.target.value)} rows={2} placeholder="Description Google..." className={`${inputClass} resize-none`} />
             </div>
           </div>
@@ -556,7 +556,7 @@ export default function NouveauProduitPage() {
           <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Tag size={14} className="text-[#F5A623]" />
-              <h2 className="font-semibold text-gray-800 text-sm">Catégorie & Tags</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">Catégorie & Tags</h2>
             </div>
             <select value={form.categorie} onChange={e => set("categorie", e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50">
@@ -583,7 +583,7 @@ export default function NouveauProduitPage() {
 
           {/* Options */}
           <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
-            <h2 className="font-semibold text-gray-800 text-sm mb-1">Options</h2>
+            <h2 className="text-[13px] font-semibold text-[#111111] mb-1">Options</h2>
             {[
               { label: "Produit actif", desc: "Visible sur la boutique", key: "actif" },
               { label: "Mis en avant", desc: "Affiché en page d'accueil", key: "featured" },
@@ -601,7 +601,7 @@ export default function NouveauProduitPage() {
             ))}
             {form.type === "physique" && (
               <div className="pt-2">
-                <label className="text-gray-400 text-xs block mb-1.5">Poids (kg)</label>
+                <label className="ax-label block mb-1.5">Poids (kg)</label>
                 <input type="number" value={form.poids} onChange={e => set("poids", e.target.value)} placeholder="0.5" min="0" step="0.01"
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50" />
               </div>

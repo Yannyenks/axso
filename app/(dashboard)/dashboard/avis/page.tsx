@@ -1,9 +1,37 @@
-// Dashboard Avis et évaluations
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { formatDate } from "@/lib/utils";
 import { Star, MessageSquare, CheckCircle2, Clock, ShieldCheck } from "lucide-react";
+
+const AVATAR_COLORS = [
+  ["#FFF8EC","#F5A623"],["#EFF6FF","#3B82F6"],["#F0FDF4","#16A34A"],
+  ["#FAF5FF","#7C3AED"],["#FFF1F2","#E11D48"],["#ECFEFF","#0891B2"],
+];
+
+function Avatar({ nom }: { nom: string }) {
+  const hash = nom.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const [bg, text] = AVATAR_COLORS[hash % AVATAR_COLORS.length];
+  const initiales = nom.trim().split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
+  return (
+    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[11px] font-bold flex-shrink-0"
+      style={{ background: bg, color: text, border: `1px solid ${text}20` }}>
+      {initiales}
+    </div>
+  );
+}
+
+function Stars({ note, size = 13 }: { note: number; size?: number }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1,2,3,4,5].map(i => (
+        <Star key={i} size={size}
+          fill={i <= note ? "#F5A623" : "transparent"}
+          stroke={i <= note ? "#F5A623" : "#E8E8E8"} />
+      ))}
+    </div>
+  );
+}
 
 export default async function AvisPage() {
   const session = await auth();
@@ -17,110 +45,72 @@ export default async function AvisPage() {
     where: { tenantId },
     include: {
       produit: { select: { nom: true } },
-      client: { select: { nom: true } },
+      client:  { select: { nom: true } },
     },
     orderBy: { createdAt: "desc" },
   });
 
-  const noteMoyenne = avis.length > 0 ? avis.reduce((s, a) => s + a.note, 0) / avis.length : 0;
-  const nonApprouves = avis.filter((a) => !a.approuve).length;
+  const noteMoyenne  = avis.length > 0 ? avis.reduce((s, a) => s + a.note, 0) / avis.length : 0;
+  const nonApprouves = avis.filter(a => !a.approuve).length;
+  const repartition  = [5,4,3,2,1].map(note => ({ note, count: avis.filter(a => a.note === note).length }));
 
-  const repartition = [5, 4, 3, 2, 1].map((note) => ({
-    note,
-    count: avis.filter((a) => a.note === note).length,
-  }));
-
-  // Initiales à partir du nom
-  const getInitiales = (nom: string) => {
-    const parts = nom.trim().split(" ");
-    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-    return nom.slice(0, 2).toUpperCase();
-  };
-
-  // Couleur d'avatar déterministe selon le nom
-  const avatarColors = [
-    { bg: "#F5A62320", text: "#F5A623" },
-    { bg: "#60a5fa20", text: "#3b82f6" },
-    { bg: "#10b98120", text: "#059669" },
-    { bg: "#a78bfa20", text: "#7c3aed" },
-    { bg: "#f4727220", text: "#ef4444" },
-    { bg: "#34d39920", text: "#10b981" },
-  ];
-  const getAvatarColor = (nom: string) => {
-    const idx = nom.charCodeAt(0) % avatarColors.length;
-    return avatarColors[idx];
-  };
+  const NOTE_COLORS: Record<number, string> = { 5:"#16A34A", 4:"#F5A623", 3:"#D97706", 2:"#EA580C", 1:"#DC2626" };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5"
+      style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+
       {/* ── Header ── */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-4 flex-wrap pt-1">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 font-poppins">Avis clients</h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <div className="flex items-center gap-2.5 mb-1">
+            <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Avis clients</h1>
+            <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
+              {avis.length}
+            </span>
+          </div>
+          <p className="text-[12.5px] text-[#AAAAAA]">
             {avis.length} avis au total · {nonApprouves} en attente de modération
           </p>
         </div>
         {nonApprouves > 0 && (
-          <div
-            className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl"
-            style={{ backgroundColor: "#f59e0b15", color: "#f59e0b", border: "1px solid #f59e0b30" }}
-          >
-            <Clock size={14} />
-            {nonApprouves} à modérer
-          </div>
+          <span className="flex items-center gap-1.5 text-[12px] font-semibold text-[#B45309] bg-[#FFFBEB] border border-[#FDE68A] px-3 py-1.5 rounded-2xl">
+            <Clock size={13} /> {nonApprouves} à modérer
+          </span>
         )}
       </div>
 
-      {/* ── Hero : note moyenne + répartition ── */}
+      {/* ── Stats : note + répartition ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Note moyenne */}
-        <div className="bg-white shadow-sm border border-gray-100 rounded-2xl p-8 flex flex-col items-center justify-center text-center hover:shadow-md hover:border-gray-200 transition-all duration-200">
-          <p className="text-gray-400 text-xs uppercase tracking-wider font-medium mb-3">
-            Note moyenne
-          </p>
-          <p className="text-6xl font-bold text-gray-900 font-poppins leading-none">
+        <div className="ax-card p-8 flex flex-col items-center justify-center text-center">
+          <span className="ax-label mb-3">Note moyenne</span>
+          <p className="text-[52px] font-black text-[#111111] leading-none tabular-nums">
             {noteMoyenne > 0 ? noteMoyenne.toFixed(1) : "—"}
           </p>
-          <div className="flex items-center gap-1 my-4">
-            {[1, 2, 3, 4, 5].map((i) => {
-              const filled = i <= Math.round(noteMoyenne);
-              const half = !filled && i - 0.5 <= noteMoyenne;
-              return (
-                <Star
-                  key={i}
-                  size={22}
-                  fill={filled ? "#F5A623" : "transparent"}
-                  stroke="#F5A623"
-                  className={half ? "opacity-60" : ""}
-                />
-              );
-            })}
+          <div className="my-3">
+            <Stars note={Math.round(noteMoyenne)} size={20} />
           </div>
-          <p className="text-gray-400 text-sm">
-            Basé sur{" "}
-            <span className="font-semibold text-gray-700">{avis.length}</span>{" "}
-            avis
+          <p className="text-[12px] text-[#AAAAAA]">
+            Basé sur <span className="font-semibold text-[#666]">{avis.length}</span> avis
           </p>
           {avis.length > 0 && (
-            <div className="mt-4 flex items-center gap-4 text-xs text-gray-400">
-              <div className="flex items-center gap-1">
-                <CheckCircle2 size={12} className="text-emerald-500" />
-                {avis.filter((a) => a.approuve).length} approuvés
+            <div className="mt-4 flex items-center gap-4 pt-4 border-t border-[#F5F5F5] w-full justify-center">
+              <div className="flex items-center gap-1 text-[11.5px] text-[#16A34A]">
+                <CheckCircle2 size={11} /> {avis.filter(a => a.approuve).length} approuvés
               </div>
-              <div className="flex items-center gap-1">
-                <Clock size={12} className="text-amber-400" />
-                {nonApprouves} en attente
+              <div className="flex items-center gap-1 text-[11.5px] text-[#D97706]">
+                <Clock size={11} /> {nonApprouves} en attente
               </div>
             </div>
           )}
         </div>
 
-        {/* Répartition étoiles */}
-        <div className="lg:col-span-2 bg-white shadow-sm border border-gray-100 rounded-2xl p-6 hover:shadow-md hover:border-gray-200 transition-all duration-200">
-          <h3 className="text-gray-900 font-semibold mb-5">Répartition des notes</h3>
+        {/* Répartition */}
+        <div className="lg:col-span-2 ax-card p-6">
+          <h3 className="text-[13px] font-semibold text-[#111111] mb-4">Répartition des notes</h3>
           {avis.length === 0 ? (
-            <div className="h-32 flex items-center justify-center text-gray-400 text-sm">
+            <div className="h-32 flex items-center justify-center text-[12px] text-[#AAAAAA]">
               Aucune donnée disponible
             </div>
           ) : (
@@ -129,34 +119,17 @@ export default async function AvisPage() {
                 const pct = avis.length > 0 ? (count / avis.length) * 100 : 0;
                 return (
                   <div key={note} className="flex items-center gap-3">
-                    {/* Label étoile */}
-                    <div className="flex items-center gap-1 w-14 flex-shrink-0">
-                      <span className="text-gray-700 text-sm font-semibold font-poppins">{note}</span>
-                      <Star size={12} fill="#F5A623" stroke="none" className="text-[#F5A623]" />
+                    <div className="flex items-center gap-1 w-12 flex-shrink-0">
+                      <span className="text-[13px] font-bold text-[#333]">{note}</span>
+                      <Star size={11} fill="#F5A623" stroke="none" />
                     </div>
-                    {/* Barre */}
-                    <div className="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                      <div
-                        className="h-2.5 rounded-full transition-all duration-500"
-                        style={{
-                          width: `${pct}%`,
-                          backgroundColor:
-                            note === 5
-                              ? "#10b981"
-                              : note === 4
-                              ? "#F5A623"
-                              : note === 3
-                              ? "#f59e0b"
-                              : note === 2
-                              ? "#f97316"
-                              : "#ef4444",
-                        }}
-                      />
+                    <div className="flex-1 bg-[#F5F5F7] rounded-full h-2 overflow-hidden">
+                      <div className="h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${pct}%`, background: NOTE_COLORS[note] }} />
                     </div>
-                    {/* Compteur */}
                     <div className="w-16 text-right flex-shrink-0">
-                      <span className="text-gray-700 text-sm font-bold font-poppins">{count}</span>
-                      <span className="text-gray-400 text-xs ml-1">({Math.round(pct)}%)</span>
+                      <span className="text-[13px] font-bold text-[#333]">{count}</span>
+                      <span className="text-[11px] text-[#CCCCCC] ml-1">({Math.round(pct)}%)</span>
                     </div>
                   </div>
                 );
@@ -168,160 +141,96 @@ export default async function AvisPage() {
 
       {/* ── Bannière modération ── */}
       {nonApprouves > 0 && (
-        <div
-          className="flex items-center gap-3 p-4 rounded-2xl text-sm"
-          style={{
-            backgroundColor: "#f59e0b10",
-            border: "1px solid #f59e0b30",
-            color: "#b45309",
-          }}
-        >
-          <Clock size={16} />
-          <span>
+        <div className="ax-card-flat flex items-center gap-3 p-4 border-[#FDE68A]/60"
+          style={{ background: "#FFFBEB" }}>
+          <Clock size={15} className="text-[#F5A623] flex-shrink-0" />
+          <p className="text-[12.5px] text-[#92400E]">
             <strong>{nonApprouves} avis</strong> en attente de modération — approuvez-les pour qu'ils soient visibles sur votre boutique.
-          </span>
+          </p>
         </div>
       )}
 
-      {/* ── Liste des avis ── */}
-      <div className="bg-white shadow-sm border border-gray-100 rounded-2xl overflow-hidden hover:shadow-md hover:border-gray-200 transition-all duration-200">
-        <div className="p-5 border-b border-gray-100 flex items-center gap-2">
-          <MessageSquare size={16} className="text-gray-400" />
-          <h2 className="text-gray-900 font-semibold">Tous les avis</h2>
+      {/* ── Liste ── */}
+      <div className="ax-card overflow-hidden">
+        <div className="px-5 py-4 border-b border-[#F3F3F3] flex items-center gap-2">
+          <MessageSquare size={15} className="text-[#AAAAAA]" />
+          <h2 className="text-[13px] font-semibold text-[#111111]">Tous les avis</h2>
           {avis.length > 0 && (
-            <span className="ml-auto text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-lg">
+            <span className="ml-auto text-[11px] font-bold text-[#888] bg-[#F5F5F7] border border-[#EBEBEB] px-2 py-0.5 rounded-full">
               {avis.length}
             </span>
           )}
         </div>
 
         {avis.length === 0 ? (
-          /* ── Empty state ── */
           <div className="py-16 flex flex-col items-center gap-4 text-center px-6">
-            <div
-              className="w-16 h-16 rounded-2xl flex items-center justify-center"
-              style={{ backgroundColor: "#F5A62315" }}
-            >
-              <Star size={28} style={{ color: "#F5A623" }} />
+            <div className="w-14 h-14 rounded-2xl bg-[#FFF8EC] flex items-center justify-center">
+              <Star size={24} className="text-[#F5A623]" fill="#F5A623" />
             </div>
             <div>
-              <p className="text-gray-700 font-semibold">Aucun avis client</p>
-              <p className="text-gray-400 text-sm mt-1">
-                Les avis de vos clients apparaîtront ici une fois qu'ils auront évalué leurs achats.
+              <p className="text-[14px] font-semibold text-[#111111]">Aucun avis client</p>
+              <p className="text-[12px] text-[#AAAAAA] mt-1">
+                Les avis apparaîtront ici dès que vos clients auront évalué leurs achats.
               </p>
             </div>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
-            {avis.map((a) => {
-              const initiales = getInitiales(a.client.nom);
-              const avatarColor = getAvatarColor(a.client.nom);
-              return (
-                <div
-                  key={a.id}
-                  className="p-5 hover:bg-gray-50 transition-colors duration-150"
-                >
-                  <div className="flex items-start gap-4">
-                    {/* Avatar initiales */}
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-sm"
-                      style={{ backgroundColor: avatarColor.bg, color: avatarColor.text }}
-                    >
-                      {initiales}
-                    </div>
-
-                    {/* Contenu */}
-                    <div className="flex-1 min-w-0">
-                      {/* Ligne nom + badges */}
-                      <div className="flex items-center flex-wrap gap-2 mb-2">
-                        <span className="text-gray-900 font-semibold text-sm">
-                          {a.client.nom}
+          <div className="divide-y divide-[#F9F9F9]">
+            {avis.map(a => (
+              <div key={a.id} className="p-5 hover:bg-[#FAFAFA] transition-colors">
+                <div className="flex items-start gap-3">
+                  <Avatar nom={a.client.nom} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center flex-wrap gap-2 mb-1.5">
+                      <span className="text-[13px] font-semibold text-[#222]">{a.client.nom}</span>
+                      {a.verifie && (
+                        <span className="flex items-center gap-1 text-[10.5px] font-semibold px-2 py-0.5 rounded-full bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]">
+                          <ShieldCheck size={9} /> Achat vérifié
                         </span>
-                        {a.verifie && (
-                          <span
-                            className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
-                            style={{ backgroundColor: "#10b98115", color: "#059669" }}
-                          >
-                            <ShieldCheck size={11} />
-                            Achat vérifié
-                          </span>
-                        )}
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                            a.approuve
-                              ? "bg-emerald-50 text-emerald-600"
-                              : "bg-amber-50 text-amber-600"
-                          }`}
-                        >
-                          {a.approuve ? "Approuvé" : "En attente"}
-                        </span>
-                      </div>
-
-                      {/* Étoiles */}
-                      <div className="flex items-center gap-0.5 mb-2">
-                        {[1, 2, 3, 4, 5].map((i) => (
-                          <Star
-                            key={i}
-                            size={13}
-                            fill={i <= a.note ? "#F5A623" : "transparent"}
-                            stroke={i <= a.note ? "#F5A623" : "#d1d5db"}
-                          />
-                        ))}
-                        <span className="text-gray-400 text-xs ml-1">{a.note}/5</span>
-                      </div>
-
-                      {/* Titre */}
-                      {a.titre && (
-                        <p className="text-gray-800 text-sm font-medium mb-1">{a.titre}</p>
                       )}
-
-                      {/* Commentaire */}
-                      {a.commentaire && (
-                        <p className="text-gray-500 text-sm leading-relaxed">{a.commentaire}</p>
-                      )}
-
-                      {/* Meta */}
-                      <p className="text-gray-400 text-xs mt-2">
-                        {a.produit?.nom && (
-                          <>
-                            <span className="text-gray-500">{a.produit.nom}</span>
-                            {" · "}
-                          </>
-                        )}
-                        {formatDate(a.createdAt)}
-                      </p>
+                      <span className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-full border ${
+                        a.approuve
+                          ? "bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0]"
+                          : "bg-[#FFFBEB] text-[#B45309] border-[#FDE68A]"
+                      }`}>
+                        {a.approuve ? "Approuvé" : "En attente"}
+                      </span>
                     </div>
-
-                    {/* Action modération */}
-                    {!a.approuve && (
-                      <div className="flex-shrink-0">
-                        <form
-                          action={async () => {
-                            "use server";
-                            await prisma.avis.update({
-                              where: { id: a.id },
-                              data: { approuve: true },
-                            });
-                          }}
-                        >
-                          <button
-                            type="submit"
-                            className="text-xs font-medium border px-3 py-1.5 rounded-lg transition-colors"
-                            style={{
-                              color: "#059669",
-                              borderColor: "#10b98130",
-                              backgroundColor: "#10b98108",
-                            }}
-                          >
-                            Approuver
-                          </button>
-                        </form>
-                      </div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Stars note={a.note} />
+                      <span className="text-[11px] text-[#AAAAAA]">{a.note}/5</span>
+                    </div>
+                    {a.titre && (
+                      <p className="text-[13px] font-semibold text-[#333] mb-1">{a.titre}</p>
                     )}
+                    {a.commentaire && (
+                      <p className="text-[12.5px] text-[#666666] leading-relaxed">{a.commentaire}</p>
+                    )}
+                    <p className="text-[11px] text-[#CCCCCC] mt-2">
+                      {a.produit?.nom && (
+                        <><span className="text-[#AAAAAA]">{a.produit.nom}</span> · </>
+                      )}
+                      {formatDate(a.createdAt)}
+                    </p>
                   </div>
+                  {!a.approuve && (
+                    <div className="flex-shrink-0">
+                      <form
+                        action={async () => {
+                          "use server";
+                          await prisma.avis.update({ where: { id: a.id }, data: { approuve: true } });
+                        }}
+                      >
+                        <button type="submit"
+                          className="text-[11.5px] font-semibold border px-3 py-1.5 rounded-2xl transition-all hover:scale-[1.01] bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0] hover:bg-[#ECFDF5]">
+                          Approuver
+                        </button>
+                      </form>
+                    </div>
+                  )}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         )}
       </div>

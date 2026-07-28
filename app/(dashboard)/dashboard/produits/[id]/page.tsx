@@ -224,7 +224,7 @@ export default function EditProduitPage() {
     else { toast.error("Erreur lors de la suppression"); setDeleting(false); }
   }
 
-  const inputClass = "w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50 placeholder:text-gray-400 transition-colors";
+  const inputClass = "w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 placeholder:text-[#CCCCCC] transition-all";
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-64">
@@ -239,32 +239,36 @@ export default function EditProduitPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <Link href="/dashboard/produits"
-            className="w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:border-[#F5A623]/30 transition-all">
+            className="w-9 h-9 rounded-xl bg-white border border-[#E8E8E8] flex items-center justify-center text-[#888] hover:text-[#111] hover:border-[#CCC] transition-all">
             <ArrowLeft size={16} />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 font-poppins line-clamp-1">{form.nom || "Éditer le produit"}</h1>
-            <div className="flex items-center gap-3 text-xs text-gray-400 mt-0.5">
-              <span>{stats.ventes} ventes</span>
-              <span>·</span>
-              <span>{stats.vues} vues</span>
-              <span>·</span>
-              <span>{stats.avis} avis</span>
+            <h1 className="text-[18px] font-bold text-[#111111] tracking-tight line-clamp-1">{form.nom || "Éditer le produit"}</h1>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[11px] text-[#AAAAAA]">{stats.ventes} ventes</span>
+              <span className="text-[#DDDDDD]">·</span>
+              <span className="text-[11px] text-[#AAAAAA]">{stats.vues} vues</span>
+              <span className="text-[#DDDDDD]">·</span>
+              <span className="text-[11px] text-[#AAAAAA]">{stats.avis} avis</span>
             </div>
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
           <button onClick={supprimer} disabled={deleting}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm border border-red-200 text-red-500 hover:bg-red-50 transition-all disabled:opacity-50">
-            {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />} Supprimer
+            className="flex items-center gap-1.5 text-[12px] font-semibold px-3.5 py-2 rounded-2xl border border-[#FECACA] text-[#DC2626] hover:bg-[#FEF2F2] transition-all disabled:opacity-50">
+            {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />} Supprimer
           </button>
           <button onClick={() => set("actif", !form.actif)}
-            className={`px-4 py-2 rounded-xl text-sm border transition-all ${form.actif ? "bg-green-50 border-green-200 text-green-600" : "bg-white border-gray-200 text-gray-500"}`}>
+            className="text-[12px] font-semibold px-3.5 py-2 rounded-2xl border transition-all"
+            style={form.actif
+              ? { background: "#F0FDF4", borderColor: "#BBF7D0", color: "#16A34A" }
+              : { background: "#F9F9F9", borderColor: "#E8E8E8", color: "#888888" }}>
             {form.actif ? "✓ Actif" : "Brouillon"}
           </button>
           <button onClick={sauvegarder} disabled={saving}
-            className="flex items-center gap-2 bg-[#F5A623] text-white font-semibold px-5 py-2 rounded-xl text-sm hover:bg-[#d4820a] transition-all disabled:opacity-50 shadow-lg shadow-[#F5A623]/25">
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Enregistrer
+            className="flex items-center gap-1.5 text-[12px] font-semibold px-4 py-2 rounded-2xl text-white transition-all disabled:opacity-50"
+            style={{ background: "linear-gradient(135deg, #F5A623, #D4911A)", boxShadow: "0 4px 12px rgba(245,166,35,0.25)" }}>
+            {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />} Enregistrer
           </button>
         </div>
       </div>
@@ -305,17 +309,17 @@ export default function EditProduitPage() {
         <div className="lg:col-span-2 space-y-5">
 
           {/* Infos générales */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 space-y-4">
+          <div className="ax-card p-6 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Package size={15} className="text-[#F5A623]" />
-              <h2 className="font-semibold text-gray-800 text-sm">Informations générales</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">Informations générales</h2>
             </div>
             <div>
-              <label className="text-gray-400 text-xs block mb-1.5">Nom du produit *</label>
+              <label className="ax-label block mb-1.5">Nom du produit *</label>
               <input value={form.nom} onChange={e => set("nom", e.target.value)} maxLength={120} className={inputClass} />
             </div>
             <div>
-              <label className="text-gray-400 text-xs block mb-1.5">Slug URL</label>
+              <label className="ax-label block mb-1.5">Slug URL</label>
               <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
                 <span className="text-gray-400 text-xs">/produits/</span>
                 <input value={form.slug} onChange={e => set("slug", e.target.value)} className="bg-transparent text-sm text-gray-600 outline-none flex-1" />
@@ -335,28 +339,28 @@ export default function EditProduitPage() {
           </div>
 
           {/* Prix & Stock */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 space-y-4">
+          <div className="ax-card p-6 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <BarChart2 size={15} className="text-[#F5A623]" />
-              <h2 className="font-semibold text-gray-800 text-sm">Prix & Stock</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">Prix & Stock</h2>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-gray-400 text-xs block mb-1.5">Prix de vente *</label>
+                <label className="ax-label block mb-1.5">Prix de vente *</label>
                 <input type="number" value={form.prix} onChange={e => set("prix", e.target.value)} min="0" className={inputClass} />
               </div>
               <div>
-                <label className="text-gray-400 text-xs block mb-1.5">Prix barré (promo)</label>
+                <label className="ax-label block mb-1.5">Prix barré (promo)</label>
                 <input type="number" value={form.prixCompare} onChange={e => set("prixCompare", e.target.value)} min="0" className={inputClass} />
               </div>
               {form.type !== "digital" && (
                 <>
                   <div>
-                    <label className="text-gray-400 text-xs block mb-1.5">Stock</label>
+                    <label className="ax-label block mb-1.5">Stock</label>
                     <input type="number" value={form.stock} onChange={e => set("stock", e.target.value)} min="0" className={inputClass} />
                   </div>
                   <div>
-                    <label className="text-gray-400 text-xs block mb-1.5">SKU / Référence</label>
+                    <label className="ax-label block mb-1.5">SKU / Référence</label>
                     <input value={form.sku} onChange={e => set("sku", e.target.value)} placeholder="SKU-001" className={inputClass} />
                   </div>
                 </>
@@ -379,20 +383,20 @@ export default function EditProduitPage() {
             <div className="bg-white border border-emerald-200 rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-2 mb-1">
                 <Truck size={15} className="text-emerald-500" />
-                <h2 className="font-semibold text-gray-800 text-sm">Informations fournisseur</h2>
+                <h2 className="text-[13px] font-semibold text-[#111111]">Informations fournisseur</h2>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-gray-400 text-xs block mb-1.5">Prix fournisseur (coût)</label>
+                  <label className="ax-label block mb-1.5">Prix fournisseur (coût)</label>
                   <input type="number" value={form.prixFournisseur} onChange={e => set("prixFournisseur", e.target.value)} placeholder="0" min="0" className={inputClass} />
                 </div>
                 <div>
-                  <label className="text-gray-400 text-xs block mb-1.5">Nom du fournisseur</label>
+                  <label className="ax-label block mb-1.5">Nom du fournisseur</label>
                   <input value={form.nomFournisseur} onChange={e => set("nomFournisseur", e.target.value)} placeholder="AliExpress, CJ, ..." className={inputClass} />
                 </div>
               </div>
               <div>
-                <label className="text-gray-400 text-xs block mb-1.5">URL produit source</label>
+                <label className="ax-label block mb-1.5">URL produit source</label>
                 <div className="flex gap-2">
                   <input value={form.urlFournisseur} onChange={e => set("urlFournisseur", e.target.value)}
                     placeholder="https://aliexpress.com/item/..." className={`${inputClass} flex-1`} />
@@ -412,7 +416,7 @@ export default function EditProduitPage() {
             <div className="bg-white border border-purple-200 rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-2 mb-1">
                 <FileText size={15} className="text-purple-500" />
-                <h2 className="font-semibold text-gray-800 text-sm">Fichier digital</h2>
+                <h2 className="text-[13px] font-semibold text-[#111111]">Fichier digital</h2>
               </div>
               {!form.fichierUrl ? (
                 <div
@@ -448,7 +452,7 @@ export default function EditProduitPage() {
                 </div>
               )}
               <div>
-                <label className="text-gray-400 text-xs block mb-1.5">Instructions de téléchargement (optionnel)</label>
+                <label className="ax-label block mb-1.5">Instructions de téléchargement (optionnel)</label>
                 <textarea value={form.instructionsTelechargement} onChange={e => set("instructionsTelechargement", e.target.value)}
                   rows={3} placeholder="Ex: Ouvrez le PDF avec Adobe Reader." className={`${inputClass} resize-none`} />
               </div>
@@ -456,10 +460,10 @@ export default function EditProduitPage() {
           )}
 
           {/* Médias */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 space-y-5">
+          <div className="ax-card p-6 space-y-5">
             <div className="flex items-center gap-2 mb-1">
               <ImageIcon size={15} className="text-[#F5A623]" />
-              <h2 className="font-semibold text-gray-800 text-sm">Images & Vidéos</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">Images & Vidéos</h2>
             </div>
             {/* Images */}
             <div className="space-y-3">
@@ -536,17 +540,17 @@ export default function EditProduitPage() {
           </div>
 
           {/* SEO */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 space-y-4">
+          <div className="ax-card p-6 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Globe size={15} className="text-[#F5A623]" />
-              <h2 className="font-semibold text-gray-800 text-sm">SEO</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">SEO</h2>
             </div>
             <div>
-              <label className="text-gray-400 text-xs block mb-1.5">Titre méta</label>
+              <label className="ax-label block mb-1.5">Titre méta</label>
               <input value={form.metaTitle} onChange={e => set("metaTitle", e.target.value)} placeholder="Titre pour Google" className={inputClass} />
             </div>
             <div>
-              <label className="text-gray-400 text-xs block mb-1.5">Méta description</label>
+              <label className="ax-label block mb-1.5">Méta description</label>
               <textarea value={form.metaDesc} onChange={e => set("metaDesc", e.target.value)} rows={2} placeholder="Description Google..." className={`${inputClass} resize-none`} />
             </div>
           </div>
@@ -557,7 +561,7 @@ export default function EditProduitPage() {
 
           {/* Stats */}
           <div className="bg-white border border-gray-100 rounded-2xl p-5">
-            <h2 className="font-semibold text-gray-800 text-sm mb-3">Statistiques</h2>
+            <h2 className="text-[13px] font-semibold text-[#111111] mb-3">Statistiques</h2>
             <div className="space-y-3">
               {[
                 { label: "Ventes totales", value: stats.ventes, color: "text-[#F5A623]" },
@@ -577,7 +581,7 @@ export default function EditProduitPage() {
           <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Tag size={14} className="text-[#F5A623]" />
-              <h2 className="font-semibold text-gray-800 text-sm">Catégorie & Tags</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">Catégorie & Tags</h2>
             </div>
             <select value={form.categorie} onChange={e => set("categorie", e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50">
@@ -605,7 +609,7 @@ export default function EditProduitPage() {
 
           {/* Options */}
           <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
-            <h2 className="font-semibold text-gray-800 text-sm mb-1">Options</h2>
+            <h2 className="text-[13px] font-semibold text-[#111111] mb-1">Options</h2>
             {[
               { label: "Produit actif", desc: "Visible sur la boutique", key: "actif" },
               { label: "Mis en avant", desc: "Affiché en page d'accueil", key: "featured" },
@@ -623,7 +627,7 @@ export default function EditProduitPage() {
             ))}
             {form.type === "physique" && (
               <div className="pt-2">
-                <label className="text-gray-400 text-xs block mb-1.5">Poids (kg)</label>
+                <label className="ax-label block mb-1.5">Poids (kg)</label>
                 <input type="number" value={form.poids} onChange={e => set("poids", e.target.value)} placeholder="0.5" min="0" step="0.01"
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50" />
               </div>
