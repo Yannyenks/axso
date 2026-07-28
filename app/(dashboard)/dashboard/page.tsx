@@ -77,25 +77,25 @@ export default async function DashboardPage() {
     <div className="space-y-5">
 
       {/* ── Top bar: greeting + CTA ────────────────────────────────── */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 pt-1">
         <div>
-          <h1 className="text-[17px] font-bold text-[#111111]">
-            {new Date().getHours() < 12 ? "Bonjour" : new Date().getHours() < 18 ? "Bonne journée" : "Bonsoir"}, {prenom}
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">
+            {new Date().getHours() < 12 ? "Bonjour" : new Date().getHours() < 18 ? "Bonne journée" : "Bonsoir"}, {prenom} 👋
           </h1>
-          <p className="text-[12px] text-[#AAAAAA] mt-0.5">
+          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5 capitalize">
             {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {d.slug && (
             <a href={`/${d.slug}`} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-[12px] font-medium border border-[#E8E8E8] rounded-xl px-3 py-2 bg-white text-[#666666] hover:text-[#111111] hover:border-[#CCCCCC] transition-all">
+              className="flex items-center gap-1.5 text-[12px] font-medium border border-[#E8E8E8] rounded-2xl px-3.5 py-2 bg-white text-[#666666] hover:text-[#111111] hover:border-[#CCCCCC] hover:shadow-sm transition-all">
               <Globe size={13} /> Boutique
               <ArrowUpRight size={11} />
             </a>
           )}
           <a href="/dashboard/produits/nouveau"
-            className="flex items-center gap-1.5 text-[12px] font-semibold bg-[#111111] text-white rounded-xl px-3 py-2 hover:bg-[#333333] transition-all">
+            className="flex items-center gap-1.5 text-[12px] font-semibold bg-[#111111] text-white rounded-2xl px-4 py-2 hover:bg-[#2a2a2a] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm">
             <Plus size={13} /> Nouveau produit
           </a>
         </div>
@@ -109,6 +109,7 @@ export default async function DashboardPage() {
           sub={d.evol !== null ? `${d.evol > 0 ? "+" : ""}${d.evol}% vs mois dernier` : `${d.monthCount} commandes`}
           trend={d.evol}
           Icon={TrendingUp}
+          accent
         />
         <KpiCard
           label="Aujourd'hui"
@@ -140,19 +141,19 @@ export default async function DashboardPage() {
 
           {/* Pending orders */}
           {d.pending > 0 && (
-            <div className="ax-card p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#FFFBEB] border border-[#FDE68A] flex items-center justify-center">
-                  <ShoppingBag size={15} className="text-[#D97706]" />
+            <div className="ax-card p-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-[#FFFBEB] border border-[#FDE68A]/60 flex items-center justify-center flex-shrink-0">
+                  <ShoppingBag size={16} className="text-[#D97706]" />
                 </div>
-                <div>
-                  <p className="text-[13px] font-semibold text-[#111111]">{d.pending} en attente</p>
-                  <p className="text-[11px] text-[#AAAAAA]">Commandes à traiter</p>
+                <div className="min-w-0">
+                  <p className="text-[13.5px] font-semibold text-[#111111]">{d.pending} commande{d.pending > 1 ? "s" : ""} en attente</p>
+                  <p className="text-[11.5px] text-[#AAAAAA]">À traiter en priorité</p>
                 </div>
               </div>
               <a href="/dashboard/commandes?statut=en_attente"
-                className="text-[11px] font-semibold text-[#111111] border border-[#E8E8E8] rounded-xl px-3 py-1.5 hover:bg-[#F5F5F5] transition-all">
-                Voir
+                className="flex-shrink-0 text-[11.5px] font-semibold text-[#111111] border border-[#E8E8E8] rounded-2xl px-3.5 py-2 hover:bg-[#F5F5F5] hover:border-[#CCC] transition-all">
+                Traiter →
               </a>
             </div>
           )}
@@ -160,19 +161,23 @@ export default async function DashboardPage() {
           {/* Low stock */}
           {d.lowStock.length > 0 && (
             <div className="ax-card p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle size={14} className="text-[#DC2626]" />
-                <p className="text-[12px] font-semibold text-[#111111]">Stock critique</p>
-                <span className="ml-auto text-[10px] font-bold bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] px-2 py-0.5 rounded-full">
-                  {d.lowStock.length}
+              <div className="flex items-center gap-2.5 mb-3.5">
+                <div className="w-7 h-7 rounded-xl bg-[#FEF2F2] border border-[#FECACA]/60 flex items-center justify-center">
+                  <AlertTriangle size={13} className="text-[#DC2626]" />
+                </div>
+                <p className="text-[13px] font-semibold text-[#111111]">Stock critique</p>
+                <span className="ml-auto text-[10.5px] font-bold bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] px-2.5 py-0.5 rounded-full">
+                  {d.lowStock.length} produit{d.lowStock.length > 1 ? "s" : ""}
                 </span>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {d.lowStock.map(p => (
-                  <div key={p.id} className="flex items-center justify-between gap-3">
-                    <span className="text-[12px] text-[#444444] truncate">{p.nom}</span>
-                    <span className={`text-[11px] font-bold flex-shrink-0 px-2 py-0.5 rounded-full border ${
-                      p.stock <= 2 ? "bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]" : "bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]"
+                  <div key={p.id} className="flex items-center justify-between gap-3 py-1">
+                    <span className="text-[12.5px] text-[#444444] truncate font-medium">{p.nom}</span>
+                    <span className={`text-[11px] font-bold flex-shrink-0 px-2.5 py-0.5 rounded-full border ${
+                      p.stock <= 2
+                        ? "bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]"
+                        : "bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]"
                     }`}>
                       {p.stock} restant{p.stock > 1 ? "s" : ""}
                     </span>
@@ -180,26 +185,29 @@ export default async function DashboardPage() {
                 ))}
               </div>
               <a href="/dashboard/produits?stock=critique"
-                className="flex items-center gap-1 text-[11px] text-[#666666] font-medium mt-3 hover:text-[#111111] transition-colors">
-                Gérer les stocks <ArrowUpRight size={10} />
+                className="flex items-center gap-1 text-[12px] text-[#666666] font-medium mt-4 hover:text-[#111111] transition-colors group">
+                Gérer les stocks <ArrowUpRight size={11} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </a>
             </div>
           )}
 
           {/* Quick actions */}
           <div className="ax-card p-4">
-            <p className="ax-label mb-3">Accès rapides</p>
+            <p className="ax-label mb-3.5">Accès rapides</p>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { href: "/dashboard/produits/nouveau", label: "Nouveau produit",   Icon: Package },
-                { href: "/dashboard/commandes",        label: "Commandes",          Icon: ShoppingBag },
-                { href: "/dashboard/clients",          label: "Clients",            Icon: Users },
-                { href: "/dashboard/analytics",        label: "Analytics",          Icon: TrendingUp },
-              ].map(({ href, label, Icon }) => (
+                { href: "/dashboard/produits/nouveau", label: "Nouveau produit", Icon: Package,      color: "#7C3AED", bg: "#F5F3FF" },
+                { href: "/dashboard/commandes",        label: "Commandes",       Icon: ShoppingBag,  color: "#D97706", bg: "#FFFBEB" },
+                { href: "/dashboard/clients",          label: "Clients",         Icon: Users,         color: "#0891B2", bg: "#ECFEFF" },
+                { href: "/dashboard/analytics",        label: "Analytics",       Icon: TrendingUp,    color: "#16A34A", bg: "#ECFDF5" },
+              ].map(({ href, label, Icon, color, bg }) => (
                 <a key={href} href={href}
-                  className="flex flex-col items-center gap-2 p-3 rounded-xl bg-[#F9F9F9] border border-[#EBEBEB] hover:border-[#CCCCCC] hover:bg-[#F5F5F5] transition-all group">
-                  <Icon size={16} className="text-[#666666] group-hover:text-[#111111] transition-colors" strokeWidth={1.8} />
-                  <span className="text-[10.5px] font-medium text-[#666666] group-hover:text-[#111111] transition-colors text-center leading-tight">{label}</span>
+                  className="flex flex-col items-center gap-2.5 p-3.5 rounded-2xl border border-[#EBEBEB] bg-white hover:border-[#CCC] hover:-translate-y-0.5 hover:shadow-md transition-all group">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
+                    style={{ background: bg, border: `1px solid ${color}20` }}>
+                    <Icon size={16} style={{ color }} strokeWidth={1.8} />
+                  </div>
+                  <span className="text-[11px] font-semibold text-[#666666] group-hover:text-[#111111] transition-colors text-center leading-tight">{label}</span>
                 </a>
               ))}
             </div>
@@ -215,29 +223,47 @@ export default async function DashboardPage() {
 
 /* ── KPI Card ─────────────────────────────────────────────────────────────── */
 function KpiCard({
-  label, value, sub, trend, Icon,
+  label, value, sub, trend, Icon, accent,
 }: {
   label: string;
   value: string;
   sub: string;
   trend?: number | null;
   Icon: any;
+  accent?: boolean;
 }) {
   const up = trend !== null && trend !== undefined && trend > 0;
   const dn = trend !== null && trend !== undefined && trend < 0;
   return (
-    <div className="ax-card p-4">
-      <div className="flex items-start justify-between gap-2 mb-3">
+    <div className={`ax-card p-5 relative overflow-hidden group cursor-default ${accent ? "border-[#F5A623]/20" : ""}`}>
+      {/* Accent top bar on first card */}
+      {accent && (
+        <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[20px]"
+          style={{ background: "linear-gradient(90deg, #F5A623, #FFD280, #F5A623)" }} />
+      )}
+      <div className="flex items-start justify-between gap-2 mb-4">
         <span className="ax-label">{label}</span>
-        <div className="w-7 h-7 rounded-lg bg-[#F5F5F5] flex items-center justify-center flex-shrink-0">
-          <Icon size={13} className="text-[#888888]" strokeWidth={1.8} />
+        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all group-hover:scale-110 ${
+          accent ? "bg-[#FFF8EC] border border-[#F5A623]/20" : "bg-[#F5F5F7] border border-[#EBEBEB]"
+        }`}>
+          <Icon size={14} className={accent ? "text-[#F5A623]" : "text-[#888]"} strokeWidth={1.8} />
         </div>
       </div>
-      <p className="text-[22px] font-bold text-[#111111] leading-none font-variant-numeric tabular-nums">{value}</p>
-      <div className="flex items-center gap-1 mt-1.5">
-        {up && <ArrowUpRight size={11} className="text-[#16A34A]" />}
-        {dn && <ArrowDownRight size={11} className="text-[#DC2626]" />}
-        <span className={`text-[11px] ${up ? "text-[#16A34A]" : dn ? "text-[#DC2626]" : "text-[#AAAAAA]"}`}>{sub}</span>
+      <p className="text-[24px] font-bold text-[#111111] leading-none tabular-nums tracking-tight">{value}</p>
+      <div className="flex items-center gap-1.5 mt-2">
+        {up && (
+          <span className="flex items-center gap-0.5 text-[11px] font-semibold text-[#16A34A] bg-[#ECFDF5] border border-[#BBF7D0] px-2 py-0.5 rounded-full">
+            <ArrowUpRight size={10} /> {sub}
+          </span>
+        )}
+        {dn && (
+          <span className="flex items-center gap-0.5 text-[11px] font-semibold text-[#DC2626] bg-[#FEF2F2] border border-[#FECACA] px-2 py-0.5 rounded-full">
+            <ArrowDownRight size={10} /> {sub}
+          </span>
+        )}
+        {!up && !dn && (
+          <span className="text-[11.5px] text-[#AAAAAA]">{sub}</span>
+        )}
       </div>
     </div>
   );

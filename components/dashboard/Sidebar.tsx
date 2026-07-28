@@ -82,21 +82,6 @@ export function Sidebar() {
       )}
       style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}
     >
-      {/* Brand accent strip */}
-      <div className={cn(
-        "flex items-center justify-center border-b border-gray-100 transition-all",
-        collapsed ? "px-3 py-3" : "px-4 py-3"
-      )}>
-        <div className="flex items-center gap-2">
-          <IconAxia size={collapsed ? 32 : 28} />
-          {!collapsed && (
-            <span className="text-[13px] font-black tracking-tight text-gray-800">
-              axso
-            </span>
-          )}
-        </div>
-      </div>
-
       {/* Navigation */}
       <nav className="flex-1 py-3 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
         {NAV_GROUPS.map((group) => (
