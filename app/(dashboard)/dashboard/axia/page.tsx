@@ -80,10 +80,10 @@ export default function AxiaPage() {
       .slice(history.findIndex(m => m.role === "user"));
 
     try {
-      const res = await fetch("/api/ai/universal", {
+      const res = await fetch("/api/axia/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: toSend, fast: false, stream: true }),
+        body: JSON.stringify({ messages: toSend, stream: true }),
       });
       if (!res.ok || !res.body) throw new Error(`Erreur ${res.status}`);
 
@@ -128,10 +128,10 @@ export default function AxiaPage() {
     setResult("");
     setCopied(false);
     try {
-      const res = await fetch("/api/ai/universal", {
+      const res = await fetch("/api/axia/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: [{ role: "user", content: prompt }] }),
+        body: JSON.stringify({ messages: [{ role: "user", content: prompt }], stream: false }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Erreur");
