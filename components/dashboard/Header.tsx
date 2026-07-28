@@ -1,175 +1,325 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Search, Bell, ChevronDown, LogOut, Settings, User, ExternalLink, Store } from "lucide-react";
+import {
+  Search, Bell, ChevronDown, LogOut, Settings,
+  User, ExternalLink, Store, X,
+} from "lucide-react";
 import { signOut } from "next-auth/react";
 import { initiales } from "@/lib/utils";
 import type { Session } from "next-auth";
 
 interface HeaderProps {
-  session: Session;
+  session:     Session;
   boutiqueSlug?: string;
-  boutiqueNom?: string;
+  boutiqueNom?:  string;
 }
 
 export function Header({ session, boutiqueSlug, boutiqueNom }: HeaderProps) {
-  const [menuOuvert, setMenuOuvert]   = useState(false);
-  const [notifOuvert, setNotifOuvert] = useState(false);
-  const [scrolled, setScrolled]       = useState(false);
+  const [profileOpen,   setProfileOpen]   = useState(false);
+  const [notifOpen,     setNotifOpen]     = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const pillRef   = useRef<HTMLDivElement>(null);
 
-  const nom   = session.user?.name || "Marchand";
-  const email = session.user?.email || "";
+  const nom      = session.user?.name  || "Marchand";
+  const email    = session.user?.email || "";
   const urlLocale = boutiqueSlug ? `/${boutiqueSlug}` : null;
 
+  /* ── Ferme les menus au clic extérieur ── */
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const handler = (e: MouseEvent) => {
+      if (!pillRef.current?.contains(e.target as Node)) {
+        setProfileOpen(false);
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  const toggleNotif   = () => { setNotifOpen(v => !v);   setProfileOpen(false); };
+  const toggleProfile = () => { setProfileOpen(v => !v); setNotifOpen(false);   };
+
   return (
-    <div
-      className="sticky top-0 z-40 flex justify-center px-4 pt-3 pb-2"
-      style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}
-    >
-      {/* ── Pill container ── */}
+    <>
+      <style>{`
+        @keyframes hdrDropIn {
+          from { opacity:0; transform:translateY(-10px) scale(.96); }
+          to   { opacity:1; transform:translateY(0)     scale(1);   }
+        }
+        @keyframes hdrPulse {
+          0%,100% { box-shadow:0 0 0 0 rgba(245,166,35,0);    }
+          50%     { box-shadow:0 0 0 5px rgba(245,166,35,.15); }
+        }
+        @keyframes hdrBadge {
+          0%,100% { transform:scale(1);   }
+          50%     { transform:scale(1.25); }
+        }
+        .hdr-drop { animation:hdrDropIn .24s cubic-bezier(.34,1.56,.64,1) both; }
+        .hdr-btn:hover { background:rgba(0,0,0,.055) !important; }
+        .hdr-item:hover { background:#f5f5f7 !important; color:#111 !important; }
+        .hdr-item-red:hover { background:#fff0f0 !important; }
+        .hdr-shop:hover { background:rgba(245,166,35,.14) !important; }
+      `}</style>
+
       <div
-        className="w-full flex items-center justify-between transition-all duration-500"
         style={{
-          background: "rgba(255,255,255,0.97)",
-          borderRadius: "999px",
-          padding: "8px 16px 8px 12px",
-          backdropFilter: "blur(20px)",
-          boxShadow: scrolled
-            ? "0 8px 40px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.05)"
-            : "0 4px 24px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.04)",
-          border: "1px solid rgba(0,0,0,0.06)",
+          position: "sticky", top: 0, zIndex: 40,
+          display: "flex", justifyContent: "center",
+          padding: "10px 16px 8px",
+          fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif",
         }}
       >
-        {/* ── Gauche : Recherche ── */}
-        <div className="flex items-center gap-2.5 bg-gray-50/80 border border-gray-200/80 rounded-full px-3.5 py-2 w-52 focus-within:border-gray-300 focus-within:bg-white transition-all">
-          <Search size={13} className="text-gray-400 flex-shrink-0" />
-          <input
-            type="text"
-            placeholder="Rechercher…"
-            className="bg-transparent text-sm text-gray-700 placeholder:text-gray-400 outline-none w-full"
-          />
-        </div>
-
-        {/* ── Centre : Logo ── */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
-          <Link href="/dashboard">
-            <img
-              src="/logo.png"
-              alt="Axso"
+        {/* ── The island ─────────────────────────────────────────────── */}
+        <div
+          ref={pillRef}
+          style={{
+            display: "flex", alignItems: "center",
+            width: "100%",
+            background: "rgba(255,255,255,.97)",
+            backdropFilter: "blur(28px) saturate(1.4)",
+            WebkitBackdropFilter: "blur(28px) saturate(1.4)",
+            borderRadius: "999px",
+            padding: "6px 8px 6px 14px",
+            border: "1px solid rgba(0,0,0,.07)",
+            boxShadow: "0 8px 40px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.04), inset 0 1px 0 rgba(255,255,255,.9)",
+            gap: "8px",
+            transition: "box-shadow .35s ease",
+          }}
+        >
+          {/* ── Recherche ─────────────────────────────────────────────── */}
+          <div
+            onClick={() => searchRef.current?.focus()}
+            style={{
+              display: "flex", alignItems: "center", gap: "8px",
+              background:    searchFocused ? "#fff" : "rgba(0,0,0,.042)",
+              border:        `1px solid ${searchFocused ? "#F5A623" : "rgba(0,0,0,.09)"}`,
+              borderRadius:  "999px",
+              padding:       "7px 14px",
+              width:         searchFocused ? "240px" : "170px",
+              cursor:        "text",
+              transition:    "width .4s cubic-bezier(.34,1.56,.64,1), border-color .25s, background .25s, box-shadow .25s",
+              boxShadow:     searchFocused ? "0 0 0 3px rgba(245,166,35,.12)" : "none",
+              flexShrink:    0,
+            }}
+          >
+            <Search
+              size={13}
+              style={{ color: searchFocused ? "#F5A623" : "#bbb", flexShrink: 0, transition: "color .25s" }}
+            />
+            <input
+              ref={searchRef}
+              type="text"
+              placeholder="Rechercher…"
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() =>  setSearchFocused(false)}
               style={{
-                height: "54px",
-                width: "auto",
-                objectFit: "contain",
-                filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.08))",
+                background: "transparent", border: "none", outline: "none",
+                fontSize: "13px", color: "#333",
+                width: "100%", fontFamily: "inherit",
               }}
             />
-          </Link>
-        </div>
+            {searchFocused && (
+              <button
+                onMouseDown={e => { e.preventDefault(); if (searchRef.current) searchRef.current.value = ""; }}
+                style={{ background:"none", border:"none", cursor:"pointer", color:"#bbb", padding:0, display:"flex", alignItems:"center" }}
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
 
-        {/* ── Droite : Actions ── */}
-        <div className="flex items-center gap-2">
-          {/* Boutique */}
-          {urlLocale && (
-            <a
-              href={urlLocale}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden lg:flex items-center gap-1.5 bg-[#F5A623]/8 border border-[#F5A623]/25 text-[#F5A623] text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-[#F5A623]/15 transition-all"
-            >
-              <Store size={12} />
-              {boutiqueNom ? boutiqueNom.slice(0, 12) : "Ma boutique"}
-              <ExternalLink size={10} />
-            </a>
-          )}
+          {/* ── Logo — centre absolu ───────────────────────────────────── */}
+          <div style={{ position:"absolute", left:"50%", transform:"translateX(-50%)", pointerEvents:"auto" }}>
+            <Link href="/dashboard" style={{ display:"flex", alignItems:"center", textDecoration:"none" }}>
+              <img
+                src="/logo.png" alt="axso"
+                style={{
+                  height: "52px", width: "auto", objectFit: "contain",
+                  filter: "drop-shadow(0 2px 6px rgba(0,0,0,.07))",
+                  transition: "transform .3s cubic-bezier(.34,1.56,.64,1)",
+                }}
+                onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.04)")}
+                onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+              />
+            </Link>
+          </div>
 
-          {/* Notifications */}
-          <div className="relative">
-            <button
-              onClick={() => { setNotifOuvert(!notifOuvert); setMenuOuvert(false); }}
-              className="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:text-[#F5A623] hover:border-[#F5A623]/30 transition-all relative"
-            >
-              <Bell size={14} />
-              <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#F5A623] rounded-full text-white text-[8px] font-bold flex items-center justify-center">
-                3
-              </span>
-            </button>
+          {/* ── Actions droite ─────────────────────────────────────────── */}
+          <div style={{ display:"flex", alignItems:"center", gap:"6px", marginLeft:"auto" }}>
 
-            {notifOuvert && (
-              <div className="absolute right-0 top-11 w-80 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                  <h4 className="text-gray-900 font-semibold text-sm">Notifications</h4>
-                  <span className="text-xs text-[#F5A623] font-medium">3 nouvelles</span>
-                </div>
-                <div className="divide-y divide-gray-50">
+            {/* Boutique */}
+            {urlLocale && (
+              <a
+                href={urlLocale} target="_blank" rel="noopener noreferrer"
+                className="hdr-shop hidden lg:flex"
+                style={{
+                  alignItems: "center", gap: "6px",
+                  background: "rgba(245,166,35,.07)",
+                  border: "1px solid rgba(245,166,35,.22)",
+                  color: "#c47c0a",
+                  fontSize: "12px", fontWeight: 600,
+                  padding: "6px 13px", borderRadius: "999px",
+                  textDecoration: "none", whiteSpace: "nowrap",
+                  transition: "background .2s",
+                  flexShrink: 0,
+                }}
+              >
+                <Store size={12} />
+                {boutiqueNom ? boutiqueNom.slice(0, 14) : "Ma boutique"}
+                <ExternalLink size={10} />
+              </a>
+            )}
+
+            {/* ── Notifications ─────────────────────────────────────── */}
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={toggleNotif}
+                className="hdr-btn"
+                style={{
+                  width: "36px", height: "36px", borderRadius: "50%",
+                  background: notifOpen ? "rgba(0,0,0,.06)" : "transparent",
+                  border: "1px solid rgba(0,0,0,.09)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", position: "relative", flexShrink: 0,
+                  transition: "background .2s, box-shadow .3s",
+                  animation: "hdrPulse 3s ease-in-out infinite",
+                }}
+                aria-label="Notifications"
+              >
+                <Bell size={15} style={{ color: "#555" }} />
+                <span style={{
+                  position: "absolute", top: "-2px", right: "-2px",
+                  width: "15px", height: "15px",
+                  background: "#F5A623", borderRadius: "50%",
+                  fontSize: "8px", fontWeight: 800, color: "#fff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: "2px solid #fff",
+                  animation: "hdrBadge 2.5s ease-in-out infinite",
+                }}>3</span>
+              </button>
+
+              {notifOpen && (
+                <div className="hdr-drop" style={{
+                  position: "absolute", right: 0, top: "44px",
+                  width: "310px",
+                  background: "#fff",
+                  border: "1px solid rgba(0,0,0,.07)",
+                  borderRadius: "22px",
+                  boxShadow: "0 24px 64px rgba(0,0,0,.13), 0 4px 14px rgba(0,0,0,.07)",
+                  overflow: "hidden", zIndex: 100,
+                }}>
+                  <div style={{ padding: "14px 18px 12px", borderBottom: "1px solid #f2f2f2", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                    <span style={{ fontSize:"13px", fontWeight:700, color:"#111" }}>Notifications</span>
+                    <span style={{ fontSize:"11px", fontWeight:600, color:"#F5A623", background:"rgba(245,166,35,.1)", padding:"3px 9px", borderRadius:"999px" }}>3 nouvelles</span>
+                  </div>
                   {[
-                    { icon: "🛍️", msg: "Nouvelle commande reçue", temps: "Il y a 2 min" },
-                    { icon: "💰", msg: "Paiement confirmé 25 000 XOF", temps: "Il y a 15 min" },
-                    { icon: "⭐", msg: "Nouvel avis 5 étoiles", temps: "Il y a 1h" },
+                    { icon:"🛍️", msg:"Nouvelle commande #1042 reçue",      temps:"Il y a 2 min"  },
+                    { icon:"💰", msg:"Paiement confirmé — 25 000 XOF",     temps:"Il y a 15 min" },
+                    { icon:"⭐", msg:"Nouvel avis 5 étoiles reçu",         temps:"Il y a 1h"     },
                   ].map((n, i) => (
-                    <div key={i} className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors">
-                      <span className="text-sm flex-shrink-0">{n.icon}</span>
+                    <div key={i} className="hdr-item" style={{
+                      display:"flex", alignItems:"flex-start", gap:"12px",
+                      padding:"13px 18px", cursor:"pointer",
+                      borderBottom: i < 2 ? "1px solid #f7f7f7" : "none",
+                      transition:"background .15s",
+                    }}>
+                      <span style={{ fontSize:"18px", lineHeight:1, flexShrink:0, marginTop:"1px" }}>{n.icon}</span>
                       <div>
-                        <p className="text-gray-700 text-sm">{n.msg}</p>
-                        <p className="text-gray-400 text-xs mt-0.5">{n.temps}</p>
+                        <p style={{ fontSize:"13px", color:"#333", margin:0, lineHeight:"1.4" }}>{n.msg}</p>
+                        <p style={{ fontSize:"11px", color:"#bbb", margin:"3px 0 0" }}>{n.temps}</p>
                       </div>
                     </div>
                   ))}
+                  <div style={{ padding:"10px 18px 14px", borderTop:"1px solid #f2f2f2" }}>
+                    <button style={{ background:"none", border:"none", fontSize:"12px", fontWeight:600, color:"#F5A623", cursor:"pointer", fontFamily:"inherit" }}>
+                      Voir toutes les notifications
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Profile */}
-          <div className="relative">
-            <button
-              onClick={() => { setMenuOuvert(!menuOuvert); setNotifOuvert(false); }}
-              className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-full pl-1 pr-2.5 py-1 hover:border-gray-300 hover:bg-gray-100/50 transition-all"
-            >
-              <div className="w-6 h-6 rounded-full flex items-center justify-center text-[#1B2A4A] text-[10px] font-bold"
-                style={{ background: "linear-gradient(135deg, #F5A623, #d97706)" }}>
-                {initiales(nom)}
-              </div>
-              <span className="hidden sm:block text-gray-700 text-xs font-semibold max-w-[80px] truncate">
-                {nom.split(" ")[0]}
-              </span>
-              <ChevronDown size={11} className="text-gray-400" />
-            </button>
-
-            {menuOuvert && (
-              <div className="absolute right-0 top-11 w-52 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden">
-                <div className="p-2 space-y-0.5">
-                  <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-sm transition-colors">
-                    <User size={14} /> Mon profil
-                  </button>
-                  <Link href="/dashboard/parametres"
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-sm transition-colors">
-                    <Settings size={14} /> Paramètres
-                  </Link>
-                  {urlLocale && (
-                    <a href={urlLocale} target="_blank" rel="noopener noreferrer"
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-sm transition-colors">
-                      <ExternalLink size={14} /> Voir la boutique
-                    </a>
-                  )}
-                  <hr className="border-gray-100 my-1" />
-                  <button
-                    onClick={() => signOut({ callbackUrl: "/connexion" })}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 text-sm transition-colors"
-                  >
-                    <LogOut size={14} /> Déconnexion
-                  </button>
+            {/* ── Profil ────────────────────────────────────────────── */}
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={toggleProfile}
+                style={{
+                  display:"flex", alignItems:"center", gap:"8px",
+                  background: profileOpen ? "rgba(0,0,0,.055)" : "transparent",
+                  border: "1px solid rgba(0,0,0,.09)",
+                  borderRadius: "999px",
+                  padding: "5px 10px 5px 5px",
+                  cursor: "pointer",
+                  transition: "background .2s, border-color .2s",
+                  flexShrink: 0,
+                }}
+                onMouseEnter={e => { if (!profileOpen) e.currentTarget.style.background = "rgba(0,0,0,.04)"; }}
+                onMouseLeave={e => { if (!profileOpen) e.currentTarget.style.background = "transparent"; }}
+              >
+                <div style={{
+                  width:"27px", height:"27px", borderRadius:"50%",
+                  background:"linear-gradient(135deg,#F5A623,#d97706)",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  fontSize:"10px", fontWeight:800, color:"#fff", flexShrink:0,
+                }}>
+                  {initiales(nom)}
                 </div>
-              </div>
-            )}
+                <span className="hidden sm:block" style={{ fontSize:"12.5px", fontWeight:600, color:"#333", maxWidth:"80px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                  {nom.split(" ")[0]}
+                </span>
+                <ChevronDown size={12} style={{ color:"#aaa", transform: profileOpen ? "rotate(180deg)" : "none", transition:"transform .25s cubic-bezier(.34,1.56,.64,1)" }} />
+              </button>
+
+              {profileOpen && (
+                <div className="hdr-drop" style={{
+                  position:"absolute", right:0, top:"46px",
+                  width:"220px",
+                  background:"#fff",
+                  border:"1px solid rgba(0,0,0,.07)",
+                  borderRadius:"20px",
+                  boxShadow:"0 24px 64px rgba(0,0,0,.13), 0 4px 14px rgba(0,0,0,.07)",
+                  padding:"8px",
+                  zIndex:100,
+                }}>
+                  {/* Header profil */}
+                  <div style={{ padding:"10px 13px 12px", borderBottom:"1px solid #f2f2f2", marginBottom:"6px" }}>
+                    <p style={{ fontSize:"13px", fontWeight:700, color:"#111", margin:0 }}>{nom}</p>
+                    <p style={{ fontSize:"11px", color:"#bbb", margin:"3px 0 0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{email}</p>
+                  </div>
+
+                  {/* Items */}
+                  {([
+                    { Icon: User,         label: "Mon profil",        href: "#" },
+                    { Icon: Settings,     label: "Paramètres",        href: "/dashboard/parametres" },
+                    ...(urlLocale ? [{ Icon: ExternalLink, label: "Voir la boutique", href: urlLocale, ext: true }] : []),
+                  ] as any[]).map(({ Icon, label, href, ext }) => (
+                    <Link
+                      key={label} href={href}
+                      {...(ext ? { target:"_blank", rel:"noopener noreferrer" } : {})}
+                      className="hdr-item"
+                      style={{ display:"flex", alignItems:"center", gap:"10px", padding:"9px 13px", borderRadius:"13px", fontSize:"13px", color:"#555", textDecoration:"none", transition:"background .15s, color .15s" }}
+                    >
+                      <Icon size={14} style={{ flexShrink:0 }} /> {label}
+                    </Link>
+                  ))}
+
+                  <div style={{ borderTop:"1px solid #f2f2f2", marginTop:"6px", paddingTop:"6px" }}>
+                    <button
+                      onClick={() => signOut({ callbackUrl: "/connexion" })}
+                      className="hdr-item-red"
+                      style={{ display:"flex", alignItems:"center", gap:"10px", padding:"9px 13px", borderRadius:"13px", fontSize:"13px", color:"#ef4444", background:"none", border:"none", cursor:"pointer", width:"100%", fontFamily:"inherit", transition:"background .15s" }}
+                    >
+                      <LogOut size={14} style={{ flexShrink:0 }} /> Déconnexion
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
