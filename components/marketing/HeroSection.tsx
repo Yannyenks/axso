@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { CartParallax } from "./CartParallax";
 
-const MOTS = ["en 60 secondes", "sans coder", "avec l'IA", "pour l'Afrique"];
+const MOTS = ["en ligne", "digital", "africain", "sans limite"];
 const FLAGS = ["🇸🇳", "🇨🇲", "🇨🇮", "🇬🇭", "🇳🇬", "🇰🇪", "🇲🇦"];
 
 const HERO_CARTS = [
@@ -79,14 +79,14 @@ export function HeroSection() {
               <span className="text-[#F5A623] text-base font-semibold">⚡ 11 agents IA · tout est automatisé</span>
             </div>
 
-            {/* Headline — très grand */}
+            {/* Headline empire */}
             <h1 className="font-bold leading-[1.06] mb-8">
-              <span className="block text-5xl lg:text-6xl xl:text-[4.8rem] 2xl:text-[5.5rem] text-gray-900">
-                Votre boutique
+              <span className="block text-4xl lg:text-5xl xl:text-[4.2rem] 2xl:text-[4.8rem] text-gray-900 uppercase tracking-tight">
+                Crée ton empire
               </span>
               <span
                 key={motIdx}
-                className="block text-5xl lg:text-6xl xl:text-[4.8rem] 2xl:text-[5.5rem]"
+                className="block text-4xl lg:text-5xl xl:text-[4.2rem] 2xl:text-[4.8rem] uppercase tracking-tight"
                 style={{
                   background: "linear-gradient(135deg, #F5A623 0%, #e8950f 50%, #FFD280 100%)",
                   backgroundSize: "200% auto",
@@ -98,8 +98,8 @@ export function HeroSection() {
               >
                 {MOTS[motIdx]}
               </span>
-              <span className="block text-3xl lg:text-4xl xl:text-[3rem] 2xl:text-[3.4rem] text-gray-500 font-medium">
-                grâce à l'intelligence artificielle
+              <span className="block text-4xl lg:text-5xl xl:text-[4.2rem] 2xl:text-[4.8rem] text-gray-900 uppercase tracking-tight">
+                avec <span style={{ color: "#F5A623" }}>AXSO</span>
               </span>
             </h1>
 
@@ -107,7 +107,11 @@ export function HeroSection() {
               style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.25s" }}
               className="text-lg lg:text-xl xl:text-2xl text-gray-500 leading-relaxed mb-12 max-w-xl"
             >
-              Décrivez votre business en quelques mots. L'IA génère votre boutique complète — catalogue, thème, prix, marketing. Vous encaissez. L'IA s'occupe du reste.
+              Présente ta vision — AXSO s'occupe du reste.
+              <br />
+              <span className="text-base text-gray-400 mt-1 block">
+                Boutique, marketing, clients, livraison. Tout en quelques clics.
+              </span>
             </p>
 
             {/* CTAs */}
@@ -122,7 +126,7 @@ export function HeroSection() {
               >
                 <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                   style={{ background: "linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.25) 50%, transparent 80%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s linear infinite" }}/>
-                <span className="relative z-10">✨ Voir l'IA créer ma boutique →</span>
+                <span className="relative z-10">🚀 Lancer mon empire →</span>
               </Link>
               <Link
                 href="#video-demo"
@@ -142,13 +146,13 @@ export function HeroSection() {
                 ))}
               </div>
               <div>
-                <p className="text-base font-bold text-gray-900">+1 247 boutiques actives</p>
+                <p className="text-base font-bold text-gray-900">+1 247 empires lancés</p>
                 <p className="text-sm text-gray-400">dans 10 pays africains</p>
               </div>
             </div>
           </div>
 
-          {/* ─── DROITE — 3D Mockup GÉANT ─── */}
+          {/* ─── DROITE — 3D Mockup ─── */}
           <div
             className="relative hidden lg:flex items-center justify-center"
             style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateX(30px)", transition: "all 0.9s 0.15s cubic-bezier(0.23,1,0.32,1)" }}
@@ -185,7 +189,7 @@ export function HeroSection() {
                 {/* Dashboard */}
                 <div className="p-7 space-y-5">
                   <div className="flex items-center justify-between">
-                    <p className="text-base font-bold text-gray-900">🤖 Agent Analytics actif</p>
+                    <p className="text-base font-bold text-gray-900">🤖 Empire en cours de construction</p>
                     <span className="text-sm text-gray-400">il y a 2 sec</span>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
@@ -218,19 +222,15 @@ export function HeroSection() {
                     ))}
                   </div>
 
-                  {/* Mini revenue chart bar */}
+                  {/* Mini revenue chart */}
                   <div className="pt-2">
                     <p className="text-xs font-bold text-gray-400 mb-3">REVENUS · 7 DERNIERS JOURS</p>
                     <div className="flex items-end gap-1.5 h-16">
                       {[35, 55, 42, 78, 60, 90, 100].map((h, i) => (
-                        <div
-                          key={i}
-                          className="flex-1 rounded-lg transition-all"
+                        <div key={i} className="flex-1 rounded-lg transition-all"
                           style={{
                             height: `${h}%`,
-                            background: i === 6
-                              ? "linear-gradient(180deg, #F5A623, #e8950f)"
-                              : "rgba(245,166,35,0.18)",
+                            background: i === 6 ? "linear-gradient(180deg, #F5A623, #e8950f)" : "rgba(245,166,35,0.18)",
                             animation: `barIn 0.6s ${i * 0.08}s both`,
                           }}
                         />
@@ -240,45 +240,18 @@ export function HeroSection() {
                 </div>
               </div>
 
-              {/* Floating badge — haut droite */}
-              <div
-                className="absolute -top-6 -right-6 rounded-2xl px-5 py-3 text-base font-bold shadow-2xl"
-                style={{
-                  background: "linear-gradient(135deg, #F5A623, #e8950f)",
-                  color: "white",
-                  transform: "translateZ(60px)",
-                  animation: "daFloat 4s ease-in-out infinite",
-                }}
-              >
+              {/* Floating badges */}
+              <div className="absolute -top-6 -right-6 rounded-2xl px-5 py-3 text-base font-bold shadow-2xl"
+                style={{ background: "linear-gradient(135deg, #F5A623, #e8950f)", color: "white", transform: "translateZ(60px)", animation: "daFloat 4s ease-in-out infinite" }}>
                 +24% CA 🚀
               </div>
-
-              {/* Floating badge — bas gauche */}
-              <div
-                className="absolute -bottom-5 -left-6 rounded-2xl px-4 py-3 text-sm font-semibold border shadow-xl"
-                style={{
-                  background: "white",
-                  borderColor: "#7c3aed30",
-                  color: "#7c3aed",
-                  transform: "translateZ(40px)",
-                  animation: "daFloat 5s 1s ease-in-out infinite",
-                }}
-              >
+              <div className="absolute -bottom-5 -left-6 rounded-2xl px-4 py-3 text-sm font-semibold border shadow-xl"
+                style={{ background: "white", borderColor: "#7c3aed30", color: "#7c3aed", transform: "translateZ(40px)", animation: "daFloat 5s 1s ease-in-out infinite" }}>
                 🤖 11 agents actifs
               </div>
-
-              {/* Floating badge — milieu gauche */}
-              <div
-                className="absolute top-1/2 -left-8 rounded-2xl px-3 py-2.5 text-xs font-bold shadow-lg"
-                style={{
-                  background: "#f0fdf4",
-                  color: "#16a34a",
-                  border: "1px solid #bbf7d0",
-                  transform: "translateZ(50px)",
-                  animation: "daFloat 4.5s 2s ease-in-out infinite",
-                }}
-              >
-                ✅ Commande livrée
+              <div className="absolute top-1/2 -left-8 rounded-2xl px-3 py-2.5 text-xs font-bold shadow-lg"
+                style={{ background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0", transform: "translateZ(50px)", animation: "daFloat 4.5s 2s ease-in-out infinite" }}>
+                ✅ Empire en ligne
               </div>
             </div>
           </div>

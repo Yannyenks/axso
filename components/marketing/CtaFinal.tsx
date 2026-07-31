@@ -144,7 +144,7 @@ export function CtaFinal() {
             animation: visible ? "slideRevealLeft 0.8s 0.2s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          Laissez l'IA bâtir
+          Présente ta vision.
           <br />
           <span
             className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5A623] via-[#FFD280] to-[#E09015]"
@@ -153,7 +153,7 @@ export function CtaFinal() {
               animation: "shimmer 3s linear infinite",
             }}
           >
-            votre empire e-commerce
+            AXSO bâtit ton empire.
           </span>
         </h2>
 
@@ -164,8 +164,9 @@ export function CtaFinal() {
             animation: visible ? "flip3dIn 0.7s 0.4s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          7 agents IA, zéro configuration. Décrivez votre business, l'IA crée tout.
-          Rejoignez 1 247 entrepreneurs africains qui vendent avec Axso.
+          11 agents IA, zéro friction. En quelques clics, ton empire digital est en ligne.
+          <br className="hidden sm:block" />
+          Rejoins 1 247 entrepreneurs africains qui dominent avec AXSO.
         </p>
 
         {/* Magnetic CTA button */}
@@ -199,7 +200,7 @@ export function CtaFinal() {
               }}
             />
             <Sparkles size={22} className="relative z-10" />
-            <span className="relative z-10">Activer mes 7 agents IA — gratuit</span>
+            <span className="relative z-10">🚀 Lancer mon empire maintenant</span>
             <ArrowRight size={22} className="relative z-10 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
@@ -211,7 +212,7 @@ export function CtaFinal() {
             animation: visible ? "flip3dIn 0.6s 0.7s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          Aucune carte bancaire • Sans engagement • Boutique en ligne en 3 minutes
+          Dès 1 200 XOF/mois · Annulation à tout moment · Empire live en 3 minutes
         </p>
       </div>
     </section>
