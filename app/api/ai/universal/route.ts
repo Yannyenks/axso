@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { aiLimiter, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 import { Resend } from "resend";
 import { runAgent, runAgentStream, type AgentTool, type ToolExecutor } from "@/lib/agent-runner";
 import { executerOutilMcp } from "@/lib/mcp/executor";
@@ -702,6 +703,11 @@ export const maxDuration = 60;
 
 export async function POST(request: Request) {
   try {
+    // Rate limit — 20 requêtes IA/minute par IP
+    const ip = getClientIp(request);
+    const rl = aiLimiter.check(ip);
+    if (!rl.success) return rateLimitResponse(rl.reset);
+
     const session = await auth();
     if (!session) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     const tenantId = (session.user as any)?.tenantId;
