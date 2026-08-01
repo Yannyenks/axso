@@ -340,6 +340,14 @@ export function runAgentStream(
         return typeof last.content === "string" ? last.content : JSON.stringify(last.content);
       })();
 
+      // Si Phase 1 a répondu sans utiliser d'outil → streamer directement, pas besoin de re-synthèse
+      if (phase1Text && toolResults.length === 0) {
+        const chunks = phase1Text.match(/\S+\s*/g) ?? [];
+        for (const chunk of chunks) { send({ type: "token", text: chunk }); await sleep(2); }
+        finish(actionsEffectuees);
+        return;
+      }
+
       const prevMessages = messages.slice(0, -1)
         .filter(m => m.role !== ("system" as any))
         .map(m => ({
@@ -347,13 +355,27 @@ export function runAgentStream(
           content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
         }));
 
-      const synthesisMsg = buildSynthesisUserMessage(originalQuestion, toolResults);
+      const synthesisMsg = toolResults.length > 0
+        ? buildSynthesisUserMessage(originalQuestion, toolResults)
+        : originalQuestion;
+
       const synthMessages: Array<{ role: "user" | "assistant"; content: string }> = [
         ...prevMessages,
         { role: "user", content: synthesisMsg },
       ];
 
-      // Gemini streaming (priorité)
+      // Claude streaming (priorité — meilleure qualité de langue)
+      if (hasAnthropic()) {
+        try {
+          await claudeSynthesisStream(send, systemPrompt, synthMessages);
+          finish(actionsEffectuees);
+          return;
+        } catch (err: any) {
+          console.warn("[stream] claude synthesis failed:", err?.message?.slice(0, 100));
+        }
+      }
+
+      // Gemini streaming (fallback 1)
       if (hasGemini()) {
         try {
           await geminiSynthesisStream(send, systemPrompt, synthMessages);
@@ -364,7 +386,7 @@ export function runAgentStream(
         }
       }
 
-      // Groq streaming (fallback 1)
+      // Groq streaming (fallback 2)
       if (hasGroq()) {
         try {
           await groqSynthesisStream(send, systemPrompt, synthMessages);
@@ -372,17 +394,6 @@ export function runAgentStream(
           return;
         } catch (err: any) {
           console.warn("[stream] groq synthesis failed:", err?.message?.slice(0, 100));
-        }
-      }
-
-      // Claude streaming (dernier recours)
-      if (hasAnthropic()) {
-        try {
-          await claudeSynthesisStream(send, systemPrompt, synthMessages);
-          finish(actionsEffectuees);
-          return;
-        } catch (err: any) {
-          console.warn("[stream] claude synthesis failed:", err?.message?.slice(0, 100));
         }
       }
 
