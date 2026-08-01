@@ -501,6 +501,31 @@ const OUTILS: AgentTool[] = [
     },
   },
   {
+    name: "contexte_client",
+    description: "Récupère le profil complet d'un client : historique d'achats, commandes récentes, dépenses totales",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        clientEmail: { type: "string", description: "Email du client" },
+        clientId: { type: "string", description: "ID du client (alternatif à l'email)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "initier_retour",
+    description: "Initie une procédure de retour ou d'échange pour une commande",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        commandeId: { type: "string", description: "ID ou numéro de la commande" },
+        raison: { type: "string", description: "Motif du retour : défaut, taille, changement d'avis, etc." },
+        type: { type: "string", enum: ["retour", "echange"], description: "Type de procédure" },
+      },
+      required: ["commandeId", "raison"],
+    },
+  },
+  {
     name: "escalader_vers_humain",
     description: "Signale une situation complexe ou sensible qui nécessite une intervention humaine",
     parameters: {
@@ -796,6 +821,45 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         if (!topProduits.length) return { succes: false, resultat: "Pas assez de données pour générer des recommandations." };
         const lines = topProduits.map((p, i) => `${i + 1}. ${p.nom} (${p.prix} ${dev}) — ${p.ventes} ventes`).join("\n");
         return { succes: true, resultat: `Top produits recommandés (basé sur les ventes):\n${lines}` };
+      }
+
+      case "contexte_client": {
+        let clientWhere: any = { tenantId };
+        if (args.clientEmail) clientWhere.email = args.clientEmail;
+        else if (args.clientId) clientWhere.id = args.clientId;
+        else return { succes: false, resultat: "Précise l'email ou l'ID du client." };
+        const client = await prisma.client.findFirst({
+          where: clientWhere,
+          select: { id: true, nom: true, email: true, telephone: true, totalCommandes: true, totalDepense: true, createdAt: true },
+        });
+        if (!client) return { succes: false, resultat: `Client introuvable avec les infos fournies.` };
+        const commandes = await prisma.commande.findMany({
+          where: { tenantId, clientId: client.id },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          select: { numero: true, statut: true, montantTotal: true, devise: true, createdAt: true },
+        });
+        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true } });
+        const dev = tenant?.devise ?? "XAF";
+        const cmdLines = commandes.map(c => `  - ${c.numero} | ${c.statut} | ${c.montantTotal} ${c.devise ?? dev} | ${c.createdAt.toLocaleDateString("fr-FR")}`).join("\n");
+        return { succes: true, resultat: `Client : ${client.nom} (${client.email}) | Tél: ${client.telephone ?? "?"} | Inscrit le ${client.createdAt.toLocaleDateString("fr-FR")} | ${client.totalCommandes} commandes | ${client.totalDepense} ${dev} dépensé\nDernières commandes:\n${cmdLines || "  aucune"}` };
+      }
+
+      case "initier_retour": {
+        const commande = await prisma.commande.findFirst({
+          where: {
+            tenantId,
+            OR: [{ id: args.commandeId }, { numero: { contains: args.commandeId, mode: "insensitive" } }],
+          },
+          select: { id: true, numero: true, statut: true, clientNom: true, montantTotal: true, devise: true },
+        });
+        if (!commande) return { succes: false, resultat: `Commande introuvable : "${args.commandeId}"` };
+        if (!["confirmee", "livree"].includes(commande.statut)) {
+          return { succes: false, resultat: `La commande ${commande.numero} a le statut "${commande.statut}" — un retour n'est possible que sur les commandes confirmées ou livrées.` };
+        }
+        const typeLabel = args.type === "echange" ? "échange" : "retour";
+        await prisma.commande.update({ where: { id: commande.id }, data: { statut: "retour_demande" } });
+        return { succes: true, resultat: `✅ Procédure de ${typeLabel} initiée pour la commande ${commande.numero} (${commande.clientNom}, ${commande.montantTotal} ${commande.devise ?? "XAF"}). Motif : ${args.raison}. Le statut a été mis à "retour_demande".` };
       }
 
       case "escalader_vers_humain": {

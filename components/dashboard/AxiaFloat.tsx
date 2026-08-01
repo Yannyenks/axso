@@ -91,6 +91,17 @@ const PHASE_CONFIG: Record<VoicePhase, { label: string; sub: string; orbGrad: st
   speaking:  { label: "AXIA répond",   sub: "Touchez pour interrompre",  orbGrad: "radial-gradient(circle at 35% 35%, #10b981, #047857)",    orbShadow: "0 0 80px rgba(16,185,129,0.55), 0 0 160px rgba(16,185,129,0.25)", ringColor: "#10b981" },
 };
 
+// ── Thinking messages ─────────────────────────────────────────────────────────
+const THINKING_MSGS = [
+  "Axia réfléchit…",
+  "Axia analyse les données…",
+  "Axia vérifie ta boutique…",
+  "Axia prépare sa réponse…",
+  "Axia compare les options…",
+  "Axia consulte le catalogue…",
+  "Axia peaufine sa réponse…",
+];
+
 // ── Suggestions ───────────────────────────────────────────────────────────────
 const SUGGESTIONS = [
   { emoji: "📊", label: "Rapport de mes ventes ce mois-ci" },
@@ -112,6 +123,7 @@ export function AxiaFloat() {
   const [interimText, setInterimText]   = useState("");
   const [copiedIdx, setCopiedIdx]       = useState<number | null>(null);
   const [unread, setUnread]             = useState(0);
+  const [thinkingMsgIdx, setThinkingMsgIdx] = useState(0);
 
   const bottomRef      = useRef<HTMLDivElement>(null);
   const voiceScrollRef = useRef<HTMLDivElement>(null);
@@ -127,6 +139,11 @@ export function AxiaFloat() {
   useEffect(() => { voiceModeRef.current = voiceMode; }, [voiceMode]);
   useEffect(() => { ttsRef.current = ttsOn; }, [ttsOn]);
   useEffect(() => { loadingRef.current = loading; }, [loading]);
+  useEffect(() => {
+    if (!loading) { setThinkingMsgIdx(0); return; }
+    const id = setInterval(() => setThinkingMsgIdx(i => (i + 1) % THINKING_MSGS.length), 2200);
+    return () => clearInterval(id);
+  }, [loading]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
   useEffect(() => { voiceScrollRef.current?.scrollTo({ top: 9999, behavior: "smooth" }); }, [messages]);
   useEffect(() => { if (open && !voiceMode) setTimeout(() => inputRef.current?.focus(), 250); }, [open, voiceMode]);
@@ -670,20 +687,23 @@ export function AxiaFloat() {
               );
             })}
 
-            {/* Loading dots */}
+            {/* Thinking indicator */}
             {loading && (
               <div className="flex gap-2.5">
                 <div className="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center"
                   style={{ background: "linear-gradient(135deg,#7c3aed,#5b21b6)" }}>
                   <Sparkles size={12} className="text-white" />
                 </div>
-                <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
-                  <div className="flex gap-1.5 items-center">
+                <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm flex items-center gap-2.5">
+                  <div className="flex gap-1 items-center">
                     {[0, 1, 2].map(j => (
-                      <div key={j} className="w-2 h-2 rounded-full"
+                      <div key={j} className="w-1.5 h-1.5 rounded-full"
                         style={{ background: "#7c3aed", animation: `axiaDot 1s ${j * 0.18}s ease-in-out infinite` }} />
                     ))}
                   </div>
+                  <span className="text-xs text-gray-400 transition-all duration-500">
+                    {THINKING_MSGS[thinkingMsgIdx]}
+                  </span>
                 </div>
               </div>
             )}
