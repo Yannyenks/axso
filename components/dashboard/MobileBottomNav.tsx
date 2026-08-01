@@ -63,7 +63,18 @@ const GROUPS = [
     label: "Logistique", color: "#fb923c",
     items: [
       { href: "/dashboard/livraison",  label: "Livraison",        icon: Truck },
+      { href: "/dashboard/retours",    label: "Retours RMA",      icon: Package2 },
+      { href: "/dashboard/factures",   label: "Factures",         icon: CreditCard },
       { href: "/dashboard/livreurs",   label: "Livreurs",         icon: Bike },
+    ],
+  },
+  {
+    label: "Marketing+", color: "#7c3aed",
+    items: [
+      { href: "/dashboard/popups",       label: "Popups",         icon: Megaphone },
+      { href: "/dashboard/automation",   label: "Automation",     icon: Zap },
+      { href: "/dashboard/affiliation",  label: "Affiliation",    icon: TrendingUp },
+      { href: "/dashboard/gamification", label: "Badges",         icon: Star },
     ],
   },
   {

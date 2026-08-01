@@ -9,7 +9,7 @@ import {
   IconSourcing, IconCommandes, IconClients, IconWallet, IconRevenus,
   IconMarketing, IconMessages, IconContenus, IconNavigateur, IconLivraisons,
   IconAnalytics, IconConnecteurs, IconAbonnement, IconParametres, IconIA,
-  IconWhatsApp,
+  IconWhatsApp, IconAvis, IconPaiements, IconThemes,
 } from "./AppIcons";
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
@@ -47,8 +47,19 @@ const NAV_GROUPS = [
     label: "Opérations",
     items: [
       { href: "/dashboard/livraison",    label: "Livraisons",   Icone: IconLivraisons },
+      { href: "/dashboard/retours",      label: "Retours RMA",  Icone: IconCommandes },
+      { href: "/dashboard/factures",     label: "Factures",     Icone: IconPaiements },
       { href: "/dashboard/dropshipping", label: "Dropshipping", Icone: IconSourcing },
       { href: "/dashboard/analytics",    label: "Analytics",    Icone: IconAnalytics },
+    ],
+  },
+  {
+    label: "Marketing+",
+    items: [
+      { href: "/dashboard/popups",       label: "Popups",       Icone: IconThemes },
+      { href: "/dashboard/automation",   label: "Automation",   Icone: IconIA },
+      { href: "/dashboard/affiliation",  label: "Affiliation",  Icone: IconRevenus },
+      { href: "/dashboard/gamification", label: "Badges",       Icone: IconAvis },
     ],
   },
   {
