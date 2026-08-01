@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const OWASP_HEADERS = [
-  { key: "X-Frame-Options",           value: "DENY" },
+  { key: "X-Frame-Options",           value: "SAMEORIGIN" },
   { key: "X-Content-Type-Options",    value: "nosniff" },
   { key: "X-XSS-Protection",          value: "1; mode=block" },
   { key: "Referrer-Policy",           value: "strict-origin-when-cross-origin" },
@@ -17,7 +17,7 @@ const OWASP_HEADERS = [
       "media-src 'self' blob: https:",
       "connect-src 'self' https:",
       "font-src 'self' data:",
-      "frame-ancestors 'none'",
+      "frame-ancestors 'self'",
     ].join("; "),
   },
 ];
