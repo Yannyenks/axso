@@ -97,6 +97,7 @@ async function _openAICompat(
     body: JSON.stringify({
       model: cfg.model,
       max_tokens: cfg.maxTokens ?? 2000,
+      temperature: 0.7,
       messages,
       tools: toOpenAITools(tools),
       tool_choice: "auto",

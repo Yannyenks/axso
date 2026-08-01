@@ -62,6 +62,7 @@ async function geminiSynthesisStream(
     body: JSON.stringify({
       model: "gemini-2.0-flash",
       max_tokens: 4000,
+      temperature: 0.75,
       stream: true,
       messages: [{ role: "system", content: systemPrompt }, ...messages],
     }),
@@ -111,6 +112,7 @@ async function groqSynthesisStream(
     body: JSON.stringify({
       model: "llama-3.3-70b-versatile",
       max_tokens: 4000,
+      temperature: 0.75,
       stream: true,
       messages: [{ role: "system", content: systemPrompt }, ...messages],
     }),
@@ -158,6 +160,7 @@ async function claudeSynthesisStream(
       const runner = client.messages.stream({
         model,
         max_tokens: 4000,
+        temperature: 0.75,
         system: systemPrompt,
         messages: claudeMessages,
       });
