@@ -208,7 +208,7 @@ function OngletCommandes() {
                   <p className="text-[12px] font-semibold text-[#111] truncate">{cf.commande?.numero} → {cf.fournisseur?.nom}</p>
                   <p className="text-[10px] text-gray-400">{cf.commande?.clientNom}</p>
                 </div>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full text-white" style={{background:STATUT_COLORS[cf.statut]???"#888"}}>{cf.statut.replace(/_/g," ")}</span>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full text-white" style={{background:STATUT_COLORS[cf.statut]??"#888"}}>{cf.statut.replace(/_/g," ")}</span>
                 {cf.montantFournisseur && <span className="text-[11px] font-bold text-[#111] shrink-0">{cf.montantFournisseur?.toLocaleString()} XAF</span>}
               </button>
 
