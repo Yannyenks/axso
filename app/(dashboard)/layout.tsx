@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Header } from "@/components/dashboard/Header";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
+import { AxiaFloat } from "@/components/dashboard/AxiaFloat";
 
 const FULLBLEED_ROUTES: string[] = [];
 
@@ -51,6 +52,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </main>
         <MobileBottomNav />
       </div>
+
+      {/* ─── AXIA flottant (desktop + mobile) ───────────────────── */}
+      <AxiaFloat />
     </>
   );
 }

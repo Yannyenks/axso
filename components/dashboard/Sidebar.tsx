@@ -15,12 +15,6 @@ import {
 // ─── Navigation ───────────────────────────────────────────────────────────────
 const NAV_GROUPS = [
   {
-    label: "Intelligence",
-    items: [
-      { href: "/dashboard/axia",         label: "AXIA IA",      Icone: IconIA,          highlight: true },
-    ],
-  },
-  {
     label: "Boutique",
     items: [
       { href: "/dashboard",              label: "Accueil",      Icone: IconAccueil,     exact: true },
