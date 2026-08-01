@@ -31,7 +31,10 @@ export async function POST(req: Request) {
     if (existing) return NextResponse.json({ error: "Ce compte existe déjà" }, { status: 409 });
 
     const token = genToken();
-    const tokenExpire = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 jours
+    const tokenExpire = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    // Cross-canal: lier au Client existant par email
+    const clientExistant = await prisma.client.findFirst({ where: { tenantId, email } });
 
     const compte = await prisma.compteAcheteur.create({
       data: {
@@ -40,13 +43,14 @@ export async function POST(req: Request) {
         passwordHash: hash(password),
         token,
         tokenExpire,
+        clientId: clientExistant?.id ?? null,
       },
     });
 
     return NextResponse.json({
       ok: true,
       token,
-      compte: { id: compte.id, email: compte.email, nom: compte.nom },
+      compte: { id: compte.id, email: compte.email, nom: compte.nom, clientLie: !!clientExistant },
     }, { status: 201 });
   }
 
@@ -62,15 +66,22 @@ export async function POST(req: Request) {
     const token = genToken();
     const tokenExpire = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
+    // Cross-canal: si pas encore lié, essayer de lier maintenant
+    let clientId = compte.clientId;
+    if (!clientId) {
+      const clientExistant = await prisma.client.findFirst({ where: { tenantId, email } });
+      if (clientExistant) clientId = clientExistant.id;
+    }
+
     await prisma.compteAcheteur.update({
       where: { id: compte.id },
-      data: { token, tokenExpire },
+      data: { token, tokenExpire, clientId: clientId ?? undefined },
     });
 
     return NextResponse.json({
       ok: true,
       token,
-      compte: { id: compte.id, email: compte.email, nom: compte.nom },
+      compte: { id: compte.id, email: compte.email, nom: compte.nom, clientId },
     });
   }
 

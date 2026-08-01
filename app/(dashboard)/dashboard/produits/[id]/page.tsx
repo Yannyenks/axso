@@ -53,6 +53,9 @@ export default function EditProduitPage() {
   const [imageInput, setImageInput] = useState("");
   const [stats, setStats] = useState({ ventes: 0, vues: 0, avis: 0, commandes: 0 });
   const [devise, setDevise] = useState("FCFA");
+  const [variantes, setVariantes] = useState<{ id?: string; nom: string; valeur: string; sku: string; prix: string; stock: string; image: string; actif: boolean }[]>([]);
+  const [varianteForm, setVarianteForm] = useState({ nom: "Taille", valeur: "", sku: "", prix: "", stock: "0", image: "" });
+  const [savingVariante, setSavingVariante] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -101,9 +104,47 @@ export default function EditProduitPage() {
           urlFournisseur: p.urlFournisseur ?? "",
           nomFournisseur: p.nomFournisseur ?? "",
         });
+        // Load variantes
+        if (p.variantes?.length) {
+          setVariantes(p.variantes.map((v: any) => ({
+            id: v.id, nom: v.nom, valeur: v.valeur,
+            sku: v.sku ?? "", prix: v.prix?.toString() ?? "", stock: v.stock?.toString() ?? "0",
+            image: v.image ?? "", actif: v.actif ?? true,
+          })));
+        }
         setLoading(false);
       });
   }, [id]);
+
+  async function ajouterVariante() {
+    if (!varianteForm.valeur) return;
+    setSavingVariante(true);
+    try {
+      const res = await fetch(`/api/produits/${id}/variantes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nom: varianteForm.nom, valeur: varianteForm.valeur,
+          sku: varianteForm.sku || null,
+          prix: varianteForm.prix ? parseFloat(varianteForm.prix) : null,
+          stock: parseInt(varianteForm.stock) || 0,
+          image: varianteForm.image || null,
+        }),
+      });
+      const d = await res.json();
+      setVariantes(vs => [...vs, { ...varianteForm, id: d.variante?.id, actif: true }]);
+      setVarianteForm(v => ({ ...v, valeur: "", sku: "", prix: "", stock: "0", image: "" }));
+      toast.success("Variante ajoutée");
+    } catch { toast.error("Erreur ajout variante"); }
+    finally { setSavingVariante(false); }
+  }
+
+  async function supprimerVariante(varianteId: string | undefined, idx: number) {
+    if (!varianteId) { setVariantes(vs => vs.filter((_, i) => i !== idx)); return; }
+    await fetch(`/api/produits/${id}/variantes?varianteId=${varianteId}`, { method: "DELETE" }).catch(() => null);
+    setVariantes(vs => vs.filter((_, i) => i !== idx));
+    toast.success("Variante supprimée");
+  }
 
   function set(field: string, value: any) {
     setFormState(f => ({ ...f, [field]: value }));
@@ -606,6 +647,52 @@ export default function EditProduitPage() {
               </div>
             )}
           </div>
+
+          {/* ─── Variantes ─── */}
+          {form.type !== "digital" && (
+            <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[13px] font-semibold text-[#111111]">Variantes</h2>
+                <span className="text-[11px] bg-[#F5A623]/10 text-[#F5A623] px-2 py-0.5 rounded-full">{variantes.length} variante(s)</span>
+              </div>
+              {/* Existantes */}
+              {variantes.length > 0 && (
+                <div className="space-y-1.5">
+                  {variantes.map((v, idx) => (
+                    <div key={idx} className="flex items-center gap-2 bg-[#FAFAFA] rounded-xl px-3 py-2">
+                      <span className="text-[11px] bg-[#F5A623]/15 text-[#F5A623] px-2 py-0.5 rounded-full font-medium">{v.nom}</span>
+                      <span className="text-[12px] font-semibold text-[#111] flex-1">{v.valeur}</span>
+                      {v.sku && <span className="text-[10px] text-[#AAA] font-mono">{v.sku}</span>}
+                      <span className="text-[12px] text-[#F5A623] font-bold">{v.prix || form.prix} XAF</span>
+                      <span className="text-[11px] text-[#888]">S:{v.stock}</span>
+                      <button onClick={() => supprimerVariante(v.id, idx)} className="text-red-400 hover:text-red-600 ml-1 text-xs">✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Formulaire ajout */}
+              <div className="bg-[#FAFAFA] rounded-xl p-3 space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <select value={varianteForm.nom} onChange={e => setVarianteForm(v => ({ ...v, nom: e.target.value }))}
+                    className="border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white">
+                    {["Taille","Couleur","Matière","Poids","Modèle","Style","Pack"].map(n => <option key={n}>{n}</option>)}
+                  </select>
+                  <input className="border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white" placeholder="Valeur (ex: XL, Rouge)"
+                    value={varianteForm.valeur} onChange={e => setVarianteForm(v => ({ ...v, valeur: e.target.value }))} />
+                  <input className="border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white" placeholder="SKU (optionnel)"
+                    value={varianteForm.sku} onChange={e => setVarianteForm(v => ({ ...v, sku: e.target.value }))} />
+                  <input className="border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white" placeholder={`Prix (défaut: ${form.prix})`} type="number"
+                    value={varianteForm.prix} onChange={e => setVarianteForm(v => ({ ...v, prix: e.target.value }))} />
+                  <input className="border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white" placeholder="Stock" type="number"
+                    value={varianteForm.stock} onChange={e => setVarianteForm(v => ({ ...v, stock: e.target.value }))} />
+                </div>
+                <button onClick={ajouterVariante} disabled={!varianteForm.valeur || savingVariante}
+                  className="w-full py-2 rounded-xl border-2 border-dashed border-[#F5A623]/40 text-[12px] text-[#F5A623] font-semibold hover:bg-[#FFF8EC] transition-all disabled:opacity-40">
+                  {savingVariante ? "..." : "+ Ajouter cette variante"}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Options */}
           <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
