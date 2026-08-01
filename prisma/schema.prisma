@@ -35,6 +35,10 @@ model Tenant {
   socialLinks         Json     @default("{}")
   parametresPaiement  Json     @default("{}")
   parametresLivraison Json     @default("{}")
+  tauxTVA             Float    @default(0)
+  kycStatut           String   @default("non_soumis") // non_soumis | en_cours | valide | rejete
+  kycDocUrl           String?
+  snapActif           Boolean  @default(false)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
@@ -94,10 +98,15 @@ model Produit {
   prixFournisseur Float?   // Prix d'achat fournisseur
   urlFournisseur  String?  // URL source produit fournisseur
   nomFournisseur  String?  // Nom du fournisseur
+  fournisseurId   String?  // FK vers Fournisseur
+  // Stock
+  stockMin        Int?     // seuil de réapprovisionnement (alerte AXIA)
+  stockReserve    Int      @default(0) // stock réservé par paniers actifs
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   tenant         Tenant          @relation(fields: [tenantId], references: [id])
+  fournisseur    Fournisseur?    @relation(fields: [fournisseurId], references: [id])
   variantes      Variante[]
   collections    Collection[]    @relation("ProduitCollection")
   lignesCommande LigneCommande[]
@@ -224,6 +233,8 @@ model Commande {
   escrow     Escrow?
   codePromo  CodePromo?      @relation(fields: [codePromoId], references: [id])
   affiliationCommission AffiliationCommission?
+  retours    RetourRMA[]
+  facture    Facture?
 }
 
 // =====================
@@ -934,5 +945,211 @@ model CampagneEmail {
   source    String   @default("resend")  // resend | gmail
   createdAt DateTime @default(now())
 
+  @@index([tenantId])
+}
+
+// =====================
+// RÈGLE DE PORT (Moteur livraison)
+// =====================
+model ReglePort {
+  id           String   @id @default(cuid())
+  tenantId     String
+  nom          String
+  zone         String   // ex: "Cameroun", "UEMOA", "International"
+  poidsMin     Float    @default(0)   // kg
+  poidsMax     Float?                 // null = illimité
+  montantMin   Float?                 // montant commande min pour activer
+  montantMax   Float?
+  frais        Float                  // frais fixes
+  fraisKg      Float    @default(0)  // par kg supplémentaire
+  delai        String   @default("3-5 jours")
+  transporteur String?  // Campost | DHL | MTN Delivery | Sendbox | ...
+  gratuit      Boolean  @default(false)
+  actif        Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([tenantId, actif])
+}
+
+// =====================
+// FOURNISSEUR DROPSHIPPING
+// =====================
+model Fournisseur {
+  id             String   @id @default(cuid())
+  tenantId       String
+  nom            String
+  pays           String   @default("Chine")
+  type           String   @default("aliexpress") // aliexpress | cj | jumia | local | autre
+  url            String?
+  email          String?
+  telephone      String?
+  delaiLivraison Int      @default(15)  // jours
+  fiabilite      Float    @default(4.0) // 1–5
+  margeAuto      Float    @default(0.30) // marge par défaut 30%
+  actif          Boolean  @default(true)
+  catalogueCount Int      @default(0)
+  livraisonsTotal Int     @default(0)
+  livraisonsOk   Int      @default(0)
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  produits Produit[]
+
+  @@index([tenantId, actif])
+}
+
+// =====================
+// RETOUR / RMA
+// =====================
+model RetourRMA {
+  id          String   @id @default(cuid())
+  tenantId    String
+  commandeId  String
+  clientNom   String
+  clientEmail String
+  raison      String   // defaut | erreur_commande | change_avis | endommage | non_recu
+  description String?
+  type        String   @default("remboursement") // remboursement | echange | avoir
+  statut      String   @default("ouvert")        // ouvert | en_cours | accepte | rejete | clos
+  montant     Float?
+  notes       String?
+  preuveUrls  String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  commande Commande @relation(fields: [commandeId], references: [id])
+
+  @@index([tenantId, statut])
+  @@index([commandeId])
+}
+
+// =====================
+// FACTURE
+// =====================
+model Facture {
+  id            String   @id @default(cuid())
+  tenantId      String
+  commandeId    String   @unique
+  numero        String   @unique // FAC-2025-001
+  clientNom     String
+  clientEmail   String
+  clientAdresse String?
+  lignes        Json     // [{nom, quantite, prixHT, tauxTVA, prixTTC}]
+  montantHT     Float
+  tauxTVA       Float    @default(0)
+  montantTVA    Float    @default(0)
+  montantTTC    Float
+  devise        String   @default("XAF")
+  statut        String   @default("emise") // emise | payee | annulee
+  pdfUrl        String?
+  emiseAt       DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  commande Commande @relation(fields: [commandeId], references: [id])
+
+  @@index([tenantId])
+}
+
+// =====================
+// RÉSERVATION STOCK (panier actif)
+// =====================
+model StockReservation {
+  id         String   @id @default(cuid())
+  tenantId   String
+  produitId  String
+  varianteId String?
+  sessionId  String
+  quantite   Int
+  expireAt   DateTime  // TTL 30 min
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId, produitId])
+  @@index([sessionId])
+  @@index([expireAt])
+}
+
+// =====================
+// POPUP / BANDEAU COMPORTEMENTAL
+// =====================
+model PopupCampagne {
+  id          String   @id @default(cuid())
+  tenantId    String
+  nom         String
+  type        String   @default("popup") // popup | bandeau | slide_in
+  declencheur String   @default("delai") // delai | exit_intent | scroll | premiere_visite
+  delaiSec    Int      @default(5)
+  titre       String
+  message     String
+  ctaTexte    String?
+  ctaUrl      String?
+  imageUrl    String?
+  codePromo   String?
+  actif       Boolean  @default(true)
+  affichages  Int      @default(0)
+  clics       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, actif])
+}
+
+// =====================
+// COMPTE ACHETEUR (storefront)
+// =====================
+model CompteAcheteur {
+  id           String   @id @default(cuid())
+  tenantId     String
+  email        String
+  nom          String
+  telephone    String?
+  adresse      String?
+  ville        String?
+  pays         String?
+  passwordHash String?
+  token        String?
+  tokenExpire  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([tenantId, email])
+  @@index([token])
+}
+
+// =====================
+// AUTOMATION / SÉQUENCES
+// =====================
+model AutomationWorkflow {
+  id             String   @id @default(cuid())
+  tenantId       String
+  nom            String
+  type           String   // panier_abandonne | bienvenue | apres_achat | anniversaire | inactif
+  actif          Boolean  @default(true)
+  delaiHeures    Int      @default(1)
+  canal          String   @default("email") // email | sms | whatsapp
+  sujet          String?
+  message        String
+  declenchements Int      @default(0)
+  conversions    Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([tenantId, type, actif])
+}
+
+// =====================
+// BADGE / TROPHÉE MARCHAND
+// =====================
+model BadgeMarchand {
+  id          String   @id @default(cuid())
+  tenantId    String
+  type        String   // premiere_vente | 10_commandes | 100_commandes | 1m_xaf | top_vendeur
+  titre       String
+  description String?
+  emoji       String   @default("🏆")
+  obtenueAt   DateTime @default(now())
+
+  @@unique([tenantId, type])
   @@index([tenantId])
 }

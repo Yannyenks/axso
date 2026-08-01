@@ -556,6 +556,162 @@ const OUTILS: AgentTool[] = [
       required: ["raison"],
     },
   },
+  // ─── LOGISTIQUE AVANCÉE ───────────────────────────────────────────────────
+  {
+    name: "calculer_frais_livraison",
+    description: "Calcule les frais de livraison pour une commande selon la zone et le poids",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        zone: { type: "string", description: "Pays ou zone de destination (ex: Cameroun, UEMOA)" },
+        poids: { type: "number", description: "Poids total en kg (optionnel)" },
+        montantCommande: { type: "number", description: "Montant total de la commande" },
+      },
+      required: ["zone"],
+    },
+  },
+  {
+    name: "lister_regles_livraison",
+    description: "Liste toutes les règles tarifaires de livraison configurées",
+    parameters: { type: "object" as const, properties: {}, required: [] },
+  },
+  // ─── RETOURS / RMA ────────────────────────────────────────────────────────
+  {
+    name: "creer_retour",
+    description: "Crée une demande de retour (remboursement, échange ou avoir) pour une commande",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        commandeId: { type: "string", description: "ID ou numéro de la commande" },
+        raison: { type: "string", enum: ["defaut", "erreur_commande", "change_avis", "endommage", "non_recu"] },
+        type: { type: "string", enum: ["remboursement", "echange", "avoir"] },
+        description: { type: "string", description: "Détails supplémentaires" },
+      },
+      required: ["commandeId", "raison"],
+    },
+  },
+  {
+    name: "lister_retours",
+    description: "Liste les demandes de retour (RMA) avec leur statut",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        statut: { type: "string", enum: ["ouvert", "en_cours", "accepte", "rejete", "clos"] },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "mettre_a_jour_retour",
+    description: "Met à jour le statut d'un retour (accepter, rejeter, clore)",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        retourId: { type: "string" },
+        statut: { type: "string", enum: ["en_cours", "accepte", "rejete", "clos"] },
+        notes: { type: "string", description: "Notes internes" },
+      },
+      required: ["retourId", "statut"],
+    },
+  },
+  // ─── FACTURATION ──────────────────────────────────────────────────────────
+  {
+    name: "generer_facture",
+    description: "Génère automatiquement une facture pour une commande",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        commandeId: { type: "string", description: "ID de la commande" },
+      },
+      required: ["commandeId"],
+    },
+  },
+  {
+    name: "lister_factures",
+    description: "Liste les factures générées avec leur statut de paiement",
+    parameters: {
+      type: "object" as const,
+      properties: { limite: { type: "number" } },
+      required: [],
+    },
+  },
+  // ─── FOURNISSEURS ─────────────────────────────────────────────────────────
+  {
+    name: "lister_fournisseurs",
+    description: "Liste les fournisseurs dropshipping avec leur fiabilité et marges",
+    parameters: { type: "object" as const, properties: {}, required: [] },
+  },
+  {
+    name: "ajouter_fournisseur",
+    description: "Ajoute un nouveau fournisseur dropshipping",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        nom: { type: "string" },
+        type: { type: "string", enum: ["aliexpress", "cj", "jumia", "local", "autre"] },
+        pays: { type: "string" },
+        url: { type: "string" },
+        delaiLivraison: { type: "number" },
+        margeAuto: { type: "number", description: "Marge en pourcentage (ex: 30 = 30%)" },
+      },
+      required: ["nom"],
+    },
+  },
+  // ─── POPUPS & BANDEAUX ────────────────────────────────────────────────────
+  {
+    name: "creer_popup",
+    description: "Crée un popup ou bandeau promotionnel sur la boutique",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        nom: { type: "string" },
+        type: { type: "string", enum: ["popup", "bandeau", "slide_in"] },
+        declencheur: { type: "string", enum: ["delai", "exit_intent", "premiere_visite"] },
+        titre: { type: "string" },
+        message: { type: "string" },
+        codePromo: { type: "string" },
+        ctaTexte: { type: "string" },
+        ctaUrl: { type: "string" },
+        delaiSec: { type: "number" },
+      },
+      required: ["nom", "titre", "message"],
+    },
+  },
+  // ─── AUTOMATION ───────────────────────────────────────────────────────────
+  {
+    name: "creer_automation",
+    description: "Crée une séquence marketing automatique (panier abandonné, bienvenue, etc.)",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        nom: { type: "string" },
+        type: { type: "string", enum: ["panier_abandonne", "bienvenue", "apres_achat", "anniversaire", "inactif"] },
+        canal: { type: "string", enum: ["email", "sms", "whatsapp"] },
+        message: { type: "string" },
+        sujet: { type: "string" },
+        delaiHeures: { type: "number" },
+      },
+      required: ["nom", "type", "message"],
+    },
+  },
+  // ─── GAMIFICATION ─────────────────────────────────────────────────────────
+  {
+    name: "verifier_badges",
+    description: "Vérifie et attribue les badges/trophées mérités selon les performances de la boutique",
+    parameters: { type: "object" as const, properties: {}, required: [] },
+  },
+  // ─── ANALYSE AVIS ─────────────────────────────────────────────────────────
+  {
+    name: "analyser_avis",
+    description: "Analyse les avis clients et génère des insights et recommandations",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        produitId: { type: "string", description: "Filtrer par produit (optionnel)" },
+      },
+      required: [],
+    },
+  },
   // ─── AGENTS SPÉCIALISÉS ───────────────────────────────────────────────────
   {
     name: "deleguer_vers_agent",
@@ -917,6 +1073,206 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
           }).catch(() => null);
         } catch { /* notification table may not exist */ }
         return { succes: true, resultat: `Escalade enregistrée (urgence: ${urgenceLabel}). L'équipe sera notifiée pour traiter : ${args.raison}` };
+      }
+
+      case "calculer_frais_livraison": {
+        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true } });
+        const dev = tenant?.devise ?? "XAF";
+        const regles = await (prisma as any).reglePort.findMany({ where: { tenantId, actif: true }, orderBy: { frais: "asc" } }).catch(() => []);
+        if (!regles.length) return { succes: true, resultat: "Aucune règle tarifaire configurée. Accède à Livraison → Règles tarifaires pour en créer." };
+        const poids = args.poids ?? 0;
+        const montantCommande = args.montantCommande ?? 0;
+        const zone = args.zone ?? "";
+        const matching = regles.filter((r: any) => {
+          const zm = r.zone.toLowerCase().includes(zone.toLowerCase()) || zone.toLowerCase().includes(r.zone.toLowerCase());
+          const pm = poids >= r.poidsMin && (r.poidsMax === null || poids <= r.poidsMax);
+          const mm = (r.montantMin === null || montantCommande >= r.montantMin);
+          return zm && pm && mm;
+        });
+        if (!matching.length) return { succes: true, resultat: `Aucune règle pour la zone "${zone}". Configure une règle internationale ou spécifique.` };
+        const options = matching.map((r: any) => `• ${r.nom} (${r.transporteur ?? "Standard"}) : ${r.gratuit ? "Gratuit" : `${r.frais + Math.max(0, poids - r.poidsMin) * r.fraisKg} ${dev}`} — ${r.delai}`).join("\n");
+        return { succes: true, resultat: `Frais de livraison pour ${zone} (${poids}kg, ${montantCommande} ${dev}):\n${options}` };
+      }
+
+      case "lister_regles_livraison": {
+        const regles = await (prisma as any).reglePort.findMany({ where: { tenantId }, orderBy: { zone: "asc" } }).catch(() => []);
+        if (!regles.length) return { succes: true, resultat: "Aucune règle configurée. Va dans Livraison → Règles tarifaires." };
+        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true } });
+        const dev = tenant?.devise ?? "XAF";
+        const lines = regles.map((r: any) => `• ${r.nom} | Zone: ${r.zone} | ${r.gratuit ? "Gratuit" : `${r.frais} ${dev} (+${r.fraisKg}/kg)`} | ${r.delai} | ${r.actif ? "Actif" : "Inactif"}`).join("\n");
+        return { succes: true, resultat: `${regles.length} règle(s) de livraison:\n${lines}` };
+      }
+
+      case "creer_retour": {
+        // Find the order
+        const commande = await prisma.commande.findFirst({
+          where: { tenantId, OR: [{ id: args.commandeId }, { numero: { contains: args.commandeId } }] },
+          select: { id: true, numero: true, clientNom: true, clientEmail: true, montantTotal: true, devise: true },
+        });
+        if (!commande) return { succes: false, resultat: `Commande introuvable : "${args.commandeId}"` };
+        const retour = await (prisma as any).retourRMA.create({
+          data: {
+            tenantId, commandeId: commande.id,
+            clientNom: commande.clientNom, clientEmail: commande.clientEmail,
+            raison: args.raison, description: args.description ?? null,
+            type: args.type ?? "remboursement",
+            montant: commande.montantTotal,
+          },
+        }).catch(() => null);
+        if (!retour) return { succes: false, resultat: "Erreur lors de la création du retour." };
+        return { succes: true, resultat: `✅ Retour créé pour la commande ${commande.numero} (${commande.clientNom}) — Type: ${args.type ?? "remboursement"} — Raison: ${args.raison}` };
+      }
+
+      case "lister_retours": {
+        const where: any = { tenantId };
+        if (args.statut) where.statut = args.statut;
+        const retours = await (prisma as any).retourRMA.findMany({ where, take: 15, orderBy: { createdAt: "desc" } }).catch(() => []);
+        if (!retours.length) return { succes: true, resultat: "Aucun retour" + (args.statut ? ` avec le statut "${args.statut}"` : "") + "." };
+        const lines = retours.map((r: any) => `• Cmd ${r.commandeId.slice(-8)} | ${r.clientNom} | ${r.raison} → ${r.type} | ${r.statut} | ${r.montant ?? "?"}${r.createdAt ? ` | ${new Date(r.createdAt).toLocaleDateString("fr")}` : ""}`).join("\n");
+        return { succes: true, resultat: `${retours.length} retour(s):\n${lines}` };
+      }
+
+      case "mettre_a_jour_retour": {
+        const retour = await (prisma as any).retourRMA.findFirst({ where: { id: args.retourId, tenantId } }).catch(() => null);
+        if (!retour) return { succes: false, resultat: "Retour introuvable." };
+        await (prisma as any).retourRMA.update({ where: { id: args.retourId }, data: { statut: args.statut, notes: args.notes ?? retour.notes } }).catch(() => null);
+        // Restore stock if accepted
+        if (args.statut === "accepte" && retour.type === "remboursement") {
+          const lignes = await prisma.ligneCommande.findMany({ where: { commandeId: retour.commandeId } });
+          for (const l of lignes) await prisma.produit.update({ where: { id: l.produitId }, data: { stock: { increment: l.quantite } } }).catch(() => null);
+          await prisma.commande.update({ where: { id: retour.commandeId }, data: { statut: "remboursee" } }).catch(() => null);
+        }
+        return { succes: true, resultat: `✅ Retour mis à jour : statut → ${args.statut}${args.statut === "accepte" && retour.type === "remboursement" ? " (stock restauré, commande marquée remboursée)" : ""}` };
+      }
+
+      case "generer_facture": {
+        const commande = await prisma.commande.findFirst({
+          where: { tenantId, OR: [{ id: args.commandeId }, { numero: { contains: args.commandeId } }] },
+          include: { lignes: true },
+        });
+        if (!commande) return { succes: false, resultat: "Commande introuvable." };
+        const existing = await (prisma as any).facture.findFirst({ where: { commandeId: commande.id } }).catch(() => null);
+        if (existing) return { succes: true, resultat: `Facture ${existing.numero} déjà générée (statut: ${existing.statut}).` };
+        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { tauxTVA: true, devise: true } });
+        const tauxTVA = (tenant as any)?.tauxTVA ?? 0;
+        const count = await (prisma as any).facture.count({ where: { tenantId } }).catch(() => 0);
+        const numero = `FAC-${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`;
+        const montantHT = tauxTVA > 0 ? commande.montantSousTotal / (1 + tauxTVA) : commande.montantSousTotal;
+        const facture = await (prisma as any).facture.create({
+          data: {
+            tenantId, commandeId: commande.id, numero,
+            clientNom: commande.clientNom, clientEmail: commande.clientEmail, clientAdresse: commande.adresseLivraison,
+            lignes: commande.lignes.map((l: any) => ({ nom: l.nom, quantite: l.quantite, prixHT: l.prix, tauxTVA, prixTTC: l.prix })),
+            montantHT, tauxTVA, montantTVA: commande.montantSousTotal - montantHT, montantTTC: commande.montantTotal, devise: commande.devise,
+            statut: commande.paiementStatut === "paid" ? "payee" : "emise",
+          },
+        }).catch(() => null);
+        if (!facture) return { succes: false, resultat: "Erreur lors de la génération de la facture." };
+        return { succes: true, resultat: `✅ Facture ${numero} générée pour ${commande.clientNom} — ${commande.montantTotal} ${commande.devise}` };
+      }
+
+      case "lister_factures": {
+        const factures = await (prisma as any).facture.findMany({ where: { tenantId }, take: args.limite ?? 10, orderBy: { emiseAt: "desc" } }).catch(() => []);
+        if (!factures.length) return { succes: true, resultat: "Aucune facture générée pour l'instant." };
+        const lines = factures.map((f: any) => `• ${f.numero} | ${f.clientNom} | ${f.montantTTC} ${f.devise} | ${f.statut} | ${new Date(f.emiseAt).toLocaleDateString("fr")}`).join("\n");
+        return { succes: true, resultat: `${factures.length} facture(s):\n${lines}` };
+      }
+
+      case "lister_fournisseurs": {
+        const fournisseurs = await (prisma as any).fournisseur.findMany({ where: { tenantId }, orderBy: { fiabilite: "desc" } }).catch(() => []);
+        if (!fournisseurs.length) return { succes: true, resultat: "Aucun fournisseur configuré. Ajoute-en un depuis Dropshipping." };
+        const lines = fournisseurs.map((f: any) => `• ${f.nom} (${f.type}) | ${f.pays} | Délai: ${f.delaiLivraison}j | Fiabilité: ${f.fiabilite}/5 | Marge auto: ${Math.round(f.margeAuto * 100)}%`).join("\n");
+        return { succes: true, resultat: `${fournisseurs.length} fournisseur(s):\n${lines}` };
+      }
+
+      case "ajouter_fournisseur": {
+        const f = await (prisma as any).fournisseur.create({
+          data: {
+            tenantId, nom: args.nom, type: args.type ?? "local", pays: args.pays ?? "Cameroun",
+            url: args.url ?? null, delaiLivraison: args.delaiLivraison ?? 7,
+            margeAuto: (args.margeAuto ?? 30) / 100,
+          },
+        }).catch((e: any) => ({ error: e.message }));
+        if ((f as any).error) return { succes: false, resultat: `Erreur: ${(f as any).error}` };
+        return { succes: true, resultat: `✅ Fournisseur "${args.nom}" ajouté — Marge auto: ${args.margeAuto ?? 30}%` };
+      }
+
+      case "creer_popup": {
+        const popup = await (prisma as any).popupCampagne.create({
+          data: {
+            tenantId, nom: args.nom, type: args.type ?? "popup",
+            declencheur: args.declencheur ?? "delai", delaiSec: args.delaiSec ?? 5,
+            titre: args.titre, message: args.message,
+            ctaTexte: args.ctaTexte ?? null, ctaUrl: args.ctaUrl ?? null, codePromo: args.codePromo ?? null,
+          },
+        }).catch((e: any) => ({ error: e.message }));
+        if ((popup as any).error) return { succes: false, resultat: `Erreur: ${(popup as any).error}` };
+        return { succes: true, resultat: `✅ Popup "${args.nom}" créé et actif sur ta boutique — Déclencheur: ${args.declencheur ?? "delai"}` };
+      }
+
+      case "creer_automation": {
+        const wf = await (prisma as any).automationWorkflow.create({
+          data: {
+            tenantId, nom: args.nom, type: args.type,
+            canal: args.canal ?? "email", message: args.message,
+            sujet: args.sujet ?? null, delaiHeures: args.delaiHeures ?? 1,
+          },
+        }).catch((e: any) => ({ error: e.message }));
+        if ((wf as any).error) return { succes: false, resultat: `Erreur: ${(wf as any).error}` };
+        const typeLabels: Record<string, string> = { panier_abandonne: "panier abandonné", bienvenue: "bienvenue", apres_achat: "après achat", anniversaire: "anniversaire", inactif: "relance inactifs" };
+        return { succes: true, resultat: `✅ Automation "${args.nom}" créée — Type: ${typeLabels[args.type] ?? args.type} — Canal: ${args.canal ?? "email"} — Déclenché après ${args.delaiHeures ?? 1}h` };
+      }
+
+      case "verifier_badges": {
+        const [nbCommandes, caTotal, nbProduits, avisStats] = await Promise.all([
+          prisma.commande.count({ where: { tenantId, statut: { notIn: ["annulee", "remboursee"] } } }),
+          prisma.commande.aggregate({ where: { tenantId, statut: { notIn: ["annulee", "remboursee"] } }, _sum: { montantTotal: true } }),
+          prisma.produit.count({ where: { tenantId, actif: true } }),
+          prisma.avis.aggregate({ where: { tenantId, approuve: true }, _avg: { note: true }, _count: true }),
+        ]);
+        const ca = caTotal._sum.montantTotal ?? 0;
+        const existing = await (prisma as any).badgeMarchand.findMany({ where: { tenantId } }).catch(() => []);
+        const obtenuTypes = new Set(existing.map((b: any) => b.type));
+        const BADGES = [
+          { type: "premiere_vente", titre: "Première vente", emoji: "🎉", cond: nbCommandes >= 1 },
+          { type: "10_commandes", titre: "10 commandes", emoji: "🔟", cond: nbCommandes >= 10 },
+          { type: "50_commandes", titre: "50 commandes", emoji: "🚀", cond: nbCommandes >= 50 },
+          { type: "100_commandes", titre: "Centenaire", emoji: "💯", cond: nbCommandes >= 100 },
+          { type: "1m_xaf", titre: "Premier million", emoji: "💰", cond: ca >= 1_000_000 },
+          { type: "catalogue_riche", titre: "Catalogue riche", emoji: "📦", cond: nbProduits >= 10 },
+          { type: "avis_parfaits", titre: "5 étoiles", emoji: "⭐", cond: (avisStats._count >= 5) && ((avisStats._avg.note ?? 0) >= 4.8) },
+        ];
+        const nouveaux = BADGES.filter(b => b.cond && !obtenuTypes.has(b.type));
+        if (nouveaux.length > 0) {
+          await (prisma as any).badgeMarchand.createMany({
+            data: nouveaux.map(b => ({ tenantId, type: b.type, titre: b.titre, emoji: b.emoji })),
+            skipDuplicates: true,
+          }).catch(() => null);
+        }
+        const obtenus = BADGES.filter(b => obtenuTypes.has(b.type) || b.cond);
+        const reste = BADGES.filter(b => !obtenuTypes.has(b.type) && !b.cond);
+        const r = nouveaux.length > 0
+          ? `🎉 Nouveau(x) badge(s) obtenu(s) : ${nouveaux.map(b => `${b.emoji} ${b.titre}`).join(", ")}\n`
+          : "";
+        return { succes: true, resultat: `${r}Badges obtenus : ${obtenus.map(b => `${b.emoji} ${b.titre}`).join(", ") || "aucun"}\nÀ débloquer : ${reste.map(b => b.titre).join(", ") || "tous obtenus !"}` };
+      }
+
+      case "analyser_avis": {
+        const where: any = { tenantId, approuve: true };
+        if (args.produitId) where.produitId = args.produitId;
+        const [avis, tenant] = await Promise.all([
+          prisma.avis.findMany({ where, select: { note: true, commentaire: true, createdAt: true }, take: 50, orderBy: { createdAt: "desc" } }),
+          prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true } }),
+        ]);
+        if (!avis.length) return { succes: true, resultat: "Pas encore d'avis approuvés à analyser." };
+        const moy = avis.reduce((s, a) => s + a.note, 0) / avis.length;
+        const dist = [1, 2, 3, 4, 5].map(n => ({ note: n, count: avis.filter(a => a.note === n).length }));
+        const distStr = dist.map(d => `${d.note}★: ${d.count}`).join(", ");
+        const commentaires = avis.filter(a => a.commentaire).map(a => `${a.note}★: "${a.commentaire}"`).slice(0, 10).join("\n");
+        return {
+          succes: true,
+          resultat: `Analyse ${avis.length} avis — Note moyenne: ${moy.toFixed(1)}/5\nDistribution: ${distStr}\n\nDerniers commentaires:\n${commentaires}\n\nContexte disponible pour générer des insights.`,
+        };
       }
 
       case "deleguer_vers_agent": {
