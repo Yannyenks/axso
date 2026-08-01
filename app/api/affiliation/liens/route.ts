@@ -22,6 +22,18 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ liens });
 }
 
+// PATCH — mise à jour (cookieJours, actif, etc.)
+export async function PATCH(req: NextRequest) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  const body = await req.json();
+  const data: any = {};
+  if (body.cookieJours !== undefined) data.cookieJours = body.cookieJours;
+  if (body.actif !== undefined) data.actif = body.actif;
+  const lien = await prisma.affiliationLien.update({ where: { id: body.id }, data });
+  return NextResponse.json({ lien });
+}
+
 // DELETE — désactive un lien
 export async function DELETE(req: NextRequest) {
   const session = await auth();

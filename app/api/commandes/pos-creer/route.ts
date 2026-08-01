@@ -1,0 +1,85 @@
+// POS — Créer une commande en boutique physique
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+export async function POST(req: Request) {
+  const session = await auth();
+  if (!session?.user?.tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  const tenantId = session.user.tenantId;
+
+  const body = await req.json();
+  const { clientNom, clientTelephone, items, methode, montantTotal, montantReduction = 0 } = body;
+  if (!items?.length) return NextResponse.json({ error: "Panier vide" }, { status: 400 });
+
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true, slug: true } });
+  const devise = tenant?.devise ?? "XAF";
+
+  // Auto-create or find client
+  let client = await prisma.client.findFirst({ where: { tenantId, OR: [{ email: "pos@local" }] } });
+  if (!client) {
+    client = await prisma.client.create({ data: { tenantId, nom: clientNom, email: "pos@local", telephone: clientTelephone } });
+  }
+
+  const sousTotal = items.reduce((s: number, i: any) => s + i.prix * i.quantite, 0);
+  const count = await prisma.commande.count({ where: { tenantId } });
+  const numero = `CMD-${new Date().getFullYear()}-${String(count + 1).padStart(5, "0")}`;
+
+  const commande = await prisma.commande.create({
+    data: {
+      tenantId,
+      numero,
+      clientId: client.id,
+      clientNom,
+      clientEmail: "pos@local",
+      clientTelephone,
+      adresseLivraison: "Vente en boutique",
+      ville: "Local",
+      pays: "CM",
+      montantSousTotal: sousTotal,
+      montantLivraison: 0,
+      montantReduction,
+      montantTotal,
+      devise,
+      statut: "livree",
+      paiementStatut: "paid",
+      methodePaiement: methode,
+      livraisonStatut: "livree",
+      lignes: {
+        create: items.map((i: any) => ({
+          produitId: i.produitId,
+          nom: i.nom,
+          prix: i.prix,
+          quantite: i.quantite,
+          imageUrl: i.imageUrl || null,
+          variante: i.variante || null,
+        })),
+      },
+    },
+  });
+
+  // Deduct stock
+  for (const item of items) {
+    await prisma.produit.update({
+      where: { id: item.produitId },
+      data: { stock: { decrement: item.quantite }, ventes: { increment: item.quantite } },
+    }).catch(() => null);
+  }
+
+  // Generate invoice automatically for POS sales
+  try {
+    const factureCount = await (prisma as any).facture.count({ where: { tenantId } });
+    const numeroFac = `FAC-${new Date().getFullYear()}-${String(factureCount + 1).padStart(4, "0")}`;
+    await (prisma as any).facture.create({
+      data: {
+        tenantId, commandeId: commande.id, numero: numeroFac,
+        clientNom, clientEmail: "pos@local", clientAdresse: "Vente en boutique",
+        montantHT: montantTotal, tauxTVA: 0, montantTVA: 0, montantTTC: montantTotal, devise,
+        lignes: items.map((i: any) => ({ nom: i.nom, quantite: i.quantite, prixHT: i.prix, tauxTVA: 0, prixTTC: i.prix })),
+        statut: "payee",
+      },
+    });
+  } catch {}
+
+  return NextResponse.json({ ok: true, commandeId: commande.id, numero: commande.numero });
+}

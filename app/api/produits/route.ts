@@ -59,12 +59,26 @@ export async function POST(request: Request) {
       );
     }
 
+    const { variantes: variantesInput, ...produitData } = data as any;
+
     const produit = await prisma.produit.create({
-      data: {
-        ...data,
-        tenantId,
-      },
+      data: { ...produitData, tenantId },
     });
+
+    // Create variants if provided
+    if (variantesInput?.length) {
+      await prisma.variante.createMany({
+        data: variantesInput.map((v: any) => ({
+          produitId: produit.id,
+          nom: v.nom,
+          valeur: v.valeur,
+          sku: v.sku || null,
+          prix: v.prix || null,
+          stock: v.stock ?? 0,
+          image: v.image || null,
+        })),
+      });
+    }
 
     return NextResponse.json({ produit }, { status: 201 });
   } catch (err) {

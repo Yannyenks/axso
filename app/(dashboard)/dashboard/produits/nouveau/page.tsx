@@ -61,6 +61,9 @@ export default function NouveauProduitPage() {
   const videoInputRef = useRef<HTMLInputElement>(null);
   const digitalFileRef = useRef<HTMLInputElement>(null);
 
+  const [variantes, setVariantes] = useState<{ nom: string; valeur: string; sku: string; prix: string; stock: string; image: string }[]>([]);
+  const [varianteForm, setVarianteForm] = useState({ nom: "Taille", valeur: "", sku: "", prix: "", stock: "0", image: "" });
+
   const [form, setForm] = useState({
     type: "physique" as "physique" | "digital" | "dropshipping",
     nom: "",
@@ -210,6 +213,14 @@ export default function NouveauProduitPage() {
         payload.prixFournisseur = form.prixFournisseur ? parseFloat(form.prixFournisseur) : undefined;
         payload.urlFournisseur = form.urlFournisseur || undefined;
         payload.nomFournisseur = form.nomFournisseur || undefined;
+      }
+      if (variantes.length > 0) {
+        payload.variantes = variantes.map(v => ({
+          nom: v.nom, valeur: v.valeur, sku: v.sku || undefined,
+          prix: v.prix ? parseFloat(v.prix) : undefined,
+          stock: parseInt(v.stock) || 0,
+          image: v.image || undefined,
+        }));
       }
 
       const res = await fetch("/api/produits", {
@@ -580,6 +591,83 @@ export default function NouveauProduitPage() {
               </div>
             )}
           </div>
+
+          {/* ─── Variantes ─── */}
+          {form.type !== "digital" && (
+            <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[13px] font-semibold text-[#111111]">Variantes (taille, couleur, matière…)</h2>
+                <span className="text-[11px] bg-[#F5A623]/10 text-[#F5A623] px-2 py-0.5 rounded-full">{variantes.length} variante(s)</span>
+              </div>
+
+              {/* Form ajout variante */}
+              <div className="bg-[#FAFAFA] rounded-xl p-3 space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    value={varianteForm.nom}
+                    onChange={e => setVarianteForm(v => ({ ...v, nom: e.target.value }))}
+                    className="border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white"
+                  >
+                    {["Taille","Couleur","Matière","Poids","Modèle","Style","Pack"].map(n => <option key={n}>{n}</option>)}
+                  </select>
+                  <input
+                    className="border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white"
+                    placeholder="Valeur (ex: XL, Rouge)"
+                    value={varianteForm.valeur}
+                    onChange={e => setVarianteForm(v => ({ ...v, valeur: e.target.value }))}
+                  />
+                  <input
+                    className="border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white"
+                    placeholder="SKU (optionnel)"
+                    value={varianteForm.sku}
+                    onChange={e => setVarianteForm(v => ({ ...v, sku: e.target.value }))}
+                  />
+                  <input
+                    className="border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white"
+                    placeholder={`Prix (défaut: ${form.prix || "0"})`}
+                    type="number"
+                    value={varianteForm.prix}
+                    onChange={e => setVarianteForm(v => ({ ...v, prix: e.target.value }))}
+                  />
+                  <input
+                    className="border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white"
+                    placeholder="Stock"
+                    type="number"
+                    value={varianteForm.stock}
+                    onChange={e => setVarianteForm(v => ({ ...v, stock: e.target.value }))}
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    if (!varianteForm.valeur) return;
+                    setVariantes(vs => [...vs, { ...varianteForm }]);
+                    setVarianteForm(v => ({ ...v, valeur: "", sku: "", prix: "", stock: "0", image: "" }));
+                  }}
+                  className="w-full py-2 rounded-xl border-2 border-dashed border-[#F5A623]/40 text-[12px] text-[#F5A623] font-semibold hover:bg-[#FFF8EC] transition-all"
+                >
+                  + Ajouter cette variante
+                </button>
+              </div>
+
+              {/* Liste variantes ajoutées */}
+              {variantes.length > 0 && (
+                <div className="space-y-1.5">
+                  {variantes.map((v, idx) => (
+                    <div key={idx} className="flex items-center gap-3 bg-[#FAFAFA] rounded-xl px-3 py-2">
+                      <span className="text-[11px] bg-[#F5A623]/15 text-[#F5A623] px-2 py-0.5 rounded-full font-medium">{v.nom}</span>
+                      <span className="text-[12px] font-semibold text-[#111] flex-1">{v.valeur}</span>
+                      {v.sku && <span className="text-[10px] text-[#AAA] font-mono">{v.sku}</span>}
+                      <span className="text-[12px] text-[#F5A623] font-bold">{v.prix || form.prix} XAF</span>
+                      <span className="text-[11px] text-[#888]">S:{v.stock}</span>
+                      <button onClick={() => setVariantes(vs => vs.filter((_, i) => i !== idx))} className="text-red-400 hover:text-red-600 ml-1">
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Options */}
           <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">

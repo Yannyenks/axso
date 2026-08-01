@@ -787,6 +787,29 @@ const OUTILS: AgentTool[] = [
       required: ["affilieurId", "montant"],
     },
   },
+  // ─── POS & TVA ────────────────────────────────────────────────────────────
+  {
+    name: "calculer_tva",
+    description: "Calcule la TVA applicable selon la juridiction de la boutique ou d'un pays donné",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        montant: { type: "number", description: "Montant TTC à décomposer" },
+        juridiction: { type: "string", description: "Code pays ISO (CM, FR, SN, CI, NG…) — utilise celui de la boutique par défaut" },
+      },
+      required: ["montant"],
+    },
+  },
+  {
+    name: "sync_fournisseurs",
+    description: "Lance la synchronisation des prix et stocks des produits dropshipping depuis les fournisseurs, et détecte les retards de livraison",
+    parameters: { type: "object" as const, properties: {}, required: [] },
+  },
+  {
+    name: "verifier_retards_fournisseurs",
+    description: "Vérifie les commandes fournisseurs en retard et liste les clients à prévenir",
+    parameters: { type: "object" as const, properties: {}, required: [] },
+  },
   // ─── AGENTS SPÉCIALISÉS ───────────────────────────────────────────────────
   {
     name: "deleguer_vers_agent",
@@ -1410,6 +1433,57 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         }).catch((e: any) => ({ error: e.message }));
         if ((paiement as any).error) return { succes: false, resultat: `Erreur: ${(paiement as any).error}` };
         return { succes: true, resultat: `✅ Paiement de ${args.montant.toLocaleString()} XAF enregistré pour l'affilié ${args.affilieurId} via ${args.methode ?? "mobile money"}` };
+      }
+
+      case "calculer_tva": {
+        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { tauxTVA: true } });
+        const juridiction = args.juridiction ?? "CM";
+        const TVA_RATES: Record<string, { taux: number; nom: string; incluse: boolean }> = {
+          CM: { taux: 0.1925, nom: "TVA Cameroun (19,25%)", incluse: true },
+          CI: { taux: 0.18, nom: "TVA Côte d'Ivoire (18%)", incluse: true },
+          SN: { taux: 0.18, nom: "TVA Sénégal (18%)", incluse: true },
+          FR: { taux: 0.20, nom: "TVA France (20%)", incluse: true },
+          NG: { taux: 0.075, nom: "VAT Nigeria (7,5%)", incluse: false },
+          GH: { taux: 0.15, nom: "VAT Ghana (15%)", incluse: false },
+          MA: { taux: 0.20, nom: "TVA Maroc (20%)", incluse: true },
+          US: { taux: 0, nom: "Pas de TVA fédérale", incluse: false },
+        };
+        const reg = TVA_RATES[juridiction] ?? { taux: tenant?.tauxTVA ?? 0, nom: "Taux personnalisé", incluse: true };
+        const montant = args.montant;
+        const montantHT = reg.incluse ? montant / (1 + reg.taux) : montant;
+        const montantTVA = montant - montantHT;
+        return {
+          succes: true,
+          resultat: `TVA ${juridiction} — ${reg.nom}\nMontant TTC: ${montant.toLocaleString()} XAF\nMontant HT: ${Math.round(montantHT).toLocaleString()} XAF\nTVA: ${Math.round(montantTVA).toLocaleString()} XAF (${Math.round(reg.taux * 100)}%)`,
+        };
+      }
+
+      case "sync_fournisseurs": {
+        const result = await fetch(`${process.env.NEXTAUTH_URL ?? "https://axso.vercel.app"}/api/cron/sync-fournisseurs`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tenantId }),
+        }).then(r => r.json()).catch(() => null);
+        if (!result) return { succes: false, resultat: "Erreur lors de la synchronisation." };
+        return {
+          succes: true,
+          resultat: `Sync terminée — ${result.produitsAnalyses} produits analysés\n• Prix recalculés: ${result.majPrix}\n• Alertes stock bas: ${result.alertesStock}\n• Commandes fournisseur en retard: ${result.commandesEnRetard}`,
+        };
+      }
+
+      case "verifier_retards_fournisseurs": {
+        const maintenant = new Date();
+        const retards = await (prisma as any).commandeFournisseur.findMany({
+          where: { tenantId, statut: { in: ["envoye", "confirme"] }, createdAt: { lt: new Date(maintenant.getTime() - 1000 * 60 * 60 * 24 * 7) } },
+          include: { fournisseur: { select: { nom: true, delaiLivraison: true } }, commande: { select: { numero: true, clientNom: true, clientEmail: true, clientTelephone: true } } },
+          take: 20,
+        }).catch(() => []);
+        if (!retards.length) return { succes: true, resultat: "Aucune commande fournisseur en retard. Tout est à jour !" };
+        const lines = retards.map((cf: any) => {
+          const jours = Math.floor((maintenant.getTime() - new Date(cf.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+          return `• Cmd ${cf.commande.numero} — ${cf.commande.clientNom} — ${cf.fournisseur.nom} — ${jours}j (délai prévu: ${cf.fournisseur.delaiLivraison}j) ⚠️`;
+        }).join("\n");
+        return { succes: true, resultat: `${retards.length} commande(s) fournisseur en retard :\n${lines}\n\n→ Conseillé : contacter les clients pour les prévenir du délai.` };
       }
 
       case "deleguer_vers_agent": {
