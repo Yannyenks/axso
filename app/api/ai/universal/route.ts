@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { aiLimiter, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 import { Resend } from "resend";
 import { runAgent, runAgentStream, type AgentTool, type ToolExecutor } from "@/lib/agent-runner";
+import { MODULE_AGENTS, getAgentById } from "@/lib/agents/definitions";
 import { executerOutilMcp } from "@/lib/mcp/executor";
 import { generateProductImage, buildProductImagePrompt } from "@/lib/image-gen";
 import { pollinationsVideoUrl, pollinationsAudioUrl, pollinationsImageUrl } from "@/lib/llm-client";
@@ -73,6 +74,23 @@ Afrique francophone (Sénégal, Côte d'Ivoire, Cameroun, etc.) + diaspora. Paie
 
 ❌ MAUVAIS — "Voici la liste de vos produits : id=abc123 nom=Savon prix=2500 ventes=3, id=def456 nom=Crème prix=4000 ventes=1..."
 ✓ BON — "Tu as 2 produits qui stagnent : le Savon (3 ventes) et la Crème (1 vente). Je te suggère de créer un pack 'beauté duo' à prix réduit pour les booster. Tu veux que je génère un visuel et un post Instagram ?"
+
+─── AGENTS SPÉCIALISÉS — DÉLÉGATION ─────────────────────────────────────────
+
+Tu as accès à des agents experts pour chaque module. Utilise deleguer_vers_agent dès qu'une tâche nécessite une expertise profonde ou plusieurs actions coordonnées dans un domaine précis. Tu restes l'interlocuteur unique du marchand — les agents travaillent en coulisses et te rapportent leurs résultats que tu présentes naturellement.
+
+Quand déléguer (exemples) :
+- "Audite mon catalogue" → agent produits
+- "Lance une campagne WhatsApp pour les inactifs" → agent marketing
+- "Analyse mes revenus du mois" → agent analytics ou revenus
+- "Mon client se plaint de sa commande" → agent commandes
+- "Optimise le thème de ma boutique" → agent boutique
+- "Génère une vidéo produit pour [article]" → agent contenu
+- "Je cherche de nouveaux produits à vendre" → agent sourcing
+- "Trouve mes meilleurs clients et relance-les" → agent clients
+- "Toutes mes commandes en attente de livreur" → agent livraisons
+
+Tu peux enchaîner plusieurs agents pour des tâches complexes : audit produits → campagne marketing → post Instagram.
 
 ─── CE QUE TU NE FAIS JAMAIS ────────────────────────────────────────────────
 
@@ -538,6 +556,30 @@ const OUTILS: AgentTool[] = [
       required: ["raison"],
     },
   },
+  // ─── AGENTS SPÉCIALISÉS ───────────────────────────────────────────────────
+  {
+    name: "deleguer_vers_agent",
+    description: "Délègue une tâche complexe à l'agent spécialisé du module concerné. Chaque agent a une expertise profonde dans son domaine et exécute les actions nécessaires de façon autonome. Utilise cet outil dès qu'une tâche dépasse une simple requête et nécessite de l'expertise : audit catalogue, campagne marketing complète, analyse financière approfondie, optimisation boutique, gestion logistique, etc.",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        agent: {
+          type: "string",
+          enum: ["produits", "marketing", "analytics", "clients", "livraisons", "boutique", "revenus", "contenu", "commandes", "sourcing", "wallet"],
+          description: "L'agent spécialisé à activer selon le domaine de la tâche",
+        },
+        tache: {
+          type: "string",
+          description: "Description précise de ce que l'agent doit accomplir, avec tout le contexte nécessaire",
+        },
+        contexte_supplementaire: {
+          type: "string",
+          description: "Informations additionnelles de la conversation à transmettre à l'agent (préférences du marchand, contraintes, etc.)",
+        },
+      },
+      required: ["agent", "tache"],
+    },
+  },
 ];
 
 // ─── EXÉCUTEUR ────────────────────────────────────────────────────────────────
@@ -875,6 +917,49 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
           }).catch(() => null);
         } catch { /* notification table may not exist */ }
         return { succes: true, resultat: `Escalade enregistrée (urgence: ${urgenceLabel}). L'équipe sera notifiée pour traiter : ${args.raison}` };
+      }
+
+      case "deleguer_vers_agent": {
+        const agentDef = getAgentById(args.agent);
+        if (!agentDef) return { succes: false, resultat: `Agent inconnu : "${args.agent}". Agents disponibles : ${MODULE_AGENTS.map(a => a.id).join(", ")}` };
+
+        // Récupérer le contexte boutique pour l'injecter dans le prompt de l'agent
+        const tenantCtx = await prisma.tenant.findUnique({
+          where: { id: tenantId },
+          select: { nomBoutique: true, pays: true, devise: true, categorie: true },
+        }).catch(() => null);
+
+        const agentSystemPrompt = [
+          agentDef.systemPrompt,
+          "",
+          `─── CONTEXTE BOUTIQUE ───`,
+          tenantCtx?.nomBoutique ? `Boutique : "${tenantCtx.nomBoutique}"` : "",
+          tenantCtx?.pays ? `Pays : ${tenantCtx.pays}` : "",
+          tenantCtx?.devise ? `Devise : ${tenantCtx.devise}` : "",
+          tenantCtx?.categorie ? `Catégorie : ${tenantCtx.categorie}` : "",
+        ].filter(Boolean).join("\n");
+
+        // Filtrer les outils pour ne donner à l'agent que ceux de son domaine
+        const agentTools = OUTILS.filter(t => agentDef.tools.includes(t.name));
+
+        const tacheComplete = args.contexte_supplementaire
+          ? `${args.tache}\n\nContexte supplémentaire : ${args.contexte_supplementaire}`
+          : args.tache;
+
+        try {
+          const result = await runAgent(
+            agentSystemPrompt,
+            [{ role: "user", content: tacheComplete }],
+            agentTools,
+            tenantId,
+            executeOutil,
+            6,
+          );
+          const reponse = result.reponse || result.actions.join("\n") || "L'agent n'a pas pu compléter la tâche.";
+          return { succes: true, resultat: `[${agentDef.emoji} ${agentDef.nom}]\n${reponse}` };
+        } catch (err: any) {
+          return { succes: false, resultat: `L'agent ${agentDef.nom} a rencontré une erreur : ${err.message?.slice(0, 120)}` };
+        }
       }
 
       default: {
