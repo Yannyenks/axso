@@ -66,6 +66,21 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Auto-routing dropshipping: si des produits ont un fournisseurId, créer CommandeFournisseur
+    try {
+      const dropItems = items.filter((i: any) => i.fournisseurId);
+      if (dropItems.length > 0) {
+        const fournisseurIds = [...new Set(dropItems.map((i: any) => i.fournisseurId as string))];
+        for (const fId of fournisseurIds) {
+          const lignesFournisseur = dropItems.filter((i: any) => i.fournisseurId === fId);
+          const montantFournisseur = lignesFournisseur.reduce((s: number, i: any) => s + ((i.prixFournisseur ?? i.prix * 0.5) * i.quantite), 0);
+          await (prisma as any).commandeFournisseur.create({
+            data: { tenantId: tenant.id, commandeId: commande.id, fournisseurId: fId, montantFournisseur, statut: "envoye", envoiAuto: true },
+          }).catch(() => null);
+        }
+      }
+    } catch {}
+
     // Construire le message WhatsApp
     const lignesTexte = items.map((i: any) =>
       `• ${i.nom}${i.variante ? ` (${i.variante})` : ""} × ${i.quantite} — ${formatMontant(i.prix * i.quantite, devise)}`

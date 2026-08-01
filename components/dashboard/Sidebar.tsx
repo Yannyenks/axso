@@ -46,20 +46,24 @@ const NAV_GROUPS = [
   {
     label: "Opérations",
     items: [
-      { href: "/dashboard/livraison",    label: "Livraisons",   Icone: IconLivraisons },
-      { href: "/dashboard/retours",      label: "Retours RMA",  Icone: IconCommandes },
-      { href: "/dashboard/factures",     label: "Factures",     Icone: IconPaiements },
-      { href: "/dashboard/dropshipping", label: "Dropshipping", Icone: IconSourcing },
-      { href: "/dashboard/analytics",    label: "Analytics",    Icone: IconAnalytics },
+      { href: "/dashboard/livraison",              label: "Livraisons",   Icone: IconLivraisons },
+      { href: "/dashboard/retours",                label: "Retours RMA",  Icone: IconCommandes },
+      { href: "/dashboard/factures",               label: "Factures",     Icone: IconPaiements },
+      { href: "/dashboard/entrepots",              label: "Entrepôts",    Icone: IconProduits },
+      { href: "/dashboard/dropshipping",           label: "Dropshipping", Icone: IconSourcing },
+      { href: "/dashboard/dropshipping/commandes", label: "Cmds Fournis.", Icone: IconCommandes },
+      { href: "/dashboard/analytics",              label: "Analytics",    Icone: IconAnalytics },
     ],
   },
   {
     label: "Marketing+",
     items: [
-      { href: "/dashboard/popups",       label: "Popups",       Icone: IconThemes },
-      { href: "/dashboard/automation",   label: "Automation",   Icone: IconIA },
-      { href: "/dashboard/affiliation",  label: "Affiliation",  Icone: IconRevenus },
-      { href: "/dashboard/gamification", label: "Badges",       Icone: IconAvis },
+      { href: "/dashboard/popups",                 label: "Popups",       Icone: IconThemes },
+      { href: "/dashboard/automation",             label: "Automation",   Icone: IconIA },
+      { href: "/dashboard/affiliation",            label: "Affiliation",  Icone: IconRevenus },
+      { href: "/dashboard/affiliation/entrante",   label: "Aff. entrante",Icone: IconRevenus },
+      { href: "/dashboard/affiliation/paiements",  label: "Commissions",  Icone: IconPaiements },
+      { href: "/dashboard/gamification",           label: "Badges",       Icone: IconAvis },
     ],
   },
   {

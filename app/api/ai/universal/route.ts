@@ -712,6 +712,81 @@ const OUTILS: AgentTool[] = [
       required: [],
     },
   },
+  // ─── MULTI-ENTREPÔTS ─────────────────────────────────────────────────────
+  {
+    name: "lister_entrepots",
+    description: "Liste les entrepôts configurés avec leur stock",
+    parameters: { type: "object" as const, properties: {}, required: [] },
+  },
+  {
+    name: "creer_entrepot",
+    description: "Crée un nouvel entrepôt pour la gestion multi-site du stock",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        nom: { type: "string", description: "Nom de l'entrepôt" },
+        ville: { type: "string", description: "Ville" },
+        pays: { type: "string", description: "Pays (défaut: Cameroun)" },
+        adresse: { type: "string", description: "Adresse complète" },
+        principal: { type: "boolean", description: "Entrepôt principal ?" },
+      },
+      required: ["nom"],
+    },
+  },
+  // ─── DROPSHIPPING AUTO-ROUTING ───────────────────────────────────────────
+  {
+    name: "router_commande_fournisseur",
+    description: "Route automatiquement une commande vers le fournisseur dropshipping approprié",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        commandeId: { type: "string", description: "ID ou numéro de la commande" },
+      },
+      required: ["commandeId"],
+    },
+  },
+  {
+    name: "lister_commandes_fournisseur",
+    description: "Liste les commandes transmises aux fournisseurs dropshipping",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        statut: { type: "string", description: "Filtrer par statut: en_attente | envoye | confirme | expedie | livre | annule" },
+      },
+      required: [],
+    },
+  },
+  // ─── AFFILIATION ENTRANTE & PAIEMENTS ────────────────────────────────────
+  {
+    name: "ajouter_programme_affiliation_entrante",
+    description: "Ajoute un programme d'affiliation externe où le marchand est affilié (ex: Jumia, Amazon, partenaire local)",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        nom: { type: "string", description: "Nom du programme" },
+        marchand: { type: "string", description: "Nom du marchand/plateforme" },
+        url: { type: "string", description: "Lien d'affiliation avec tracking" },
+        categorie: { type: "string", description: "Catégorie produits" },
+        commission: { type: "number", description: "Taux de commission en % (ex: 10 pour 10%)" },
+      },
+      required: ["nom", "marchand", "url"],
+    },
+  },
+  {
+    name: "payer_commission_affilie",
+    description: "Enregistre un paiement de commission vers un affilié via mobile money ou virement",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        affilieurId: { type: "string", description: "ID de l'affilié" },
+        montant: { type: "number", description: "Montant à payer" },
+        methode: { type: "string", description: "mobile_money | virement | wallet" },
+        telephone: { type: "string", description: "Numéro mobile money" },
+        notes: { type: "string", description: "Notes sur le paiement" },
+      },
+      required: ["affilieurId", "montant"],
+    },
+  },
   // ─── AGENTS SPÉCIALISÉS ───────────────────────────────────────────────────
   {
     name: "deleguer_vers_agent",
@@ -1273,6 +1348,68 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
           succes: true,
           resultat: `Analyse ${avis.length} avis — Note moyenne: ${moy.toFixed(1)}/5\nDistribution: ${distStr}\n\nDerniers commentaires:\n${commentaires}\n\nContexte disponible pour générer des insights.`,
         };
+      }
+
+      case "lister_entrepots": {
+        const entrepots = await (prisma as any).entrepot.findMany({ where: { tenantId }, orderBy: { principal: "desc" } }).catch(() => []);
+        if (!entrepots.length) return { succes: true, resultat: "Aucun entrepôt configuré. Va dans Opérations → Entrepôts pour en créer un." };
+        const lines = entrepots.map((e: any) => `• ${e.nom}${e.principal ? " [Principal]" : ""} | ${[e.ville, e.pays].filter(Boolean).join(", ")} | ${e.actif ? "Actif" : "Inactif"}`).join("\n");
+        return { succes: true, resultat: `${entrepots.length} entrepôt(s):\n${lines}` };
+      }
+
+      case "creer_entrepot": {
+        const e = await (prisma as any).entrepot.create({
+          data: { tenantId, nom: args.nom, ville: args.ville, pays: args.pays ?? "Cameroun", adresse: args.adresse, principal: args.principal ?? false },
+        }).catch((e: any) => ({ error: e.message }));
+        if ((e as any).error) return { succes: false, resultat: `Erreur: ${(e as any).error}` };
+        return { succes: true, resultat: `✅ Entrepôt "${args.nom}" créé à ${args.ville ?? ""}${args.principal ? " (principal)" : ""}` };
+      }
+
+      case "router_commande_fournisseur": {
+        const commande = await prisma.commande.findFirst({
+          where: { tenantId, OR: [{ id: args.commandeId }, { numero: { contains: args.commandeId } }] },
+          include: { lignes: { include: { produit: { select: { fournisseurId: true, prixFournisseur: true, nom: true } } } } },
+        });
+        if (!commande) return { succes: false, resultat: "Commande introuvable." };
+        const fournisseurId = commande.lignes.find((l: any) => l.produit?.fournisseurId)?.produit?.fournisseurId;
+        if (!fournisseurId) return { succes: false, resultat: "Aucun fournisseur dropshipping associé aux produits de cette commande." };
+        const montantFournisseur = commande.lignes.reduce((s: number, l: any) => s + ((l.produit?.prixFournisseur ?? l.prix * 0.5) * l.quantite), 0);
+        const cf = await (prisma as any).commandeFournisseur.create({
+          data: { tenantId, commandeId: commande.id, fournisseurId, montantFournisseur, statut: "envoye", envoiAuto: true },
+        }).catch(() => null);
+        if (!cf) return { succes: false, resultat: "Erreur lors du routage." };
+        return { succes: true, resultat: `✅ Commande ${commande.numero} routée vers le fournisseur — Montant fournisseur estimé: ${montantFournisseur.toLocaleString()} ${commande.devise}` };
+      }
+
+      case "lister_commandes_fournisseur": {
+        const where: any = { tenantId };
+        if (args.statut) where.statut = args.statut;
+        const cfs = await (prisma as any).commandeFournisseur.findMany({
+          where, take: 10, orderBy: { createdAt: "desc" },
+          include: { commande: { select: { numero: true, clientNom: true } }, fournisseur: { select: { nom: true } } },
+        }).catch(() => []);
+        if (!cfs.length) return { succes: true, resultat: "Aucune commande fournisseur" + (args.statut ? ` en statut "${args.statut}"` : "") + "." };
+        const lines = cfs.map((cf: any) => `• Cmd ${cf.commande.numero} → ${cf.fournisseur.nom} | ${cf.statut} | Tracking: ${cf.trackingNo ?? "—"}`).join("\n");
+        return { succes: true, resultat: `${cfs.length} commande(s) fournisseur:\n${lines}` };
+      }
+
+      case "ajouter_programme_affiliation_entrante": {
+        const p = await (prisma as any).affiliationEntrante.create({
+          data: {
+            tenantId, nom: args.nom, marchand: args.marchand, url: args.url,
+            categorie: args.categorie, commission: (args.commission ?? 10) / 100,
+          },
+        }).catch((e: any) => ({ error: e.message }));
+        if ((p as any).error) return { succes: false, resultat: `Erreur: ${(p as any).error}` };
+        return { succes: true, resultat: `✅ Programme "${args.nom}" (${args.marchand}) ajouté — Commission: ${args.commission ?? 10}%` };
+      }
+
+      case "payer_commission_affilie": {
+        const paiement = await (prisma as any).paiementCommission.create({
+          data: { tenantId, affilieurId: args.affilieurId, montant: args.montant, methode: args.methode ?? "mobile_money", telephone: args.telephone, notes: args.notes },
+        }).catch((e: any) => ({ error: e.message }));
+        if ((paiement as any).error) return { succes: false, resultat: `Erreur: ${(paiement as any).error}` };
+        return { succes: true, resultat: `✅ Paiement de ${args.montant.toLocaleString()} XAF enregistré pour l'affilié ${args.affilieurId} via ${args.methode ?? "mobile money"}` };
       }
 
       case "deleguer_vers_agent": {
