@@ -92,16 +92,31 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
   const inpStyle = { backgroundColor: theme.surface, borderColor: `${theme.accent}30`, color: theme.texte, ["--tw-ring-color" as any]: `${theme.accent}40` };
 
   function partagerPosition() {
-    if (!navigator.geolocation) { toast.error("Géolocalisation non supportée"); return; }
+    if (typeof window === "undefined" || !navigator?.geolocation) {
+      toast.error("Géolocalisation non disponible sur cet appareil");
+      return;
+    }
     setGpsLoading(true);
+
+    // Essai rapide (précision moindre, moins de risque de timeout)
     navigator.geolocation.getCurrentPosition(
       pos => {
         const { latitude: lat, longitude: lng } = pos.coords;
         setGps({ lat, lng });
         setGpsLoading(false);
-        toast.success("Position partagée !");
+        toast.success("Position obtenue !");
       },
-      () => { toast.error("Impossible d'obtenir la position"); setGpsLoading(false); }
+      (err) => {
+        setGpsLoading(false);
+        if (err.code === 1) {
+          toast.error("Permission refusée — autorisez la localisation dans votre navigateur puis réessayez");
+        } else if (err.code === 2) {
+          toast.error("Position indisponible — vérifiez que le GPS est activé sur votre appareil");
+        } else {
+          toast.error("Délai dépassé — réessayez ou saisissez l'adresse manuellement");
+        }
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
     );
   }
 
