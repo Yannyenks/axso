@@ -232,6 +232,17 @@ model Commande {
   numeroSuivi      String?
   transporteur     String?
   livraisonStatut  String   @default("non_expediee")
+  // Localisation client
+  latitudeClient   Float?
+  longitudeClient  Float?
+  adresseExacte    String?
+  mapsLienClient   String?
+  // Tracking livraison
+  trackingToken    String?  @unique
+  livreurToken     String?  @unique
+  livreurPosition  Json?
+  livreurNom       String?
+  livreurTelephone String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

@@ -81,12 +81,29 @@ function Field({ label, required, children }: { label: string; required?: boolea
 function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePromo, viderPanier }: any) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState<{ commandeId: string; numero: string; whatsappUrl: string | null } | null>(null);
+  const [done, setDone] = useState<{ commandeId: string; numero: string; whatsappUrl: string | null; trackingToken?: string } | null>(null);
   const [form, setForm] = useState({ nom: "", telephone: "", adresse: "", ville: "", pays: "Sénégal", email: "" });
+  const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [adresseExacte, setAdresseExacte] = useState("");
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
   const inp = "w-full px-4 py-3 rounded-xl border text-sm transition-all focus:ring-2 focus:outline-none";
   const inpStyle = { backgroundColor: theme.surface, borderColor: `${theme.accent}30`, color: theme.texte, ["--tw-ring-color" as any]: `${theme.accent}40` };
+
+  function partagerPosition() {
+    if (!navigator.geolocation) { toast.error("Géolocalisation non supportée"); return; }
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        setGps({ lat, lng });
+        setGpsLoading(false);
+        toast.success("Position partagée !");
+      },
+      () => { toast.error("Impossible d'obtenir la position"); setGpsLoading(false); }
+    );
+  }
 
   async function commander() {
     if (!form.nom.trim() || !form.telephone.trim()) { toast.error("Nom et téléphone obligatoires"); return; }
@@ -95,7 +112,13 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
       const res = await fetch("/api/commandes/whatsapp-creer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tenantId, slug, client: form, items: items.map((i: any) => ({ produitId: i.produitId, nom: i.nom, prix: i.prix, quantite: i.quantite, variante: i.variante, imageUrl: i.imageUrl })), total, devise, codePromo }),
+        body: JSON.stringify({
+          tenantId, slug,
+          client: form,
+          items: items.map((i: any) => ({ produitId: i.produitId, nom: i.nom, prix: i.prix, quantite: i.quantite, variante: i.variante, imageUrl: i.imageUrl })),
+          total, devise, codePromo,
+          localisation: gps ? { lat: gps.lat, lng: gps.lng, adresseExacte: adresseExacte || form.adresse } : null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -110,29 +133,43 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
 
   // Succès
   if (done) {
+    const appUrl = typeof window !== "undefined" ? window.location.origin : "";
+    const invoiceUrl = done.trackingToken ? `${appUrl}/${slug}/facture/${done.trackingToken}` : null;
+    const trackingUrl = done.trackingToken ? `${appUrl}/${slug}/tracking/${done.trackingToken}` : null;
     return (
-      <div className="text-center py-12 space-y-6">
-        <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto" style={{ background: `${theme.accent}20`, border: `2px solid ${theme.accent}` }}>
-          <CheckCircle2 size={36} style={{ color: theme.accent }} />
+      <div className="max-w-lg mx-auto py-12 space-y-6">
+        <div className="text-center space-y-4">
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto" style={{ background: `${theme.accent}20`, border: `2px solid ${theme.accent}` }}>
+            <CheckCircle2 size={36} style={{ color: theme.accent }} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold font-playfair mb-2" style={{ color: theme.accent }}>Commande #{done.numero} confirmée !</h2>
+            <p className="text-sm opacity-60">Votre commande est enregistrée. Vous paierez à la livraison.</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-2xl font-bold font-playfair mb-2" style={{ color: theme.accent }}>Commande #{done.numero} créée !</h2>
-          <p className="text-sm opacity-60 mb-2">Votre commande est enregistrée. Le vendeur vous contactera pour la livraison.</p>
-          <p className="text-sm opacity-50 font-medium">💳 Vous paierez à la livraison.</p>
-        </div>
-        {done.whatsappUrl ? (
-          <a href={done.whatsappUrl} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-base transition-all hover:opacity-90"
-            style={{ background: "#25D366", color: "#fff", boxShadow: "0 4px 20px rgba(37,211,102,0.4)" }}>
-            <MessageCircle size={18} /> Confirmer via WhatsApp
-          </a>
-        ) : (
-          <p className="text-sm opacity-50">Le vendeur a reçu votre commande et vous contactera bientôt.</p>
-        )}
-        <div className="pt-2">
-          <button onClick={() => router.push(`/${slug}/suivi/${done.commandeId}`)} className="text-sm underline opacity-50 hover:opacity-80">
-            Suivre ma commande →
-          </button>
+
+        <div className="space-y-3">
+          {done.whatsappUrl && (
+            <a href={done.whatsappUrl} target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-bold text-base hover:opacity-90 transition-all"
+              style={{ background: "#25D366", color: "#fff", boxShadow: "0 4px 20px rgba(37,211,102,0.35)" }}>
+              <MessageCircle size={18} /> Confirmer via WhatsApp
+            </a>
+          )}
+          {invoiceUrl && (
+            <a href={invoiceUrl} target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-semibold text-sm border-2 hover:opacity-80 transition-all"
+              style={{ borderColor: theme.accent, color: theme.accent }}>
+              <Download size={16} /> Voir ma facture
+            </a>
+          )}
+          {trackingUrl && (
+            <a href={trackingUrl} target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl font-semibold text-sm hover:opacity-80 transition-all"
+              style={{ background: `${theme.accent}12`, color: theme.accent }}>
+              <MapPin size={16} /> Suivre ma livraison en temps réel
+            </a>
+          )}
         </div>
       </div>
     );
@@ -184,13 +221,37 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
           <h2 className="font-bold font-playfair text-base">📦 Adresse de livraison</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="sm:col-span-2">
-              <Field label="Adresse">
+              <Field label="Adresse exacte">
                 <div className="relative">
                   <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40" />
-                  <input value={form.adresse} onChange={e => set("adresse", e.target.value)} placeholder="Rue, quartier, numéro" className={inp} style={{ ...inpStyle, paddingLeft: "2.25rem" }} />
+                  <input value={adresseExacte || form.adresse}
+                    onChange={e => { setAdresseExacte(e.target.value); set("adresse", e.target.value); }}
+                    placeholder="Rue, quartier, numéro, point de repère…" className={inp} style={{ ...inpStyle, paddingLeft: "2.25rem" }} />
                 </div>
               </Field>
             </div>
+
+            {/* GPS Picker */}
+            <div className="sm:col-span-2">
+              <button type="button" onClick={partagerPosition} disabled={gpsLoading}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed text-sm font-semibold transition-all"
+                style={{ borderColor: gps ? "#22c55e" : `${theme.accent}40`, color: gps ? "#16a34a" : theme.accent, background: gps ? "rgba(34,197,94,0.06)" : `${theme.accent}08` }}>
+                {gpsLoading ? (
+                  <><Loader2 size={14} className="animate-spin" /> Localisation en cours…</>
+                ) : gps ? (
+                  <><CheckCircle2 size={14} /> Position GPS partagée ({gps.lat.toFixed(5)}, {gps.lng.toFixed(5)})</>
+                ) : (
+                  <><MapPin size={14} /> Partager ma localisation GPS (recommandé)</>
+                )}
+              </button>
+              {gps && (
+                <a href={`https://www.google.com/maps?q=${gps.lat},${gps.lng}`} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 mt-2 text-xs underline opacity-50 hover:opacity-80">
+                  <MapPin size={10} /> Voir sur Google Maps
+                </a>
+              )}
+            </div>
+
             <Field label="Ville">
               <input value={form.ville} onChange={e => set("ville", e.target.value)} placeholder="Dakar" className={inp} style={inpStyle} />
             </Field>

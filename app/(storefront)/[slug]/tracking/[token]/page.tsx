@@ -1,0 +1,162 @@
+"use client";
+export const dynamic = "force-dynamic";
+import { useEffect, useState, useRef } from "react";
+import { MapPin, Package, Phone, RefreshCw, CheckCircle2, Truck } from "lucide-react";
+
+const STATUT_STEPS = [
+  { key: "en_attente",    label: "Commande reçue",     icon: "📋" },
+  { key: "en_preparation", label: "En préparation",    icon: "📦" },
+  { key: "expedie",       label: "Partie en livraison", icon: "🚚" },
+  { key: "livree",        label: "Livrée",              icon: "✅" },
+];
+
+export default function TrackingPage({ params }: { params: { token: string } }) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  async function load() {
+    const r = await fetch(`/api/tracking/${params.token}`).then(r => r.json());
+    if (r.commande) { setData(r.commande); setLastUpdate(new Date()); }
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    load();
+    intervalRef.current = setInterval(load, 15000); // poll toutes les 15s
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, []);
+
+  if (loading) return (
+    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#0F0F0F", fontFamily:"system-ui,sans-serif" }}>
+      <div style={{ textAlign:"center" }}>
+        <div style={{ width:40, height:40, border:"3px solid #F5A623", borderTopColor:"transparent", borderRadius:"50%", animation:"spin 1s linear infinite", margin:"0 auto 16px" }} />
+        <p style={{ color:"#666", fontSize:14 }}>Chargement du suivi…</p>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      </div>
+    </div>
+  );
+
+  if (!data) return (
+    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#0F0F0F", fontFamily:"system-ui,sans-serif" }}>
+      <p style={{ color:"#666" }}>Commande introuvable</p>
+    </div>
+  );
+
+  const pos = data.livreurPosition as any;
+  const statutIdx = STATUT_STEPS.findIndex(s => s.key === data.statut);
+  const currentStep = statutIdx >= 0 ? statutIdx : 0;
+
+  const mapSrc = pos?.lat && pos?.lng
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${pos.lng-0.02},${pos.lat-0.02},${pos.lng+0.02},${pos.lat+0.02}&layer=mapnik&marker=${pos.lat},${pos.lng}`
+    : data.latitudeClient && data.longitudeClient
+      ? `https://www.openstreetmap.org/export/embed.html?bbox=${data.longitudeClient-0.02},${data.latitudeClient-0.02},${data.longitudeClient+0.02},${data.latitudeClient+0.02}&layer=mapnik&marker=${data.latitudeClient},${data.longitudeClient}`
+      : null;
+
+  return (
+    <div style={{ minHeight:"100vh", background:"#0A0A0A", fontFamily:"'Inter',system-ui,sans-serif", color:"white" }}>
+      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}} @keyframes spin{to{transform:rotate(360deg)}}`}</style>
+
+      {/* Header */}
+      <div style={{ background:"linear-gradient(135deg,#1A1A1A,#111)", padding:"20px 20px 16px", borderBottom:"1px solid rgba(245,166,35,0.15)" }}>
+        <div style={{ maxWidth:500, margin:"0 auto" }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+            <div>
+              <div style={{ fontSize:11, color:"#F5A623", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:4 }}>
+                {data.tenant?.nomBoutique}
+              </div>
+              <div style={{ fontSize:20, fontWeight:700 }}>Suivi de livraison</div>
+              <div style={{ fontSize:12, color:"#555", marginTop:2 }}>Commande #{data.numero}</div>
+            </div>
+            {data.tenant?.logoUrl && (
+              <img src={data.tenant.logoUrl} alt="" style={{ height:40, objectFit:"contain", opacity:0.7 }} />
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth:500, margin:"0 auto", padding:"20px 16px", space:"20px" }}>
+
+        {/* Étapes */}
+        <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:20, padding:20, marginBottom:16 }}>
+          {STATUT_STEPS.map((step, i) => {
+            const done = i < currentStep;
+            const active = i === currentStep;
+            return (
+              <div key={step.key} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom: i < STATUT_STEPS.length-1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
+                <div style={{ width:36, height:36, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, flexShrink:0, background: done ? "rgba(34,197,94,0.15)" : active ? "rgba(245,166,35,0.15)" : "rgba(255,255,255,0.05)", border: done ? "1px solid rgba(34,197,94,0.3)" : active ? "1px solid rgba(245,166,35,0.4)" : "1px solid rgba(255,255,255,0.1)" }}>
+                  {done ? "✓" : step.icon}
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, fontWeight: active ? 600 : 400, color: done ? "#22c55e" : active ? "#F5A623" : "#555" }}>{step.label}</div>
+                </div>
+                {active && <div style={{ width:8, height:8, borderRadius:"50%", background:"#F5A623", animation:"pulse 1.5s ease-in-out infinite" }} />}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Carte */}
+        {mapSrc ? (
+          <div style={{ borderRadius:20, overflow:"hidden", border:"1px solid rgba(255,255,255,0.08)", marginBottom:16, position:"relative" }}>
+            <iframe src={mapSrc} style={{ width:"100%", height:280, border:"none", display:"block" }} />
+            {pos?.lat && (
+              <div style={{ position:"absolute", bottom:12, left:12, right:12, background:"rgba(0,0,0,0.75)", backdropFilter:"blur(8px)", borderRadius:12, padding:"8px 14px", display:"flex", alignItems:"center", gap:8 }}>
+                <div style={{ width:8, height:8, borderRadius:"50%", background:"#22c55e", animation:"pulse 1s ease-in-out infinite" }} />
+                <span style={{ fontSize:12, color:"white" }}>
+                  {data.livreurNom ? `${data.livreurNom} — ` : "Livreur — "}
+                  Mis à jour {pos.updatedAt ? new Date(pos.updatedAt).toLocaleTimeString("fr", { hour:"2-digit", minute:"2-digit" }) : "récemment"}
+                </span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div style={{ borderRadius:20, border:"1px solid rgba(255,255,255,0.08)", padding:32, textAlign:"center", marginBottom:16, background:"rgba(255,255,255,0.02)" }}>
+            <div style={{ fontSize:32, marginBottom:8 }}>🗺️</div>
+            <p style={{ fontSize:13, color:"#555" }}>La carte s'affichera dès que le livreur partagera sa position</p>
+          </div>
+        )}
+
+        {/* Livreur info */}
+        {(data.livreurNom || data.livreurTelephone) && (
+          <div style={{ background:"rgba(245,166,35,0.08)", border:"1px solid rgba(245,166,35,0.2)", borderRadius:16, padding:16, marginBottom:16, display:"flex", alignItems:"center", gap:14 }}>
+            <div style={{ width:44, height:44, borderRadius:"50%", background:"rgba(245,166,35,0.15)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>🚴</div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:13, fontWeight:600, color:"white", marginBottom:2 }}>{data.livreurNom ?? "Livreur assigné"}</div>
+              {data.livreurTelephone && <div style={{ fontSize:12, color:"#888" }}>{data.livreurTelephone}</div>}
+            </div>
+            {data.livreurTelephone && (
+              <a href={`tel:${data.livreurTelephone}`} style={{ background:"#F5A623", color:"black", borderRadius:12, padding:"8px 14px", fontSize:12, fontWeight:600, textDecoration:"none" }}>
+                Appeler
+              </a>
+            )}
+          </div>
+        )}
+
+        {/* Adresse client */}
+        {(data.adresseExacte || data.adresseLivraison) && (
+          <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:16, padding:16, marginBottom:16 }}>
+            <div style={{ fontSize:10, color:"#666", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:8 }}>Adresse de livraison</div>
+            <div style={{ fontSize:14, color:"#DDD" }}>{data.adresseExacte || data.adresseLivraison}</div>
+            {data.ville && <div style={{ fontSize:12, color:"#666", marginTop:4 }}>{data.ville}</div>}
+            {data.mapsLienClient && (
+              <a href={data.mapsLienClient} target="_blank" rel="noopener noreferrer"
+                style={{ display:"inline-flex", alignItems:"center", gap:6, marginTop:10, color:"#F5A623", fontSize:12, textDecoration:"none" }}>
+                <span>📍</span> Voir sur Google Maps
+              </a>
+            )}
+          </div>
+        )}
+
+        {/* Refresh info */}
+        <div style={{ textAlign:"center", padding:"12px 0" }}>
+          <p style={{ fontSize:11, color:"#444" }}>
+            Mise à jour automatique toutes les 15 secondes
+            {lastUpdate && ` · Dernière : ${lastUpdate.toLocaleTimeString("fr", { hour:"2-digit", minute:"2-digit", second:"2-digit" })}`}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

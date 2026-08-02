@@ -33,6 +33,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
         commission: true,
         escrow: true,
         codePromo: true,
+        tenant: { select: { slug: true, nomBoutique: true, logoUrl: true } },
       },
     }),
     prisma.livreur.findMany({
@@ -290,6 +291,66 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
               <h2 className="text-white font-semibold text-sm mb-3">Suivi colis</h2>
               {commande.transporteur && <p className="text-gray-400 text-xs">{commande.transporteur}</p>}
               {commande.numeroSuivi && <p className="text-white font-mono text-sm mt-1">{commande.numeroSuivi}</p>}
+            </div>
+          )}
+
+          {/* ─── Tracking temps réel & Livraison ─── */}
+          {(commande as any).trackingToken && (
+            <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
+              <h2 className="text-white font-semibold text-sm flex items-center gap-2">
+                <Truck size={14} className="text-[#F5A623]" />
+                Tracking & Livraison
+              </h2>
+
+              {/* Localisation client */}
+              {((commande as any).latitudeClient || (commande as any).adresseExacte) && (
+                <div className="bg-gray-50 rounded-xl p-3 space-y-1.5">
+                  <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide">Position client GPS</p>
+                  {(commande as any).adresseExacte && <p className="text-sm text-white">{(commande as any).adresseExacte}</p>}
+                  {(commande as any).latitudeClient && (
+                    <p className="text-xs text-gray-500 font-mono">{(commande as any).latitudeClient?.toFixed(5)}, {(commande as any).longitudeClient?.toFixed(5)}</p>
+                  )}
+                  {(commande as any).mapsLienClient && (
+                    <a href={(commande as any).mapsLienClient} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[#60a5fa] text-xs hover:underline">
+                      <MapPin size={11} /> Ouvrir Google Maps
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {/* Liens marchand */}
+              <div className="space-y-2">
+                {/* Facture */}
+                <a href={`/${(commande as any).tenant?.slug ?? ""}/facture/${(commande as any).trackingToken}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-2 w-full py-2.5 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-300 hover:border-[#F5A623]/30 hover:text-[#F5A623] transition-all">
+                  📄 Voir la facture client
+                </a>
+
+                {/* Tracking client */}
+                <a href={`/${(commande as any).tenant?.slug ?? ""}/tracking/${(commande as any).trackingToken}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-2 w-full py-2.5 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-300 hover:border-[#F5A623]/30 hover:text-[#F5A623] transition-all">
+                  🗺️ Page de suivi (vue client)
+                </a>
+
+                {/* Lien livreur */}
+                {(commande as any).livreurToken && (() => {
+                  const slug = (commande as any).tenant?.slug ?? "";
+                  const livreurUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/${slug}/livreur/${(commande as any).livreurToken}`;
+                  const clientTel = commande.clientTelephone?.replace(/\D/g, "");
+                  const msg = encodeURIComponent(`🚚 *Livraison — ${(commande as any).tenant?.nomBoutique}*\n\nBonjour ! Vous êtes assigné à la livraison de la commande #${commande.numero}.\n\n👤 Client : ${commande.clientNom}\n📞 Tél : ${commande.clientTelephone}\n📍 Adresse : ${(commande as any).adresseExacte || commande.adresseLivraison}, ${commande.ville}\n${(commande as any).mapsLienClient ? `\n🗺️ Google Maps : ${(commande as any).mapsLienClient}\n` : ""}\n📡 Activez votre tracking GPS :\n${livreurUrl}\n\nMerci !`);
+                  return (
+                    <a href={`https://wa.me/?text=${msg}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-2 w-full py-2.5 px-4 rounded-xl text-sm font-semibold transition-all text-white"
+                      style={{ background:"rgba(37,211,102,0.15)", border:"1px solid rgba(37,211,102,0.25)", color:"#25D366" }}>
+                      📲 Partager avec le livreur (WhatsApp)
+                    </a>
+                  );
+                })()}
+              </div>
             </div>
           )}
         </div>
