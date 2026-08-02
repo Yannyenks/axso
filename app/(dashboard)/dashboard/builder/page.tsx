@@ -358,6 +358,7 @@ export default function BuilderPage() {
                 <div className="transition-all duration-500 bg-white overflow-hidden"
                   style={{ width: device==="desktop"?"100%":device==="tablet"?"768px":"390px", maxWidth:"100%", borderRadius: device!=="desktop"?"20px":"0", boxShadow: device!=="desktop"?"0 24px 80px rgba(0,0,0,0.7)":"none" }}>
                   <iframe ref={iframeRef} key={iframeKey} src={`/${tenant.slug}`} onLoad={injectLive}
+                    allow="geolocation; camera; microphone"
                     className="w-full border-0 block"
                     style={{ height: device!=="desktop"?"calc(100vh - 128px)":"calc(100vh - 78px)" }}
                     title="Prévisualisation" />

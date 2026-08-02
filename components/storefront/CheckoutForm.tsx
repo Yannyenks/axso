@@ -109,11 +109,11 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
       (err) => {
         setGpsLoading(false);
         if (err.code === 1) {
-          toast.error("Permission refusée — autorisez la localisation dans votre navigateur puis réessayez");
+          toast.error("Localisation bloquée — cliquez sur 🔒 dans la barre d'adresse → Paramètres du site → Localisation → Autoriser → Rechargez la page", { duration: 8000 });
         } else if (err.code === 2) {
-          toast.error("Position indisponible — vérifiez que le GPS est activé sur votre appareil");
+          toast.error("GPS indisponible — activez la localisation dans les paramètres de votre appareil", { duration: 5000 });
         } else {
-          toast.error("Délai dépassé — réessayez ou saisissez l'adresse manuellement");
+          toast.error("Délai dépassé — vérifiez votre connexion et réessayez", { duration: 5000 });
         }
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
