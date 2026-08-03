@@ -67,9 +67,33 @@ const TEMPLATES = [
 ];
 
 // ─── Modal Config ─────────────────────────────────────────────────────────────
+const WEBHOOK_URL    = "https://axso.vercel.app/api/webhooks/whatsapp";
+const WEBHOOK_TOKEN  = process.env.NEXT_PUBLIC_META_WEBHOOK_TOKEN ?? "axso_meta_2026";
+
+function CopyBox({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+  function copy() {
+    navigator.clipboard.writeText(value).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+  }
+  return (
+    <div className="space-y-1">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">{label}</p>
+      <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+        <code className="flex-1 text-xs font-mono text-white break-all">{value}</code>
+        <button onClick={copy} className="flex-shrink-0 text-xs font-bold px-2.5 py-1 rounded-lg transition-all"
+          style={{ background: copied ? "rgba(37,211,102,0.2)" : "rgba(255,255,255,0.08)", color: copied ? "#25D366" : "#9ca3af" }}>
+          {copied ? "✓ Copié" : "Copier"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ConfigPanel({ onClose, onConnecte }: { onClose: () => void; onConnecte: (cfg: WaConfig) => void }) {
+  const [etape, setEtape] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState({ phone_number_id: "", access_token: "" });
   const [loading, setLoading] = useState(false);
+  const [showToken, setShowToken] = useState(false);
 
   async function connecter() {
     if (!form.phone_number_id || !form.access_token) { toast.error("Remplissez tous les champs"); return; }
@@ -78,50 +102,190 @@ function ConfigPanel({ onClose, onConnecte }: { onClose: () => void; onConnecte:
       const res = await fetch("/api/connecteurs/whatsapp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      toast.success(`✅ WhatsApp Business connecté ! (${data.numero ?? ""})`);
+      toast.success(`✅ WhatsApp connecté — ${data.numero ?? ""} (${data.nom ?? ""})`);
       onConnecte({ statut: "actif", config: { phone_number_id: form.phone_number_id, numero_affiche: data.numero, verified_name: data.nom } });
     } catch (e: any) { toast.error(e.message); }
     finally { setLoading(false); }
   }
 
+  const ETAPES = [
+    { n: 1, label: "Créer l'app Meta" },
+    { n: 2, label: "Configurer le webhook" },
+    { n: 3, label: "Connecter au dashboard" },
+  ];
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-[#111827] border border-white/10 rounded-2xl w-full max-w-lg p-6 space-y-5" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between">
-          <h2 className="text-white font-bold text-lg flex items-center gap-2">
-            <MessageCircle size={20} style={{ color: "#25D366" }} /> Connecter WhatsApp Business
-          </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-xl leading-none">×</button>
-        </div>
-        <div className="rounded-xl p-4 space-y-1.5 text-sm text-gray-300" style={{ background: "rgba(37,211,102,0.08)", border: "1px solid rgba(37,211,102,0.2)" }}>
-          <p className="font-semibold" style={{ color: "#25D366" }}>Comment obtenir vos identifiants ?</p>
-          <p>1. <span className="text-white font-mono">developers.facebook.com</span> → Créer une app</p>
-          <p>2. Ajouter le produit <span className="text-white">WhatsApp Business</span></p>
-          <p>3. Copier le <span className="font-mono" style={{ color: "#25D366" }}>Phone Number ID</span> + <span className="font-mono" style={{ color: "#25D366" }}>Token permanent</span></p>
-          <p>4. Webhook : <span className="font-mono text-xs text-white">…/api/webhooks/whatsapp</span> · Token : <span className="font-mono text-white text-xs">axso_meta_2026</span></p>
-          <p>5. S'abonner à l'événement <span className="font-mono text-white">messages</span></p>
-        </div>
-        <div className="space-y-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)" }} onClick={onClose}>
+      <div className="w-full max-w-xl rounded-2xl overflow-hidden" style={{ background: "#0d1117", border: "1px solid rgba(255,255,255,0.08)" }} onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4 border-b border-white/8 flex items-start justify-between">
           <div>
-            <label className="text-gray-400 text-xs block mb-1.5">Phone Number ID *</label>
-            <input value={form.phone_number_id} onChange={e => setForm(f => ({ ...f, phone_number_id: e.target.value }))}
-              placeholder="123456789012345"
-              className="w-full bg-[#1f2937] border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-mono focus:outline-none focus:border-[#25D366]/50" />
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "#25D366" }}>
+                <MessageCircle size={15} className="text-white" />
+              </div>
+              <h2 className="text-white font-bold text-base">Connecter WhatsApp Business API</h2>
+            </div>
+            <p className="text-gray-500 text-xs ml-10">Configuration guidée en 3 étapes · API officielle Meta</p>
           </div>
-          <div>
-            <label className="text-gray-400 text-xs block mb-1.5">Token d'accès permanent *</label>
-            <input value={form.access_token} onChange={e => setForm(f => ({ ...f, access_token: e.target.value }))}
-              placeholder="EAAxxxxxxx…" type="password"
-              className="w-full bg-[#1f2937] border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-mono focus:outline-none focus:border-[#25D366]/50" />
-          </div>
+          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors text-xl leading-none mt-1">×</button>
         </div>
-        <button onClick={connecter} disabled={loading}
-          className="w-full py-3 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50"
-          style={{ background: "#25D366", boxShadow: "0 4px 20px rgba(37,211,102,0.3)" }}>
-          {loading ? <Loader2 size={16} className="animate-spin" /> : <Wifi size={16} />}
-          {loading ? "Vérification…" : "Tester et connecter"}
-        </button>
+
+        {/* Stepper */}
+        <div className="px-6 pt-4 pb-3 flex items-center gap-0">
+          {ETAPES.map((e, i) => (
+            <div key={e.n} className="flex items-center" style={{ flex: i < 2 ? 1 : "none" }}>
+              <button onClick={() => { if (e.n < etape || (e.n === 2)) setEtape(e.n as 1|2|3); }}
+                className="flex items-center gap-2 group">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all"
+                  style={{ background: etape === e.n ? "#25D366" : etape > e.n ? "rgba(37,211,102,0.2)" : "rgba(255,255,255,0.06)", color: etape === e.n ? "white" : etape > e.n ? "#25D366" : "#6b7280" }}>
+                  {etape > e.n ? "✓" : e.n}
+                </div>
+                <span className="text-xs font-semibold hidden sm:block"
+                  style={{ color: etape === e.n ? "white" : etape > e.n ? "#25D366" : "#4b5563" }}>
+                  {e.label}
+                </span>
+              </button>
+              {i < 2 && <div className="flex-1 h-px mx-3" style={{ background: etape > e.n ? "rgba(37,211,102,0.3)" : "rgba(255,255,255,0.06)" }} />}
+            </div>
+          ))}
+        </div>
+
+        {/* Contenu par étape */}
+        <div className="px-6 pb-6 space-y-4 max-h-[60vh] overflow-y-auto">
+
+          {/* ── ÉTAPE 1 : Créer l'app Meta ── */}
+          {etape === 1 && (
+            <div className="space-y-3 pt-2">
+              <div className="rounded-xl p-4 space-y-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                <Step n="1" text="Allez sur" link="https://developers.facebook.com" linkLabel="developers.facebook.com" />
+                <Step n="2" text="Cliquez sur" bold="Mes apps → Créer une app" />
+                <Step n="3" text="Choisissez le type" bold="Entreprise" />
+                <Step n="4" text="Nommez votre app et cliquez" bold="Créer une app" />
+                <Step n="5" text="Dans le tableau de bord, trouvez" bold="WhatsApp" text2="et cliquez" bold2="Configurer" />
+                <Step n="6" text="Ajoutez un numéro de téléphone de test ou votre numéro Business vérifié" />
+              </div>
+              <div className="rounded-xl p-3 flex gap-3" style={{ background: "rgba(245,166,35,0.07)", border: "1px solid rgba(245,166,35,0.15)" }}>
+                <span className="text-lg">💡</span>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  Pour un usage en production, votre compte WhatsApp doit être un <span className="text-white font-medium">compte Business vérifié par Meta</span>. Le numéro de test gratuit est suffisant pour commencer.
+                </p>
+              </div>
+              <button onClick={() => setEtape(2)} className="w-full py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 hover:opacity-90 transition-all" style={{ background: "#25D366" }}>
+                Étape suivante →
+              </button>
+            </div>
+          )}
+
+          {/* ── ÉTAPE 2 : Configurer le webhook ── */}
+          {etape === 2 && (
+            <div className="space-y-4 pt-2">
+              <p className="text-gray-400 text-sm">Dans votre app Meta, allez dans <span className="text-white font-semibold">WhatsApp → Configuration → Webhooks</span> et entrez ces valeurs :</p>
+
+              <CopyBox label="URL de rappel (Callback URL)" value={WEBHOOK_URL} />
+              <CopyBox label="Token de vérification (Verify Token)" value={WEBHOOK_TOKEN} />
+
+              <div className="rounded-xl p-4 space-y-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Ensuite</p>
+                <Step n="1" text="Cliquez" bold="Vérifier et enregistrer" text2="— Meta appellera automatiquement l'URL ci-dessus" />
+                <Step n="2" text="Dans la liste des champs, activez l'abonnement" bold="messages" />
+                <Step n="3" text="Cliquez" bold="S'abonner" />
+              </div>
+
+              <div className="rounded-xl p-3 flex gap-3" style={{ background: "rgba(37,211,102,0.06)", border: "1px solid rgba(37,211,102,0.15)" }}>
+                <span className="text-lg">✅</span>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  Une fois vérifié, Axso recevra automatiquement tous vos messages WhatsApp entrants et les routera vers votre dashboard.
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <button onClick={() => setEtape(1)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-400 hover:text-white hover:bg-white/6 transition-all border border-white/8">
+                  ← Retour
+                </button>
+                <button onClick={() => setEtape(3)} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 hover:opacity-90 transition-all" style={{ background: "#25D366" }}>
+                  Webhook configuré →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── ÉTAPE 3 : Connecter les clés ── */}
+          {etape === 3 && (
+            <div className="space-y-4 pt-2">
+              <p className="text-gray-400 text-sm">Dans votre app Meta, allez dans <span className="text-white font-semibold">WhatsApp → Configuration API</span> pour trouver ces deux valeurs :</p>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
+                    Phone Number ID
+                    <span className="normal-case font-normal text-gray-600 ml-2">— trouvé dans "Numéros de téléphone"</span>
+                  </label>
+                  <input value={form.phone_number_id} onChange={e => setForm(f => ({ ...f, phone_number_id: e.target.value }))}
+                    placeholder="123456789012345"
+                    className="w-full rounded-xl px-4 py-3 text-white text-sm font-mono focus:outline-none transition-all"
+                    style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${form.phone_number_id ? "rgba(37,211,102,0.4)" : "rgba(255,255,255,0.1)"}` }} />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
+                    Token d'accès permanent
+                    <span className="normal-case font-normal text-gray-600 ml-2">— générez-le dans Paramètres système</span>
+                  </label>
+                  <div className="relative">
+                    <input value={form.access_token} onChange={e => setForm(f => ({ ...f, access_token: e.target.value }))}
+                      type={showToken ? "text" : "password"}
+                      placeholder="EAAxxxxxxxxxxxxxxxxxx"
+                      className="w-full rounded-xl px-4 py-3 pr-20 text-white text-sm font-mono focus:outline-none transition-all"
+                      style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${form.access_token ? "rgba(37,211,102,0.4)" : "rgba(255,255,255,0.1)"}` }} />
+                    <button onClick={() => setShowToken(s => !s)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-white px-2 py-1 rounded-lg transition-all"
+                      style={{ background: "rgba(255,255,255,0.06)" }}>
+                      {showToken ? "Masquer" : "Voir"}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-gray-600 mt-1 ml-1">⚠️ Utilisez un token permanent (non expirant) — pas le token temporaire de 24h</p>
+                </div>
+              </div>
+
+              <div className="rounded-xl p-3 flex gap-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                <span>🔐</span>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  Vos clés sont chiffrées et stockées uniquement sur votre compte Axso. Elles ne sont jamais partagées.
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <button onClick={() => setEtape(2)} className="flex-shrink-0 py-2.5 px-4 rounded-xl text-sm font-semibold text-gray-400 hover:text-white hover:bg-white/6 transition-all border border-white/8">
+                  ← Retour
+                </button>
+                <button onClick={connecter} disabled={loading || !form.phone_number_id || !form.access_token}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-40 transition-all"
+                  style={{ background: "#25D366", boxShadow: "0 4px 20px rgba(37,211,102,0.25)" }}>
+                  {loading ? <><Loader2 size={15} className="animate-spin" /> Vérification en cours…</> : <><Wifi size={15} /> Tester et connecter</>}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
+    </div>
+  );
+}
+
+function Step({ n, text, bold, text2, bold2, link, linkLabel }: { n: string; text?: string; bold?: string; text2?: string; bold2?: string; link?: string; linkLabel?: string }) {
+  return (
+    <div className="flex gap-2.5 items-start">
+      <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5"
+        style={{ background: "rgba(37,211,102,0.15)", color: "#25D366" }}>{n}</div>
+      <p className="text-sm text-gray-400 leading-relaxed">
+        {text}{" "}
+        {link && <a href={link} target="_blank" rel="noopener noreferrer" className="text-white font-mono underline hover:text-[#25D366] transition-colors">{linkLabel}</a>}
+        {bold && <span className="text-white font-semibold">{bold}</span>}
+        {text2 && " " + text2 + " "}
+        {bold2 && <span className="text-white font-semibold">{bold2}</span>}
+      </p>
     </div>
   );
 }
