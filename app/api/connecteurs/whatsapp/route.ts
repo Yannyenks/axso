@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
   // Tester la connexion via l'API Meta
   const testRes = await fetch(
-    `https://graph.facebook.com/v21.0/${phone_number_id}?fields=display_phone_number,verified_name`,
+    `https://graph.facebook.com/v22.0/${phone_number_id}?fields=display_phone_number,verified_name,quality_rating,status`,
     { headers: { Authorization: `Bearer ${access_token}` } }
   );
   const testData = await testRes.json();
