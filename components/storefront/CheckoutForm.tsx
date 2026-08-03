@@ -335,7 +335,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
                     <div className="space-y-2 text-xs" style={{ color: "#d1d5db" }}>
                       <p><span style={{ color: "#F5A623" }} className="font-bold">Chrome / Edge :</span> Cliquez sur 🔒 dans la barre → <strong>Paramètres du site</strong> → <strong>Localisation</strong> → <strong>Autoriser</strong></p>
                       <p><span style={{ color: "#F5A623" }} className="font-bold">Firefox :</span> Cliquez sur 🔒 → icône localisation → <strong>Autoriser</strong></p>
-                      <p><span style={{ color: "#F5A623" }} className="font-bold">Puis rechargez la page</strong> et réessayez.</p>
+                      <p>Puis <strong>rechargez la page</strong> et réessayez.</p>
                     </div>
                   )}
 
