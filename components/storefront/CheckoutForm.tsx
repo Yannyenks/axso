@@ -85,39 +85,75 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
   const [form, setForm] = useState({ nom: "", telephone: "", adresse: "", ville: "", pays: "Sénégal", email: "" });
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsBloque, setGpsBloque] = useState(false);
   const [adresseExacte, setAdresseExacte] = useState("");
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
   const inp = "w-full px-4 py-3 rounded-xl border text-sm transition-all focus:ring-2 focus:outline-none";
   const inpStyle = { backgroundColor: theme.surface, borderColor: `${theme.accent}30`, color: theme.texte, ["--tw-ring-color" as any]: `${theme.accent}40` };
 
-  function partagerPosition() {
-    if (typeof window === "undefined" || !navigator?.geolocation) {
-      toast.error("Géolocalisation non disponible sur cet appareil");
+  // Détection plateforme
+  const isIOS = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isAndroid = typeof navigator !== "undefined" && /Android/.test(navigator.userAgent);
+
+  // Vérifie l'état de la permission au chargement (seulement si l'API est dispo)
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.permissions) return;
+    navigator.permissions.query({ name: "geolocation" as PermissionName })
+      .then(result => {
+        if (result.state === "denied") setGpsBloque(true);
+        result.onchange = () => setGpsBloque(result.state === "denied");
+      })
+      .catch(() => {}); // iOS Safari ne supporte pas l'API Permissions
+  }, []);
+
+  function obtenirPosition() {
+    if (!navigator?.geolocation) {
+      toast.error("La géolocalisation n'est pas supportée sur cet appareil");
       return;
     }
     setGpsLoading(true);
 
-    // Essai rapide (précision moindre, moins de risque de timeout)
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        setGps({ lat, lng });
-        setGpsLoading(false);
-        toast.success("Position obtenue !");
-      },
-      (err) => {
-        setGpsLoading(false);
-        if (err.code === 1) {
-          toast.error("Localisation bloquée — cliquez sur 🔒 dans la barre d'adresse → Paramètres du site → Localisation → Autoriser → Rechargez la page", { duration: 8000 });
-        } else if (err.code === 2) {
-          toast.error("GPS indisponible — activez la localisation dans les paramètres de votre appareil", { duration: 5000 });
-        } else {
-          toast.error("Délai dépassé — vérifiez votre connexion et réessayez", { duration: 5000 });
-        }
-      },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
-    );
+    // Sur mobile, on essaie d'abord haute précision (puce GPS) puis réseau
+    const tenterAvec = (highAccuracy: boolean) => {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          setGps({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          setGpsLoading(false);
+          setGpsBloque(false);
+        },
+        err => {
+          if (err.code === 1) {
+            // PERMISSION_DENIED
+            setGpsLoading(false);
+            setGpsBloque(true);
+          } else if (err.code === 2 && highAccuracy) {
+            // POSITION_UNAVAILABLE avec haute précision → on retente en basse précision
+            tenterAvec(false);
+          } else {
+            setGpsLoading(false);
+            toast.error("Impossible d'obtenir la position — vérifiez que le GPS est activé", { duration: 5000 });
+          }
+        },
+        { enableHighAccuracy: highAccuracy, timeout: 12000, maximumAge: 0 }
+      );
+    };
+
+    tenterAvec(true);
+  }
+
+  async function partagerPosition() {
+    if (typeof window === "undefined") return;
+
+    // Vérification préalable via Permissions API (si disponible)
+    if (navigator.permissions) {
+      try {
+        const perm = await navigator.permissions.query({ name: "geolocation" as PermissionName });
+        if (perm.state === "denied") { setGpsBloque(true); return; }
+      } catch { /* iOS Safari ne supporte pas cette API */ }
+    }
+
+    obtenirPosition();
   }
 
   async function commander() {
@@ -247,23 +283,86 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
             </div>
 
             {/* GPS Picker */}
-            <div className="sm:col-span-2">
-              <button type="button" onClick={partagerPosition} disabled={gpsLoading}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed text-sm font-semibold transition-all"
-                style={{ borderColor: gps ? "#22c55e" : `${theme.accent}40`, color: gps ? "#16a34a" : theme.accent, background: gps ? "rgba(34,197,94,0.06)" : `${theme.accent}08` }}>
-                {gpsLoading ? (
-                  <><Loader2 size={14} className="animate-spin" /> Localisation en cours…</>
-                ) : gps ? (
-                  <><CheckCircle2 size={14} /> Position GPS partagée ({gps.lat.toFixed(5)}, {gps.lng.toFixed(5)})</>
-                ) : (
-                  <><MapPin size={14} /> Partager ma localisation GPS (recommandé)</>
-                )}
-              </button>
-              {gps && (
-                <a href={`https://www.google.com/maps?q=${gps.lat},${gps.lng}`} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 mt-2 text-xs underline opacity-50 hover:opacity-80">
-                  <MapPin size={10} /> Voir sur Google Maps
-                </a>
+            <div className="sm:col-span-2 space-y-2">
+              {/* Succès */}
+              {gps && !gpsBloque && (
+                <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)" }}>
+                  <CheckCircle2 size={16} color="#16a34a" className="flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold" style={{ color: "#15803d" }}>Position GPS partagée</p>
+                    <p className="text-xs" style={{ color: "#16a34a", opacity: 0.8 }}>{gps.lat.toFixed(5)}, {gps.lng.toFixed(5)}</p>
+                  </div>
+                  <a href={`https://www.google.com/maps?q=${gps.lat},${gps.lng}`} target="_blank" rel="noopener noreferrer"
+                    className="text-xs font-semibold underline flex-shrink-0" style={{ color: "#16a34a" }}>
+                    Voir
+                  </a>
+                  <button type="button" onClick={() => setGps(null)} className="text-xs opacity-50 hover:opacity-100 flex-shrink-0" style={{ color: "#16a34a" }}>✕</button>
+                </div>
+              )}
+
+              {/* Guide déblocage adapté par plateforme */}
+              {gpsBloque && (
+                <div className="rounded-xl p-4 space-y-3" style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                  <div className="flex items-start gap-2">
+                    <AlertCircle size={15} color="#ef4444" className="flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-bold" style={{ color: "#ef4444" }}>Localisation bloquée</p>
+                      <p className="text-xs mt-0.5" style={{ color: "#9ca3af" }}>
+                        {isIOS ? "Suivez ces étapes sur iPhone/iPad :" : isAndroid ? "Suivez ces étapes sur votre téléphone :" : "Suivez ces étapes dans votre navigateur :"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* iOS */}
+                  {isIOS && (
+                    <div className="space-y-2 text-xs" style={{ color: "#d1d5db" }}>
+                      <p><span style={{ color: "#F5A623" }} className="font-bold">Option 1 (Safari) :</span> Réglages → Confidentialité → <strong>Services de localisation</strong> → Safari → <strong>Lors de l'utilisation</strong></p>
+                      <p><span style={{ color: "#F5A623" }} className="font-bold">Option 2 :</span> Réglages → Safari → <strong>Localisation</strong> → <strong>Demander</strong> → revenez ici et réessayez</p>
+                      <p><span style={{ color: "#F5A623" }} className="font-bold">Option 3 (Chrome iOS) :</span> Réglages → Chrome → <strong>Localisation</strong> → <strong>Lors de l'utilisation</strong></p>
+                    </div>
+                  )}
+
+                  {/* Android */}
+                  {isAndroid && !isIOS && (
+                    <div className="space-y-2 text-xs" style={{ color: "#d1d5db" }}>
+                      <p><span style={{ color: "#F5A623" }} className="font-bold">Chrome Android :</span> Appuyez sur 🔒 dans la barre d'adresse → <strong>Autorisations</strong> → <strong>Localisation</strong> → <strong>Autoriser</strong></p>
+                      <p><span style={{ color: "#F5A623" }} className="font-bold">Si toujours bloqué :</span> Paramètres téléphone → Applications → Chrome → Autorisations → <strong>Localisation → Autoriser</strong></p>
+                    </div>
+                  )}
+
+                  {/* Desktop */}
+                  {!isIOS && !isAndroid && (
+                    <div className="space-y-2 text-xs" style={{ color: "#d1d5db" }}>
+                      <p><span style={{ color: "#F5A623" }} className="font-bold">Chrome / Edge :</span> Cliquez sur 🔒 dans la barre → <strong>Paramètres du site</strong> → <strong>Localisation</strong> → <strong>Autoriser</strong></p>
+                      <p><span style={{ color: "#F5A623" }} className="font-bold">Firefox :</span> Cliquez sur 🔒 → icône localisation → <strong>Autoriser</strong></p>
+                      <p><span style={{ color: "#F5A623" }} className="font-bold">Puis rechargez la page</strong> et réessayez.</p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-1">
+                    <button type="button" onClick={() => { setGpsBloque(false); obtenirPosition(); }}
+                      className="flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                      style={{ background: "rgba(37,211,102,0.12)", color: "#22c55e", border: "1px solid rgba(37,211,102,0.2)" }}>
+                      <MapPin size={11} /> J'ai autorisé — Réessayer
+                    </button>
+                    <button type="button" onClick={() => setGpsBloque(false)}
+                      className="px-3 py-2 rounded-lg text-xs transition-all" style={{ color: "#6b7280" }}>
+                      Ignorer
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Bouton principal (si pas de GPS et pas bloqué) */}
+              {!gps && !gpsBloque && (
+                <button type="button" onClick={partagerPosition} disabled={gpsLoading}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-dashed border-2 text-sm font-semibold transition-all"
+                  style={{ borderColor: `${theme.accent}35`, color: theme.accent, background: `${theme.accent}06` }}>
+                  {gpsLoading
+                    ? <><Loader2 size={14} className="animate-spin" /> Localisation en cours…</>
+                    : <><MapPin size={14} /> Partager ma localisation GPS <span className="opacity-50 font-normal">(optionnel)</span></>
+                  }
+                </button>
               )}
             </div>
 
