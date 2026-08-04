@@ -38,12 +38,12 @@ export default function DocsPage() {
 
           {/* Search */}
           <div className="relative max-w-lg mb-16">
-            <input type="search" placeholder="Chercher dans la doc..."
-              className="w-full rounded-2xl px-5 py-4 text-sm outline-none transition-all"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
-              onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,166,35,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.08)"; }}
-              onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.boxShadow = "none"; }}
-            />
+            <style>{`
+              .docs-search { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; width:100%; border-radius:16px; padding:16px 50px 16px 20px; font-size:14px; outline:none; transition:all .2s; }
+              .docs-search::placeholder { color:rgba(255,255,255,0.3); }
+              .docs-search:focus { border-color:rgba(245,166,35,0.5); box-shadow:0 0 0 3px rgba(245,166,35,0.08); }
+            `}</style>
+            <input type="search" placeholder="Chercher dans la doc..." className="docs-search" />
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/25 text-sm">⌘K</span>
           </div>
 

@@ -63,30 +63,27 @@ export default function ContactPage() {
             <h2 className="text-2xl font-bold mb-2">Envoyer un message</h2>
             <p className="text-white/40 text-sm mb-7">Nous répondons sous 24h en jours ouvrés.</p>
 
-            <form className="space-y-4" onSubmit={e => e.preventDefault()}>
-              {[
-                { label: "Votre nom", type: "text", ph: "Aminata Diallo" },
-                { label: "Email", type: "email", ph: "aminata@example.com" },
-                { label: "Sujet", type: "text", ph: "Support, partenariat, presse..." },
-              ].map(f => (
-                <div key={f.label}>
-                  <label className="block text-white/55 text-sm font-medium mb-1.5">{f.label}</label>
-                  <input type={f.type} placeholder={f.ph}
-                    className="w-full rounded-xl px-4 py-3.5 text-sm transition-all outline-none"
-                    style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
-                    onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,166,35,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.08)"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.boxShadow = "none"; }}
-                  />
-                </div>
-              ))}
+            <style>{`
+              .axso-input { background:#0d0d0d; border:1px solid rgba(255,255,255,0.1); color:#fff; width:100%; border-radius:12px; padding:14px 16px; font-size:14px; outline:none; transition:all .2s; }
+              .axso-input::placeholder { color:rgba(255,255,255,0.3); }
+              .axso-input:focus { border-color:rgba(245,166,35,0.5); box-shadow:0 0 0 3px rgba(245,166,35,0.08); }
+            `}</style>
+            <form className="space-y-4" action="mailto:support@axso.app" method="get">
+              <div>
+                <label className="block text-white/55 text-sm font-medium mb-1.5">Votre nom</label>
+                <input type="text" name="name" placeholder="Aminata Diallo" className="axso-input" />
+              </div>
+              <div>
+                <label className="block text-white/55 text-sm font-medium mb-1.5">Email</label>
+                <input type="email" name="email" placeholder="aminata@example.com" className="axso-input" />
+              </div>
+              <div>
+                <label className="block text-white/55 text-sm font-medium mb-1.5">Sujet</label>
+                <input type="text" name="subject" placeholder="Support, partenariat, presse..." className="axso-input" />
+              </div>
               <div>
                 <label className="block text-white/55 text-sm font-medium mb-1.5">Message</label>
-                <textarea rows={4} placeholder="Décrivez votre demande..."
-                  className="w-full rounded-xl px-4 py-3.5 text-sm resize-none outline-none transition-all"
-                  style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
-                  onFocus={e => { e.currentTarget.style.borderColor = "rgba(245,166,35,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.08)"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.boxShadow = "none"; }}
-                />
+                <textarea rows={4} name="body" placeholder="Décrivez votre demande..." className="axso-input" style={{ resize: "none" }} />
               </div>
               <button type="submit"
                 className="w-full font-bold py-4 rounded-xl transition-all hover:scale-[1.02] active:scale-95"
