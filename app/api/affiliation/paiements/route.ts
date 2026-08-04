@@ -17,7 +17,7 @@ export async function GET(req: Request) {
     (prisma as any).affiliationCommission.groupBy({
       by: ["affilieurId"],
       where: { tenantId, statut: "validee" },
-      _sum: { montant: true },
+      _sum: { montantGagne: true },
       _count: true,
     }),
   ]);

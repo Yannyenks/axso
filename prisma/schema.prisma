@@ -39,9 +39,10 @@ model Tenant {
   juridiction         String   @default("CM") // code pays ISO pour TVA
   kycStatut           String   @default("non_soumis") // non_soumis | en_cours | valide | rejete
   kycDocUrl           String?
-  snapActif           Boolean  @default(false)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  snapActif             Boolean  @default(false)
+  parametresAffiliation Json?    @default("{}")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   produits               Produit[]
   collections            Collection[]
@@ -61,6 +62,9 @@ model Tenant {
   affiliationsEntrantes  AffiliationEntrante[]
   paiementsCommissions   PaiementCommission[]
   commandesFournisseur   CommandeFournisseur[]
+  programmeAffiliation   ProgrammeAffiliation?
+  affilies               Affilie[]
+  commissionsAffilie     CommissionAffilie[]
 }
 
 // =====================
@@ -819,6 +823,7 @@ model AffiliationLien {
   id          String   @id @default(cuid())
   tenantId    String   // boutique qui propose le produit
   affilieurId String   // tenantId de l'affilieur (celui qui partage le lien)
+  affilieId   String?  // ID d'un affilié B2C individuel (si applicable)
   produitId   String?  // null = lien boutique entière
   code          String   @unique // ex: "JEAN-AB12"
   clics         Int      @default(0)
@@ -1287,4 +1292,86 @@ model PaiementCommission {
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@index([tenantId, statut])
+}
+
+// =====================
+// PROGRAMME D'AFFILIATION B2C (merchant → influenceurs/clients ambassadeurs)
+// =====================
+model ProgrammeAffiliation {
+  id               String   @id @default(cuid())
+  tenantId         String   @unique
+  nom              String
+  description      String?
+  typeCommission   String   @default("pourcentage") // pourcentage | fixe
+  valeurCommission Float    @default(10)
+  dureeCookie      Int      @default(30)
+  seuilPaiement    Float    @default(5000)
+  tousLesProduits  Boolean  @default(true)
+  produitIds       String[] @default([])
+  tiersActifs      Boolean  @default(false)
+  tier1Nom         String   @default("Bronze")
+  tier1Max         Int      @default(10)
+  tier1Commission  Float    @default(5)
+  tier2Nom         String   @default("Argent")
+  tier2Max         Int      @default(50)
+  tier2Commission  Float    @default(8)
+  tier3Nom         String   @default("Or")
+  tier3Commission  Float    @default(12)
+  multiNiveauActif Boolean  @default(false)
+  tauxSousAffilies Float    @default(2)
+  actif            Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tenant  Tenant    @relation(fields: [tenantId], references: [id])
+  affilies Affilie[]
+}
+
+// =====================
+// AFFILIÉ B2C (influenceur, client ambassadeur, apporteur d'affaires)
+// =====================
+model Affilie {
+  id                String   @id @default(cuid())
+  tenantId          String
+  nom               String
+  email             String
+  telephone         String?
+  programmeId       String?
+  codeParrainage    String   @unique
+  notes             String?
+  statut            String   @default("en_attente") // en_attente | actif | suspendu
+  clics             Int      @default(0)
+  conversions       Int      @default(0)
+  commissionTotal   Float    @default(0)
+  commissionPending Float    @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant     Tenant                @relation(fields: [tenantId], references: [id])
+  programme  ProgrammeAffiliation? @relation(fields: [programmeId], references: [id])
+  commissions CommissionAffilie[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+}
+
+// =====================
+// COMMISSION AFFILIÉ B2C
+// =====================
+model CommissionAffilie {
+  id                String   @id @default(cuid())
+  tenantId          String
+  affilieId         String
+  commandeId        String?
+  montantCommission Float
+  valeurCommande    Float    @default(0)
+  statut            String   @default("pending") // pending | approuvee | payee | rejetee
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  affilie Affilie @relation(fields: [affilieId], references: [id])
+
+  @@index([tenantId])
+  @@index([affilieId])
 }
