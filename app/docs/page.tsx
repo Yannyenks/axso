@@ -1,5 +1,6 @@
 import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
+import { Zap, ShoppingBag, CreditCard, Truck, Cpu, Plug } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -8,12 +9,12 @@ export const metadata: Metadata = {
 };
 
 const SECTIONS = [
-  { emoji: "🚀", titre: "Démarrage rapide", articles: ["Créer votre boutique en 3 étapes", "Configurer les paiements Mobile Money", "Ajouter vos premiers produits", "Personnaliser votre thème"], accent: "#F5A623" },
-  { emoji: "🛍️", titre: "Boutique & produits", articles: ["Catalogue multi-type", "Gestion des variantes", "Produits digitaux", "Import en masse CSV"], accent: "#7c3aed" },
-  { emoji: "💳", titre: "Paiements", articles: ["Wave, Orange Money, MTN MoMo", "Stripe — cartes internationales", "CinetPay & CampPay", "Gestion des remboursements"], accent: "#25D366" },
-  { emoji: "🚚", titre: "Livraison", articles: ["Zones et tarifs de livraison", "Intégration livreurs", "Suivi GPS temps réel", "Livraison digitale automatique"], accent: "#0ea5e9" },
-  { emoji: "🤖", titre: "AXIA — Intelligence artificielle", articles: ["Présentation d'AXIA", "Chatbot client automatique", "Génération de descriptions", "Onboarding boutique IA"], accent: "#ef4444" },
-  { emoji: "🔌", titre: "API & intégrations", articles: ["API REST v1 — authentification", "Webhooks — événements", "Connecteurs WhatsApp Business", "SDK JavaScript"], accent: "#F5A623" },
+  { Icon: Zap,         titre: "Démarrage rapide", articles: ["Créer votre boutique en 3 étapes", "Configurer les paiements Mobile Money", "Ajouter vos premiers produits", "Personnaliser votre thème"], accent: "#F5A623" },
+  { Icon: ShoppingBag, titre: "Boutique & produits", articles: ["Catalogue multi-type", "Gestion des variantes", "Produits digitaux", "Import en masse CSV"], accent: "#7c3aed" },
+  { Icon: CreditCard,  titre: "Paiements", articles: ["Wave, Orange Money, MTN MoMo", "Stripe — cartes internationales", "CinetPay & CampPay", "Gestion des remboursements"], accent: "#25D366" },
+  { Icon: Truck,       titre: "Livraison", articles: ["Zones et tarifs de livraison", "Intégration livreurs", "Suivi GPS temps réel", "Livraison digitale automatique"], accent: "#0ea5e9" },
+  { Icon: Cpu,         titre: "AXIA — Intelligence artificielle", articles: ["Présentation d'AXIA", "Chatbot client automatique", "Génération de descriptions", "Onboarding boutique IA"], accent: "#ef4444" },
+  { Icon: Plug,        titre: "API & intégrations", articles: ["API REST v1 — authentification", "Webhooks — événements", "Connecteurs WhatsApp Business", "SDK JavaScript"], accent: "#F5A623" },
 ];
 
 export default function DocsPage() {
@@ -26,7 +27,7 @@ export default function DocsPage() {
           style={{ background: "radial-gradient(ellipse, rgba(245,166,35,0.09) 0%, transparent 65%)" }} />
         <div className="max-w-5xl mx-auto">
           <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: "#F5A623" }}>
-            📚 Documentation
+            Documentation
           </span>
           <h1 className="text-4xl sm:text-5xl font-bold mb-4 leading-tight">
             Tout ce qu'il faut savoir<br />
@@ -48,15 +49,18 @@ export default function DocsPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {SECTIONS.map(s => (
-              <div key={s.titre} className="rounded-2xl border p-6 hover:-translate-y-0.5 transition-all duration-300"
+            {SECTIONS.map(({ Icon, titre, articles, accent }) => (
+              <div key={titre} className="rounded-2xl border p-6 hover:-translate-y-0.5 transition-all duration-300"
                 style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.07)" }}>
                 <div className="flex items-center gap-3 mb-5">
-                  <span className="text-2xl">{s.emoji}</span>
-                  <h3 className="font-bold text-white">{s.titre}</h3>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: `${accent}12`, border: `1px solid ${accent}20` }}>
+                    <Icon size={15} style={{ color: accent }} />
+                  </div>
+                  <h3 className="font-bold text-white">{titre}</h3>
                 </div>
                 <ul className="space-y-2">
-                  {s.articles.map(a => (
+                  {articles.map(a => (
                     <li key={a}>
                       <a href="#" className="text-sm text-white/45 hover:text-white transition-colors flex items-center gap-2 group">
                         <span className="w-1 h-1 rounded-full flex-shrink-0 transition-colors" style={{ background: "rgba(255,255,255,0.2)" }} />
@@ -66,7 +70,7 @@ export default function DocsPage() {
                   ))}
                 </ul>
                 <a href="#" className="inline-flex items-center gap-1.5 mt-5 text-xs font-bold transition-opacity hover:opacity-70"
-                  style={{ color: s.accent }}>
+                  style={{ color: accent }}>
                   Voir tout <span>→</span>
                 </a>
               </div>

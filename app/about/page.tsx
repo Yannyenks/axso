@@ -1,5 +1,6 @@
 import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
+import { Globe, Zap, Cpu, Shield } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -8,10 +9,10 @@ export const metadata: Metadata = {
 };
 
 const VALEURS = [
-  { emoji: "🌍", titre: "Africa-first", desc: "Tout ce que nous construisons est pensé pour les réalités du marché africain — Mobile Money, langues locales, logistique adaptée." },
-  { emoji: "⚡", titre: "Simplicité radicale", desc: "Un entrepreneur à Dakar ou Douala ne doit pas avoir besoin d'un développeur. AXSO est puissant et simple à la fois." },
-  { emoji: "🤖", titre: "IA au service du marchand", desc: "AXIA, notre IA embarquée, automatise ce qui prend du temps — descriptions, réponses clients, gestion des commandes." },
-  { emoji: "🔒", titre: "Confiance & transparence", desc: "Pas de frais cachés. Pas de commissions surprises. Votre boutique, vos données, votre argent." },
+  { Icon: Globe,  accent: "#F5A623", titre: "Africa-first", desc: "Tout ce que nous construisons est pensé pour les réalités du marché africain — Mobile Money, langues locales, logistique adaptée." },
+  { Icon: Zap,    accent: "#F5A623", titre: "Simplicité radicale", desc: "Un entrepreneur à Dakar ou Douala ne doit pas avoir besoin d'un développeur. AXSO est puissant et simple à la fois." },
+  { Icon: Cpu,    accent: "#7c3aed", titre: "IA au service du marchand", desc: "AXIA, notre IA embarquée, automatise ce qui prend du temps — descriptions, réponses clients, gestion des commandes." },
+  { Icon: Shield, accent: "#10b981", titre: "Confiance & transparence", desc: "Pas de frais cachés. Pas de commissions surprises. Votre boutique, vos données, votre argent." },
 ];
 
 const CHIFFRES = [
@@ -32,7 +33,7 @@ export default function AboutPage() {
           style={{ background: "radial-gradient(ellipse, rgba(245,166,35,0.09) 0%, transparent 65%)" }} />
         <div className="max-w-3xl mx-auto text-center relative">
           <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: "#F5A623" }}>
-            🏢 Notre histoire
+            Notre histoire
           </span>
           <h1 className="text-4xl sm:text-6xl font-bold mb-7 leading-tight">
             Bâtir l'Afrique digitale,<br />
@@ -85,12 +86,15 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto">
           <p className="text-center text-xs font-bold uppercase tracking-[0.2em] mb-12" style={{ color: "#F5A623" }}>Nos valeurs</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {VALEURS.map(v => (
-              <div key={v.titre} className="rounded-2xl p-7 border transition-all duration-300 hover:-translate-y-0.5"
+            {VALEURS.map(({ Icon, accent, titre, desc }) => (
+              <div key={titre} className="rounded-2xl p-7 border transition-all duration-300 hover:-translate-y-0.5"
                 style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.07)" }}>
-                <div className="text-3xl mb-4">{v.emoji}</div>
-                <h3 className="font-bold text-white text-lg mb-2">{v.titre}</h3>
-                <p className="text-white/45 text-sm leading-relaxed">{v.desc}</p>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
+                  style={{ background: `${accent}12`, border: `1px solid ${accent}25` }}>
+                  <Icon size={20} style={{ color: accent }} />
+                </div>
+                <h3 className="font-bold text-white text-lg mb-2">{titre}</h3>
+                <p className="text-white/45 text-sm leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
