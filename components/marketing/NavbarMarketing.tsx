@@ -4,10 +4,10 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
 const LIENS = [
-  { label: "Fonctionnalités", href: "#features" },
-  { label: "Tarifs",          href: "#tarifs"   },
-  { label: "Témoignages",     href: "#temoignages" },
-  { label: "Contact",         href: "#contact"  },
+  { label: "Fonctionnalités", href: "/fonctionnalites" },
+  { label: "Tarifs",          href: "/#tarifs"         },
+  { label: "Témoignages",     href: "/temoignages"     },
+  { label: "Contact",         href: "/contact"         },
 ];
 
 export function NavbarMarketing() {
