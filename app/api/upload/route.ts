@@ -70,8 +70,13 @@ export async function POST(req: NextRequest) {
       taille: file.size,
       type: file.type,
     });
-  } catch (err) {
+  } catch (err: any) {
+    console.error("[UPLOAD ERROR]", err?.message, err?.cause, err?.code);
     const msg = err instanceof Error ? err.message : "Erreur serveur";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({
+      error: msg,
+      detail: err?.cause ?? err?.code ?? null,
+      storeId: process.env.BLOB_STORE_ID ?? "non défini",
+    }, { status: 500 });
   }
 }
