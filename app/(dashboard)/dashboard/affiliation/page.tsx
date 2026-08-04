@@ -86,7 +86,8 @@ function OngletStats() {
   useEffect(() => {
     fetch("/api/affiliation/stats")
       .then(r => r.json())
-      .then(d => { setStats(d.stats); setTop(d.topAffilies ?? []); setLoading(false); });
+      .then(d => { setStats(d.stats ?? null); setTop(d.topAffilies ?? []); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="py-12 text-center text-sm text-gray-400">Chargement…</div>;
@@ -175,7 +176,8 @@ function OngletProgramme() {
         setProg(p);
         if (p) setForm({ nom: p.nom, description: p.description ?? "", typeCommission: p.typeCommission, valeurCommission: p.valeurCommission, dureeCookie: p.dureeCookie, seuilPaiement: p.seuilPaiement, tousLesProduits: p.tousLesProduits, tiersActifs: p.tiersActifs, actif: p.actif });
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   useEffect(() => { charger(); }, [charger]);
@@ -345,7 +347,8 @@ function OngletAffilies() {
     if (search) qs.set("search", search);
     fetch(`/api/affiliation/affilies?${qs}`)
       .then(r => r.json())
-      .then(d => { setAffilies(d.affilies ?? []); setLoading(false); });
+      .then(d => { setAffilies(d.affilies ?? []); setLoading(false); })
+      .catch(() => setLoading(false));
   }, [filtre, search]);
 
   useEffect(() => { charger(); }, [charger]);
@@ -489,7 +492,8 @@ function OngletPaiements() {
   const charger = useCallback(() => {
     fetch("/api/affiliation/paiements")
       .then(r => r.json())
-      .then(d => { setData(d); setLoading(false); });
+      .then(d => { setData(d); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
 
   useEffect(() => { charger(); }, [charger]);
@@ -610,7 +614,7 @@ function OngletLiens() {
       setCommissions(comData.commissions ?? []);
       setTotaux(comData.totaux ?? { total: 0, pending: 0, captured: 0 });
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
   }, []);
 
   const totalClics = liens.reduce((a, l) => a + l.clics, 0);

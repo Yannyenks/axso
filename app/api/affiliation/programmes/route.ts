@@ -4,20 +4,23 @@ import { prisma } from "@/lib/prisma";
 
 // GET — liste des programmes du tenant
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  const tenantId = (session.user as any)?.tenantId;
-  if (!tenantId) return NextResponse.json({ error: "Pas de boutique" }, { status: 400 });
+  try {
+    const session = await auth();
+    if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    const tenantId = (session.user as any)?.tenantId;
+    if (!tenantId) return NextResponse.json({ error: "Pas de boutique" }, { status: 400 });
 
-  const programmes = await prisma.programmeAffiliation.findMany({
-    where: { tenantId },
-    include: {
-      affilies: { select: { id: true, statut: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+    const programmes = await prisma.programmeAffiliation.findMany({
+      where: { tenantId },
+      include: { affilies: { select: { id: true, statut: true } } },
+      orderBy: { createdAt: "desc" },
+    });
 
-  return NextResponse.json({ programmes });
+    return NextResponse.json({ programmes });
+  } catch (err) {
+    console.error("[PROGRAMMES/GET]", err);
+    return NextResponse.json({ programmes: [] });
+  }
 }
 
 // POST — créer un programme

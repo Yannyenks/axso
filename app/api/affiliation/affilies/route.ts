@@ -16,39 +16,44 @@ function genererCodeParrainage(nom: string): string {
 
 // GET — liste des affiliés du tenant avec leurs stats
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  const tenantId = (session.user as any)?.tenantId;
-  if (!tenantId) return NextResponse.json({ error: "Pas de boutique" }, { status: 400 });
+  try {
+    const session = await auth();
+    if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    const tenantId = (session.user as any)?.tenantId;
+    if (!tenantId) return NextResponse.json({ error: "Pas de boutique" }, { status: 400 });
 
-  const { searchParams } = new URL(req.url);
-  const statut = searchParams.get("statut");
-  const search = searchParams.get("search");
+    const { searchParams } = new URL(req.url);
+    const statut = searchParams.get("statut");
+    const search = searchParams.get("search");
 
-  const where: any = { tenantId };
-  if (statut && statut !== "all") where.statut = statut;
-  if (search) {
-    where.OR = [
-      { nom: { contains: search, mode: "insensitive" } },
-      { email: { contains: search, mode: "insensitive" } },
-      { codeParrainage: { contains: search, mode: "insensitive" } },
-    ];
-  }
+    const where: any = { tenantId };
+    if (statut && statut !== "all") where.statut = statut;
+    if (search) {
+      where.OR = [
+        { nom: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+        { codeParrainage: { contains: search, mode: "insensitive" } },
+      ];
+    }
 
-  const affilies = await prisma.affilie.findMany({
-    where,
-    include: {
-      programme: { select: { nom: true, valeurCommission: true, typeCommission: true } },
-      commissions: {
-        select: { montantCommission: true, statut: true, createdAt: true },
-        orderBy: { createdAt: "desc" },
-        take: 5,
+    const affilies = await prisma.affilie.findMany({
+      where,
+      include: {
+        programme: { select: { nom: true, valeurCommission: true, typeCommission: true } },
+        commissions: {
+          select: { montantCommission: true, statut: true, createdAt: true },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+        },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+      orderBy: { createdAt: "desc" },
+    });
 
-  return NextResponse.json({ affilies });
+    return NextResponse.json({ affilies });
+  } catch (err) {
+    console.error("[AFFILIES/GET]", err);
+    return NextResponse.json({ affilies: [] });
+  }
 }
 
 // POST — créer un affilié
