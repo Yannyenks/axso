@@ -34,9 +34,7 @@ export function FooterMarketing() {
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
           <div className="col-span-2 lg:col-span-1">
             <Link href="/" className="inline-block mb-4">
-              <div className="bg-white rounded-xl px-2 py-1 inline-block">
-                <img src="/logo.png" alt="axso" style={{ height: "44px", width: "auto", objectFit: "contain" }} />
-              </div>
+              <img src="/logo.png" alt="axso" style={{ height: "44px", width: "auto", objectFit: "contain", filter: "brightness(0) invert(1)" }} />
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed mb-2">
               Bâtis ton empire digital.

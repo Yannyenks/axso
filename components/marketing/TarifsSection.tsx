@@ -7,7 +7,7 @@ const PLANS = [
   {
     id: "essentiel",
     nom: "Essentiel",
-    prix: 1200,
+    prix: 0,
     couleur: "#6b7280",
     gradFrom: "#6b7280",
     gradTo: "#9ca3af",
@@ -25,7 +25,7 @@ const PLANS = [
     ],
     notIncluded: ["Commandes illimitées", "Navigateur AXIA", "Sourcing dropshipping mondial"],
     recommande: false,
-    cta: "Commencer →",
+    cta: "Démarrer gratuitement →",
   },
   {
     id: "pro",
@@ -151,7 +151,7 @@ export function TarifsSection() {
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { plateforme: "AXSO",        cout: "dès 1 200 XOF/mois", highlight: true,  note: "Fait pour l'Afrique" },
+              { plateforme: "AXSO",        cout: "Gratuit pour démarrer", highlight: true,  note: "Fait pour l'Afrique" },
               { plateforme: "Shopify",     cout: "~19 000 XOF/mois",  highlight: false, note: "Aucun support local" },
               { plateforme: "WooCommerce", cout: "Hébergement + dev",  highlight: false, note: "Complexe à gérer" },
               { plateforme: "Squarespace", cout: "~14 000 XOF/mois",  highlight: false, note: "Pas fait pour vous" },
@@ -295,23 +295,42 @@ function PlanCard({
 
           {/* Price */}
           <div className="mb-8">
-            <div className="flex items-end gap-2 mb-1">
-              <span
-                className="text-5xl font-black leading-none"
-                style={{
-                  background: `linear-gradient(135deg, ${plan.gradFrom}, ${plan.gradTo})`,
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                {plan.prix.toLocaleString("fr-FR")}
-              </span>
-              <span className="text-gray-400 text-sm mb-1.5">XOF / mois</span>
-            </div>
-            <p className="text-xs text-gray-400">
-              ≈ {Math.round(plan.prix / 655).toLocaleString()} €/mois
-            </p>
+            {plan.prix === 0 ? (
+              <div>
+                <span
+                  className="text-5xl font-black leading-none"
+                  style={{
+                    background: `linear-gradient(135deg, ${plan.gradFrom}, ${plan.gradTo})`,
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  Gratuit
+                </span>
+                <p className="text-xs text-gray-400 mt-1">Pour toujours · Pas de carte requise</p>
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-end gap-2 mb-1">
+                  <span
+                    className="text-5xl font-black leading-none"
+                    style={{
+                      background: `linear-gradient(135deg, ${plan.gradFrom}, ${plan.gradTo})`,
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                    }}
+                  >
+                    {plan.prix.toLocaleString("fr-FR")}
+                  </span>
+                  <span className="text-gray-400 text-sm mb-1.5">XOF / mois</span>
+                </div>
+                <p className="text-xs text-gray-400">
+                  ≈ {Math.round(plan.prix / 655).toLocaleString()} €/mois
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Features incluses */}

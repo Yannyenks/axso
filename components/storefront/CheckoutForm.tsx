@@ -33,6 +33,18 @@ const PAYS_CONFIG: Record<string, { code: string; operateurs: { id: string; labe
 };
 const PAYS_AFRIQUE = Object.keys(PAYS_CONFIG).concat(["Niger","Mauritanie","Tunisie","Algérie","Gabon","Congo","RDC"]);
 
+// ─── Guide GPS par navigateur ─────────────────────────────────────────────────
+function GpsStep({ label, steps }: { label: string; steps: string[] }) {
+  return (
+    <div>
+      <p style={{ color: "#F5A623" }} className="font-bold mb-1">{label} :</p>
+      <ol className="list-decimal pl-4 space-y-0.5">
+        {steps.map((s, i) => <li key={i}>{s}</li>)}
+      </ol>
+    </div>
+  );
+}
+
 // ─── Récapitulatif commande ───────────────────────────────────────────────────
 function Recap({ theme, devise, items, total, codePromo, label }: any) {
   return (
@@ -92,31 +104,56 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
   const inp = "w-full px-4 py-3 rounded-xl border text-sm transition-all focus:ring-2 focus:outline-none";
   const inpStyle = { backgroundColor: theme.surface, borderColor: `${theme.accent}30`, color: theme.texte, ["--tw-ring-color" as any]: `${theme.accent}40` };
 
-  // Détection plateforme
-  const isIOS = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const isAndroid = typeof navigator !== "undefined" && /Android/.test(navigator.userAgent);
+  // ── Détection navigateur précise ─────────────────────────────────────────
+  const nav = typeof navigator !== "undefined" ? navigator : null;
+  const ua  = nav?.userAgent ?? "";
+  const isIOS     = /iPad|iPhone|iPod/.test(ua);
+  const isAndroid = /Android/.test(ua);
+  const isMobile  = isIOS || isAndroid;
 
-  // Vérifie l'état de la permission au chargement (seulement si l'API est dispo)
+  // Navigateurs iOS (tous utilisent WebKit, mais l'app réelle diffère)
+  const isChromeiOS   = /CriOS/.test(ua);
+  const isFirefoxiOS  = /FxiOS/.test(ua);
+  const isOperaiOS    = /OPiOS/.test(ua);
+  const isEdgeiOS     = /EdgiOS/.test(ua);
+  const isSafariIOS   = isIOS && !isChromeiOS && !isFirefoxiOS && !isOperaiOS && !isEdgeiOS;
+
+  // Navigateurs Android
+  const isSamsung     = /SamsungBrowser/.test(ua);
+  const isOperaAndroid= /OPR\//.test(ua);
+  const isFirefoxAndroid = /Firefox/.test(ua) && isAndroid;
+  const isEdgeAndroid = /EdgA/.test(ua);
+  const isBrave       = typeof (nav as any)?.brave !== "undefined";
+  const isUC          = /UCBrowser/.test(ua);
+  const isChromeAndroid = isAndroid && /Chrome/.test(ua) && !isSamsung && !isOperaAndroid && !isEdgeAndroid;
+
+  // Navigateurs desktop
+  const isDesktopSafari = !isMobile && /Safari/.test(ua) && !/Chrome/.test(ua);
+  const isDesktopFirefox = !isMobile && /Firefox/.test(ua);
+  const isDesktopEdge   = !isMobile && /Edg\//.test(ua);
+  const isDesktopOpera  = !isMobile && /OPR\//.test(ua);
+  const isDesktopChrome = !isMobile && /Chrome/.test(ua) && !isDesktopEdge && !isDesktopOpera;
+
+  // Vérifie l'état de la permission au chargement
   useEffect(() => {
-    if (typeof navigator === "undefined" || !navigator.permissions) return;
-    navigator.permissions.query({ name: "geolocation" as PermissionName })
-      .then(result => {
-        if (result.state === "denied") setGpsBloque(true);
-        result.onchange = () => setGpsBloque(result.state === "denied");
+    if (!nav?.permissions) return;
+    nav.permissions.query({ name: "geolocation" as PermissionName })
+      .then(r => {
+        if (r.state === "denied") setGpsBloque(true);
+        r.onchange = () => setGpsBloque(r.state === "denied");
       })
-      .catch(() => {}); // iOS Safari ne supporte pas l'API Permissions
+      .catch(() => {}); // iOS Safari ne supporte pas navigator.permissions
   }, []);
 
   function obtenirPosition() {
-    if (!navigator?.geolocation) {
-      toast.error("La géolocalisation n'est pas supportée sur cet appareil");
+    if (!nav?.geolocation) {
+      toast.error("Géolocalisation non supportée sur cet appareil");
       return;
     }
     setGpsLoading(true);
 
-    // Sur mobile, on essaie d'abord haute précision (puce GPS) puis réseau
     const tenterAvec = (highAccuracy: boolean) => {
-      navigator.geolocation.getCurrentPosition(
+      nav.geolocation.getCurrentPosition(
         pos => {
           setGps({ lat: pos.coords.latitude, lng: pos.coords.longitude });
           setGpsLoading(false);
@@ -124,15 +161,14 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
         },
         err => {
           if (err.code === 1) {
-            // PERMISSION_DENIED
             setGpsLoading(false);
             setGpsBloque(true);
           } else if (err.code === 2 && highAccuracy) {
-            // POSITION_UNAVAILABLE avec haute précision → on retente en basse précision
+            // Réessayer en basse précision (réseau/WiFi) si puce GPS indisponible
             tenterAvec(false);
           } else {
             setGpsLoading(false);
-            toast.error("Impossible d'obtenir la position — vérifiez que le GPS est activé", { duration: 5000 });
+            toast.error("GPS indisponible — activez la localisation sur votre appareil", { duration: 5000 });
           }
         },
         { enableHighAccuracy: highAccuracy, timeout: 12000, maximumAge: 0 }
@@ -144,15 +180,12 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
 
   async function partagerPosition() {
     if (typeof window === "undefined") return;
-
-    // Vérification préalable via Permissions API (si disponible)
-    if (navigator.permissions) {
+    if (nav?.permissions) {
       try {
-        const perm = await navigator.permissions.query({ name: "geolocation" as PermissionName });
-        if (perm.state === "denied") { setGpsBloque(true); return; }
-      } catch { /* iOS Safari ne supporte pas cette API */ }
+        const p = await nav.permissions.query({ name: "geolocation" as PermissionName });
+        if (p.state === "denied") { setGpsBloque(true); return; }
+      } catch {} // iOS Safari
     }
-
     obtenirPosition();
   }
 
@@ -300,49 +333,181 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
                 </div>
               )}
 
-              {/* Guide déblocage adapté par plateforme */}
+              {/* Guide déblocage par navigateur */}
               {gpsBloque && (
-                <div className="rounded-xl p-4 space-y-3" style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                <div className="rounded-xl p-4 space-y-3" style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.18)" }}>
                   <div className="flex items-start gap-2">
-                    <AlertCircle size={15} color="#ef4444" className="flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-bold" style={{ color: "#ef4444" }}>Localisation bloquée</p>
-                      <p className="text-xs mt-0.5" style={{ color: "#9ca3af" }}>
-                        {isIOS ? "Suivez ces étapes sur iPhone/iPad :" : isAndroid ? "Suivez ces étapes sur votre téléphone :" : "Suivez ces étapes dans votre navigateur :"}
-                      </p>
-                    </div>
+                    <AlertCircle size={14} color="#ef4444" className="flex-shrink-0 mt-0.5" />
+                    <p className="text-sm font-bold" style={{ color: "#ef4444" }}>Localisation bloquée — comment l'autoriser :</p>
                   </div>
 
-                  {/* iOS */}
-                  {isIOS && (
-                    <div className="space-y-2 text-xs" style={{ color: "#d1d5db" }}>
-                      <p><span style={{ color: "#F5A623" }} className="font-bold">Option 1 (Safari) :</span> Réglages → Confidentialité → <strong>Services de localisation</strong> → Safari → <strong>Lors de l'utilisation</strong></p>
-                      <p><span style={{ color: "#F5A623" }} className="font-bold">Option 2 :</span> Réglages → Safari → <strong>Localisation</strong> → <strong>Demander</strong> → revenez ici et réessayez</p>
-                      <p><span style={{ color: "#F5A623" }} className="font-bold">Option 3 (Chrome iOS) :</span> Réglages → Chrome → <strong>Localisation</strong> → <strong>Lors de l'utilisation</strong></p>
-                    </div>
-                  )}
+                  <div className="space-y-2.5 text-xs" style={{ color: "#d1d5db" }}>
+                    {/* ── iOS Safari ── */}
+                    {isSafariIOS && <>
+                      <GpsStep label="Safari (iPhone/iPad)" steps={[
+                        "Réglages iPhone → Confidentialité et sécurité → Services de localisation",
+                        "Faites défiler → Safari → sélectionnez \"Lors de l'utilisation\"",
+                        "Revenez ici et appuyez sur Réessayer",
+                      ]} />
+                    </>}
 
-                  {/* Android */}
-                  {isAndroid && !isIOS && (
-                    <div className="space-y-2 text-xs" style={{ color: "#d1d5db" }}>
-                      <p><span style={{ color: "#F5A623" }} className="font-bold">Chrome Android :</span> Appuyez sur 🔒 dans la barre d'adresse → <strong>Autorisations</strong> → <strong>Localisation</strong> → <strong>Autoriser</strong></p>
-                      <p><span style={{ color: "#F5A623" }} className="font-bold">Si toujours bloqué :</span> Paramètres téléphone → Applications → Chrome → Autorisations → <strong>Localisation → Autoriser</strong></p>
-                    </div>
-                  )}
+                    {/* ── Chrome iOS ── */}
+                    {isChromeiOS && <>
+                      <GpsStep label="Chrome (iPhone/iPad)" steps={[
+                        "Réglages iPhone → Confidentialité → Services de localisation → Chrome",
+                        "Sélectionnez \"Lors de l'utilisation\"",
+                        "Revenez ici et appuyez sur Réessayer",
+                      ]} />
+                    </>}
 
-                  {/* Desktop */}
-                  {!isIOS && !isAndroid && (
-                    <div className="space-y-2 text-xs" style={{ color: "#d1d5db" }}>
-                      <p><span style={{ color: "#F5A623" }} className="font-bold">Chrome / Edge :</span> Cliquez sur 🔒 dans la barre → <strong>Paramètres du site</strong> → <strong>Localisation</strong> → <strong>Autoriser</strong></p>
-                      <p><span style={{ color: "#F5A623" }} className="font-bold">Firefox :</span> Cliquez sur 🔒 → icône localisation → <strong>Autoriser</strong></p>
-                      <p>Puis <strong>rechargez la page</strong> et réessayez.</p>
-                    </div>
-                  )}
+                    {/* ── Firefox iOS ── */}
+                    {isFirefoxiOS && <>
+                      <GpsStep label="Firefox (iPhone/iPad)" steps={[
+                        "Réglages iPhone → Confidentialité → Services de localisation → Firefox",
+                        "Sélectionnez \"Lors de l'utilisation\"",
+                        "Revenez ici et appuyez sur Réessayer",
+                      ]} />
+                    </>}
+
+                    {/* ── Opera iOS ── */}
+                    {isOperaiOS && <>
+                      <GpsStep label="Opera (iPhone/iPad)" steps={[
+                        "Réglages iPhone → Confidentialité → Services de localisation → Opera",
+                        "Sélectionnez \"Lors de l'utilisation\"",
+                        "Revenez ici et appuyez sur Réessayer",
+                      ]} />
+                    </>}
+
+                    {/* ── Edge iOS ── */}
+                    {isEdgeiOS && <>
+                      <GpsStep label="Edge (iPhone/iPad)" steps={[
+                        "Réglages iPhone → Confidentialité → Services de localisation → Microsoft Edge",
+                        "Sélectionnez \"Lors de l'utilisation\"",
+                        "Revenez ici et appuyez sur Réessayer",
+                      ]} />
+                    </>}
+
+                    {/* ── Chrome Android ── */}
+                    {isChromeAndroid && <>
+                      <GpsStep label="Chrome (Android)" steps={[
+                        "Appuyez sur 🔒 dans la barre d'adresse → Autorisations → Localisation → Autoriser",
+                        "Ou : Paramètres Android → Applications → Chrome → Autorisations → Localisation → Autoriser",
+                        "Revenez ici et appuyez sur Réessayer",
+                      ]} />
+                    </>}
+
+                    {/* ── Samsung Internet ── */}
+                    {isSamsung && <>
+                      <GpsStep label="Samsung Internet" steps={[
+                        "Menu (3 traits) → Paramètres → Sites et téléchargements → Autorisations du site",
+                        "Localisation → Autoriser",
+                        "Ou : Paramètres Android → Applications → Internet → Autorisations → Localisation",
+                      ]} />
+                    </>}
+
+                    {/* ── Opera Android ── */}
+                    {isOperaAndroid && <>
+                      <GpsStep label="Opera (Android)" steps={[
+                        "Appuyez sur l'icône O → Paramètres → Confidentialité → Autorisations du site",
+                        "Localisation → Autoriser pour ce site",
+                        "Revenez ici et appuyez sur Réessayer",
+                      ]} />
+                    </>}
+
+                    {/* ── Firefox Android ── */}
+                    {isFirefoxAndroid && <>
+                      <GpsStep label="Firefox (Android)" steps={[
+                        "Menu (3 points) → Paramètres → Paramètres du site → Localisation",
+                        "Ou : appuyez sur 🔒 → Informations de connexion → Autorisations → Localisation",
+                        "Revenez ici et appuyez sur Réessayer",
+                      ]} />
+                    </>}
+
+                    {/* ── Edge Android ── */}
+                    {isEdgeAndroid && <>
+                      <GpsStep label="Edge (Android)" steps={[
+                        "Menu (3 points) → Paramètres → Confidentialité et sécurité → Autorisations du site",
+                        "Localisation → Autoriser",
+                        "Revenez ici et appuyez sur Réessayer",
+                      ]} />
+                    </>}
+
+                    {/* ── Brave ── */}
+                    {isBrave && <>
+                      <GpsStep label="Brave" steps={[
+                        "Appuyez sur l'icône lion → Autorisations pour ce site → Localisation → Autoriser",
+                        "Ou : Paramètres Brave → Confidentialité → Autorisations du site → Localisation",
+                        "Revenez ici et appuyez sur Réessayer",
+                      ]} />
+                    </>}
+
+                    {/* ── UC Browser ── */}
+                    {isUC && <>
+                      <GpsStep label="UC Browser" steps={[
+                        "Paramètres → Autorisations du site → Localisation → Autoriser",
+                        "Ou : Paramètres Android → Applications → UC Browser → Autorisations → Localisation",
+                      ]} />
+                    </>}
+
+                    {/* ── Desktop Chrome/Chromium ── */}
+                    {isDesktopChrome && <>
+                      <GpsStep label="Chrome / Chromium (ordinateur)" steps={[
+                        "Cliquez sur 🔒 dans la barre d'adresse → Paramètres du site → Localisation → Autoriser",
+                        "Rechargez la page et réessayez",
+                      ]} />
+                    </>}
+
+                    {/* ── Desktop Edge ── */}
+                    {isDesktopEdge && <>
+                      <GpsStep label="Microsoft Edge (ordinateur)" steps={[
+                        "Cliquez sur 🔒 → Autorisations pour ce site → Localisation → Autoriser",
+                        "Rechargez la page et réessayez",
+                      ]} />
+                    </>}
+
+                    {/* ── Desktop Firefox ── */}
+                    {isDesktopFirefox && <>
+                      <GpsStep label="Firefox (ordinateur)" steps={[
+                        "Cliquez sur 🔒 → Informations de connexion → Autorisations → Localisation → Autoriser",
+                        "Ou : barre d'adresse, cliquez sur l'icône géolocalisation → Autoriser → Enregistrer",
+                        "Rechargez la page et réessayez",
+                      ]} />
+                    </>}
+
+                    {/* ── Desktop Opera ── */}
+                    {isDesktopOpera && <>
+                      <GpsStep label="Opera (ordinateur)" steps={[
+                        "Cliquez sur 🔒 → Paramètres du site → Localisation → Autoriser",
+                        "Rechargez la page et réessayez",
+                      ]} />
+                    </>}
+
+                    {/* ── Desktop Safari macOS ── */}
+                    {isDesktopSafari && <>
+                      <GpsStep label="Safari (Mac)" steps={[
+                        "Safari → Réglages → Sites web → Localisation",
+                        "Trouvez ce site et sélectionnez \"Autoriser\"",
+                        "Revenez ici et réessayez",
+                      ]} />
+                    </>}
+
+                    {/* Fallback générique si aucun navigateur détecté */}
+                    {!isSafariIOS && !isChromeiOS && !isFirefoxiOS && !isOperaiOS && !isEdgeiOS &&
+                     !isChromeAndroid && !isSamsung && !isOperaAndroid && !isFirefoxAndroid && !isEdgeAndroid && !isBrave && !isUC &&
+                     !isDesktopChrome && !isDesktopEdge && !isDesktopFirefox && !isDesktopOpera && !isDesktopSafari && (
+                      <GpsStep label="Votre navigateur" steps={[
+                        "Cherchez l'icône 🔒 ou ⚙️ dans la barre d'adresse",
+                        "Ouvrez les paramètres / autorisations du site",
+                        "Activez la Localisation → Autoriser",
+                        "Rechargez la page et réessayez",
+                      ]} />
+                    )}
+                  </div>
 
                   <div className="flex gap-2 pt-1">
                     <button type="button" onClick={() => { setGpsBloque(false); obtenirPosition(); }}
                       className="flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
-                      style={{ background: "rgba(37,211,102,0.12)", color: "#22c55e", border: "1px solid rgba(37,211,102,0.2)" }}>
+                      style={{ background: "rgba(37,211,102,0.1)", color: "#22c55e", border: "1px solid rgba(37,211,102,0.2)" }}>
                       <MapPin size={11} /> J'ai autorisé — Réessayer
                     </button>
                     <button type="button" onClick={() => setGpsBloque(false)}

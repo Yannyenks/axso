@@ -12,19 +12,22 @@ import { Eye, EyeOff, Loader2, ShieldCheck, Zap, Globe, Star } from "lucide-reac
 type FormConnexion = z.infer<typeof schemaConnexion>;
 
 const FEATURES = [
-  { icon: Zap, text: "Lancez votre boutique en 3 minutes" },
-  { icon: Globe, text: "Acceptez Orange Money & Wave" },
+  { icon: Zap,        text: "Lancez votre boutique en 3 minutes" },
+  { icon: Globe,      text: "Acceptez Orange Money, Wave & MTN MoMo" },
   { icon: ShieldCheck, text: "Gestion complète de votre activité" },
 ];
 
+const ACCENT = "#F5A623";
+const ACCENT_DARK = "#d4880d";
+
 function ConnexionForm() {
-  const router = useRouter();
+  const router       = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const callbackUrl  = searchParams.get("callbackUrl") || "/dashboard";
   const inscriptionReussie = searchParams.get("inscription") === "success";
 
   const [showPass, setShowPass] = useState(false);
-  const [erreur, setErreur] = useState("");
+  const [erreur,   setErreur]   = useState("");
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormConnexion>({
     resolver: zodResolver(schemaConnexion),
@@ -33,100 +36,99 @@ function ConnexionForm() {
   const onSubmit = async (data: FormConnexion) => {
     setErreur("");
     const result = await signIn("credentials", {
-      email: data.email,
-      password: data.password,
-      redirect: false,
+      email: data.email, password: data.password, redirect: false,
     });
-
-    if (result?.error) {
-      setErreur("Email ou mot de passe incorrect");
-      return;
-    }
-
+    if (result?.error) { setErreur("Email ou mot de passe incorrect"); return; }
     const sessionRes = await fetch("/api/auth/session");
-    const session = await sessionRes.json();
-    const role = session?.user?.role;
-
-    if (role === "livreur") {
-      router.push("/livreur");
-    } else {
-      router.push(callbackUrl);
-    }
+    const session    = await sessionRes.json();
+    if (session?.user?.role === "livreur") router.push("/livreur");
+    else router.push(callbackUrl);
     router.refresh();
   };
 
+  const inputCls =
+    "w-full bg-[#0d0d0d] border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm " +
+    "placeholder:text-white/30 focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/15 focus:outline-none transition-all";
+
   return (
     <div
-      className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100"
-      style={{ boxShadow: "0 32px 64px -12px rgba(201,168,76,0.15), 0 0 0 1px rgba(201,168,76,0.05)" }}
+      className="rounded-3xl p-8 border"
+      style={{
+        background: "rgba(255,255,255,0.03)",
+        borderColor: "rgba(245,166,35,0.2)",
+        backdropFilter: "blur(20px)",
+        boxShadow: "0 32px 64px -12px rgba(0,0,0,0.4), 0 0 0 1px rgba(245,166,35,0.08)",
+      }}
     >
-      <h2 className="text-2xl font-bold text-gray-900 mb-1">Bon retour 👋</h2>
-      <p className="text-gray-400 text-sm mb-6">Connectez-vous à votre espace marchand</p>
+      <h2 className="text-2xl font-bold text-white mb-1">Bon retour 👋</h2>
+      <p className="text-white/40 text-sm mb-7">Connectez-vous à votre espace marchand</p>
 
       {inscriptionReussie && (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-green-700 text-sm text-center mb-4 flex items-center justify-center gap-2">
-          <ShieldCheck size={15} /> Boutique créée avec succès ! Connectez-vous.
+        <div className="rounded-xl p-3 text-sm text-center mb-5 flex items-center justify-center gap-2"
+          style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e" }}>
+          <ShieldCheck size={15} /> Boutique créée avec succès !
         </div>
       )}
 
       {erreur && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm text-center mb-4">
+        <div className="rounded-xl p-3 text-sm text-center mb-5"
+          style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
           {erreur}
         </div>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="block text-gray-600 text-sm font-medium mb-1.5">Email</label>
-          <input
-            type="email"
-            {...register("email")}
-            placeholder="aminata@example.com"
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:border-[#1B4FD8] focus:ring-2 focus:ring-[#1B4FD8]/10 focus:outline-none transition-all"
-          />
-          {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+          <label className="block text-white/60 text-sm font-medium mb-1.5">Email</label>
+          <input type="email" {...register("email")} placeholder="aminata@example.com" className={inputCls} />
+          {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
         </div>
 
         <div>
-          <label className="block text-gray-600 text-sm font-medium mb-1.5">Mot de passe</label>
+          <label className="block text-white/60 text-sm font-medium mb-1.5">Mot de passe</label>
           <div className="relative">
-            <input
-              type={showPass ? "text" : "password"}
-              {...register("password")}
-              placeholder="••••••••"
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:border-[#1B4FD8] focus:ring-2 focus:ring-[#1B4FD8]/10 focus:outline-none transition-all pr-10"
-            />
-            <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+            <input type={showPass ? "text" : "password"} {...register("password")}
+              placeholder="••••••••" className={inputCls + " pr-10"} />
+            <button type="button" onClick={() => setShowPass(!showPass)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors">
               {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+          {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>}
         </div>
 
         <div className="flex justify-end">
-          <Link href="/mot-de-passe-oublie" className="text-[#1B4FD8] text-xs hover:underline font-medium">
+          <Link href="/mot-de-passe-oublie" className="text-xs font-medium transition-colors hover:opacity-80"
+            style={{ color: ACCENT }}>
             Mot de passe oublié ?
           </Link>
         </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-[#1B4FD8] text-white font-bold py-3.5 rounded-xl hover:bg-[#1440BE] transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-[#1B4FD8]/30 hover:shadow-[#1B4FD8]/50 hover:scale-[1.02] active:scale-95"
-        >
-          {isSubmitting ? <><Loader2 size={16} className="animate-spin" /> Connexion...</> : "Se connecter →"}
+        <button type="submit" disabled={isSubmitting}
+          className="w-full font-bold py-4 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95"
+          style={{
+            background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`,
+            color: "#080808",
+            boxShadow: `0 8px 30px rgba(245,166,35,0.35)`,
+          }}>
+          {isSubmitting
+            ? <><Loader2 size={16} className="animate-spin" /> Connexion...</>
+            : "Se connecter →"}
         </button>
       </form>
 
-      <div className="mt-5 p-3.5 bg-blue-50 rounded-xl border border-blue-100">
-        <p className="text-amber-700 text-[11px] font-semibold uppercase tracking-wider mb-1.5">Comptes de démo</p>
-        <p className="text-amber-600 text-xs font-mono">aminata@modeaminata.sn / axso2024</p>
-        <p className="text-amber-600 text-xs font-mono">grace@beautegrace.ci / axso2024</p>
+      <div className="mt-5 p-4 rounded-xl border"
+        style={{ background: "rgba(245,166,35,0.06)", borderColor: "rgba(245,166,35,0.15)" }}>
+        <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: ACCENT }}>Comptes de démo</p>
+        <p className="text-white/50 text-xs font-mono">aminata@modeaminata.sn / axso2024</p>
+        <p className="text-white/50 text-xs font-mono">grace@beautegrace.ci / axso2024</p>
       </div>
 
-      <p className="text-center text-gray-400 text-sm mt-5">
+      <p className="text-center text-white/40 text-sm mt-6">
         Pas encore de boutique ?{" "}
-        <Link href="/inscription" className="text-[#1B4FD8] hover:underline font-semibold">Créer gratuitement</Link>
+        <Link href="/inscription" className="font-semibold hover:opacity-80 transition-opacity" style={{ color: ACCENT }}>
+          Créer gratuitement
+        </Link>
       </p>
     </div>
   );
@@ -134,85 +136,93 @@ function ConnexionForm() {
 
 export default function ConnexionPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/20 to-white flex overflow-hidden">
-      {/* Gradient orbs */}
+    <div className="min-h-screen flex overflow-hidden" style={{ background: "#080808", fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+      {/* Ambient gradients */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 left-1/4 w-96 h-96 bg-[#1B4FD8]/8 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-72 h-72 bg-blue-100/60 rounded-full blur-3xl" />
-        <div className="absolute inset-0 opacity-[0.025]" style={{
-          backgroundImage: `linear-gradient(#1B4FD8 1px, transparent 1px), linear-gradient(90deg, #1B4FD8 1px, transparent 1px)`,
-          backgroundSize: "48px 48px",
-        }} />
+        <div className="absolute top-0 left-1/3 w-[600px] h-[600px] rounded-full"
+          style={{ background: "radial-gradient(ellipse, rgba(245,166,35,0.08) 0%, transparent 70%)" }} />
+        <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full"
+          style={{ background: "radial-gradient(ellipse, rgba(124,58,237,0.06) 0%, transparent 70%)" }} />
+        <div className="absolute inset-0 opacity-[0.018]"
+          style={{ backgroundImage: "linear-gradient(rgba(245,166,35,1) 1px,transparent 1px),linear-gradient(90deg,rgba(245,166,35,1) 1px,transparent 1px)", backgroundSize: "52px 52px" }} />
       </div>
 
-      {/* Left panel — branding */}
+      {/* ── Left panel — branding ── */}
       <div className="hidden lg:flex flex-col justify-between w-[52%] px-16 py-12 relative">
         <Link href="/">
-          <img src="/logo.png" alt="axso" style={{ height: "60px", width: "auto", objectFit: "contain" }} />
+          <img src="/logo.png" alt="axso"
+            style={{ height: "52px", width: "auto", objectFit: "contain", filter: "brightness(0) invert(1)" }} />
         </Link>
 
         <div className="max-w-md">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#1B4FD8]/10 border border-[#1B4FD8]/25 rounded-full text-[#1B4FD8] text-xs font-semibold mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#1B4FD8] animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-7"
+            style={{ background: "rgba(245,166,35,0.1)", border: "1px solid rgba(245,166,35,0.25)", color: ACCENT }}>
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: ACCENT }} />
             +1 247 boutiques actives en Afrique
           </div>
 
-          <h1 className="text-4xl font-bold font-playfair text-gray-900 leading-tight mb-4">
+          <h1 className="text-4xl font-bold text-white leading-tight mb-4">
             Gérez votre boutique<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1B4FD8] to-[#1440BE]">comme un pro</span>
+            <span style={{
+              background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`,
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+            }}>
+              comme un empire
+            </span>
           </h1>
 
-          <p className="text-gray-500 text-base leading-relaxed mb-8">
+          <p className="text-white/50 text-base leading-relaxed mb-8">
             La plateforme e-commerce pensée pour les entrepreneurs africains. Simple, puissante, et adaptée à vos besoins.
           </p>
 
           <div className="space-y-4 mb-10">
             {FEATURES.map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-[#1B4FD8]/10 flex items-center justify-center flex-shrink-0">
-                  <Icon size={15} className="text-[#1B4FD8]" />
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "rgba(245,166,35,0.12)", border: "1px solid rgba(245,166,35,0.2)" }}>
+                  <Icon size={15} style={{ color: ACCENT }} />
                 </div>
-                <span className="text-gray-600 text-sm">{text}</span>
+                <span className="text-white/65 text-sm">{text}</span>
               </div>
             ))}
           </div>
 
           {/* Testimonial */}
-          <div
-            className="bg-white rounded-2xl p-5 border border-gray-100"
-            style={{ boxShadow: "0 20px 40px -8px rgba(0,0,0,0.08), 0 0 0 1px rgba(201,168,76,0.08)" }}
-          >
+          <div className="rounded-2xl p-5 border"
+            style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(245,166,35,0.15)", backdropFilter: "blur(10px)" }}>
             <div className="flex gap-0.5 mb-3">
-              {[1,2,3,4,5].map(i => <Star key={i} size={13} className="fill-[#1B4FD8] text-[#1B4FD8]" />)}
+              {[1,2,3,4,5].map(i => <Star key={i} size={13} fill={ACCENT} style={{ color: ACCENT }} />)}
             </div>
-            <p className="text-gray-700 text-sm leading-relaxed mb-3">
+            <p className="text-white/65 text-sm leading-relaxed mb-3">
               "Axso a transformé mon activité. Je gère ma boutique depuis mon téléphone et les paiements arrivent directement."
             </p>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#1B4FD8] flex items-center justify-center text-white text-xs font-bold">A</div>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+                style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, color: "#080808" }}>A</div>
               <div>
-                <p className="text-gray-800 text-xs font-semibold">Aminata Kouyaté</p>
-                <p className="text-gray-400 text-xs">Mode Aminata, Dakar</p>
+                <p className="text-white/80 text-xs font-semibold">Aminata Kouyaté</p>
+                <p className="text-white/35 text-xs">Mode Aminata, Dakar</p>
               </div>
             </div>
           </div>
         </div>
 
-        <p className="text-gray-400 text-xs">© 2026 Axso · Made for Africa</p>
+        <p className="text-white/20 text-xs">© 2026 Axso · Made for Africa</p>
       </div>
 
-      {/* Right panel — form */}
+      {/* ── Right panel — form ── */}
       <div className="flex-1 flex items-center justify-center px-6 py-12 relative">
-        {/* Mobile logo */}
         <div className="absolute top-8 left-1/2 -translate-x-1/2 lg:hidden">
           <Link href="/">
-            <img src="/logo.png" alt="axso" style={{ height: "48px", width: "auto", objectFit: "contain" }} />
+            <img src="/logo.png" alt="axso"
+              style={{ height: "44px", width: "auto", objectFit: "contain", filter: "brightness(0) invert(1)" }} />
           </Link>
         </div>
 
         <div className="w-full max-w-md pt-16 lg:pt-0">
           <Suspense fallback={
-            <div className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100 text-center text-gray-400 text-sm">
+            <div className="rounded-3xl p-8 text-center text-white/30 text-sm"
+              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(245,166,35,0.15)" }}>
               Chargement...
             </div>
           }>
