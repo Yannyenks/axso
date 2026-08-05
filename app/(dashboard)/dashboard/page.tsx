@@ -378,7 +378,7 @@ export default async function DashboardPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-bold text-[#111111]">
-                  {d.goalPct >= 100 ? "🎉 Objectif atteint !" : "En progression"}
+                  {d.goalPct >= 100 ? <span className="flex items-center gap-1"><Sparkles size={13} />Objectif atteint !</span> : "En progression"}
                 </p>
                 <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{formatMontant(d.month, d.devise)}</p>
                 {d.prevCA > 0 && (
@@ -483,7 +483,7 @@ export default async function DashboardPage() {
           </div>
           {d.topProduits.length === 0 ? (
             <div className="py-10 flex flex-col items-center gap-3 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-[#F5F5F7] flex items-center justify-center text-[22px]">📦</div>
+              <div className="w-12 h-12 rounded-2xl bg-[#F5F5F7] flex items-center justify-center"><Package size={22} className="text-gray-400" /></div>
               <p className="text-[13px] text-[#AAAAAA]">Aucune vente ce mois</p>
             </div>
           ) : (

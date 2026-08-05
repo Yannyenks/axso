@@ -3,15 +3,15 @@ import { useEffect, useRef, useState } from "react";
 import { Smartphone, CreditCard, Banknote } from "lucide-react";
 
 const pays = [
-  { flag: "🇸🇳", nom: "Sénégal", methodes: ["Wave", "Orange Money", "Free Money", "Visa/MC"], couleur: "#00853F" },
-  { flag: "🇨🇲", nom: "Cameroun", methodes: ["MTN MoMo", "Orange Money CM", "Visa/MC"], couleur: "#007A5E" },
-  { flag: "🇨🇮", nom: "Côte d'Ivoire", methodes: ["MTN MoMo CI", "Orange Money CI", "Wave", "Visa/MC"], couleur: "#F77F00" },
-  { flag: "🇬🇭", nom: "Ghana", methodes: ["MTN MoMo GH", "Vodafone Cash", "AirtelTigo", "Visa/MC"], couleur: "#006B3F" },
-  { flag: "🇳🇬", nom: "Nigeria", methodes: ["Bank Transfer", "USSD", "Visa/MC"], couleur: "#008751" },
-  { flag: "🇰🇪", nom: "Kenya", methodes: ["M-Pesa", "Airtel Money", "Visa/MC"], couleur: "#006600" },
+  { code: "SN", nom: "Sénégal", methodes: ["Wave", "Orange Money", "Free Money", "Visa/MC"], couleur: "#00853F" },
+  { code: "CM", nom: "Cameroun", methodes: ["MTN MoMo", "Orange Money CM", "Visa/MC"], couleur: "#007A5E" },
+  { code: "CI", nom: "Côte d'Ivoire", methodes: ["MTN MoMo CI", "Orange Money CI", "Wave", "Visa/MC"], couleur: "#F77F00" },
+  { code: "GH", nom: "Ghana", methodes: ["MTN MoMo GH", "Vodafone Cash", "AirtelTigo", "Visa/MC"], couleur: "#006B3F" },
+  { code: "NG", nom: "Nigeria", methodes: ["Bank Transfer", "USSD", "Visa/MC"], couleur: "#008751" },
+  { code: "KE", nom: "Kenya", methodes: ["M-Pesa", "Airtel Money", "Visa/MC"], couleur: "#006600" },
 ];
 
-function PayCard({ p, i, visible }: { p: typeof pays[0]; i: number; visible: boolean }) {
+function PayCard({ p, i, visible }: { p: (typeof pays)[0]; i: number; visible: boolean }) {
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
 
   const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -40,10 +40,15 @@ function PayCard({ p, i, visible }: { p: typeof pays[0]; i: number; visible: boo
     >
       <div className="flex items-center gap-4 mb-4">
         <span
-          className="text-4xl transition-all duration-300"
-          style={{ filter: tilt.x !== 0 ? `drop-shadow(0 0 8px ${p.couleur}60)` : "none" }}
+          className="w-12 h-12 rounded-xl flex items-center justify-center text-xs font-black tracking-wider transition-all duration-300 flex-shrink-0"
+          style={{
+            background: `${p.couleur}18`,
+            color: p.couleur,
+            border: `1.5px solid ${p.couleur}40`,
+            filter: tilt.x !== 0 ? `drop-shadow(0 0 8px ${p.couleur}60)` : "none",
+          }}
         >
-          {p.flag}
+          {p.code}
         </span>
         <div>
           <h3 className="text-gray-900 font-bold text-lg">{p.nom}</h3>

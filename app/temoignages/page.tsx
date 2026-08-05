@@ -21,7 +21,7 @@ const TEMOIGNAGES = [
     nom: "Aminata Koné",
     role: "Fondatrice, Wax & Prestige",
     pays: "Côte d'Ivoire",
-    flag: "🇨🇮",
+    code: "CI",
     avatar: "AK",
     accentBg: "#F5A623",
     note: 5,
@@ -32,7 +32,7 @@ const TEMOIGNAGES = [
     nom: "Moussa Traoré",
     role: "Directeur, ElectroShop Mali",
     pays: "Mali",
-    flag: "🇲🇱",
+    code: "ML",
     avatar: "MT",
     accentBg: "#7c3aed",
     note: 5,
@@ -43,7 +43,7 @@ const TEMOIGNAGES = [
     nom: "Fatou Diallo",
     role: "CEO, FormationAfrique.com",
     pays: "Sénégal",
-    flag: "🇸🇳",
+    code: "SN",
     avatar: "FD",
     accentBg: "#10b981",
     note: 5,
@@ -54,7 +54,7 @@ const TEMOIGNAGES = [
     nom: "Koffi Mensah",
     role: "Fondateur, Natura Togo",
     pays: "Togo",
-    flag: "🇹🇬",
+    code: "TG",
     avatar: "KM",
     accentBg: "#3b82f6",
     note: 5,
@@ -65,7 +65,7 @@ const TEMOIGNAGES = [
     nom: "Issa Coulibaly",
     role: "Gérant, TechGadgets BF",
     pays: "Burkina Faso",
-    flag: "🇧🇫",
+    code: "BF",
     avatar: "IC",
     accentBg: "#ef4444",
     note: 5,
@@ -76,7 +76,7 @@ const TEMOIGNAGES = [
     nom: "Nadia Benali",
     role: "Dropshippeur, Mode Express",
     pays: "Cameroun",
-    flag: "🇨🇲",
+    code: "CM",
     avatar: "NB",
     accentBg: "#F5A623",
     note: 5,
@@ -87,7 +87,7 @@ const TEMOIGNAGES = [
     nom: "Boubacar Barry",
     role: "Fondateur, BarryDeco Guinée",
     pays: "Guinée",
-    flag: "🇬🇳",
+    code: "GN",
     avatar: "BB",
     accentBg: "#7c3aed",
     note: 5,
@@ -98,7 +98,7 @@ const TEMOIGNAGES = [
     nom: "Grace Akosua",
     role: "Créatrice, Ghana Beauty Hub",
     pays: "Ghana",
-    flag: "🇬🇭",
+    code: "GH",
     avatar: "GA",
     accentBg: "#10b981",
     note: 5,
@@ -109,7 +109,7 @@ const TEMOIGNAGES = [
     nom: "Omar Diop",
     role: "CEO, FreightSN Logistique",
     pays: "Sénégal",
-    flag: "🇸🇳",
+    code: "SN",
     avatar: "OD",
     accentBg: "#3b82f6",
     note: 5,
@@ -190,7 +190,7 @@ export default function TemoignagesPage() {
               style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#080808" }}>AK</div>
             <div>
               <p className="font-bold text-white">Aminata Koné</p>
-              <p className="text-white/45 text-sm">Fondatrice, Wax & Prestige · 🇨🇮 Côte d'Ivoire</p>
+              <p className="text-white/45 text-sm">Fondatrice, Wax & Prestige · <span className="text-[10px] font-bold px-1 py-0.5 rounded" style={{ background: "rgba(245,166,35,0.15)", color: "#F5A623" }}>CI</span> Côte d'Ivoire</p>
             </div>
             <div className="ml-auto hidden sm:block text-right">
               <p className="text-2xl font-black" style={{ color: "#F5A623" }}>+280%</p>
@@ -222,7 +222,7 @@ export default function TemoignagesPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-white text-sm">{t.nom}</p>
-                    <p className="text-white/40 text-xs truncate">{t.role} · {t.flag} {t.pays}</p>
+                    <p className="text-white/40 text-xs truncate">{t.role} · <span className="font-bold" style={{ color: t.accentBg }}>{t.code}</span> {t.pays}</p>
                   </div>
                   <div className="flex gap-0.5 flex-shrink-0">
                     {Array(t.note).fill(0).map((_, i) => (

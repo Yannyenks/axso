@@ -716,7 +716,7 @@ export default function NouveauProduitPage() {
                     background: form.type === "digital" ? "rgba(124,58,237,0.1)" : form.type === "dropshipping" ? "rgba(52,211,153,0.1)" : "rgba(245,166,35,0.1)",
                     color: form.type === "digital" ? "#7c3aed" : form.type === "dropshipping" ? "#059669" : "#F5A623",
                   }}>
-                  {form.type === "digital" ? "📁 Digital" : form.type === "dropshipping" ? "🚚 Dropshipping" : "📦 Physique"}
+                  {form.type === "digital" ? <><FileText size={11} className="inline-block mr-1" />Digital</> : form.type === "dropshipping" ? <><Truck size={11} className="inline-block mr-1" />Dropshipping</> : <><Package size={11} className="inline-block mr-1" />Physique</>}
                 </span>
               </div>
             </div>

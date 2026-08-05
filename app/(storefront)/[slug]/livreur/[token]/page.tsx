@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
+import { Bike, MapPin, Navigation, Radio, Square, XCircle, CheckCircle } from "lucide-react";
 
 export default function LivreurPage({ params }: { params: { token: string } }) {
   const [commande, setCommande] = useState<any>(null);
@@ -45,7 +46,6 @@ export default function LivreurPage({ params }: { params: { token: string } }) {
       () => {},
       { enableHighAccuracy: true, maximumAge: 5000 }
     );
-    // Backup interval au cas où watchPosition ne se déclenche pas souvent
     intervalRef.current = setInterval(() => {
       navigator.geolocation.getCurrentPosition(pos => sendPos(pos.coords.latitude, pos.coords.longitude), () => {}, { enableHighAccuracy: true });
     }, 30000);
@@ -63,7 +63,9 @@ export default function LivreurPage({ params }: { params: { token: string } }) {
 
       {/* Logo / boutique */}
       <div style={{ textAlign:"center", marginBottom:32 }}>
-        <div style={{ fontSize:40, marginBottom:8 }}>🚴</div>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", width:64, height:64, borderRadius:"50%", background:"rgba(245,166,35,0.12)", border:"2px solid rgba(245,166,35,0.25)", margin:"0 auto 8px" }}>
+          <Bike size={32} color="#F5A623" />
+        </div>
         <div style={{ fontSize:13, color:"#F5A623", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:4 }}>
           {commande?.tenant?.nomBoutique ?? "Livraison"}
         </div>
@@ -73,7 +75,7 @@ export default function LivreurPage({ params }: { params: { token: string } }) {
 
       {/* Formulaire nom si pas encore tracking */}
       {status === "idle" && (
-        <div style={{ width:"100%", maxWidth:360, space:"12px" }}>
+        <div style={{ width:"100%", maxWidth:360 }}>
           <div style={{ marginBottom:12 }}>
             <label style={{ fontSize:11, color:"#666", display:"block", marginBottom:6 }}>Votre nom (optionnel)</label>
             <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Ex: Moussa"
@@ -94,14 +96,14 @@ export default function LivreurPage({ params }: { params: { token: string } }) {
               {commande.mapsLienClient && (
                 <a href={commande.mapsLienClient} target="_blank" rel="noopener noreferrer"
                   style={{ display:"inline-flex", alignItems:"center", gap:6, marginTop:10, color:"#F5A623", fontSize:12, textDecoration:"none", fontWeight:600 }}>
-                  📍 Ouvrir dans Google Maps
+                  <MapPin size={13} /> Ouvrir dans Google Maps
                 </a>
               )}
               {commande.latitudeClient && commande.longitudeClient && (
                 <a href={`https://www.google.com/maps/dir/?api=1&destination=${commande.latitudeClient},${commande.longitudeClient}`}
                   target="_blank" rel="noopener noreferrer"
                   style={{ display:"flex", alignItems:"center", gap:6, marginTop:8, color:"#22c55e", fontSize:12, textDecoration:"none", fontWeight:600 }}>
-                  🧭 Itinéraire GPS
+                  <Navigation size={13} /> Itinéraire GPS
                 </a>
               )}
             </div>
@@ -109,7 +111,7 @@ export default function LivreurPage({ params }: { params: { token: string } }) {
 
           <button onClick={startTracking}
             style={{ width:"100%", padding:"16px", borderRadius:16, background:"linear-gradient(135deg,#F5A623,#e09520)", color:"black", border:"none", fontSize:15, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
-            📡 Démarrer le partage de position
+            <Radio size={18} /> Démarrer le partage de position
           </button>
         </div>
       )}
@@ -118,7 +120,7 @@ export default function LivreurPage({ params }: { params: { token: string } }) {
       {status === "tracking" && (
         <div style={{ textAlign:"center", maxWidth:360, width:"100%" }}>
           <div style={{ width:100, height:100, borderRadius:"50%", background:"rgba(34,197,94,0.1)", border:"3px solid rgba(34,197,94,0.3)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 24px", animation:"pulse 1.5s ease-in-out infinite" }}>
-            <span style={{ fontSize:40 }}>📡</span>
+            <Radio size={40} color="#22c55e" />
           </div>
           <div style={{ fontSize:18, fontWeight:700, color:"#22c55e", marginBottom:8 }}>Position partagée</div>
           <div style={{ fontSize:13, color:"#555", marginBottom:20 }}>Votre position est envoyée automatiquement</div>
@@ -135,20 +137,20 @@ export default function LivreurPage({ params }: { params: { token: string } }) {
             <a href={`https://www.google.com/maps/dir/?api=1&destination=${commande.latitudeClient},${commande.longitudeClient}`}
               target="_blank" rel="noopener noreferrer"
               style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"12px 20px", borderRadius:14, background:"rgba(34,197,94,0.12)", border:"1px solid rgba(34,197,94,0.25)", color:"#22c55e", fontSize:13, fontWeight:600, textDecoration:"none", marginBottom:16 }}>
-              🧭 Itinéraire vers le client
+              <Navigation size={16} /> Itinéraire vers le client
             </a>
           )}
 
           <button onClick={stopTracking}
-            style={{ width:"100%", padding:"13px", borderRadius:14, background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.25)", color:"#ef4444", fontSize:13, fontWeight:600, cursor:"pointer" }}>
-            ⏹ Arrêter le partage
+            style={{ width:"100%", padding:"13px", borderRadius:14, background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.25)", color:"#ef4444", fontSize:13, fontWeight:600, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+            <Square size={14} /> Arrêter le partage
           </button>
         </div>
       )}
 
       {status === "error" && (
         <div style={{ textAlign:"center" }}>
-          <div style={{ fontSize:40, marginBottom:16 }}>❌</div>
+          <div style={{ display:"flex", justifyContent:"center", marginBottom:16 }}><XCircle size={48} color="#ef4444" /></div>
           <div style={{ fontSize:16, fontWeight:600, marginBottom:8, color:"#ef4444" }}>Géolocalisation refusée</div>
           <p style={{ fontSize:13, color:"#666" }}>Autorisez l'accès à votre position dans les paramètres de votre navigateur puis rechargez la page.</p>
         </div>
@@ -156,7 +158,7 @@ export default function LivreurPage({ params }: { params: { token: string } }) {
 
       {status === "done" && (
         <div style={{ textAlign:"center" }}>
-          <div style={{ fontSize:40, marginBottom:16 }}>✅</div>
+          <div style={{ display:"flex", justifyContent:"center", marginBottom:16 }}><CheckCircle size={48} color="#22c55e" /></div>
           <div style={{ fontSize:16, fontWeight:600, color:"#22c55e" }}>Partage terminé</div>
           <p style={{ fontSize:13, color:"#666", marginTop:8 }}>{updateCount} position(s) envoyée(s)</p>
         </div>

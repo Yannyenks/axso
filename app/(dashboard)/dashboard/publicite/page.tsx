@@ -57,9 +57,9 @@ const STATUT_CONFIG: Record<string, { label: string; color: string; bg: string }
 
 const PAYS_AFRIQUE = ["SN", "CI", "CM", "GH", "NG", "KE", "MA", "TG", "BJ", "ML", "BF", "GN"];
 const PAYS_LABELS: Record<string, string> = {
-  SN:"🇸🇳 Sénégal", CI:"🇨🇮 Côte d'Ivoire", CM:"🇨🇲 Cameroun", GH:"🇬🇭 Ghana",
-  NG:"🇳🇬 Nigeria", KE:"🇰🇪 Kenya", MA:"🇲🇦 Maroc", TG:"🇹🇬 Togo",
-  BJ:"🇧🇯 Bénin", ML:"🇲🇱 Mali", BF:"🇧🇫 Burkina Faso", GN:"🇬🇳 Guinée",
+  SN:"SN · Sénégal", CI:"CI · Côte d'Ivoire", CM:"CM · Cameroun", GH:"GH · Ghana",
+  NG:"NG · Nigeria", KE:"KE · Kenya", MA:"MA · Maroc", TG:"TG · Togo",
+  BJ:"BJ · Bénin", ML:"ML · Mali", BF:"BF · Burkina Faso", GN:"GN · Guinée",
 };
 
 function MetricCard({ icon: Icone, label, value, sub, color }: any) {

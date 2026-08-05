@@ -4,22 +4,22 @@ import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 
 const temoignages = [
   {
-    nom: "Aminata Diallo", role: "Créatrice de mode, Dakar", pays: "🇸🇳", note: 5,
+    nom: "Aminata Diallo", role: "Créatrice de mode, Dakar", pays: "SN", note: 5,
     texte: "En 3 mois avec Axso, j'ai multiplié mes ventes par 4. Le paiement Wave intégré a tout changé — mes clientes peuvent payer en quelques secondes. L'IA m'a même aidé à rédiger mes fiches produits !",
     ventes: "847 000 XOF", avatar: "A", couleur: "#1B4FD8",
   },
   {
-    nom: "Jean-Pierre Mbarga", role: "Artisan, Douala", pays: "🇨🇲", note: 5,
+    nom: "Jean-Pierre Mbarga", role: "Artisan, Douala", pays: "CM", note: 5,
     texte: "Je vendais mes produits artisanaux au marché. Aujourd'hui j'expédie dans toute l'Afrique Centrale grâce à Axso. Le dashboard est tellement simple à utiliser, même sans formation informatique.",
     ventes: "2 340 000 XAF", avatar: "J", couleur: "#c2622d",
   },
   {
-    nom: "Grâce Kouassi", role: "Cosméticienne, Abidjan", pays: "🇨🇮", note: 5,
+    nom: "Grâce Kouassi", role: "Cosméticienne, Abidjan", pays: "CI", note: 5,
     texte: "Le thème Violet Cosmos correspond parfaitement à mon image de marque. Mes clientes adorent l'expérience d'achat. Les avis certifiés ont boosté ma crédibilité. Je recommande à 100% !",
     ventes: "1 200 000 XOF", avatar: "G", couleur: "#7c3aed",
   },
   {
-    nom: "Fatou Sow", role: "Épicerie fine, Saint-Louis", pays: "🇸🇳", note: 5,
+    nom: "Fatou Sow", role: "Épicerie fine, Saint-Louis", pays: "SN", note: 5,
     texte: "L'assistant IA m'a suggéré des prix parfaits pour mon marché local. Les clients reçoivent leur confirmation automatiquement par WhatsApp. Axso pense à tout !",
     ventes: "560 000 XOF", avatar: "F", couleur: "#10b981",
   },
@@ -171,7 +171,7 @@ export function TemoignagesSection() {
               <div className="text-left">
                 <div className="flex items-center gap-2">
                   <span className="text-gray-900 font-bold text-lg">{t.nom}</span>
-                  <span className="text-lg">{t.pays}</span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 tracking-wide">{t.pays}</span>
                 </div>
                 <p className="text-gray-400 text-sm">{t.role}</p>
                 <p className="text-sm font-semibold mt-0.5" style={{ color: t.couleur }}>{t.ventes} de ventes</p>

@@ -728,7 +728,7 @@ export default function EditProduitPage() {
               <div className="aspect-square bg-gray-50 overflow-hidden">
                 {form.images?.[0]
                   ? <img src={form.images[0]} alt="" className="w-full h-full object-cover" />
-                  : <div className="w-full h-full flex items-center justify-center text-3xl">{form.type === "digital" ? "💾" : "📦"}</div>}
+                  : <div className="w-full h-full flex items-center justify-center">{form.type === "digital" ? <Download size={40} className="text-gray-300" /> : <Package size={40} className="text-gray-300" />}</div>}
               </div>
               <div className="p-4">
                 <p className="font-medium text-gray-800 text-sm line-clamp-2">{form.nom || "Nom du produit"}</p>

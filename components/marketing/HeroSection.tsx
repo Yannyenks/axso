@@ -5,7 +5,7 @@ import { Bot, Rocket, TrendingUp, CheckCircle, Zap, Plus } from "lucide-react";
 import { CartParallax } from "./CartParallax";
 
 const MOTS = ["en ligne", "digital", "africain", "sans limite"];
-const FLAGS = ["🇸🇳", "🇨🇲", "🇨🇮", "🇬🇭", "🇳🇬", "🇰🇪", "🇲🇦"];
+const FLAGS = ["SN", "CM", "CI", "GH", "NG", "KE", "MA"];
 
 const HERO_CARTS = [
   { size: 700, top: "6%",  duration: 18, delay: 0,   opacity: 0.07, direction: "rtl" as const },
@@ -141,8 +141,8 @@ export function HeroSection() {
             <div className="flex items-center gap-6" style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.6s" }}>
               <div className="flex -space-x-3">
                 {FLAGS.map((f, i) => (
-                  <div key={i} className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-200 to-[#F5A623] border-2 border-white flex items-center justify-center text-lg shadow-sm hover:scale-125 hover:z-10 transition-transform">
-                    {f}
+                  <div key={i} className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-200 to-[#F5A623] border-2 border-white flex items-center justify-center shadow-sm hover:scale-125 hover:z-10 transition-transform">
+                    <span className="text-[9px] font-black text-white/90 tracking-tight">{f}</span>
                   </div>
                 ))}
               </div>
