@@ -27,13 +27,13 @@ const inputCls =
   "w-full bg-[#0d0d0d] border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm " +
   "placeholder:text-white/30 focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/15 focus:outline-none transition-all";
 
-const THEMES: Record<string, { nom: string; emoji: string; couleur: string }> = {
-  "noir-obsidien":    { nom: "Noir Obsidien",    emoji: "✨", couleur: "#F5A623" },
-  "violet-cosmos":    { nom: "Violet Cosmos",     emoji: "💜", couleur: "#7c3aed" },
-  "terre-et-or":      { nom: "Terre & Or",        emoji: "🌿", couleur: "#c2622d" },
-  "kente-royal":      { nom: "Kente Royal",       emoji: "👑", couleur: "#D4AF37" },
-  "ocean-atlantique": { nom: "Océan Atlantique",  emoji: "🌊", couleur: "#0ea5e9" },
-  "bwiti-forest":     { nom: "Bwiti Forest",      emoji: "🌱", couleur: "#16a34a" },
+const THEMES: Record<string, { nom: string; couleur: string }> = {
+  "noir-obsidien":    { nom: "Noir Obsidien",    couleur: "#F5A623" },
+  "violet-cosmos":    { nom: "Violet Cosmos",    couleur: "#7c3aed" },
+  "terre-et-or":      { nom: "Terre & Or",       couleur: "#c2622d" },
+  "kente-royal":      { nom: "Kente Royal",      couleur: "#D4AF37" },
+  "ocean-atlantique": { nom: "Océan Atlantique", couleur: "#0ea5e9" },
+  "bwiti-forest":     { nom: "Bwiti Forest",     couleur: "#16a34a" },
 };
 
 function PlanPreviewCard({ plan, messageIA, onConfirmer, onModifier, loading }: {
@@ -60,9 +60,9 @@ function PlanPreviewCard({ plan, messageIA, onConfirmer, onModifier, loading }: 
       <div className="rounded-2xl overflow-hidden border" style={{ background: "#0d0d0d", borderColor: "rgba(255,255,255,0.08)" }}>
         <div className="p-4 border-b" style={{ borderColor: "rgba(255,255,255,0.06)", background: `linear-gradient(135deg, ${theme.couleur}12, ${theme.couleur}06)` }}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
               style={{ background: `${theme.couleur}20`, border: `2px solid ${theme.couleur}40` }}>
-              {theme.emoji}
+              <div style={{ width: 16, height: 16, borderRadius: "50%", background: theme.couleur }} />
             </div>
             <div>
               <p className="font-bold text-white">{plan.nomBoutique}</p>
@@ -217,7 +217,7 @@ function EtapeIA({ onBack, compte }: { onBack: () => void; compte: CompteData })
           <div className="flex-1 rounded-2xl px-4 py-3"
             style={{ background: "rgba(245,166,35,0.06)", border: "1px solid rgba(245,166,35,0.15)" }}>
             <p className="text-sm text-white/70">
-              Bonjour {compte.name.split(" ")[0]} ! 👋 Décrivez votre business et je crée tout automatiquement —
+              Bonjour {compte.name.split(" ")[0]} ! Décrivez votre business et je crée tout automatiquement —
               nom, thème, produits, livraison. Ex : <em style={{ color: ACCENT }}>"Je vends des vêtements mode à Dakar"</em> ou{" "}
               <em style={{ color: ACCENT }}>"Bijoux artisanaux au Maroc"</em>
             </p>

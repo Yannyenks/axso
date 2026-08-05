@@ -8,6 +8,7 @@ import Link from "next/link";
 import { AddToCartButton } from "@/components/storefront/AddToCartButton";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
+import { Package, AlertTriangle, Smartphone, Lock, RotateCcw, Check } from "lucide-react";
 
 interface Props {
   params: Promise<{ slug: string; id: string }>;
@@ -112,7 +113,7 @@ export default async function ProduitPage({ params }: Props) {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-7xl">📦</div>
+                <div className="w-full h-full flex items-center justify-center"><Package size={64} className="opacity-20" /></div>
               )}
             </div>
             {produit.images.length > 1 && (
@@ -188,14 +189,14 @@ export default async function ProduitPage({ params }: Props) {
             {/* Stock */}
             <div className="flex items-center gap-2">
               <div
-                className="w-2 h-2 rounded-full"
+                className="w-2 h-2 rounded-full flex-shrink-0"
                 style={{ backgroundColor: produit.stock > 10 ? "#34d399" : produit.stock > 0 ? "#f59e0b" : "#ef4444" }}
               />
-              <span className="text-sm">
+              <span className="text-sm flex items-center gap-1">
                 {produit.stock > 10
                   ? `En stock — ${produit.stock} disponibles`
                   : produit.stock > 0
-                    ? `⚠ Plus que ${produit.stock} en stock`
+                    ? <><AlertTriangle size={14} /> Plus que {produit.stock} en stock</>
                     : "Rupture de stock"}
               </span>
             </div>
@@ -248,19 +249,19 @@ export default async function ProduitPage({ params }: Props) {
                 className="flex items-center justify-center gap-2 w-full py-3.5 text-sm font-semibold border-2 transition-all hover:opacity-80"
                 style={{ borderColor: `${c.accent}40`, color: c.texte, borderRadius: radius }}
               >
-                📱 Demander via WhatsApp
+                <Smartphone size={16} /> Demander via WhatsApp
               </a>
             )}
 
             {/* Trust badges inline */}
             <div className="grid grid-cols-3 gap-3 pt-2">
               {[
-                { icon: "🔒", text: "Paiement sécurisé" },
-                { icon: "📦", text: "Livraison rapide" },
-                { icon: "↩️", text: "Retours 14j" },
+                { icon: <Lock size={18} style={{ color: c.accent }} />, text: "Paiement sécurisé" },
+                { icon: <Package size={18} style={{ color: c.accent }} />, text: "Livraison rapide" },
+                { icon: <RotateCcw size={18} style={{ color: c.accent }} />, text: "Retours 14j" },
               ].map((b) => (
                 <div key={b.text} className="text-center py-3 rounded-xl" style={{ backgroundColor: c.surface }}>
-                  <div className="text-xl mb-1">{b.icon}</div>
+                  <div className="flex justify-center mb-1">{b.icon}</div>
                   <p className="text-[10px] font-medium" style={{ opacity: 0.6 }}>{b.text}</p>
                 </div>
               ))}
@@ -315,7 +316,7 @@ export default async function ProduitPage({ params }: Props) {
                       <span key={i} style={{ color: i <= avis.note ? c.accent : `${c.texte}20`, fontSize: "14px" }}>★</span>
                     ))}
                     {avis.verifie && (
-                      <span className="ml-1 text-[10px] text-green-500 font-semibold">✓ Vérifié</span>
+                      <span className="ml-1 text-[10px] text-green-500 font-semibold flex items-center gap-0.5"><Check size={10} /> Vérifié</span>
                     )}
                   </div>
                   {avis.titre && <p className="font-semibold text-sm mb-1.5">{avis.titre}</p>}
@@ -342,7 +343,7 @@ export default async function ProduitPage({ params }: Props) {
                       {p.images[0] ? (
                         <img src={p.images[0]} alt={p.nom} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
+                        <div className="w-full h-full flex items-center justify-center"><Package size={32} className="opacity-20" /></div>
                       )}
                     </div>
                     <div className="p-3">

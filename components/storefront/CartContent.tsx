@@ -3,7 +3,7 @@
 import { useCartStore } from "@/store/cartStore";
 import { formatMontant } from "@/lib/utils";
 import Link from "next/link";
-import { Trash2, Plus, Minus, ShoppingBag } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingBag, Package } from "lucide-react";
 
 interface Props {
   theme: { fond: string; accent: string; texte: string; surface: string };
@@ -35,7 +35,7 @@ export function CartContent({ theme, slug, devise }: Props) {
             {item.imageUrl ? (
               <img src={item.imageUrl} alt={item.nom} className="w-20 h-20 object-cover rounded-xl flex-shrink-0" />
             ) : (
-              <div className="w-20 h-20 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style={{ backgroundColor: theme.fond }}>📦</div>
+              <div className="w-20 h-20 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: theme.fond }}><Package size={28} className="opacity-30" /></div>
             )}
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-sm mb-1 truncate">{item.nom}</h3>

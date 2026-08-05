@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { Lock, Rocket, Zap, Bot, Globe } from "lucide-react";
 import { CartParallax } from "./CartParallax";
 
 const HIGHFIELD_VIDEO_URL = "";
@@ -132,7 +133,7 @@ export function VideoSection() {
                 <div className="w-3.5 h-3.5 rounded-full bg-green-400/80"/>
               </div>
               <div className="flex-1 bg-gray-50 rounded-xl px-4 py-2 flex items-center gap-2 border border-gray-200/80">
-                <span className="text-gray-300 text-sm">🔒</span>
+                <Lock size={14} className="text-gray-300 flex-shrink-0" />
                 <span className="text-sm text-gray-400 flex-1 text-center">app.axso.africa — Construction de ton empire</span>
               </div>
               <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#F5A623]/10 text-[#F5A623]">
@@ -202,7 +203,7 @@ export function VideoSection() {
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-white/30 text-xs">0:00</span>
-                      <span className="text-white/30 text-xs">🚀 Empire en construction</span>
+                      <span className="text-white/30 text-xs inline-flex items-center gap-1"><Rocket size={12} /> Empire en construction</span>
                       <span className="text-white/30 text-xs">1:00</span>
                     </div>
                   </div>
@@ -219,7 +220,7 @@ export function VideoSection() {
             {/* Bottom bar */}
             <div className="bg-white px-5 py-3 border-t border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-lg bg-[#F5A623]/10 flex items-center justify-center text-sm">🤖</div>
+                <div className="w-7 h-7 rounded-lg bg-[#F5A623]/10 flex items-center justify-center text-[#F5A623]"><Bot size={16} /></div>
                 <div>
                   <p className="text-xs font-semibold text-gray-700">Agent Onboarding</p>
                   <p className="text-[10px] text-gray-400">Empire créé en 58 secondes</p>
@@ -227,7 +228,7 @@ export function VideoSection() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-semibold">✓ Boutique live</span>
-                <span className="text-[10px] px-2.5 py-1 rounded-full bg-[#F5A623]/10 text-[#F5A623] font-semibold">⚡ Agents actifs</span>
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-[#F5A623]/10 text-[#F5A623] font-semibold inline-flex items-center gap-1"><Zap size={10} /> Agents actifs</span>
               </div>
             </div>
           </div>
@@ -239,14 +240,14 @@ export function VideoSection() {
           style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.6s" }}
         >
           {[
-            { icon: "⚡", title: "60 secondes", desc: "De ta vision à la boutique live" },
-            { icon: "🤖", title: "11 agents IA", desc: "Travaillent pour toi en continu" },
-            { icon: "🌍", title: "10 pays", desc: "Paiements et livraisons localisés" },
+            { icon: <Zap size={36} />, title: "60 secondes", desc: "De ta vision à la boutique live" },
+            { icon: <Bot size={36} />, title: "11 agents IA", desc: "Travaillent pour toi en continu" },
+            { icon: <Globe size={36} />, title: "10 pays", desc: "Paiements et livraisons localisés" },
           ].map((item) => (
             <div key={item.title} className="group">
               <div
-                className="text-4xl mb-3 inline-block transition-transform duration-300 group-hover:scale-125"
-                style={{ filter: "drop-shadow(0 0 12px rgba(245,166,35,0.3))" }}
+                className="mb-3 inline-block transition-transform duration-300 group-hover:scale-125"
+                style={{ filter: "drop-shadow(0 0 12px rgba(245,166,35,0.3))", color: "#F5A623" }}
               >
                 {item.icon}
               </div>

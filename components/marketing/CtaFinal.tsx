@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, Rocket } from "lucide-react";
 import { CartParallax } from "./CartParallax";
 
 const CTA_CARTS = [
@@ -200,7 +200,8 @@ export function CtaFinal() {
               }}
             />
             <Sparkles size={22} className="relative z-10" />
-            <span className="relative z-10">🚀 Lancer mon empire maintenant</span>
+            <Rocket size={20} className="relative z-10" />
+            <span className="relative z-10">Lancer mon empire maintenant</span>
             <ArrowRight size={22} className="relative z-10 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>

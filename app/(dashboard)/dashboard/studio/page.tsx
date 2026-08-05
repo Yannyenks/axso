@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import {
   Video, Mic, FileText, Zap, Loader2, Play, Download,
   Pause, RefreshCw, Sparkles, ChevronDown, Copy, Check,
-  Film, Volume2, Camera, Share2, BookOpen
+  Film, Volume2, Camera, Share2, BookOpen, Package, Megaphone
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -18,10 +18,10 @@ const TABS: { id: TabId; icon: any; label: string; desc: string }[] = [
 ];
 
 const VIDEO_STYLES = [
-  { id: "product", label: "Produit", icon: "📦", desc: "Fond blanc, studio pro" },
-  { id: "ugc",     label: "UGC",    icon: "🤳", desc: "Style créateur authentique" },
-  { id: "ad",      label: "Pub",    icon: "📣", desc: "Dynamique, conversion" },
-  { id: "demo",    label: "Démo",   icon: "🎬", desc: "Démonstration produit" },
+  { id: "product", label: "Produit", Icon: Package,  desc: "Fond blanc, studio pro" },
+  { id: "ugc",     label: "UGC",    Icon: Camera,   desc: "Style créateur authentique" },
+  { id: "ad",      label: "Pub",    Icon: Megaphone,desc: "Dynamique, conversion" },
+  { id: "demo",    label: "Démo",   Icon: Film,     desc: "Démonstration produit" },
 ];
 
 const SCRIPT_TYPES = [
@@ -109,7 +109,7 @@ function TabVideo() {
             {VIDEO_STYLES.map(s => (
               <button key={s.id} onClick={() => setStyle(s.id)}
                 className={`flex items-center gap-2.5 p-3 rounded-xl border text-left transition-all ${style === s.id ? "border-[#F5A623]/50 bg-[#F5A623]/8" : "border-gray-200 bg-white hover:border-gray-300"}`}>
-                <span className="text-xl">{s.icon}</span>
+                <s.Icon size={20} className={style === s.id ? "text-[#F5A623]" : "text-gray-400"} />
                 <div>
                   <p className="text-sm font-semibold text-gray-800">{s.label}</p>
                   <p className="text-[11px] text-gray-400">{s.desc}</p>

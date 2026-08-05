@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CheckCircle, Truck } from "lucide-react";
+import { CheckCircle, Truck, Package } from "lucide-react";
 import { formatMontant } from "@/lib/utils";
 
 interface Ligne {
@@ -82,7 +82,7 @@ export function CommandeConfirmeeClient({ commande, theme, slug, nomBoutique, te
           Commande reçue !
         </h1>
         <p className="opacity-70 text-lg">
-          Merci {commande.clientNom} 🎉
+          Merci {commande.clientNom}
         </p>
         <p className="opacity-40 text-sm mt-1">
           Votre commande #{commande.numero} a bien été enregistrée.
@@ -126,7 +126,7 @@ export function CommandeConfirmeeClient({ commande, theme, slug, nomBoutique, te
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-lg">📦</span>
+                  <Package size={20} className="opacity-40" />
                 )}
               </div>
               <div className="flex-1 min-w-0">

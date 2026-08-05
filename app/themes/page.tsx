@@ -2,6 +2,7 @@ import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Palette, ShoppingBag, Star } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Thèmes — AXSO",
@@ -10,37 +11,37 @@ export const metadata: Metadata = {
 
 const THEMES = [
   {
-    id: "noir-obsidien", nom: "Noir Obsidien", emoji: "✨",
+    id: "noir-obsidien", nom: "Noir Obsidien",
     desc: "Élégance sombre, accents dorés. Le luxe à l'africaine.",
     accent: "#F5A623", bg: "#0a0a0a", surface: "#111",
     tags: ["Mode", "Luxe", "Bijoux"], popular: true,
   },
   {
-    id: "kente-royal", nom: "Kente Royal", emoji: "👑",
+    id: "kente-royal", nom: "Kente Royal",
     desc: "Inspiré des tissus Kente, couleurs riches et royales.",
     accent: "#D4AF37", bg: "#1a1000", surface: "#1f1500",
     tags: ["Artisanat", "Culture", "Mode"],
   },
   {
-    id: "violet-cosmos", nom: "Violet Cosmos", emoji: "💜",
+    id: "violet-cosmos", nom: "Violet Cosmos",
     desc: "Violet profond, ambiance cosmique et avant-gardiste.",
     accent: "#7c3aed", bg: "#0d0a1a", surface: "#120f22",
     tags: ["Tech", "Beauté", "Cosmétiques"],
   },
   {
-    id: "terre-et-or", nom: "Terre & Or", emoji: "🌿",
+    id: "terre-et-or", nom: "Terre & Or",
     desc: "Tons chauds terreux, naturel et authentique.",
     accent: "#c2622d", bg: "#1a0f0a", surface: "#1f1510",
     tags: ["Food", "Bio", "Artisanat"],
   },
   {
-    id: "ocean-atlantique", nom: "Océan Atlantique", emoji: "🌊",
+    id: "ocean-atlantique", nom: "Océan Atlantique",
     desc: "Bleu profond, fraîcheur et modernité coastale.",
     accent: "#0ea5e9", bg: "#050f1a", surface: "#08131f",
     tags: ["Sport", "Tech", "Électronique"],
   },
   {
-    id: "bwiti-forest", nom: "Bwiti Forest", emoji: "🌱",
+    id: "bwiti-forest", nom: "Bwiti Forest",
     desc: "Vert forêt, nature, bien-être et croissance.",
     accent: "#16a34a", bg: "#050f08", surface: "#07120a",
     tags: ["Bio", "Santé", "Agriculture"],
@@ -57,8 +58,8 @@ export default function ThemesPage() {
           style={{ background: "radial-gradient(ellipse, rgba(245,166,35,0.09) 0%, transparent 65%)" }} />
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: "#F5A623" }}>
-              🎨 Thèmes premium
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: "#F5A623" }}>
+              <Palette size={13} /> Thèmes premium
             </span>
             <h1 className="text-4xl sm:text-5xl font-bold mb-4 leading-tight">
               Votre boutique,<br />
@@ -83,7 +84,7 @@ export default function ThemesPage() {
                   <div className="absolute top-0 left-0 right-0 p-3 flex items-center justify-between"
                     style={{ background: theme.surface, borderBottom: `1px solid ${theme.accent}25` }}>
                     <div className="flex items-center gap-2">
-                      <span style={{ color: theme.accent }}>{theme.emoji}</span>
+                      <div style={{ width: 10, height: 10, borderRadius: "50%", background: theme.accent }} />
                       <span className="text-xs font-bold" style={{ color: theme.accent }}>Ma Boutique</span>
                     </div>
                     <div className="flex gap-1.5">
@@ -98,8 +99,10 @@ export default function ThemesPage() {
                     {[1,2,3,4].map(i => (
                       <div key={i} className="rounded-xl overflow-hidden"
                         style={{ background: theme.surface, border: `1px solid ${theme.accent}15` }}>
-                        <div className="aspect-square flex items-center justify-center text-2xl"
-                          style={{ background: `${theme.accent}08` }}>🛍️</div>
+                        <div className="aspect-square flex items-center justify-center"
+                          style={{ background: `${theme.accent}08` }}>
+                          <ShoppingBag size={18} style={{ color: theme.accent, opacity: 0.6 }} />
+                        </div>
                         <div className="p-2">
                           <div className="h-1.5 rounded mb-1" style={{ background: "rgba(255,255,255,0.1)", width: "70%" }} />
                           <div className="h-1.5 rounded" style={{ background: theme.accent, width: "45%", opacity: 0.6 }} />
@@ -110,9 +113,9 @@ export default function ThemesPage() {
 
                   {/* Badge populaire */}
                   {theme.popular && (
-                    <div className="absolute top-2 right-2 text-xs font-bold px-2 py-1 rounded-full z-10"
+                    <div className="absolute top-2 right-2 flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full z-10"
                       style={{ background: `linear-gradient(135deg,#F5A623,#d4880d)`, color: "#080808" }}>
-                      ⭐ Populaire
+                      <Star size={11} fill="#080808" /> Populaire
                     </div>
                   )}
 
@@ -131,7 +134,7 @@ export default function ThemesPage() {
                 <div className="p-5">
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="font-bold text-white">{theme.nom}</h3>
-                    <span className="text-lg">{theme.emoji}</span>
+                    <div style={{ width: 14, height: 14, borderRadius: "50%", background: theme.accent, marginTop: 2 }} />
                   </div>
                   <p className="text-white/45 text-sm mb-3">{theme.desc}</p>
                   <div className="flex flex-wrap gap-1.5">

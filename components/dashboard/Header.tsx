@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Search, Bell, ChevronDown, LogOut, Settings,
-  User, ExternalLink, Store, X,
+  User, ExternalLink, Store, X, ShoppingBag, DollarSign, Star,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { initiales } from "@/lib/utils";
@@ -215,9 +215,9 @@ export function Header({ session, boutiqueSlug, boutiqueNom }: HeaderProps) {
                     <span style={{ fontSize:"11px", fontWeight:600, color:"#F5A623", background:"rgba(245,166,35,.1)", padding:"3px 9px", borderRadius:"999px" }}>3 nouvelles</span>
                   </div>
                   {[
-                    { icon:"🛍️", msg:"Nouvelle commande #1042 reçue",      temps:"Il y a 2 min"  },
-                    { icon:"💰", msg:"Paiement confirmé — 25 000 XOF",     temps:"Il y a 15 min" },
-                    { icon:"⭐", msg:"Nouvel avis 5 étoiles reçu",         temps:"Il y a 1h"     },
+                    { Icon: ShoppingBag, color: "#D97706", msg:"Nouvelle commande #1042 reçue",      temps:"Il y a 2 min"  },
+                    { Icon: DollarSign,  color: "#16A34A", msg:"Paiement confirmé — 25 000 XOF",     temps:"Il y a 15 min" },
+                    { Icon: Star,        color: "#F59E0B", msg:"Nouvel avis 5 étoiles reçu",         temps:"Il y a 1h"     },
                   ].map((n, i) => (
                     <div key={i} className="hdr-item" style={{
                       display:"flex", alignItems:"flex-start", gap:"12px",
@@ -225,7 +225,7 @@ export function Header({ session, boutiqueSlug, boutiqueNom }: HeaderProps) {
                       borderBottom: i < 2 ? "1px solid #f7f7f7" : "none",
                       transition:"background .15s",
                     }}>
-                      <span style={{ fontSize:"18px", lineHeight:1, flexShrink:0, marginTop:"1px" }}>{n.icon}</span>
+                      <n.Icon size={16} style={{ color: n.color, flexShrink:0, marginTop:"2px" }} />
                       <div>
                         <p style={{ fontSize:"13px", color:"#333", margin:0, lineHeight:"1.4" }}>{n.msg}</p>
                         <p style={{ fontSize:"11px", color:"#bbb", margin:"3px 0 0" }}>{n.temps}</p>

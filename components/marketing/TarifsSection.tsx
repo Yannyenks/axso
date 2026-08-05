@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Check, X, Zap, Star } from "lucide-react";
+import { Check, X, Zap, Star, Trophy, Lock } from "lucide-react";
 import Link from "next/link";
 
 const PLANS = [
@@ -115,8 +115,8 @@ export function TarifsSection() {
             transition: "all 0.8s cubic-bezier(0.23,1,0.32,1)",
           }}
         >
-          <span className="text-[#F5A623] text-sm font-bold uppercase tracking-[0.2em] mb-4 block">
-            ⚡ Paliers de puissance
+          <span className="text-[#F5A623] text-sm font-bold uppercase tracking-[0.2em] mb-4 inline-flex items-center gap-1.5">
+            <Zap size={14} /> Paliers de puissance
           </span>
           <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-5"
             style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
@@ -165,9 +165,9 @@ export function TarifsSection() {
                   boxShadow: item.highlight ? "0 8px 30px rgba(245,166,35,0.15)" : "none",
                 }}
               >
-                <p className="font-bold text-sm mb-1.5" style={{ color: item.highlight ? "#F5A623" : "#9ca3af" }}>
+                <p className="font-bold text-sm mb-1.5 inline-flex items-center gap-1" style={{ color: item.highlight ? "#F5A623" : "#9ca3af" }}>
                   {item.plateforme}
-                  {item.highlight && <span className="ml-1">🏆</span>}
+                  {item.highlight && <Trophy size={12} className="ml-1" />}
                 </p>
                 <p className="text-xs font-semibold text-gray-700 mb-1">{item.cout}</p>
                 <p className="text-[10px] text-gray-400">{item.note}</p>
@@ -181,8 +181,8 @@ export function TarifsSection() {
           className="mt-14 text-center"
           style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 1s" }}
         >
-          <p className="text-sm text-gray-400">
-            🔒 Paiement sécurisé · Annulation à tout moment · Pas de frais cachés
+          <p className="text-sm text-gray-400 inline-flex items-center gap-1.5">
+            <Lock size={13} /> Paiement sécurisé · Annulation à tout moment · Pas de frais cachés
           </p>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Camera, Globe } from "lucide-react";
 
 const liens = {
   Produit: [
@@ -43,10 +44,10 @@ export function FooterMarketing() {
               AXSO s'occupe du reste — boutique, marketing, clients, livraison.
             </p>
             <div className="flex gap-3">
-              {["𝕏", "f", "📸", "in"].map((s, i) => (
+              {(["𝕏", "f", null, "in"] as (string | null)[]).map((s, i) => (
                 <a key={i} href="#"
                   className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-gray-400 hover:text-[#F5A623] hover:bg-gray-700 transition-all text-xs font-bold">
-                  {s}
+                  {s === null ? <Camera size={14} /> : s}
                 </a>
               ))}
             </div>
@@ -71,9 +72,9 @@ export function FooterMarketing() {
         <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-gray-500 text-sm">© {new Date().getFullYear()} AXSO Technologies. Tous droits réservés.</p>
           <div className="flex items-center gap-4 text-sm text-gray-500">
-            <span>🇫🇷 Français</span>
+            <span className="inline-flex items-center gap-1"><Globe size={13} /> Français</span>
             <span>|</span>
-            <span>🇬🇧 English</span>
+            <span className="inline-flex items-center gap-1"><Globe size={13} /> English</span>
           </div>
         </div>
       </div>

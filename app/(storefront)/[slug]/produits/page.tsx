@@ -7,6 +7,7 @@ import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import Link from "next/link";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
+import { Package, Search } from "lucide-react";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -188,7 +189,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
           <div className="flex-1">
             {produits.length === 0 ? (
               <div className="text-center py-24">
-                <p className="text-4xl mb-4">🔍</p>
+                <Search size={48} className="mx-auto mb-4 opacity-20" />
                 <p className="text-lg font-semibold mb-2">Aucun produit trouvé</p>
                 <p className="text-sm mb-6" style={{ opacity: 0.5 }}>
                   {q ? `Aucun résultat pour "${q}"` : "Cette collection est vide pour l'instant"}
@@ -221,7 +222,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
                               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-5xl">📦</div>
+                            <div className="w-full h-full flex items-center justify-center"><Package size={40} className="opacity-20" /></div>
                           )}
                           <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5">
                             {p.featured && (

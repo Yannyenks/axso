@@ -2,36 +2,37 @@
 import { useState, useEffect } from "react";
 import {
   MessageSquare, Plus, Loader2, X, Sparkles, Send,
-  Users, CheckCircle2, Zap, Smartphone, Hash
+  Users, CheckCircle2, Zap, Smartphone, Hash,
+  Crown, Moon, ShoppingCart, UserPlus, Check
 } from "lucide-react";
 import { toast } from "sonner";
 
 const SEGMENTS = [
-  { id: "tous",       label: "Tous les clients",    desc: "Toute votre base clients", icon: "👥" },
-  { id: "vip",        label: "Clients VIP",         desc: "Top dépenseurs (2x moy.)", icon: "👑" },
-  { id: "inactifs",   label: "Clients inactifs",    desc: "Pas d'achat depuis 30j+",  icon: "💤" },
-  { id: "nouveaux",   label: "Nouveaux clients",    desc: "Inscrits cette semaine",   icon: "🆕" },
+  { id: "tous",     label: "Tous les clients", desc: "Toute votre base clients", Icon: Users    },
+  { id: "vip",      label: "Clients VIP",      desc: "Top dépenseurs (2x moy.)", Icon: Crown    },
+  { id: "inactifs", label: "Clients inactifs", desc: "Pas d'achat depuis 30j+",  Icon: Moon     },
+  { id: "nouveaux", label: "Nouveaux clients", desc: "Inscrits cette semaine",   Icon: UserPlus },
 ];
 
 const TEMPLATES = [
   {
     label: "Promo flash",
-    icon: "⚡",
+    Icon: Zap,
     template: "Bonjour {{nom}} ! Flash sale chez {boutique} : -30% sur tout pendant 24h ! Profitez-en : {lien} 🛍️",
   },
   {
     label: "Nouveau produit",
-    icon: "🆕",
+    Icon: UserPlus,
     template: "Salut {{nom}} ! Découvrez notre nouveau produit exclusif sur {boutique} ! Quantités limitées 👉 {lien}",
   },
   {
     label: "Relance panier",
-    icon: "🛒",
+    Icon: ShoppingCart,
     template: "{{nom}}, vous avez oublié quelque chose dans votre panier ! Terminez votre commande avant rupture de stock : {lien} 📦",
   },
   {
     label: "Événement",
-    icon: "🎉",
+    Icon: Sparkles,
     template: "{{nom}}, grande nouvelle ! Événement spécial sur {boutique} ce weekend. Offres exclusives pour vous 🎁 {lien}",
   },
 ];
@@ -203,7 +204,7 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
                   {SEGMENTS.map(s => (
                     <button key={s.id} onClick={() => setForm(f => ({ ...f, segment: s.id }))}
                       className={`flex items-start gap-2.5 p-3 rounded-xl border text-left transition-all ${form.segment === s.id ? "border-green-400 bg-green-50" : "border-gray-200 hover:border-gray-300"}`}>
-                      <span className="text-lg">{s.icon}</span>
+                      <s.Icon size={18} className={form.segment === s.id ? "text-green-600 flex-shrink-0 mt-0.5" : "text-gray-400 flex-shrink-0 mt-0.5"} />
                       <div>
                         <p className="text-xs font-semibold text-gray-800">{s.label}</p>
                         <p className="text-[10px] text-gray-400">{s.desc}</p>
@@ -228,7 +229,7 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
                   {TEMPLATES.map(t => (
                     <button key={t.label} onClick={() => setForm(f => ({ ...f, message: t.template }))}
                       className="flex items-center gap-2 p-2.5 rounded-xl border border-gray-200 text-left hover:border-green-400 hover:bg-green-50 transition-all text-xs text-gray-600">
-                      <span>{t.icon}</span> {t.label}
+                      <t.Icon size={14} className="text-gray-400 flex-shrink-0" /> {t.label}
                     </button>
                   ))}
                 </div>

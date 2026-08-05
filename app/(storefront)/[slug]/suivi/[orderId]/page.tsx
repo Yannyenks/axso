@@ -7,17 +7,18 @@ import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { ClipboardList, CheckCircle2, Package, Truck, Sparkles, Phone, Check, Smartphone, Circle } from "lucide-react";
 
 interface Props {
   params: Promise<{ slug: string; orderId: string }>;
 }
 
 const ETAPES = [
-  { statut: "en_attente", label: "Commande reçue", icon: "📋" },
-  { statut: "confirmee", label: "Paiement confirmé", icon: "✅" },
-  { statut: "en_preparation", label: "En préparation", icon: "📦" },
-  { statut: "en_livraison", label: "En livraison", icon: "🚚" },
-  { statut: "livree", label: "Livrée", icon: "🎉" },
+  { statut: "en_attente",    label: "Commande reçue",   icon: <ClipboardList size={18} /> },
+  { statut: "confirmee",     label: "Paiement confirmé", icon: <CheckCircle2 size={18} /> },
+  { statut: "en_preparation", label: "En préparation",  icon: <Package size={18} /> },
+  { statut: "en_livraison",  label: "En livraison",     icon: <Truck size={18} /> },
+  { statut: "livree",        label: "Livrée",            icon: <Sparkles size={18} /> },
 ];
 
 export default async function SuiviPage({ params }: Props) {
@@ -94,11 +95,12 @@ export default async function SuiviPage({ params }: Props) {
                 return (
                   <div key={etape.statut} className="flex items-start gap-4">
                     <div className="flex flex-col items-center">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg" style={{
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{
                         backgroundColor: fait ? theme.accent : `${theme.accent}15`,
                         border: `2px solid ${fait ? theme.accent : `${theme.accent}30`}`,
+                        color: fait ? theme.fond : `${theme.accent}80`,
                       }}>
-                        {fait ? etape.icon : "○"}
+                        {fait ? <Check size={18} /> : <Circle size={18} />}
                       </div>
                       {index < ETAPES.length - 1 && (
                         <div className="w-0.5 h-8 my-1" style={{ backgroundColor: fait && index < etapeActuelle ? theme.accent : `${theme.accent}20` }} />
@@ -121,8 +123,8 @@ export default async function SuiviPage({ params }: Props) {
             <p className="font-semibold text-sm mb-2">Livreur assigné</p>
             <p className="font-medium">{commande.livreur.nom}</p>
             {commande.livreur.telephone && (
-              <a href={`tel:${commande.livreur.telephone}`} className="text-sm mt-1 inline-block" style={{ color: theme.accent }}>
-                📞 {commande.livreur.telephone}
+              <a href={`tel:${commande.livreur.telephone}`} className="text-sm mt-1 inline-flex items-center gap-1" style={{ color: theme.accent }}>
+                <Phone size={14} /> {commande.livreur.telephone}
               </a>
             )}
           </div>
@@ -136,7 +138,7 @@ export default async function SuiviPage({ params }: Props) {
           }}>
             {dejaCONFIRME ? (
               <div>
-                <p className="font-semibold" style={{ color: theme.accent }}>✅ Réception confirmée</p>
+                <p className="font-semibold flex items-center gap-1.5" style={{ color: theme.accent }}><CheckCircle2 size={16} /> Réception confirmée</p>
                 <p className="text-sm opacity-60 mt-1">Merci ! Le paiement a été libéré au vendeur.</p>
               </div>
             ) : (
@@ -146,10 +148,10 @@ export default async function SuiviPage({ params }: Props) {
                 <form action={confirmerReception}>
                   <button
                     type="submit"
-                    className="px-6 py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90"
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90"
                     style={{ backgroundColor: theme.accent, color: theme.fond }}
                   >
-                    ✓ Confirmer la réception
+                    <Check size={14} /> Confirmer la réception
                   </button>
                 </form>
               </div>
@@ -199,10 +201,10 @@ export default async function SuiviPage({ params }: Props) {
               href={`https://wa.me/${tenant.whatsapp.replace(/\D/g, "")}?text=Bonjour, j'ai une question sur ma commande ${commande.numero}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 text-center py-3 rounded-xl font-semibold text-sm border-2 transition-all"
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm border-2 transition-all"
               style={{ borderColor: theme.accent, color: theme.accent }}
             >
-              📱 Contacter la boutique
+              <Smartphone size={16} /> Contacter la boutique
             </a>
           )}
           <Link

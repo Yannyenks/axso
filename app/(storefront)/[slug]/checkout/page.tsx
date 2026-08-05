@@ -7,6 +7,7 @@ import Link from "next/link";
 import { CheckoutForm } from "@/components/storefront/CheckoutForm";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
+import { Lock } from "lucide-react";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -31,7 +32,7 @@ export default async function CheckoutPage({ params }: Props) {
           </Link>
           <div className="flex items-center gap-2 text-sm opacity-50">
             <span className="text-xs">Paiement sécurisé</span>
-            <span>🔒</span>
+            <Lock size={14} />
           </div>
         </div>
       </nav>

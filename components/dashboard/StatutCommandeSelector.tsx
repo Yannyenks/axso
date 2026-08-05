@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ChevronDown, Loader2, MessageCircle, CheckCircle2 } from "lucide-react";
+import { ChevronDown, Loader2, MessageCircle, CheckCircle2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -101,7 +101,7 @@ export function StatutCommandeSelector({ commandeId, statutActuel }: Props) {
                 >
                   <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
                   <span className={s.value === statut ? "text-gray-900 font-medium" : "text-gray-600"}>{s.label}</span>
-                  {s.value === statut && <span className="ml-auto text-[#F5A623] text-xs">✓</span>}
+                  {s.value === statut && <Check size={12} className="ml-auto text-[#F5A623]" />}
                 </button>
               ))}
             </div>

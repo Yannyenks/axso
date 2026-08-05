@@ -3,7 +3,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Send, Wand2, Users, Clock, CheckCircle2, XCircle,
-  Mail, RefreshCw, ChevronDown, Sparkles, Eye, Zap
+  Mail, RefreshCw, ChevronDown, Sparkles, Eye, Zap,
+  Gem, Moon, Flame, Crown, UserPlus
 } from "lucide-react";
 
 const EMAIL_PLATFORMS = [
@@ -26,31 +27,31 @@ interface Campagne {
 }
 
 const SEGMENTS = [
-  { value: "tous", label: "Tous les clients", icon: "👥" },
-  { value: "vip", label: "VIP (≥ 50 000 XAF dépensés)", icon: "💎" },
-  { value: "nouveaux", label: "Nouveaux (≤ 1 commande)", icon: "🆕" },
-  { value: "inactifs", label: "Inactifs (30+ jours)", icon: "😴" },
+  { value: "tous",     label: "Tous les clients",          Icon: Users    },
+  { value: "vip",      label: "VIP (≥ 50 000 XAF dépensés)", Icon: Gem   },
+  { value: "nouveaux", label: "Nouveaux (≤ 1 commande)",   Icon: UserPlus },
+  { value: "inactifs", label: "Inactifs (30+ jours)",      Icon: Moon     },
 ];
 
 const TEMPLATES = [
   {
-    id: "promo", label: "Promotion flash", icon: "🔥",
-    sujet: "🔥 Offre limitée — {boutique}",
+    id: "promo", label: "Promotion flash", Icon: Flame,
+    sujet: "Offre limitée — {boutique}",
     corps: "Bonjour {prenom},\n\nNous avons une offre exclusive pour vous ! Profitez de -20% sur toute la boutique ce weekend.\n\nUtilisez le code : PROMO20\n\nÀ très vite,\nL'équipe {boutique}",
   },
   {
-    id: "nouveau_produit", label: "Nouveau produit", icon: "✨",
-    sujet: "✨ Découvrez notre nouveauté — {boutique}",
+    id: "nouveau_produit", label: "Nouveau produit", Icon: Sparkles,
+    sujet: "Découvrez notre nouveauté — {boutique}",
     corps: "Bonjour {prenom},\n\nNous venons de lancer un nouveau produit que vous allez adorer !\n\nDécouvrez-le maintenant sur notre boutique.\n\nCordialement,\n{boutique}",
   },
   {
-    id: "relance", label: "Relance client", icon: "💌",
-    sujet: "💌 On pense à vous, {prenom} — {boutique}",
+    id: "relance", label: "Relance client", Icon: Mail,
+    sujet: "On pense à vous, {prenom} — {boutique}",
     corps: "Bonjour {prenom},\n\nVous nous manquez ! Voici un code de bienvenue spécialement pour vous : RETOUR15\n\nValidez votre prochain achat avec -15% de réduction.\n\nÀ bientôt,\n{boutique}",
   },
   {
-    id: "fidelite", label: "Fidélité VIP", icon: "👑",
-    sujet: "👑 Merci pour votre fidélité, {prenom} !",
+    id: "fidelite", label: "Fidélité VIP", Icon: Crown,
+    sujet: "Merci pour votre fidélité, {prenom} !",
     corps: "Bonjour {prenom},\n\nEn tant que client VIP de {boutique}, vous bénéficiez d'un accès exclusif à nos meilleures offres.\n\nMerci pour votre confiance !\n\nL'équipe {boutique}",
   },
 ];
@@ -181,8 +182,8 @@ export default function EmailMarketingPage() {
       {/* Providers connectés */}
       <div className="grid grid-cols-2 gap-3">
         {[
-          { key: "resend", label: "Resend", icon: "📨", actif: stats?.providers.resend, desc: "Emails transactionnels jusqu'à 50/envoi" },
-          { key: "gmail", label: "Gmail OAuth", icon: "📧", actif: stats?.providers.gmail, desc: "Votre compte Gmail professionnel" },
+          { key: "resend", label: "Resend",      Icon: Send, actif: stats?.providers.resend, desc: "Emails transactionnels jusqu'à 50/envoi" },
+          { key: "gmail",  label: "Gmail OAuth", Icon: Mail, actif: stats?.providers.gmail,  desc: "Votre compte Gmail professionnel" },
         ].map((p) => (
           <button
             key={p.key}
@@ -190,7 +191,7 @@ export default function EmailMarketingPage() {
             className={`p-4 rounded-2xl border-2 text-left transition-all ${provider === p.key && p.actif ? "border-[#F5A623] bg-amber-50" : "border-gray-100 bg-white"} ${!p.actif ? "opacity-50 cursor-not-allowed" : "hover:border-[#F5A623]/40"}`}
           >
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg">{p.icon}</span>
+              <p.Icon size={18} className="text-gray-600 flex-shrink-0" />
               <span className="font-semibold text-gray-900 text-sm">{p.label}</span>
               <span className={`ml-auto text-xs px-2 py-0.5 rounded-full font-medium ${p.actif ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
                 {p.actif ? "Connecté" : "Non connecté"}
@@ -217,7 +218,7 @@ export default function EmailMarketingPage() {
                     className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border-2 text-sm transition-all ${segment === s.value ? "border-[#F5A623] bg-amber-50" : "border-gray-100 hover:border-gray-200"}`}
                   >
                     <span className="flex items-center gap-2">
-                      <span>{s.icon}</span>
+                      <s.Icon size={15} className={segment === s.value ? "text-[#F5A623]" : "text-gray-400"} />
                       <span className={segment === s.value ? "font-semibold text-gray-900" : "text-gray-600"}>{s.label}</span>
                     </span>
                     <span className="text-xs font-bold text-gray-400">{stats?.segments?.[s.value as keyof typeof stats.segments] ?? "..."}</span>
@@ -234,9 +235,9 @@ export default function EmailMarketingPage() {
                   <button
                     key={t.id}
                     onClick={() => appliquerTemplate(t.id)}
-                    className={`p-3 rounded-xl border-2 text-left text-sm transition-all ${templateId === t.id ? "border-[#F5A623] bg-amber-50" : "border-gray-100 hover:border-gray-200"}`}
+                    className={`p-3 rounded-xl border-2 text-left text-sm transition-all flex items-center gap-2 ${templateId === t.id ? "border-[#F5A623] bg-amber-50" : "border-gray-100 hover:border-gray-200"}`}
                   >
-                    <span className="text-base mr-1.5">{t.icon}</span>
+                    <t.Icon size={15} className={templateId === t.id ? "text-[#F5A623] flex-shrink-0" : "text-gray-400 flex-shrink-0"} />
                     <span className={`font-medium ${templateId === t.id ? "text-gray-900" : "text-gray-600"}`}>{t.label}</span>
                   </button>
                 ))}

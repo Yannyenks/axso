@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { formatMontant, formatDate } from "@/lib/utils";
 import Link from "next/link";
-import { CheckCircle, Clock, XCircle, Shield, TrendingDown, Download, Zap, Package, MessageCircle } from "lucide-react";
+import { CheckCircle, Clock, XCircle, Shield, TrendingDown, Download, Zap, Package, MessageCircle, Check, X } from "lucide-react";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
 
@@ -141,7 +141,7 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
               <Package size={36} className="text-green-400" />
             </div>
             <h1 className="text-3xl font-bold font-playfair mb-2 text-green-400">Commande enregistrée !</h1>
-            <p className="opacity-70 text-lg mb-1">Merci {commande.clientNom} 🎉</p>
+            <p className="opacity-70 text-lg mb-1">Merci {commande.clientNom}</p>
             <p className="opacity-40 text-sm">Le vendeur va vous contacter pour organiser la livraison.</p>
           </div>
         ) : isDigital ? (
@@ -153,7 +153,7 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
             <h1 className="text-3xl font-bold font-playfair mb-2" style={{ color: theme.accent }}>
               {paye ? "Achat confirmé !" : "Commande reçue !"}
             </h1>
-            <p className="opacity-70 text-lg mb-1">Merci {commande.clientNom} — votre fichier est prêt ! 🚀</p>
+            <p className="opacity-70 text-lg mb-1">Merci {commande.clientNom} — votre fichier est prêt !</p>
             <p className="opacity-40 text-sm">Un lien de téléchargement a été envoyé à votre email.</p>
           </div>
         ) : (
@@ -165,7 +165,7 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
             <h1 className="text-3xl font-bold font-playfair mb-2" style={{ color: theme.accent }}>
               {paye ? "Commande confirmée !" : "Commande reçue !"}
             </h1>
-            <p className="opacity-70 text-lg mb-1">Merci pour votre commande, {commande.clientNom} 🎉</p>
+            <p className="opacity-70 text-lg mb-1">Merci pour votre commande, {commande.clientNom}</p>
             <p className="opacity-40 text-sm">Un email de confirmation vous a été envoyé.</p>
           </div>
         )}
@@ -233,10 +233,10 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
           <div className="flex justify-between text-sm">
             <span className="opacity-60">Statut paiement</span>
             {isCOD ? (
-              <span className="text-green-400 font-medium">💚 Paiement à la livraison</span>
+              <span className="text-green-400 font-medium flex items-center gap-1"><Check size={12} /> Paiement à la livraison</span>
             ) : (
-              <span className={paye ? "text-green-400 font-medium" : echoue ? "text-red-400 font-medium" : "text-amber-400 font-medium"}>
-                {paye ? "✓ Payé" : echoue ? "✗ Échoué" : "En attente"}
+              <span className={`flex items-center gap-1 ${paye ? "text-green-400 font-medium" : echoue ? "text-red-400 font-medium" : "text-amber-400 font-medium"}`}>
+                {paye ? <><Check size={12} /> Payé</> : echoue ? <><X size={12} /> Échoué</> : "En attente"}
               </span>
             )}
           </div>

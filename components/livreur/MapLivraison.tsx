@@ -55,21 +55,21 @@ export function MapLivraison({ adresse, ville, latitude, longitude, livreurLat, 
 
       L.marker([destLat, destLng], { icon: iconDest })
         .addTo(map)
-        .bindPopup(`<b>📦 Livraison</b><br/>${adresse}<br/>${ville}`)
+        .bindPopup(`<b>Livraison</b><br/>${adresse}<br/>${ville}`)
         .openPopup();
 
       // Marqueur livreur (position actuelle)
       if (livreurLat && livreurLng) {
         const iconLivreur = L.divIcon({
           className: "",
-          html: `<div style="background:#3b82f6;width:28px;height:28px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:14px">🏍️</div>`,
+          html: `<div style="background:#3b82f6;width:28px;height:28px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:white;font-size:14px">●</div>`,
           iconSize: [28, 28],
           iconAnchor: [14, 14],
         });
 
         L.marker([livreurLat, livreurLng], { icon: iconLivreur })
           .addTo(map)
-          .bindPopup("<b>🏍️ Vous êtes ici</b>");
+          .bindPopup("<b>Vous êtes ici</b>");
 
         // Tracer la ligne entre les deux points
         L.polyline([[livreurLat, livreurLng], [destLat, destLng]], {

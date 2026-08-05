@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { toast } from "sonner";
-import { UserCheck, ChevronDown } from "lucide-react";
+import { UserCheck, ChevronDown, Bike, Car, User, Check } from "lucide-react";
 
 type Livreur = { id: string; nom: string; vehicule: string; zone: string | null; disponible?: boolean };
 
@@ -13,8 +13,8 @@ interface Props {
   statut?: string;
 }
 
-const VEHICULE_EMOJI: Record<string, string> = {
-  moto: "🏍️", voiture: "🚗", velo: "🚲", a_pied: "🚶",
+const VEHICULE_ICON: Record<string, any> = {
+  moto: Bike, voiture: Car, velo: Bike, a_pied: User,
 };
 
 export function AssignerLivreur({ commandeId, livreurActuelId, livreurActuelNom, livreurs, statut }: Props) {
@@ -91,12 +91,12 @@ export function AssignerLivreur({ commandeId, livreurActuelId, livreurActuelNom,
               className={`w-full px-3 py-2.5 text-left hover:bg-gray-50 transition-colors ${l.id === livreurId ? "bg-amber-50" : ""}`}
             >
               <p className="text-gray-800 text-xs font-medium flex items-center gap-1.5">
-                <span>{VEHICULE_EMOJI[l.vehicule] || "🚶"}</span>
+                {(() => { const V = VEHICULE_ICON[l.vehicule] ?? User; return <V size={12} className="flex-shrink-0" />; })()}
                 {l.nom}
                 {l.disponible !== undefined && (
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${l.disponible ? "bg-green-400" : "bg-gray-500"}`} />
                 )}
-                {l.id === livreurId && <span className="ml-auto text-[#F5A623] text-[10px]">✓</span>}
+                {l.id === livreurId && <Check size={10} className="ml-auto text-[#F5A623]" />}
               </p>
               {l.zone && <p className="text-gray-500 text-[10px] mt-0.5 ml-5">{l.zone}</p>}
             </button>

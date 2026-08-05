@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useCartStore } from "@/store/cartStore";
-import { ShoppingBag, Check, Download, MessageCircle } from "lucide-react";
+import { ShoppingBag, Check, Download, MessageCircle, Zap, Package } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
@@ -47,12 +47,12 @@ export function AddToCartButton({ produit, theme, tenantSlug, whatsappNumero }: 
         {isDigital ? (
           <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full"
             style={{ background: `${theme.accent}18`, color: theme.accent, border: `1px solid ${theme.accent}30` }}>
-            ⚡ Livraison instantanée · Téléchargement immédiat
+            <Zap size={12} /> Livraison instantanée · Téléchargement immédiat
           </span>
         ) : (
           <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full"
             style={{ background: "rgba(16,185,129,0.1)", color: "#10B981", border: "1px solid rgba(16,185,129,0.3)" }}>
-            📦 Livraison à domicile · Paiement à la livraison
+            <Package size={12} /> Livraison à domicile · Paiement à la livraison
           </span>
         )}
       </div>

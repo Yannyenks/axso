@@ -4,6 +4,7 @@ import {
   Sparkles, X, Mic, Send, Volume2, VolumeX,
   Phone, Paperclip, ChevronDown, Zap, Image as ImageIcon,
   Trash2, Copy, Check, Square, RotateCcw, Video, Music,
+  BarChart3, Target, Smartphone,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -104,10 +105,10 @@ const THINKING_MSGS = [
 
 // ── Suggestions ───────────────────────────────────────────────────────────────
 const SUGGESTIONS = [
-  { emoji: "📊", label: "Rapport de mes ventes ce mois-ci" },
-  { emoji: "🖼️", label: "Crée un produit avec photo IA" },
-  { emoji: "🎯", label: "Crée un code promo -20%" },
-  { emoji: "📱", label: "Post Instagram pour ma boutique" },
+  { Icon: BarChart3,  label: "Rapport de mes ventes ce mois-ci" },
+  { Icon: ImageIcon,  label: "Crée un produit avec photo IA" },
+  { Icon: Target,     label: "Crée un code promo -20%" },
+  { Icon: Smartphone, label: "Post Instagram pour ma boutique" },
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -573,7 +574,7 @@ export function AxiaFloat() {
                     <button key={s.label} onClick={() => sendMessage(s.label)}
                       className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border text-sm text-left transition-all bg-white hover:border-violet-200 hover:bg-violet-50 group"
                       style={{ borderColor: "#e5e7eb" }}>
-                      <span className="text-base flex-shrink-0">{s.emoji}</span>
+                      <s.Icon size={16} className="flex-shrink-0 text-violet-400 group-hover:text-violet-600 transition-colors" />
                       <span className="font-medium text-gray-700 text-[13px] group-hover:text-violet-700 transition-colors">{s.label}</span>
                     </button>
                   ))}

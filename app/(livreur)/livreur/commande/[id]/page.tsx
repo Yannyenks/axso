@@ -21,7 +21,7 @@ const ETAPES = [
   { statut: "confirmee",      label: "Confirmée",      icon: Clock },
   { statut: "en_preparation", label: "Préparation",    icon: Package },
   { statut: "expediee",       label: "En livraison",   icon: Navigation },
-  { statut: "livree",         label: "Livré ✓",        icon: CheckCircle },
+  { statut: "livree",         label: "Livré",           icon: CheckCircle },
 ];
 
 const STATUT_COLOR: Record<string, string> = {

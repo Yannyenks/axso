@@ -7,7 +7,7 @@ import { formatMontant } from "@/lib/utils";
 import {
   TrendingUp, ShoppingBag, Users, Eye, Package, AlertTriangle,
   ArrowUpRight, ArrowDownRight, Globe, Plus, MapPin, Zap,
-  ChevronRight, Truck, Target, Wallet, BarChart3,
+  ChevronRight, Truck, Target, Wallet, BarChart3, Sparkles, CheckCircle,
 } from "lucide-react";
 
 const STATUT_CFG: Record<string, { label: string; color: string }> = {
@@ -202,7 +202,7 @@ export default async function DashboardPage() {
     bg:    onTrack ? "#ECFDF5" : "#FFF8EC",
     title: "Projection fin de mois",
     value: formatMontant(d.projection, d.devise),
-    sub:   onTrack ? `En avance sur l'objectif 🎯` : `${remainingDays}j restants pour rattraper`,
+    sub:   onTrack ? `En avance sur l'objectif` : `${remainingDays}j restants pour rattraper`,
   });
 
   if (livraisonRate > 0) insights.push({
@@ -234,9 +234,9 @@ export default async function DashboardPage() {
 
   // Etapes de l'entonnoir
   const funnelSteps = [
-    { label: "Visiteurs",  value: Math.round(d.visitors), color: "#7C3AED", bg: "#F5F3FF",  icon: "👁️" },
-    { label: "Commandes",  value: d.monthCount,            color: "#F5A623", bg: "#FFF8EC",  icon: "🛍️" },
-    { label: "Livrées",    value: livrees,                  color: "#16A34A", bg: "#F0FDF4",  icon: "✅" },
+    { label: "Visiteurs",  value: Math.round(d.visitors), color: "#7C3AED", bg: "#F5F3FF",  Icon: Eye },
+    { label: "Commandes",  value: d.monthCount,            color: "#F5A623", bg: "#FFF8EC",  Icon: ShoppingBag },
+    { label: "Livrées",    value: livrees,                  color: "#16A34A", bg: "#F0FDF4",  Icon: CheckCircle },
   ];
 
   return (
@@ -246,7 +246,7 @@ export default async function DashboardPage() {
       <div className="flex items-start justify-between gap-4 pt-1 flex-wrap">
         <div>
           <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">
-            {greeting}, {prenom} 👋
+            {greeting}, {prenom}
           </h1>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5 capitalize">
             {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}

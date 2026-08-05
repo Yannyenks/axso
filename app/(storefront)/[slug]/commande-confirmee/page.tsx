@@ -7,6 +7,7 @@ import Link from "next/link";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { CommandeConfirmeeClient } from "./CommandeConfirmeeClient";
+import { Lock } from "lucide-react";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -49,7 +50,7 @@ export default async function CommandeConfirmeePage({ params, searchParams }: Pr
           </Link>
           <div className="flex items-center gap-2 text-sm opacity-50">
             <span className="text-xs">Commande sécurisée</span>
-            <span>🔒</span>
+            <Lock size={14} />
           </div>
         </div>
       </nav>

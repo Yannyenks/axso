@@ -48,7 +48,7 @@ export function OrdersTable({ commandes }: OrdersTableProps) {
     return (
       <div className="ax-card p-14 text-center">
         <div className="w-14 h-14 rounded-2xl bg-[#F5F5F7] flex items-center justify-center mx-auto mb-4">
-          <span className="text-2xl">📦</span>
+          <Package size={24} className="text-[#AAAAAA]" />
         </div>
         <p className="text-[14px] font-semibold text-[#111111] mb-1">Aucune commande encore</p>
         <p className="text-[12px] text-[#AAAAAA]">Partagez votre boutique pour recevoir vos premières commandes</p>

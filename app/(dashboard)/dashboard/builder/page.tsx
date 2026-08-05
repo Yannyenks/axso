@@ -7,7 +7,10 @@ import {
   LayoutGrid, Palette, Type, LayoutTemplate, MousePointer2, Code2,
   ChevronDown, ChevronRight, ToggleLeft, ToggleRight, RefreshCw,
   Plus, Trash2, Check, Layers, Sparkles, Film, ChevronUp,
-  Image as ImageIcon, X, GripVertical, Zap, Copy
+  Image as ImageIcon, X, GripVertical, Zap, Copy,
+  BarChart3, Timer, Building2, Video, Star, Target, FileText,
+  ArrowUpDown, Megaphone, Shield, FolderOpen, BookOpen, HelpCircle,
+  MessageCircle, Mail, Wrench, Award, LucideIcon
 } from "lucide-react";
 import { THEME_DEFAULTS, resolveThemeConfig, type ThemeConfig, type CustomSection } from "@/lib/theme-config";
 
@@ -42,31 +45,31 @@ const FONTS = [
 
 // ─── Section library types ────────────────────────────────────────────────────
 const CUSTOM_SECTION_TYPES = [
-  { type: "features",      label: "Avantages / Features", icon: "⚡", desc: "Grille de 3 à 6 caractéristiques avec icône et texte" },
-  { type: "stats",         label: "Statistiques",         icon: "📊", desc: "Chiffres clés animés (clients, produits, années)" },
-  { type: "countdown",     label: "Compte à rebours",     icon: "⏱️", desc: "Timer pour une vente flash ou lancement" },
-  { type: "brands",        label: "Logos partenaires",    icon: "🏷️", desc: "Défilement de logos de marques ou certifications" },
-  { type: "video",         label: "Vidéo showcase",       icon: "🎥", desc: "Vidéo YouTube, Vimeo ou mp4 en grand format" },
-  { type: "gallery",       label: "Galerie photos",       icon: "🖼️", desc: "Mosaïque ou grille de photos (lookbook, coulisses)" },
-  { type: "social-proof",  label: "Preuve sociale",       icon: "⭐", desc: "Barre de confiance avec notes, certifications, médias" },
-  { type: "cta-band",      label: "Bande CTA",            icon: "🎯", desc: "Bandeau pleine largeur avec appel à l'action fort" },
-  { type: "richtext",      label: "Texte riche",          icon: "📝", desc: "Bloc de texte libre avec titre, sous-titre et bouton" },
-  { type: "spacer",        label: "Espacement",           icon: "↕️", desc: "Espace vertical personnalisable entre deux sections" },
+  { type: "features",      label: "Avantages / Features", Icon: Zap,          desc: "Grille de 3 à 6 caractéristiques avec icône et texte" },
+  { type: "stats",         label: "Statistiques",         Icon: BarChart3,    desc: "Chiffres clés animés (clients, produits, années)" },
+  { type: "countdown",     label: "Compte à rebours",     Icon: Timer,        desc: "Timer pour une vente flash ou lancement" },
+  { type: "brands",        label: "Logos partenaires",    Icon: Building2,    desc: "Défilement de logos de marques ou certifications" },
+  { type: "video",         label: "Vidéo showcase",       Icon: Video,        desc: "Vidéo YouTube, Vimeo ou mp4 en grand format" },
+  { type: "gallery",       label: "Galerie photos",       Icon: ImageIcon,    desc: "Mosaïque ou grille de photos (lookbook, coulisses)" },
+  { type: "social-proof",  label: "Preuve sociale",       Icon: Star,         desc: "Barre de confiance avec notes, certifications, médias" },
+  { type: "cta-band",      label: "Bande CTA",            Icon: Target,       desc: "Bandeau pleine largeur avec appel à l'action fort" },
+  { type: "richtext",      label: "Texte riche",          Icon: FileText,     desc: "Bloc de texte libre avec titre, sous-titre et bouton" },
+  { type: "spacer",        label: "Espacement",           Icon: ArrowUpDown,  desc: "Espace vertical personnalisable entre deux sections" },
 ] as const;
 
 const DEFAULT_SECTION_ORDER: SectionId[] = ["annonce","hero","confiance","vedettes","collections","about","promo","faq","avis","newsletter"];
 
-const SECTION_META: Record<SectionId, { label: string; icon: string; desc: string }> = {
-  annonce:     { label: "Barre d'annonce",   icon: "📢", desc: "Message promotionnel en haut" },
-  hero:        { label: "Hero / Bannière",   icon: "🖼️", desc: "Section principale" },
-  confiance:   { label: "Badges confiance",  icon: "🛡️", desc: "Garanties & avantages" },
-  vedettes:    { label: "Produits vedettes", icon: "⭐", desc: "Best-sellers" },
-  collections: { label: "Collections",       icon: "🗂️", desc: "Vos collections" },
-  about:       { label: "Notre histoire",    icon: "📖", desc: "À propos de vous" },
-  promo:       { label: "Bannière promo",    icon: "🎯", desc: "Offre promotionnelle" },
-  faq:         { label: "FAQ",               icon: "❓", desc: "Questions fréquentes" },
-  avis:        { label: "Avis clients",      icon: "💬", desc: "Témoignages" },
-  newsletter:  { label: "Newsletter",        icon: "📧", desc: "Inscription email" },
+const SECTION_META: Record<SectionId, { label: string; Icon: any; desc: string }> = {
+  annonce:     { label: "Barre d'annonce",   Icon: Megaphone,    desc: "Message promotionnel en haut" },
+  hero:        { label: "Hero / Bannière",   Icon: ImageIcon,    desc: "Section principale" },
+  confiance:   { label: "Badges confiance",  Icon: Shield,       desc: "Garanties & avantages" },
+  vedettes:    { label: "Produits vedettes", Icon: Star,         desc: "Best-sellers" },
+  collections: { label: "Collections",       Icon: FolderOpen,   desc: "Vos collections" },
+  about:       { label: "Notre histoire",    Icon: BookOpen,     desc: "À propos de vous" },
+  promo:       { label: "Bannière promo",    Icon: Target,       desc: "Offre promotionnelle" },
+  faq:         { label: "FAQ",               Icon: HelpCircle,   desc: "Questions fréquentes" },
+  avis:        { label: "Avis clients",      Icon: MessageCircle,desc: "Témoignages" },
+  newsletter:  { label: "Newsletter",        Icon: Mail,         desc: "Inscription email" },
 };
 
 const NAV_TABS: Array<{ id: Panel; icon: React.ReactNode; tooltip: string }> = [
@@ -390,7 +393,7 @@ function SectionLibrary({ onAdd, onClose }: { onAdd: (t: CustomSection["type"]) 
         {CUSTOM_SECTION_TYPES.map(t => (
           <button key={t.type} onClick={() => onAdd(t.type as CustomSection["type"])}
             className="w-full text-left flex items-start gap-3 p-3 rounded-xl border border-white/5 hover:border-[#F5A623]/30 hover:bg-[#F5A623]/5 transition-all group">
-            <span className="text-xl flex-shrink-0">{t.icon}</span>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(245,166,35,0.08)" }}><t.Icon size={15} style={{ color: "#F5A623" }} /></div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-white group-hover:text-[#F5A623] transition-colors">{t.label}</p>
               <p className="text-[10px] text-gray-600 mt-0.5 leading-relaxed">{t.desc}</p>
@@ -408,9 +411,9 @@ function PanelSections({ config, activeSection, setActiveSection, setSection, se
   const sec = config.sections as any;
   const custom: CustomSection[] = config.customSections || [];
 
-  const allSections: Array<{ id: string; label: string; icon: string; isCustom: boolean; actif: boolean }> = [
-    ...sectionOrder.map((id: SectionId) => ({ id, label: SECTION_META[id].label, icon: SECTION_META[id].icon, isCustom: false, actif: sec[id]?.actif ?? true })),
-    ...custom.sort((a,b) => a.ordre - b.ordre).map(s => ({ id: s.id, label: s.label, icon: CUSTOM_SECTION_TYPES.find(t=>t.type===s.type)?.icon||"🔧", isCustom: true, actif: s.actif })),
+  const allSections: Array<{ id: string; label: string; Icon: any; isCustom: boolean; actif: boolean }> = [
+    ...sectionOrder.map((id: SectionId) => ({ id, label: SECTION_META[id].label, Icon: SECTION_META[id].Icon, isCustom: false, actif: sec[id]?.actif ?? true })),
+    ...custom.sort((a,b) => a.ordre - b.ordre).map(s => ({ id: s.id, label: s.label, Icon: CUSTOM_SECTION_TYPES.find(t=>t.type===s.type)?.Icon || Wrench, isCustom: true, actif: s.actif })),
   ];
 
   return (
@@ -431,7 +434,7 @@ function PanelSections({ config, activeSection, setActiveSection, setSection, se
                   <button disabled={idx >= sectionOrder.length - 1} onClick={() => moveSection(sectionOrder, idx, 1)} className="text-gray-700 hover:text-gray-400 disabled:opacity-20"><ChevronDown size={9} /></button>
                 </div>
               )}
-              <span className="text-sm flex-shrink-0">{item.icon}</span>
+              <item.Icon size={13} className="flex-shrink-0 text-gray-400" />
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] font-semibold text-white truncate">{item.label}</p>
                 {item.isCustom && <span className="text-[8px] text-[#F5A623]/70 uppercase tracking-wider">Section custom</span>}

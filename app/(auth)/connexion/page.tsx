@@ -60,7 +60,7 @@ function ConnexionForm() {
         boxShadow: "0 32px 64px -12px rgba(0,0,0,0.4), 0 0 0 1px rgba(245,166,35,0.08)",
       }}
     >
-      <h2 className="text-2xl font-bold text-white mb-1">Bon retour 👋</h2>
+      <h2 className="text-2xl font-bold text-white mb-1">Bon retour</h2>
       <p className="text-white/40 text-sm mb-7">Connectez-vous à votre espace marchand</p>
 
       {inscriptionReussie && (

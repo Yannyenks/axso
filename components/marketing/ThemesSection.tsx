@@ -1,8 +1,20 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { Shirt, Sparkles, Coffee } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
-const themes = [
+const themes: {
+  id: string;
+  nom: string;
+  categorie: string;
+  fond: string;
+  accent: string;
+  texte: string;
+  surface: string;
+  description: string;
+  preview: { hero: string; prix: string; Icon: LucideIcon };
+}[] = [
   {
     id: "noir-obsidien",
     nom: "Noir Obsidien",
@@ -12,7 +24,7 @@ const themes = [
     texte: "#F5F5F0",
     surface: "#111",
     description: "Élégance africaine contemporaine. Particules dorées, animations cinématiques.",
-    preview: { hero: "Prêt-à-porter Sénégalais", prix: "25 000 XOF", emoji: "👗" },
+    preview: { hero: "Prêt-à-porter Sénégalais", prix: "25 000 XOF", Icon: Shirt },
   },
   {
     id: "violet-cosmos",
@@ -23,7 +35,7 @@ const themes = [
     texte: "#f0eaff",
     surface: "#200a3e",
     description: "Magie et féminité. Shader nébuleuse GLSL, glassmorphism, halo lumineux.",
-    preview: { hero: "Huile de Baobab Pure", prix: "12 000 XOF", emoji: "✨" },
+    preview: { hero: "Huile de Baobab Pure", prix: "12 000 XOF", Icon: Sparkles },
   },
   {
     id: "terre-et-or",
@@ -34,7 +46,7 @@ const themes = [
     texte: "#2c1503",
     surface: "#fef3e8",
     description: "Authenticité africaine. Motifs kente SVG animés, zéro WebGL, Lighthouse > 92.",
-    preview: { hero: "Café Arabica Cameroun", prix: "8 000 XAF", emoji: "☕" },
+    preview: { hero: "Café Arabica Cameroun", prix: "8 000 XAF", Icon: Coffee },
   },
 ];
 
@@ -46,6 +58,7 @@ export function ThemesSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const theme = themes[actif];
+  const PreviewIcon = theme.preview.Icon;
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -99,7 +112,9 @@ export function ThemesSection() {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Sélecteur de thèmes — staggered reveal */}
           <div className="space-y-4">
-            {themes.map((t, i) => (
+            {themes.map((t, i) => {
+              const ThemeIcon = t.preview.Icon;
+              return (
               <button
                 key={t.id}
                 onClick={() => selectTheme(i)}
@@ -115,14 +130,15 @@ export function ThemesSection() {
               >
                 <div className="flex items-start gap-4">
                   <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0 transition-all duration-300"
+                    className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300"
                     style={{
                       backgroundColor: t.fond,
                       border: `2px solid ${t.accent}`,
                       boxShadow: actif === i ? `0 0 16px 4px ${t.accent}30` : "none",
+                      color: t.accent,
                     }}
                   >
-                    {t.preview.emoji}
+                    <ThemeIcon size={20} />
                   </div>
                   <div>
                     <div className="flex items-center gap-3 mb-1">
@@ -135,7 +151,8 @@ export function ThemesSection() {
                   </div>
                 </div>
               </button>
-            ))}
+              );
+            })}
           </div>
 
           {/* Aperçu — 3D mouse tilt */}
@@ -166,10 +183,10 @@ export function ThemesSection() {
                 </span>
               </div>
               <div
-                className="aspect-video rounded-xl flex items-center justify-center text-6xl transition-all duration-500"
+                className="aspect-video rounded-xl flex items-center justify-center transition-all duration-500"
                 style={{ backgroundColor: theme.surface }}
               >
-                <span style={{ filter: `drop-shadow(0 0 20px ${theme.accent}60)` }}>{theme.preview.emoji}</span>
+                <PreviewIcon size={56} style={{ filter: `drop-shadow(0 0 20px ${theme.accent}60)`, color: theme.accent }} />
               </div>
             </div>
             <div className="p-6">

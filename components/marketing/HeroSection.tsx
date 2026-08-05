@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { Bot, Rocket, TrendingUp, CheckCircle, Zap, Plus } from "lucide-react";
 import { CartParallax } from "./CartParallax";
 
 const MOTS = ["en ligne", "digital", "africain", "sans limite"];
@@ -76,7 +77,7 @@ export function HeroSection() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F5A623] opacity-75"/>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-[#F5A623]"/>
               </span>
-              <span className="text-[#F5A623] text-base font-semibold">⚡ 11 agents IA · tout est automatisé</span>
+              <span className="text-[#F5A623] text-base font-semibold inline-flex items-center gap-1.5"><Zap size={14} /> 11 agents IA · tout est automatisé</span>
             </div>
 
             {/* Headline empire */}
@@ -126,7 +127,7 @@ export function HeroSection() {
               >
                 <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                   style={{ background: "linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.25) 50%, transparent 80%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s linear infinite" }}/>
-                <span className="relative z-10">🚀 Lancer mon empire →</span>
+                <span className="relative z-10 inline-flex items-center gap-2"><Rocket size={18} /> Lancer mon empire →</span>
               </Link>
               <Link
                 href="#video-demo"
@@ -189,14 +190,14 @@ export function HeroSection() {
                 {/* Dashboard */}
                 <div className="p-7 space-y-5">
                   <div className="flex items-center justify-between">
-                    <p className="text-base font-bold text-gray-900">🤖 Empire en cours de construction</p>
+                    <p className="text-base font-bold text-gray-900 flex items-center gap-2"><Bot size={16} /> Empire en cours de construction</p>
                     <span className="text-sm text-gray-400">il y a 2 sec</span>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      { label: "Revenus", val: "485 000", unit: "XOF", color: "#F5A623", bg: "#fffbeb", delta: "+24% 📈" },
-                      { label: "Commandes", val: "48", unit: "", color: "#34d399", bg: "#f0fdf4", delta: "+8 ✅" },
-                      { label: "Clients", val: "234", unit: "", color: "#818cf8", bg: "#f5f3ff", delta: "+12 🆕" },
+                      { label: "Revenus", val: "485 000", unit: "XOF", color: "#F5A623", bg: "#fffbeb", delta: <span className="inline-flex items-center gap-1">+24% <TrendingUp size={10} /></span> },
+                      { label: "Commandes", val: "48", unit: "", color: "#34d399", bg: "#f0fdf4", delta: <span className="inline-flex items-center gap-1">+8 <CheckCircle size={10} /></span> },
+                      { label: "Clients", val: "234", unit: "", color: "#818cf8", bg: "#f5f3ff", delta: <span className="inline-flex items-center gap-1">+12 <Plus size={10} /></span> },
                     ].map((m) => (
                       <div key={m.label} className="rounded-2xl p-4" style={{ backgroundColor: m.bg }}>
                         <p className="text-xs text-gray-400 mb-1.5">{m.label}</p>
@@ -243,15 +244,15 @@ export function HeroSection() {
               {/* Floating badges */}
               <div className="absolute -top-6 -right-6 rounded-2xl px-5 py-3 text-base font-bold shadow-2xl"
                 style={{ background: "linear-gradient(135deg, #F5A623, #e8950f)", color: "white", transform: "translateZ(60px)", animation: "daFloat 4s ease-in-out infinite" }}>
-                +24% CA 🚀
+                <span className="inline-flex items-center gap-1.5">+24% CA <Rocket size={14} /></span>
               </div>
               <div className="absolute -bottom-5 -left-6 rounded-2xl px-4 py-3 text-sm font-semibold border shadow-xl"
                 style={{ background: "white", borderColor: "#7c3aed30", color: "#7c3aed", transform: "translateZ(40px)", animation: "daFloat 5s 1s ease-in-out infinite" }}>
-                🤖 11 agents actifs
+                <span className="inline-flex items-center gap-1.5"><Bot size={14} /> 11 agents actifs</span>
               </div>
               <div className="absolute top-1/2 -left-8 rounded-2xl px-3 py-2.5 text-xs font-bold shadow-lg"
                 style={{ background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0", transform: "translateZ(50px)", animation: "daFloat 4.5s 2s ease-in-out infinite" }}>
-                ✅ Empire en ligne
+                <span className="inline-flex items-center gap-1.5"><CheckCircle size={12} /> Empire en ligne</span>
               </div>
             </div>
           </div>

@@ -1,13 +1,20 @@
 "use client";
 export const dynamic = "force-dynamic";
 import { useEffect, useState, useRef } from "react";
-import { MapPin, Package, Phone, RefreshCw, CheckCircle2, Truck } from "lucide-react";
+import { MapPin, Package, Phone, RefreshCw, CheckCircle2, Truck, ClipboardList, Check, Map, Bike } from "lucide-react";
+
+const STATUT_STEP_ICONS: Record<string, React.ReactNode> = {
+  en_attente:     <ClipboardList size={16} />,
+  en_preparation: <Package size={16} />,
+  expedie:        <Truck size={16} />,
+  livree:         <CheckCircle2 size={16} />,
+};
 
 const STATUT_STEPS = [
-  { key: "en_attente",    label: "Commande reçue",     icon: "📋" },
-  { key: "en_preparation", label: "En préparation",    icon: "📦" },
-  { key: "expedie",       label: "Partie en livraison", icon: "🚚" },
-  { key: "livree",        label: "Livrée",              icon: "✅" },
+  { key: "en_attente",    label: "Commande reçue"      },
+  { key: "en_preparation", label: "En préparation"     },
+  { key: "expedie",       label: "Partie en livraison" },
+  { key: "livree",        label: "Livrée"               },
 ];
 
 export default function TrackingPage({ params }: { params: { token: string } }) {
@@ -85,8 +92,8 @@ export default function TrackingPage({ params }: { params: { token: string } }) 
             const active = i === currentStep;
             return (
               <div key={step.key} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom: i < STATUT_STEPS.length-1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
-                <div style={{ width:36, height:36, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, flexShrink:0, background: done ? "rgba(34,197,94,0.15)" : active ? "rgba(245,166,35,0.15)" : "rgba(255,255,255,0.05)", border: done ? "1px solid rgba(34,197,94,0.3)" : active ? "1px solid rgba(245,166,35,0.4)" : "1px solid rgba(255,255,255,0.1)" }}>
-                  {done ? "✓" : step.icon}
+                <div style={{ width:36, height:36, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, color: done ? "#22c55e" : active ? "#F5A623" : "#555", background: done ? "rgba(34,197,94,0.15)" : active ? "rgba(245,166,35,0.15)" : "rgba(255,255,255,0.05)", border: done ? "1px solid rgba(34,197,94,0.3)" : active ? "1px solid rgba(245,166,35,0.4)" : "1px solid rgba(255,255,255,0.1)" }}>
+                  {done ? <Check size={16} /> : STATUT_STEP_ICONS[step.key]}
                 </div>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:13, fontWeight: active ? 600 : 400, color: done ? "#22c55e" : active ? "#F5A623" : "#555" }}>{step.label}</div>
@@ -113,7 +120,7 @@ export default function TrackingPage({ params }: { params: { token: string } }) 
           </div>
         ) : (
           <div style={{ borderRadius:20, border:"1px solid rgba(255,255,255,0.08)", padding:32, textAlign:"center", marginBottom:16, background:"rgba(255,255,255,0.02)" }}>
-            <div style={{ fontSize:32, marginBottom:8 }}>🗺️</div>
+            <Map size={32} style={{ color:"#555", margin:"0 auto 8px" }} />
             <p style={{ fontSize:13, color:"#555" }}>La carte s'affichera dès que le livreur partagera sa position</p>
           </div>
         )}
@@ -121,7 +128,7 @@ export default function TrackingPage({ params }: { params: { token: string } }) 
         {/* Livreur info */}
         {(data.livreurNom || data.livreurTelephone) && (
           <div style={{ background:"rgba(245,166,35,0.08)", border:"1px solid rgba(245,166,35,0.2)", borderRadius:16, padding:16, marginBottom:16, display:"flex", alignItems:"center", gap:14 }}>
-            <div style={{ width:44, height:44, borderRadius:"50%", background:"rgba(245,166,35,0.15)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>🚴</div>
+            <div style={{ width:44, height:44, borderRadius:"50%", background:"rgba(245,166,35,0.15)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, color:"#F5A623" }}><Bike size={20} /></div>
             <div style={{ flex:1 }}>
               <div style={{ fontSize:13, fontWeight:600, color:"white", marginBottom:2 }}>{data.livreurNom ?? "Livreur assigné"}</div>
               {data.livreurTelephone && <div style={{ fontSize:12, color:"#888" }}>{data.livreurTelephone}</div>}
@@ -143,7 +150,7 @@ export default function TrackingPage({ params }: { params: { token: string } }) 
             {data.mapsLienClient && (
               <a href={data.mapsLienClient} target="_blank" rel="noopener noreferrer"
                 style={{ display:"inline-flex", alignItems:"center", gap:6, marginTop:10, color:"#F5A623", fontSize:12, textDecoration:"none" }}>
-                <span>📍</span> Voir sur Google Maps
+                <MapPin size={12} /> Voir sur Google Maps
               </a>
             )}
           </div>

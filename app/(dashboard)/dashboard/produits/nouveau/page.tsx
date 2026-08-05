@@ -701,7 +701,7 @@ export default function NouveauProduitPage() {
             <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
               <p className="text-gray-400 text-xs px-4 pt-3 pb-2">Aperçu boutique</p>
               <div className="aspect-square bg-gray-50 overflow-hidden">
-                {form.images[0] ? <img src={form.images[0]} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-3xl">📦</div>}
+                {form.images[0] ? <img src={form.images[0]} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Package size={40} className="text-gray-300" /></div>}
               </div>
               <div className="p-4">
                 <p className="font-medium text-gray-800 text-sm line-clamp-2">{form.nom || "Nom du produit"}</p>

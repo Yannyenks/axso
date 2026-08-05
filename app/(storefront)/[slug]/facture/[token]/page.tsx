@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import { Check, Package, Printer } from "lucide-react";
 
 export default async function FacturePage({ params }: { params: Promise<{ slug: string; token: string }> }) {
   const { token } = await params;
@@ -66,8 +67,8 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
               <div style={{ fontFamily:"'Playfair Display',serif", fontSize:36, fontWeight:700, color:"white", letterSpacing:"-1px" }}>#{commande.numero}</div>
               <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, marginTop:8 }}>{date}</div>
               <div style={{ marginTop:16, display:"inline-block", background:"rgba(245,166,35,0.15)", border:"1px solid rgba(245,166,35,0.3)", borderRadius:100, padding:"6px 16px" }}>
-                <span style={{ color:"#F5A623", fontSize:11, fontWeight:600 }}>
-                  {commande.statut === "livree" ? "✓ Payée" : commande.paiementStatut === "paid" ? "✓ Payée" : "En attente"}
+                <span style={{ color:"#F5A623", fontSize:11, fontWeight:600, display:"inline-flex", alignItems:"center", gap:4 }}>
+                  {(commande.statut === "livree" || commande.paiementStatut === "paid") ? <><Check size={10} /> Payée</> : "En attente"}
                 </span>
               </div>
             </div>
@@ -116,7 +117,7 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
                       {l.imageUrl ? (
                         <img src={l.imageUrl} alt={l.nom} style={{ width:44, height:44, borderRadius:10, objectFit:"cover", flexShrink:0 }} />
                       ) : (
-                        <div style={{ width:44, height:44, borderRadius:10, background:"#F5F4F1", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>📦</div>
+                        <div style={{ width:44, height:44, borderRadius:10, background:"#F5F4F1", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, color:"#9CA3AF" }}><Package size={20} /></div>
                       )}
                       <div>
                         <div style={{ fontSize:14, fontWeight:500, color:"#1A1A1A" }}>{l.nom}</div>
@@ -179,7 +180,7 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
       <div className="no-print" style={{ textAlign:"center", padding:"24px", position:"sticky", bottom:0, background:"rgba(248,247,244,0.9)", backdropFilter:"blur(8px)" }}>
         <button onClick={() => { if (typeof window !== "undefined") window.print(); }}
           style={{ background:"linear-gradient(135deg,#1A1A1A,#333)", color:"white", border:"none", padding:"14px 36px", borderRadius:100, fontSize:14, fontWeight:600, cursor:"pointer", display:"inline-flex", alignItems:"center", gap:8, boxShadow:"0 4px 20px rgba(0,0,0,0.2)" }}>
-          🖨️ Télécharger / Imprimer la facture
+          <Printer size={16} /> Télécharger / Imprimer la facture
         </button>
       </div>
       <script dangerouslySetInnerHTML={{ __html: `

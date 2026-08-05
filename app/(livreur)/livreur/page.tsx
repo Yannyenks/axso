@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Phone, Package, ChevronRight, TrendingUp, Clock, Star, Zap } from "lucide-react";
+import { MapPin, Phone, Package, ChevronRight, TrendingUp, Clock, Star, Zap, Bike, Car, PersonStanding, Truck, Map, MessageCircle } from "lucide-react";
 import { formatMontant } from "@/lib/utils";
 import { MapLivraisonClient } from "@/components/livreur/MapLivraisonClient";
 
@@ -41,9 +41,16 @@ export default async function LivreurDashboard() {
   // Commande en cours (prioritaire = expediée, sinon première active)
   const commandePrioritaire = commandesActives.find((c) => c.statut === "expediee") || commandesActives[0];
 
-  const VEHICULE_LABEL: Record<string, string> = {
-    moto: "🏍️ Moto", voiture: "🚗 Voiture", velo: "🚲 Vélo", a_pied: "🚶 Piéton",
+  const VEHICULE_LABELS: Record<string, string> = {
+    moto: "Moto", voiture: "Voiture", velo: "Vélo", a_pied: "Piéton",
   };
+  function VehiculeIcon({ vehicule }: { vehicule: string }) {
+    if (vehicule === "voiture") return <Car size={14} />;
+    if (vehicule === "velo") return <Bike size={14} />;
+    if (vehicule === "a_pied") return <PersonStanding size={14} />;
+    if (vehicule === "moto") return <Bike size={14} />;
+    return <Truck size={14} />;
+  }
 
   return (
     <div className="space-y-5">
@@ -58,9 +65,12 @@ export default async function LivreurDashboard() {
                 {now.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
               </p>
               <h1 className="text-2xl font-bold text-white font-playfair">
-                Bonjour, {livreur.nom.split(" ")[0]} 👋
+                Bonjour, {livreur.nom.split(" ")[0]}
               </h1>
-              <p className="text-gray-400 text-sm mt-1">{VEHICULE_LABEL[livreur.vehicule] || "🚚"}{livreur.zone ? ` · ${livreur.zone}` : ""}</p>
+              <p className="text-gray-400 text-sm mt-1 flex items-center gap-1">
+                <VehiculeIcon vehicule={livreur.vehicule} />
+                {VEHICULE_LABELS[livreur.vehicule] || "Livraison"}{livreur.zone ? ` · ${livreur.zone}` : ""}
+              </p>
             </div>
             {livreur.disponible ? (
               <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 px-3 py-1.5 rounded-xl">
@@ -143,7 +153,7 @@ export default async function LivreurDashboard() {
                   rel="noopener noreferrer"
                   className="flex-1 flex items-center justify-center gap-2 bg-[#3b82f6]/10 border border-[#3b82f6]/20 text-[#60a5fa] py-2.5 rounded-xl text-sm"
                 >
-                  🗺️ Maps
+                  <Map size={14} /> Maps
                 </a>
                 <a
                   href={`https://wa.me/${commandePrioritaire.clientTelephone.replace(/\D/g, "")}`}
@@ -151,7 +161,7 @@ export default async function LivreurDashboard() {
                   rel="noopener noreferrer"
                   className="flex-1 flex items-center justify-center gap-2 bg-green-500/10 border border-green-500/20 text-green-400 py-2.5 rounded-xl text-sm"
                 >
-                  💬 WhatsApp
+                  <MessageCircle size={14} /> WhatsApp
                 </a>
                 <div className="flex items-center gap-1 text-gray-400 text-sm ml-auto px-3">
                   Détails <ChevronRight size={14} />

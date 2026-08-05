@@ -7,7 +7,8 @@ import { toast } from "sonner";
 import {
   Loader2, CreditCard, Shield, Lock,
   CheckCircle2, AlertCircle, MessageCircle, Download,
-  Package, Zap, Phone, MapPin, User, Mail, ArrowLeft
+  Package, Zap, Phone, MapPin, User, Mail, ArrowLeft,
+  Receipt, Save, ClipboardList, Check
 } from "lucide-react";
 import { StripeCheckout } from "./StripeCheckout";
 
@@ -49,13 +50,13 @@ function GpsStep({ label, steps }: { label: string; steps: string[] }) {
 function Recap({ theme, devise, items, total, codePromo, label }: any) {
   return (
     <div className="rounded-2xl border p-5 space-y-4" style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}20` }}>
-      <h2 className="font-bold font-playfair text-base">🧾 {label || "Récapitulatif"}</h2>
+      <h2 className="font-bold font-playfair text-base flex items-center gap-2"><Receipt size={16} /> {label || "Récapitulatif"}</h2>
       <div className="space-y-3 max-h-52 overflow-y-auto pr-1">
         {items.map((item: any) => (
           <div key={`${item.produitId}-${item.variante}`} className="flex items-center gap-3">
             {item.imageUrl
               ? <img src={item.imageUrl} alt={item.nom} className="w-11 h-11 rounded-xl object-cover flex-shrink-0" />
-              : <div className="w-11 h-11 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style={{ backgroundColor: `${theme.accent}15` }}>{item.type === "digital" ? "💾" : "📦"}</div>
+              : <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${theme.accent}15`, color: theme.accent }}>{item.type === "digital" ? <Save size={18} /> : <Package size={18} />}</div>
             }
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{item.nom}</p>
@@ -67,7 +68,7 @@ function Recap({ theme, devise, items, total, codePromo, label }: any) {
         ))}
       </div>
       <div className="border-t pt-3 text-sm" style={{ borderColor: `${theme.accent}18` }}>
-        {codePromo && <div className="flex justify-between text-green-500 mb-1"><span>Code : {codePromo}</span><span>✓</span></div>}
+        {codePromo && <div className="flex justify-between text-green-500 mb-1"><span>Code : {codePromo}</span><Check size={14} /></div>}
         <div className="flex justify-between font-bold text-base">
           <span>Total</span>
           <span style={{ color: theme.accent }}>{formatMontant(total, devise)}</span>
@@ -275,7 +276,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
 
         {/* Formulaire */}
         <div className="rounded-2xl border p-5 space-y-4" style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}20` }}>
-          <h2 className="font-bold font-playfair text-base">📋 Vos informations</h2>
+          <h2 className="font-bold font-playfair text-base flex items-center gap-2"><ClipboardList size={16} /> Vos informations</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="sm:col-span-2">
               <Field label="Nom complet" required>
@@ -302,7 +303,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
 
         {/* Adresse livraison */}
         <div className="rounded-2xl border p-5 space-y-4" style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}20` }}>
-          <h2 className="font-bold font-playfair text-base">📦 Adresse de livraison</h2>
+          <h2 className="font-bold font-playfair text-base flex items-center gap-2"><Package size={16} /> Adresse de livraison</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="sm:col-span-2">
               <Field label="Adresse exacte">
@@ -650,7 +651,7 @@ function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codeProm
 
           {/* Stripe checkout */}
           <div className="rounded-2xl border p-5" style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}20` }}>
-            <h2 className="font-bold font-playfair text-base mb-4">💳 Paiement sécurisé</h2>
+            <h2 className="font-bold font-playfair text-base mb-4 flex items-center gap-2"><CreditCard size={16} /> Paiement sécurisé</h2>
             <StripeCheckout
               commandeId={commandeId}
               montant={total}
@@ -698,7 +699,7 @@ function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codeProm
 
         {/* Infos client */}
         <div className="rounded-2xl border p-5 space-y-4" style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}20` }}>
-          <h2 className="font-bold font-playfair text-base">👤 Vos informations</h2>
+          <h2 className="font-bold font-playfair text-base flex items-center gap-2"><User size={16} /> Vos informations</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="sm:col-span-2">
               <Field label="Nom complet" required>

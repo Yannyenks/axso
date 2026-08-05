@@ -2,13 +2,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Truck, Loader2, CheckCircle } from "lucide-react";
+import { ArrowLeft, Truck, Loader2, CheckCircle, Bike, Car, PersonStanding, type LucideIcon } from "lucide-react";
 
-const VEHICULES = [
-  { value: "moto", label: "🏍️ Moto", desc: "Idéal pour la ville" },
-  { value: "voiture", label: "🚗 Voiture", desc: "Pour les gros colis" },
-  { value: "velo", label: "🚲 Vélo", desc: "Eco-responsable" },
-  { value: "a_pied", label: "🚶 À pied", desc: "Courtes distances" },
+const VEHICULES: { value: string; label: string; desc: string; Icon: LucideIcon }[] = [
+  { value: "moto", label: "Moto", desc: "Idéal pour la ville", Icon: Bike },
+  { value: "voiture", label: "Voiture", desc: "Pour les gros colis", Icon: Car },
+  { value: "velo", label: "Vélo", desc: "Eco-responsable", Icon: Bike },
+  { value: "a_pied", label: "À pied", desc: "Courtes distances", Icon: PersonStanding },
 ];
 
 const inputCls = "w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:border-[#1B4FD8] focus:ring-2 focus:ring-[#1B4FD8]/10 focus:outline-none transition-all";
@@ -131,8 +131,8 @@ export default function InscriptionLivreurPage() {
                         : "border-gray-100 text-gray-500 hover:border-gray-200 bg-gray-50"
                     }`}
                   >
-                    <span className="text-base">{v.label.split(" ")[0]}</span>
-                    <span className="truncate">{v.label.split(" ").slice(1).join(" ")}</span>
+                    <v.Icon size={16} />
+                    <span className="truncate">{v.label}</span>
                   </button>
                 ))}
               </div>

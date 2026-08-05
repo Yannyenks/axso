@@ -168,7 +168,7 @@ Format: liste claire avec emojis. Adapté marché africain.`,
             <div key={item.id} className="ax-card p-5 hover:-translate-y-0.5 transition-all">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-xl">🕵️</div>
+                  <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center"><Eye size={20} className="text-red-400" /></div>
                   <div>
                     <p className="text-[13px] font-semibold text-[#111111]">{item.nomConcurrent}</p>
                     {item.categorie && <p className="text-[11.5px] text-[#AAAAAA]">{item.categorie}</p>}
@@ -226,7 +226,7 @@ Format: liste claire avec emojis. Adapté marché africain.`,
 
               {rapport && (
                 <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                  <p className="text-xs font-semibold text-gray-600 mb-2">📊 Rapport IA :</p>
+                  <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1"><BarChart2 size={12} /> Rapport IA :</p>
                   <pre className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed font-sans">{rapport}</pre>
                 </div>
               )}

@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import {
   Megaphone, Plus, Loader2, X, Sparkles, TrendingUp,
   Eye, MousePointer, ShoppingCart, DollarSign, Pause,
-  Play, Trash2, ExternalLink, Zap, Target, BarChart2
+  Play, Trash2, ExternalLink, Zap, Target, BarChart2,
+  Facebook, Music, Search
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -35,9 +36,9 @@ interface Campagne {
 }
 
 const PLATEFORMES = [
-  { id: "meta",   label: "Meta Ads",    icon: "📘", color: "#1877F2", desc: "Facebook + Instagram" },
-  { id: "google", label: "Google Ads",  icon: "🔍", color: "#4285F4", desc: "Search + Display + YouTube" },
-  { id: "tiktok", label: "TikTok Ads",  icon: "🎵", color: "#010101", desc: "Short-form video ads" },
+  { id: "meta",   label: "Meta Ads",   Icon: Facebook, color: "#1877F2", desc: "Facebook + Instagram" },
+  { id: "google", label: "Google Ads", Icon: Search,   color: "#4285F4", desc: "Search + Display + YouTube" },
+  { id: "tiktok", label: "TikTok Ads", Icon: Music,    color: "#010101", desc: "Short-form video ads" },
 ];
 
 const OBJECTIFS = [
@@ -86,8 +87,8 @@ function CampagneCard({ c, onStatut, onDelete }: { c: Campagne; onStatut: (id: s
     <div className="ax-card p-5">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style={{ background: plat?.color + "15", border: `1px solid ${plat?.color}25` }}>
-            {plat?.icon}
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: plat?.color + "15", border: `1px solid ${plat?.color}25` }}>
+            {plat?.Icon && <plat.Icon size={20} style={{ color: plat.color }} />}
           </div>
           <div>
             <p className="text-[13px] font-semibold text-[#111111]">{c.nom}</p>
@@ -346,7 +347,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
           <button key={p.id} onClick={() => setFilterPlat(p.id)}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${filterPlat === p.id ? "text-white border-transparent" : "bg-white border-gray-200 text-gray-500"}`}
             style={filterPlat === p.id ? { background: p.color } : {}}>
-            {p.icon} {p.label}
+            <p.Icon size={14} /> {p.label}
           </button>
         ))}
       </div>
@@ -408,7 +409,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
                     <button key={p.id} onClick={() => setForm(f => ({ ...f, plateforme: p.id }))}
                       className={`p-3 rounded-xl border text-center transition-all ${form.plateforme === p.id ? "border-2 text-white" : "bg-white border-gray-200"}`}
                       style={form.plateforme === p.id ? { borderColor: p.color, background: p.color } : {}}>
-                      <div className="text-2xl mb-1">{p.icon}</div>
+                      <div className="flex justify-center mb-1"><p.Icon size={24} style={{ color: form.plateforme === p.id ? "#fff" : p.color }} /></div>
                       <p className="text-xs font-semibold">{p.label}</p>
                       <p className="text-[10px] opacity-70">{p.desc}</p>
                     </button>

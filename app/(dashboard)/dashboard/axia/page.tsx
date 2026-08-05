@@ -7,7 +7,7 @@ interface Msg { role: "user" | "assistant"; content: string; streaming?: boolean
 export default function AxiaPage() {
   const [messages, setMessages] = useState<Msg[]>([{
     role: "assistant",
-    content: "Bonjour 👋 Je suis AXIA, votre agent IA.\n\nPosez-moi n'importe quelle question sur votre boutique : ventes, stocks, clients, marketing…",
+    content: "Bonjour ! Je suis AXIA, votre agent IA.\n\nPosez-moi n'importe quelle question sur votre boutique : ventes, stocks, clients, marketing…",
   }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);

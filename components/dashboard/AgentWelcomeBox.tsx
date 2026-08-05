@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Send, Loader2, ChevronDown, ChevronUp, Zap, CheckCircle2 } from "lucide-react";
+import { Send, Loader2, ChevronDown, ChevronUp, Zap, CheckCircle2, User } from "lucide-react";
 import { AgentAvatar3D, AGENT_META, type AgentId } from "./AgentAvatar3D";
 
 interface Message { role: "user" | "assistant"; content: string; actions?: string[] }
@@ -99,7 +99,9 @@ export function AgentWelcomeBox({ agentId, greeting, endpoint, suggestions = [] 
                       <AgentAvatar3D agentId={agentId} size={32} pulse={loading && i === messages.length - 1}/>
                     </div>
                   ) : (
-                    <div className="w-7 h-7 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs">👤</div>
+                    <div className="w-7 h-7 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <User size={14} className="text-gray-500" />
+                    </div>
                   )}
                   <div className="flex flex-col gap-1 max-w-[85%]">
                     <div className="rounded-xl px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap"

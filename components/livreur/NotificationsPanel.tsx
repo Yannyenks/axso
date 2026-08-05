@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { Bell, Package, X, CheckCheck } from "lucide-react";
+import { Bell, Package, X, CheckCheck, Check, AlertTriangle, Bike, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 
 type Notif = {
@@ -47,7 +47,7 @@ export function NotificationsPanel({ livreurId }: Props) {
           payload.data.forEach((n: Notif) => {
             toast(n.titre, {
               description: n.message,
-              icon: "🔔",
+              icon: <Bell size={14} />,
               duration: 6000,
             });
           });
@@ -57,7 +57,7 @@ export function NotificationsPanel({ livreurId }: Props) {
           payload.data.forEach((cmd: any) => {
             toast("Nouvelle commande assignée !", {
               description: `${cmd.clientNom} · ${cmd.ville}`,
-              icon: "📦",
+              icon: <Package size={14} />,
               duration: 8000,
             });
           });
@@ -77,11 +77,11 @@ export function NotificationsPanel({ livreurId }: Props) {
     setNotifications((prev) => prev.map((n) => ({ ...n, lu: true })));
   }
 
-  const TYPE_ICON: Record<string, string> = {
-    assignation: "📦",
-    nouvelle_commande: "🛵",
-    statut: "✅",
-    alerte: "⚠️",
+  const TYPE_ICON_MAP: Record<string, LucideIcon> = {
+    assignation: Package,
+    nouvelle_commande: Bike,
+    statut: Check,
+    alerte: AlertTriangle,
   };
 
   return (
@@ -134,7 +134,9 @@ export function NotificationsPanel({ livreurId }: Props) {
                   className={`px-4 py-3 border-b border-[#1a1a1a] hover:bg-[#151515] transition-colors ${!n.lu ? "bg-[#1B4FD8]/5" : ""}`}
                 >
                   <div className="flex items-start gap-3">
-                    <span className="text-lg flex-shrink-0 mt-0.5">{TYPE_ICON[n.type] || "🔔"}</span>
+                    <span className="flex-shrink-0 mt-0.5">
+                      {(() => { const Icon = TYPE_ICON_MAP[n.type] || Bell; return <Icon size={16} />; })()}
+                    </span>
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium ${!n.lu ? "text-white" : "text-gray-300"}`}>{n.titre}</p>
                       <p className="text-gray-500 text-xs mt-0.5 leading-relaxed">{n.message}</p>

@@ -7,6 +7,7 @@ import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import Link from "next/link";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
+import { Package, Lock, RotateCcw, MessageCircle } from "lucide-react";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -239,13 +240,13 @@ export default async function StorefrontPage({ params }: Props) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {[
-              { icon: "📦", titre: "Livraison rapide", texte: "Expédiée sous 24h-48h" },
-              { icon: "🔒", titre: "Paiement sécurisé", texte: "Transactions protégées" },
-              { icon: "↩️", titre: "Retours faciles", texte: "Sous 14 jours" },
-              { icon: "💬", titre: "Support dédié", texte: "Réponse rapide garantie" },
+              { icon: <Package size={24} style={{ color: c.accent }} />, titre: "Livraison rapide", texte: "Expédiée sous 24h-48h" },
+              { icon: <Lock size={24} style={{ color: c.accent }} />, titre: "Paiement sécurisé", texte: "Transactions protégées" },
+              { icon: <RotateCcw size={24} style={{ color: c.accent }} />, titre: "Retours faciles", texte: "Sous 14 jours" },
+              { icon: <MessageCircle size={24} style={{ color: c.accent }} />, titre: "Support dédié", texte: "Réponse rapide garantie" },
             ].map((b) => (
               <div key={b.titre} className="flex flex-col items-center gap-2">
-                <span className="text-2xl">{b.icon}</span>
+                {b.icon}
                 <p className="font-semibold text-sm">{b.titre}</p>
                 <p className="text-xs" style={{ opacity: 0.5 }}>{b.texte}</p>
               </div>
@@ -285,7 +286,7 @@ export default async function StorefrontPage({ params }: Props) {
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-5xl">📦</div>
+                        <div className="w-full h-full flex items-center justify-center"><Package size={48} className="opacity-20" /></div>
                       )}
                       {/* Badges */}
                       <div className="absolute top-3 left-3 flex flex-col gap-1.5">

@@ -4,6 +4,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine, BarChart, Bar,
 } from "recharts";
+import { BarChart3 } from "lucide-react";
 
 interface DonneeVente { date: string; montant: number; commandes: number; }
 interface SalesChartProps { donnees: DonneeVente[]; devise?: string; }
@@ -59,7 +60,7 @@ export function SalesChart({ donnees, devise = "XOF" }: SalesChartProps) {
     return (
       <div className="ax-card p-6 h-72 flex flex-col items-center justify-center gap-3">
         <div className="w-12 h-12 rounded-2xl bg-[#F5F5F7] flex items-center justify-center">
-          <span style={{ fontSize: "22px" }}>📊</span>
+          <BarChart3 size={22} className="text-[#AAAAAA]" />
         </div>
         <p className="text-[13px] text-[#AAAAAA] font-medium">Aucune donnée disponible</p>
         <p className="text-[11.5px] text-[#CCCCCC]">Les ventes apparaîtront ici</p>

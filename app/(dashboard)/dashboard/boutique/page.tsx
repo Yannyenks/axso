@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Store, Palette, Globe, Link2, Truck, Save, Loader2,
-  ExternalLink, Copy, Check,
+  ExternalLink, Copy, Check, Instagram, Facebook, Music, Twitter, Lock,
 } from "lucide-react";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 
@@ -12,9 +12,9 @@ const THEMES = [
   { id: "noir-obsidien",      nom: "Noir Obsidien",       desc: "Luxe & Mode",               fond: "#0a0a0a", accent: "#1B4FD8", texte: "#F5F5F0", badge: "✦ Premium" },
   { id: "violet-cosmos",      nom: "Violet Cosmos",       desc: "Beauté & Art",              fond: "#1a0a2e", accent: "#7c3aed", texte: "#f0eaff", badge: "✦ Premium" },
   { id: "terre-et-or",        nom: "Terre & Or",          desc: "Artisanat & Culture",       fond: "#fff8f0", accent: "#c2622d", texte: "#2c1503", badge: null },
-  { id: "ocean-atlantique",   nom: "Océan Atlantique",    desc: "Luxe Côtier & Marine",      fond: "#010d1f", accent: "#00b4d8", texte: "#e0f4ff", badge: "🌊 3D" },
-  { id: "kente-royal",        nom: "Kente Royal",         desc: "Artisanat Africain Premium",fond: "#1a0e00", accent: "#1b4fd8", texte: "#fff8e8", badge: "👑 3D" },
-  { id: "bwiti-forest",       nom: "Bwiti Forest",        desc: "Nature & Bien-être Bio",    fond: "#071a0b", accent: "#4ade80", texte: "#e8ffe0", badge: "🌿 3D" },
+  { id: "ocean-atlantique",   nom: "Océan Atlantique",    desc: "Luxe Côtier & Marine",      fond: "#010d1f", accent: "#00b4d8", texte: "#e0f4ff", badge: "~ 3D" },
+  { id: "kente-royal",        nom: "Kente Royal",         desc: "Artisanat Africain Premium",fond: "#1a0e00", accent: "#1b4fd8", texte: "#fff8e8", badge: "♦ 3D" },
+  { id: "bwiti-forest",       nom: "Bwiti Forest",        desc: "Nature & Bien-être Bio",    fond: "#071a0b", accent: "#4ade80", texte: "#e8ffe0", badge: "* 3D" },
 ];
 
 const PAYS = [
@@ -211,7 +211,7 @@ export default function BoutiquePage() {
                       {form.nomBoutique || "Ma Boutique"}
                     </p>
                     {form.themeId === t.id && (
-                      <div className="absolute top-2 right-2.5 w-5 h-5 rounded-full bg-[#F5A623] flex items-center justify-center text-white text-[10px] font-bold">✓</div>
+                      <div className="absolute top-2 right-2.5 w-5 h-5 rounded-full bg-[#F5A623] flex items-center justify-center text-white"><Check size={10} /></div>
                     )}
                   </div>
                   <div className="bg-white px-4 py-2.5 flex items-center justify-between">
@@ -271,13 +271,13 @@ export default function BoutiquePage() {
         <div className="ax-card p-6 space-y-4">
           <h2 className="text-[13px] font-semibold text-[#111111]">Vos liens sociaux</h2>
           {[
-            { key: "instagram", label: "Instagram", placeholder: "https://instagram.com/votre_boutique", emoji: "📸" },
-            { key: "facebook",  label: "Facebook",  placeholder: "https://facebook.com/votre_boutique", emoji: "👍" },
-            { key: "tiktok",    label: "TikTok",    placeholder: "https://tiktok.com/@votre_boutique", emoji: "🎵" },
-            { key: "twitter",   label: "X / Twitter", placeholder: "https://twitter.com/votre_boutique", emoji: "🐦" },
+            { key: "instagram", label: "Instagram",   placeholder: "https://instagram.com/votre_boutique", Icon: Instagram },
+            { key: "facebook",  label: "Facebook",    placeholder: "https://facebook.com/votre_boutique",  Icon: Facebook  },
+            { key: "tiktok",    label: "TikTok",      placeholder: "https://tiktok.com/@votre_boutique",   Icon: Music     },
+            { key: "twitter",   label: "X / Twitter", placeholder: "https://twitter.com/votre_boutique",   Icon: Twitter   },
           ].map(s => (
             <div key={s.key}>
-              <label className={labelCls}>{s.emoji} {s.label}</label>
+              <label className={`${labelCls} flex items-center gap-1.5`}><s.Icon size={13} /> {s.label}</label>
               <input value={(form as any)[s.key]} onChange={e => set(s.key, e.target.value)}
                 placeholder={s.placeholder} className={inputCls} />
             </div>
@@ -321,7 +321,7 @@ export default function BoutiquePage() {
               placeholder="Ex: Dakar, Thiès, Saint-Louis, Toute la ville" className={inputCls} />
           </div>
           <div className="flex items-start gap-3 bg-[#FFFBEB] border border-[#FDE68A]/60 rounded-2xl p-4">
-            <span className="text-[16px]">🔒</span>
+            <Lock size={16} className="text-amber-700 flex-shrink-0 mt-0.5" />
             <p className="text-[12px] text-[#92400E] leading-relaxed">
               <strong>Système escrow :</strong> Le paiement client est sécurisé pendant 48h. Les fonds sont versés après confirmation de livraison. Axso prélève <strong>3%</strong> de commission sur chaque vente confirmée.
             </p>
