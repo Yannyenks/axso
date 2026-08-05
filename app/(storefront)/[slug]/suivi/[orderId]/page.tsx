@@ -1,24 +1,24 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { formatDate, formatMontant } from "@/lib/utils";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import Link from "next/link";
-import { revalidatePath } from "next/cache";
 import { ClipboardList, CheckCircle2, Package, Truck, Sparkles, Phone, Check, Smartphone, Circle } from "lucide-react";
+import { ConfirmReceptionButton } from "@/components/storefront/ConfirmReceptionButton";
 
 interface Props {
   params: Promise<{ slug: string; orderId: string }>;
 }
 
 const ETAPES = [
-  { statut: "en_attente",    label: "Commande reçue",   icon: <ClipboardList size={18} /> },
-  { statut: "confirmee",     label: "Paiement confirmé", icon: <CheckCircle2 size={18} /> },
-  { statut: "en_preparation", label: "En préparation",  icon: <Package size={18} /> },
-  { statut: "en_livraison",  label: "En livraison",     icon: <Truck size={18} /> },
-  { statut: "livree",        label: "Livrée",            icon: <Sparkles size={18} /> },
+  { statut: "en_attente",     label: "Commande reçue",   icon: <ClipboardList size={18} /> },
+  { statut: "confirmee",      label: "Confirmée",         icon: <CheckCircle2 size={18} /> },
+  { statut: "en_preparation", label: "En préparation",   icon: <Package size={18} /> },
+  { statut: "expediee",       label: "En livraison",     icon: <Truck size={18} /> },
+  { statut: "livree",         label: "Livrée",            icon: <Sparkles size={18} /> },
 ];
 
 export default async function SuiviPage({ params }: Props) {
@@ -26,13 +26,10 @@ export default async function SuiviPage({ params }: Props) {
   const tenant = await prisma.tenant.findUnique({ where: { slug } });
   if (!tenant || tenant.statut !== "active") notFound();
 
-  const [commande, escrow] = await Promise.all([
-    prisma.commande.findUnique({
-      where: { id: orderId },
-      include: { lignes: { select: { nom: true, quantite: true, prix: true, imageUrl: true } }, livreur: { select: { nom: true, telephone: true } } },
-    }),
-    prisma.escrow.findUnique({ where: { commandeId: orderId } }),
-  ]);
+  const commande = await prisma.commande.findUnique({
+    where: { id: orderId },
+    include: { lignes: { select: { nom: true, quantite: true, prix: true, imageUrl: true } }, livreur: { select: { nom: true, telephone: true } } },
+  });
 
   if (!commande || commande.tenantId !== tenant.id) notFound();
 
@@ -40,32 +37,10 @@ export default async function SuiviPage({ params }: Props) {
   const theme = cfg.colors;
   const etapeActuelle = Math.max(0, ETAPES.findIndex((e) => e.statut === commande.statut));
 
-  const peutConfirmer = commande.statut === "livree" || commande.statut === "en_livraison";
-  // Confirmé si l'escrow est libéré OU si le statut est "livree" sans escrow (pas de retenue)
-  const dejaCONFIRME = escrow ? escrow.statut === "released" : commande.statut === "livree";
-
-  async function confirmerReception() {
-    "use server";
-    // Re-fetch fresh data — ne pas capturer les objets Prisma dans la closure
-    const cmd = await prisma.commande.findUnique({ where: { id: orderId } });
-    if (!cmd || cmd.statut === "annulee") return;
-
-    const esc = await prisma.escrow.findUnique({ where: { commandeId: orderId } });
-    const now = new Date();
-
-    await prisma.$transaction(async (tx) => {
-      await tx.commande.update({ where: { id: orderId }, data: { statut: "livree" } });
-      if (esc && esc.statut !== "released") {
-        await tx.escrow.update({ where: { commandeId: orderId }, data: { statut: "released", releasedAt: now } });
-        const commission = await tx.commission.findUnique({ where: { commandeId: orderId } });
-        if (commission && commission.statut !== "captured") {
-          await tx.commission.update({ where: { commandeId: orderId }, data: { statut: "captured", capturedAt: now } });
-        }
-      }
-    });
-    revalidatePath(`/${slug}/suivi/${orderId}`);
-    redirect(`/${slug}/suivi/${orderId}`);
-  }
+  // Le client peut confirmer si la commande est en route (expediee) et pas encore livrée
+  const peutConfirmer = commande.statut === "expediee";
+  // Confirmé dès que le statut est "livree" (que ce soit le marchand ou le client qui a confirmé)
+  const dejaCONFIRME = commande.statut === "livree";
 
   return (
     <div style={{ backgroundColor: theme.fond, color: theme.texte, minHeight: "100vh" }}>
@@ -138,29 +113,37 @@ export default async function SuiviPage({ params }: Props) {
         )}
 
         {/* Confirmation réception */}
-        {peutConfirmer && (
-          <div className="rounded-2xl border p-6" style={{
-            backgroundColor: dejaCONFIRME ? `${theme.accent}10` : theme.surface,
-            borderColor: dejaCONFIRME ? `${theme.accent}40` : `${theme.accent}20`,
-          }}>
+        {(peutConfirmer || dejaCONFIRME) && (
+          <div
+            className="rounded-2xl border p-6"
+            style={{
+              backgroundColor: dejaCONFIRME ? `${theme.accent}08` : theme.surface,
+              borderColor: dejaCONFIRME ? `${theme.accent}35` : `${theme.accent}20`,
+            }}
+          >
             {dejaCONFIRME ? (
-              <div>
-                <p className="font-semibold flex items-center gap-1.5" style={{ color: theme.accent }}><CheckCircle2 size={16} /> Réception confirmée</p>
-                <p className="text-sm opacity-60 mt-1">Merci ! Le paiement a été libéré au vendeur.</p>
+              <div className="flex flex-col items-center gap-3 py-2 text-center">
+                <div
+                  className="w-14 h-14 rounded-full flex items-center justify-center"
+                  style={{ background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent}cc)`, boxShadow: `0 0 24px ${theme.accent}44` }}
+                >
+                  <CheckCircle2 size={28} color={theme.fond} />
+                </div>
+                <p className="font-bold" style={{ color: theme.accent }}>Commande livrée</p>
+                <p className="text-sm opacity-55">Votre colis a bien été livré. Merci pour votre confiance !</p>
               </div>
             ) : (
               <div>
-                <p className="font-semibold mb-1">Avez-vous bien reçu votre commande ?</p>
-                <p className="text-sm opacity-60 mb-4">En confirmant la réception, vous autorisez le paiement au vendeur. Cette action est irréversible.</p>
-                <form action={confirmerReception}>
-                  <button
-                    type="submit"
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90"
-                    style={{ backgroundColor: theme.accent, color: theme.fond }}
-                  >
-                    <Check size={14} /> Confirmer la réception
-                  </button>
-                </form>
+                <p className="font-semibold mb-1">Vous avez reçu votre colis ?</p>
+                <p className="text-sm opacity-55 mb-5">
+                  Confirmez la réception pour valider votre livraison. Le marchand sera notifié.
+                </p>
+                <ConfirmReceptionButton
+                  commandeId={commande.id}
+                  slug={slug}
+                  accent={theme.accent}
+                  fond={theme.fond}
+                />
               </div>
             )}
           </div>

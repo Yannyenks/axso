@@ -5,12 +5,12 @@ import { notifierClientWhatsApp } from "@/lib/whatsapp";
 import { crediterWallet } from "@/lib/affiliation";
 
 const TRANSITIONS_VALIDES: Record<string, string[]> = {
-  en_attente: ["confirmee", "annulee"],
-  confirmee: ["en_preparation", "annulee"],
-  en_preparation: ["expediee"],
-  expediee: ["livree"],
-  livree: [],
-  annulee: [],
+  en_attente:     ["confirmee", "annulee"],
+  confirmee:      ["en_preparation", "annulee"],
+  en_preparation: ["expediee", "annulee"],
+  expediee:       ["livree", "annulee"],
+  livree:         [],
+  annulee:        [],
 };
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -29,7 +29,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   if (!commande) return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
 
-  // Vérification d'accès : owner/marchand sur son tenant, livreur sur ses commandes
   if (role === "livreur") {
     const livreur = await prisma.livreur.findFirst({
       where: { userId: (session.user as any)?.id, tenantId: commande.tenantId },
@@ -37,7 +36,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (!livreur || commande.livreurId !== livreur.id) {
       return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
     }
-    // Le livreur peut seulement marquer livré
     if (statut !== "livree") {
       return NextResponse.json({ error: "Le livreur peut seulement marquer comme livré" }, { status: 403 });
     }
@@ -49,80 +47,70 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const statutsValides = TRANSITIONS_VALIDES[commande.statut] || [];
   if (!statutsValides.includes(statut)) {
-    return NextResponse.json({
-      error: `Transition invalide : ${commande.statut} → ${statut}`,
-    }, { status: 400 });
+    return NextResponse.json({ error: `Transition invalide : ${commande.statut} → ${statut}` }, { status: 400 });
   }
 
-  // Mise à jour en transaction avec libération escrow si livré
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dejaVente = commande.paiementStatut === "completed";
+
   await prisma.$transaction(async (tx) => {
     await tx.commande.update({
       where: { id },
       data: {
         statut,
-        updatedAt: new Date(),
+        // Marquer comme vente dès que le marchand confirme la livraison
+        ...(statut === "livree" && !dejaVente ? { paiementStatut: "completed" } : {}),
+        updatedAt: now,
       },
     });
 
-    // Libérer l'escrow quand livraison confirmée
-    if (statut === "livree" && commande.escrow) {
-      await tx.escrow.update({
-        where: { commandeId: id },
-        data: {
-          statut: "released",
-          releasedAt: new Date(),
-        },
-      });
-
-      // Capturer la commission
-      if (commande.commission) {
-        await tx.commission.update({
+    if (statut === "livree") {
+      // Libérer l'escrow si existant (paiement en ligne avec retenue)
+      if (commande.escrow && commande.escrow.statut !== "released") {
+        await tx.escrow.update({
           where: { commandeId: id },
-          data: {
-            statut: "captured",
-            capturedAt: new Date(),
-          },
+          data: { statut: "released", releasedAt: now },
         });
       }
-
-      // Créer escrow si pas encore (commandes sans paiement Flutterwave)
-      if (!commande.escrow) {
-        const releaseAt = new Date();
-        releaseAt.setHours(releaseAt.getHours() + 48);
-        await tx.escrow.create({
+      // Capturer la commission si existante
+      if (commande.commission && commande.commission.statut !== "captured") {
+        await tx.commission.update({
+          where: { commandeId: id },
+          data: { statut: "captured", capturedAt: now },
+        });
+      }
+      // Enregistrer la vente dans les analytics pour le graphique CA
+      if (!dejaVente) {
+        await tx.analytics.create({
           data: {
             tenantId: commande.tenantId,
-            commandeId: id,
-            montant: commande.montantTotal,
-            statut: "released",
-            releaseAt,
-            releasedAt: new Date(),
+            type: "purchase",
+            date: today,
+            valeur: commande.montantTotal / 10000,
+            metadata: { commandeId: id, source: "marchand_livree" },
           },
         });
       }
     }
   });
 
-  // Créditer le wallet quand commande physique/COD est livrée
-  if (statut === "livree") {
-    const estCOD = !commande.stripePaymentIntentId && !commande.stripeChargeId;
-    const dejaCredite = commande.paiementStatut === "completed" && commande.escrow?.statut === "released";
-    if (estCOD || !dejaCredite) {
-      const COMMISSION = 0.03;
-      const net = Math.round(commande.montantTotal * (1 - COMMISSION) * 100) / 100;
-      await crediterWallet(
-        commande.tenantId,
-        net,
-        commande.devise,
-        `Vente livrée #${commande.numero}`,
-        id,
-        undefined,
-        "CREDIT"
-      ).catch(() => {});
-    }
+  // Créditer le wallet du marchand pour les commandes COD / paiement physique
+  // (les paiements en ligne ont déjà crédité via escrow ou webhook)
+  if (statut === "livree" && !dejaVente) {
+    const COMMISSION = 0.03;
+    const net = Math.round(commande.montantTotal * (1 - COMMISSION) * 100) / 100;
+    await crediterWallet(
+      commande.tenantId,
+      net,
+      commande.devise,
+      `Vente livrée #${commande.numero}`,
+      id,
+      undefined,
+      "CREDIT"
+    ).catch(() => {});
   }
 
-  // Notifier le client via WhatsApp
   const { envoyeAuto, whatsappUrl } = await notifierClientWhatsApp({
     telephone: commande.clientTelephone,
     statut,
