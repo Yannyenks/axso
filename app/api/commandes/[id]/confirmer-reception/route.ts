@@ -18,14 +18,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  // Paiement en ligne : wallet déjà crédité dans le webhook → éviter le double crédit
+  const dejaVente = commande.paiementStatut === "completed";
 
   await prisma.$transaction(async (tx) => {
     await tx.commande.update({
       where: { id },
-      data: { statut: "livree", paiementStatut: "completed", updatedAt: now },
+      data: {
+        statut: "livree",
+        ...(dejaVente ? {} : { paiementStatut: "completed" }),
+        updatedAt: now,
+      },
     });
 
-    // Enregistrer la vente dans les analytics (graphique CA)
+    // Enregistrer la vente dans le CA (s'applique qu'au COD ou au premier passage)
     await tx.analytics.create({
       data: {
         tenantId: commande.tenantId,
@@ -37,18 +43,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     });
   });
 
-  // Créditer le wallet du marchand (sans escrow)
-  const COMMISSION = 0.03;
-  const net = Math.round(commande.montantTotal * (1 - COMMISSION) * 100) / 100;
-  await crediterWallet(
-    commande.tenantId,
-    net,
-    commande.devise,
-    `Vente confirmée #${commande.numero}`,
-    id,
-    undefined,
-    "CREDIT"
-  ).catch(() => {});
+  // Créditer le wallet uniquement pour les commandes COD
+  // (paiement en ligne : wallet déjà crédité dans le webhook)
+  if (!dejaVente) {
+    const COMMISSION = 0.03;
+    const net = Math.round(commande.montantTotal * (1 - COMMISSION) * 100) / 100;
+    await crediterWallet(
+      commande.tenantId,
+      net,
+      commande.devise,
+      `Vente confirmée #${commande.numero}`,
+      id,
+      undefined,
+      "CREDIT"
+    ).catch(() => {});
+  }
 
   return NextResponse.json({ ok: true });
 }

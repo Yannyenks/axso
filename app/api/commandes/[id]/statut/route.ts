@@ -52,21 +52,24 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  // dejaVente : paiement en ligne déjà reçu (wallet crédité dans le webhook)
   const dejaVente = commande.paiementStatut === "completed";
+  // dejaCommission : livraison déjà traitée (analytics déjà enregistrée)
+  const dejaCommission = commande.commission?.statut === "captured";
 
   await prisma.$transaction(async (tx) => {
     await tx.commande.update({
       where: { id },
       data: {
         statut,
-        // Marquer comme vente dès que le marchand confirme la livraison
+        // COD : marquer le paiement complété à la livraison
         ...(statut === "livree" && !dejaVente ? { paiementStatut: "completed" } : {}),
         updatedAt: now,
       },
     });
 
     if (statut === "livree") {
-      // Libérer l'escrow si existant (paiement en ligne avec retenue)
+      // Libérer l'escrow si existant (produits digitaux avec retenue)
       if (commande.escrow && commande.escrow.statut !== "released") {
         await tx.escrow.update({
           where: { commandeId: id },
@@ -80,8 +83,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           data: { statut: "captured", capturedAt: now },
         });
       }
-      // Enregistrer la vente dans les analytics pour le graphique CA
-      if (!dejaVente) {
+      // Enregistrer la vente dans le CA à chaque livraison confirmée
+      // (garde via dejaCommission pour éviter les doublons)
+      if (!dejaCommission) {
         await tx.analytics.create({
           data: {
             tenantId: commande.tenantId,
@@ -95,8 +99,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
   });
 
-  // Créditer le wallet du marchand pour les commandes COD / paiement physique
-  // (les paiements en ligne ont déjà crédité via escrow ou webhook)
+  // Créditer le wallet uniquement pour les commandes COD
+  // (les paiements en ligne ont déjà crédité le wallet via le webhook)
   if (statut === "livree" && !dejaVente) {
     const COMMISSION = 0.03;
     const net = Math.round(commande.montantTotal * (1 - COMMISSION) * 100) / 100;

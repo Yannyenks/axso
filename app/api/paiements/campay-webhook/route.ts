@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateWallet } from "@/lib/wallet";
 import { tauxCommissionEffectif } from "@/lib/commission";
+import { crediterWallet } from "@/lib/affiliation";
 
 export async function POST(req: NextRequest) {
   try {
@@ -55,8 +56,8 @@ export async function POST(req: NextRequest) {
 
     const taux = tauxCommissionEffectif(commande.lignes, commande.tenant.commissionRate || 0.03);
     const montantCommission = commande.montantTotal * taux;
-    const releaseAt = new Date(Date.now() + 48 * 3600 * 1000);
     const operateur = body.operator ?? verified.operator ?? "campay";
+    const isPhysique = !commande.lignes.some((l: any) => l.produit?.type === "digital");
 
     await prisma.commande.update({
       where: { id: reference },
@@ -70,12 +71,7 @@ export async function POST(req: NextRequest) {
 
     await getOrCreateWallet(commande.tenantId, commande.devise).catch(() => {});
 
-    await Promise.allSettled([
-      prisma.escrow.upsert({
-        where: { commandeId: reference },
-        create: { tenantId: commande.tenantId, commandeId: reference, montant: commande.montantTotal, releaseAt, statut: "held" },
-        update: { statut: "held", releaseAt },
-      }),
+    const tasks: Promise<any>[] = [
       prisma.commission.upsert({
         where: { commandeId: reference },
         create: {
@@ -98,7 +94,31 @@ export async function POST(req: NextRequest) {
           })
         ))
       ),
-    ]);
+    ];
+
+    // Escrow uniquement pour les produits digitaux
+    if (!isPhysique) {
+      const releaseAt = new Date(Date.now() + 48 * 3600 * 1000);
+      tasks.push(
+        prisma.escrow.upsert({
+          where: { commandeId: reference },
+          create: { tenantId: commande.tenantId, commandeId: reference, montant: commande.montantTotal, releaseAt, statut: "held" },
+          update: { statut: "held", releaseAt },
+        })
+      );
+    }
+
+    await Promise.allSettled(tasks);
+
+    // Produit physique : crédit wallet immédiat (pas d'escrow)
+    if (isPhysique) {
+      const net = Math.round((commande.montantTotal - montantCommission) * 100) / 100;
+      await crediterWallet(
+        commande.tenantId, net, commande.devise,
+        `Paiement reçu #${commande.id.slice(-6).toUpperCase()}`,
+        reference, body.operator_reference ?? reference, "CREDIT"
+      ).catch(() => {});
+    }
 
     return NextResponse.json({ received: true });
   } catch (err) {

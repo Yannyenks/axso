@@ -5,6 +5,7 @@ import { getOrCreateWallet } from "@/lib/wallet";
 import { verifierCinetPay } from "@/lib/payment-providers";
 import { tauxCommissionEffectif } from "@/lib/commission";
 import { reinitialiserEchecsPaiement } from "@/lib/paiement-securite";
+import { crediterWallet } from "@/lib/affiliation";
 
 export async function POST(req: NextRequest) {
   try {
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
 
     const taux = tauxCommissionEffectif(commande.lignes, commande.tenant.commissionRate || 0.03);
     const montantCommission = commande.montantTotal * taux;
-    const releaseAt = new Date(Date.now() + 48 * 3600 * 1000);
+    const isPhysique = !commande.lignes.some((l: any) => l.produit?.type === "digital");
 
     await prisma.commande.update({
       where: { id: commandeId },
@@ -57,12 +58,7 @@ export async function POST(req: NextRequest) {
     await getOrCreateWallet(commande.tenantId, commande.devise).catch(() => {});
     await reinitialiserEchecsPaiement(commande.tenantId).catch(() => {});
 
-    await Promise.allSettled([
-      prisma.escrow.upsert({
-        where: { commandeId },
-        create: { tenantId: commande.tenantId, commandeId, montant: commande.montantTotal, releaseAt, statut: "held" },
-        update: { statut: "held", releaseAt },
-      }),
+    const tasks: Promise<any>[] = [
       prisma.commission.upsert({
         where: { commandeId },
         create: {
@@ -83,7 +79,29 @@ export async function POST(req: NextRequest) {
           })
         ))
       ),
-    ]);
+    ];
+
+    if (!isPhysique) {
+      const releaseAt = new Date(Date.now() + 48 * 3600 * 1000);
+      tasks.push(
+        prisma.escrow.upsert({
+          where: { commandeId },
+          create: { tenantId: commande.tenantId, commandeId, montant: commande.montantTotal, releaseAt, statut: "held" },
+          update: { statut: "held", releaseAt },
+        })
+      );
+    }
+
+    await Promise.allSettled(tasks);
+
+    if (isPhysique) {
+      const net = Math.round((commande.montantTotal - montantCommission) * 100) / 100;
+      await crediterWallet(
+        commande.tenantId, net, commande.devise,
+        `Paiement reçu #${commande.id.slice(-6).toUpperCase()}`,
+        commandeId, verification.data?.cpm_payid, "CREDIT"
+      ).catch(() => {});
+    }
 
     return NextResponse.json({ received: true });
   } catch (err) {

@@ -50,19 +50,14 @@ export async function POST(req: NextRequest) {
       if (commande && commande.paiementStatut !== "completed") {
         const taux = tauxCommissionEffectif(commande.lignes, commande.tenant.commissionRate || 0.03);
         const montantCommission = commande.montantTotal * taux;
-        const releaseAt = new Date(Date.now() + 48 * 3600 * 1000);
+        const isPhysique = !commande.lignes.some((l: any) => l.produit?.type === "digital");
 
         await prisma.commande.update({
           where: { id: txRef },
           data: { statut: "confirmee", paiementStatut: "completed", flutterwaveRef: flwRefFinal },
         });
 
-        await Promise.allSettled([
-          prisma.escrow.upsert({
-            where: { commandeId: txRef },
-            create: { tenantId: commande.tenantId, commandeId: txRef, montant: commande.montantTotal, releaseAt, statut: "held" },
-            update: { statut: "held", releaseAt },
-          }),
+        const tasks: Promise<any>[] = [
           prisma.commission.upsert({
             where: { commandeId: txRef },
             create: {
@@ -75,7 +70,30 @@ export async function POST(req: NextRequest) {
             },
             update: { statut: "pending" },
           }),
-        ]);
+        ];
+
+        if (!isPhysique) {
+          const releaseAt = new Date(Date.now() + 48 * 3600 * 1000);
+          tasks.push(
+            prisma.escrow.upsert({
+              where: { commandeId: txRef },
+              create: { tenantId: commande.tenantId, commandeId: txRef, montant: commande.montantTotal, releaseAt, statut: "held" },
+              update: { statut: "held", releaseAt },
+            })
+          );
+        }
+
+        await Promise.allSettled(tasks);
+
+        if (isPhysique) {
+          const { crediterWallet } = await import("@/lib/affiliation");
+          const net = Math.round((commande.montantTotal - montantCommission) * 100) / 100;
+          await crediterWallet(
+            commande.tenantId, net, commande.devise,
+            `Paiement reçu #${commande.id.slice(-6).toUpperCase()}`,
+            txRef, flwRefFinal, "CREDIT"
+          ).catch(() => {});
+        }
       }
 
       return NextResponse.json({ success: true, commandeId: txRef });

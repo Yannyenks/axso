@@ -223,15 +223,13 @@ async function _confirmerDemo(
     commissionRate
   );
   const montantCommission = total * taux;
-  // Produits digitaux : libération immédiate du wallet (pas d'attente 48h)
-  const releaseAt = isDigital ? new Date() : new Date(Date.now() + 48 * 3600 * 1000);
 
   await prisma.commande.update({
     where: { id: commandeId },
     data: { statut: "confirmee", paiementStatut: "completed" },
   });
 
-  await Promise.allSettled([
+  const tasks: Promise<any>[] = [
     prisma.commission.create({
       data: {
         tenantId, commandeId,
@@ -241,14 +239,29 @@ async function _confirmerDemo(
         taux, devise, statut: "pending",
       },
     }),
-    prisma.escrow.create({
-      data: { tenantId, commandeId, montant: total, releaseAt, statut: "held" },
-    }),
     ...items.map((item: any) =>
       prisma.produit.update({
         where: { id: item.produitId },
         data: { stock: { decrement: item.quantite }, ventes: { increment: item.quantite } },
       }).catch(() => {})
     ),
-  ]);
+  ];
+
+  // Escrow uniquement pour les produits digitaux (libération immédiate)
+  if (isDigital) {
+    tasks.push(
+      prisma.escrow.create({
+        data: { tenantId, commandeId, montant: total, releaseAt: new Date(), statut: "held" },
+      })
+    );
+  }
+
+  await Promise.allSettled(tasks);
+
+  // Produit physique : crédit wallet immédiat en mode démo
+  if (!isDigital) {
+    const { crediterWallet } = await import("@/lib/affiliation");
+    const net = Math.round((total - montantCommission) * 100) / 100;
+    await crediterWallet(tenantId, net, devise, `Vente démo #${commandeId.slice(-6).toUpperCase()}`, commandeId, undefined, "CREDIT").catch(() => {});
+  }
 }

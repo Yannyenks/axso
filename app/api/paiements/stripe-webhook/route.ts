@@ -97,22 +97,19 @@ export async function POST(req: NextRequest) {
         "CREDIT"
       );
     } else {
-      // Produit physique payé en ligne : escrow 48h avant libération wallet
+      // Produit physique payé en ligne : crédit wallet immédiat (pas d'escrow)
       await prisma.commande.update({
         where: { id: commandeId },
         data: { paiementStatut: "completed", statut: "confirmee" },
       });
-      await prisma.escrow.upsert({
-        where: { commandeId },
-        create: {
-          commandeId,
-          tenantId: commande.tenantId,
-          montant: commande.montantTotal,
-          statut: "held",
-          releaseAt: new Date(Date.now() + 48 * 3600 * 1000),
-        },
-        update: { statut: "held" },
-      });
+      const { crediterWallet: cw } = await import("@/lib/affiliation");
+      const COMMISSION_AXSO = 0.03;
+      const net = Math.round(commande.montantTotal * (1 - COMMISSION_AXSO) * 100) / 100;
+      await cw(
+        commande.tenantId, net, commande.devise,
+        `Paiement reçu #${commande.id.slice(-6).toUpperCase()}`,
+        commande.id, pi.id, "CREDIT"
+      ).catch(() => {});
     }
   }
 

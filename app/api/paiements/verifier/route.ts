@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getOrCreateWallet } from "@/lib/wallet";
 import { tauxCommissionEffectif } from "@/lib/commission";
 import { enregistrerEchecPaiement, reinitialiserEchecsPaiement } from "@/lib/paiement-securite";
+import { crediterWallet } from "@/lib/affiliation";
 
 export async function GET(req: NextRequest) {
   try {
@@ -66,7 +67,7 @@ export async function GET(req: NextRequest) {
     if (estValide && commande.paiementStatut !== "completed") {
       const taux = tauxCommissionEffectif(commande.lignes, commande.tenant.commissionRate || 0.03);
       const montantCommission = commande.montantTotal * taux;
-      const releaseAt = new Date(Date.now() + 48 * 3600 * 1000);
+      const isPhysique = !commande.lignes.some((l: any) => l.produit?.type === "digital");
 
       await prisma.$transaction(async (tx) => {
         await tx.commande.update({
@@ -78,11 +79,15 @@ export async function GET(req: NextRequest) {
           },
         });
 
-        await tx.escrow.upsert({
-          where: { commandeId },
-          create: { tenantId: commande.tenantId, commandeId, montant: commande.montantTotal, releaseAt, statut: "held" },
-          update: { statut: "held", releaseAt },
-        }).catch(() => {});
+        // Escrow uniquement pour les produits digitaux
+        if (!isPhysique) {
+          const releaseAt = new Date(Date.now() + 48 * 3600 * 1000);
+          await tx.escrow.upsert({
+            where: { commandeId },
+            create: { tenantId: commande.tenantId, commandeId, montant: commande.montantTotal, releaseAt, statut: "held" },
+            update: { statut: "held", releaseAt },
+          }).catch(() => {});
+        }
 
         await tx.commission.upsert({
           where: { commandeId },
@@ -104,6 +109,16 @@ export async function GET(req: NextRequest) {
       await getOrCreateWallet(commande.tenantId, commande.devise).catch(() => {});
       // Réinitialiser le compteur d'échecs après succès
       await reinitialiserEchecsPaiement(commande.tenantId).catch(() => {});
+
+      // Produit physique : crédit wallet immédiat
+      if (isPhysique) {
+        const net = Math.round((commande.montantTotal - montantCommission) * 100) / 100;
+        await crediterWallet(
+          commande.tenantId, net, commande.devise,
+          `Paiement reçu #${commande.id.slice(-6).toUpperCase()}`,
+          commandeId, flwData?.data?.flw_ref, "CREDIT"
+        ).catch(() => {});
+      }
 
       return NextResponse.json({ statut: "completed", commande });
     }

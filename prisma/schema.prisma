@@ -100,6 +100,8 @@ model Produit {
   fichierNom      String?  // Nom du fichier affiché
   fichierTaille   Int?     // Taille en octets
   instructionsTelechargement String?
+  // Chariow (paiement digital via API Chariow)
+  chariowProduitId  String?  // ID du produit correspondant sur chariow.com (ex: prd_abc123)
   // Affiliation
   affiliationActive   Boolean @default(false)
   tauxCommissionAff   Float?  // ex: 0.20 = 20% pour l'affilieur (sur le prix HT commission Axso)
