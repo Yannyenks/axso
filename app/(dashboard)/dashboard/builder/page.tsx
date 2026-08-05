@@ -183,7 +183,7 @@ export default function BuilderPage() {
   const addCustomSection = useCallback((type: CustomSection["type"]) => {
     const id = `custom_${Date.now()}`;
     const defaults: Record<string, any> = {
-      features:     { titre: "Nos avantages", items: [{ icone: "⚡", titre: "Avantage 1", texte: "Description" }, { icone: "🎯", titre: "Avantage 2", texte: "Description" }, { icone: "✨", titre: "Avantage 3", texte: "Description" }], colonnes: 3 },
+      features:     { titre: "Nos avantages", items: [{ icone: "★", titre: "Avantage 1", texte: "Description" }, { icone: "→", titre: "Avantage 2", texte: "Description" }, { icone: "✓", titre: "Avantage 3", texte: "Description" }], colonnes: 3 },
       stats:        { titre: "En chiffres", items: [{ valeur: "10K+", label: "Clients" }, { valeur: "500+", label: "Produits" }, { valeur: "4.9★", label: "Note" }, { valeur: "48h", label: "Livraison" }] },
       countdown:    { titre: "Offre limitée", texte: "Ne manquez pas cette opportunité unique !", dateFin: new Date(Date.now() + 7*24*3600*1000).toISOString().slice(0,16), ctaTexte: "Profiter maintenant" },
       brands:       { titre: "Ils nous font confiance", logos: ["", "", "", ""], style: "carousel" },
@@ -659,7 +659,7 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
           <FInp label="Description" value={item.texte} onChange={v=>{ const it=[...c.items]; it[i]={...it[i],texte:v}; up({items:it}); }} multiline />
         </div>
       ))}
-      <button onClick={()=>up({items:[...(c.items||[]),{icone:"✨",titre:"Avantage",texte:"Description"}]})} className="w-full text-[10px] text-gray-500 border border-dashed border-white/10 rounded-lg py-1.5 hover:border-white/20">+ Ajouter</button>
+      <button onClick={()=>up({items:[...(c.items||[]),{icone:"★",titre:"Avantage",texte:"Description"}]})} className="w-full text-[10px] text-gray-500 border border-dashed border-white/10 rounded-lg py-1.5 hover:border-white/20">+ Ajouter</button>
     </>
   );
 
@@ -906,7 +906,7 @@ function PanelMedias({ config, setSection, updateCustomSection }: any) {
         <div className="space-y-4">
           {/* Hero */}
           <div className="bg-white/[0.03] rounded-xl p-3 space-y-2.5">
-            <p className="text-xs font-semibold text-white">🖼️ Hero — Image de fond</p>
+            <p className="text-xs font-semibold text-white flex items-center gap-1.5"><ImageIcon size={12} /> Hero — Image de fond</p>
             <p className="text-[9px] text-gray-600">L'image de fond principale (bannière boutique) se configure dans <Link href="/dashboard/boutique" className="text-[#F5A623] underline">Ma boutique → Médias</Link></p>
             {sec.hero?.style === "slideshow" && (
               <div>
@@ -925,7 +925,7 @@ function PanelMedias({ config, setSection, updateCustomSection }: any) {
           {/* À propos */}
           {sec.about?.actif && (
             <div className="bg-white/[0.03] rounded-xl p-3 space-y-2">
-              <p className="text-xs font-semibold text-white">📖 Notre histoire — Image</p>
+              <p className="text-xs font-semibold text-white flex items-center gap-1.5"><BookOpen size={12} /> Notre histoire — Image</p>
               <FInp label="URL" value={sec.about?.imageUrl||""} onChange={v=>setSection("about",{imageUrl:v})} />
               {sec.about?.imageUrl && <img src={sec.about.imageUrl} alt="" className="w-full h-20 rounded-lg object-cover border border-white/10" onError={e=>(e.currentTarget.style.display="none")} />}
             </div>
@@ -934,7 +934,7 @@ function PanelMedias({ config, setSection, updateCustomSection }: any) {
           {/* Bannière promo */}
           {sec.promo?.actif && sec.promo?.style === "image" && (
             <div className="bg-white/[0.03] rounded-xl p-3 space-y-2">
-              <p className="text-xs font-semibold text-white">🎯 Bannière promo — Image</p>
+              <p className="text-xs font-semibold text-white flex items-center gap-1.5"><Target size={12} /> Bannière promo — Image</p>
               <FInp label="URL" value={sec.promo?.imageUrl||""} onChange={v=>setSection("promo",{imageUrl:v})} />
             </div>
           )}

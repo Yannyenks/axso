@@ -158,7 +158,7 @@ export default function EditProduitPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: newType }),
       });
-      toast.success(`Type changé → ${newType === "digital" ? "💾 Digital" : newType === "dropshipping" ? "🚚 Dropshipping" : "📦 Physique"}`);
+      toast.success(`Type changé → ${newType === "digital" ? "Digital" : newType === "dropshipping" ? "Dropshipping" : "Physique"}`);
     } catch {
       toast.error("Erreur lors du changement de type");
     }

@@ -648,11 +648,11 @@ function Leaderboard({ entries }: { entries: LeaderEntry[] }) {
 // ─── Trending widget ──────────────────────────────────────────────────────────
 function TrendingWidget() {
   const trends = [
-    { tag: "#Dropshipping", posts: "2.4k posts", emoji: "📦" },
-    { tag: "#ProduitsMCI",  posts: "1.8k posts", emoji: "🌍" },
-    { tag: "#EcomAfrique",  posts: "3.1k posts", emoji: "🚀" },
-    { tag: "#FlashPromo",   posts: "945 posts",  emoji: "⚡" },
-    { tag: "#Milestone100", posts: "612 posts",  emoji: "🏆" },
+    { tag: "#Dropshipping", posts: "2.4k posts" },
+    { tag: "#ProduitsMCI",  posts: "1.8k posts" },
+    { tag: "#EcomAfrique",  posts: "3.1k posts" },
+    { tag: "#FlashPromo",   posts: "945 posts"  },
+    { tag: "#Milestone100", posts: "612 posts"  },
   ];
   return (
     <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.gray100}`, overflow: "hidden", marginBottom: 12 }}>
@@ -665,7 +665,7 @@ function TrendingWidget() {
           onMouseEnter={ev => (ev.currentTarget.style.background = C.gray50)} onMouseLeave={ev => (ev.currentTarget.style.background = "transparent")}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div style={{ fontSize: 9, color: C.gray400, fontWeight: 600 }}>{t.emoji} Tendance</div>
+              <div style={{ fontSize: 9, color: C.gray400, fontWeight: 600 }}>Tendance</div>
               <div style={{ fontSize: 13, fontWeight: 800, color: C.orange, marginTop: 1 }}>{t.tag}</div>
               <div style={{ fontSize: 10, color: C.gray400, marginTop: 1 }}>{t.posts}</div>
             </div>
@@ -680,10 +680,10 @@ function TrendingWidget() {
 // ─── AXIA Boost ───────────────────────────────────────────────────────────────
 function AxiaPanel({ myNom }: { myNom: string }) {
   const tips = [
-    { emoji: "✍️", text: "Coulisses de ta boutique" },
-    { emoji: "🏆", text: "Partage ton meilleur score" },
-    { emoji: "📢", text: "Sondage prochain produit" },
-    { emoji: "🎁", text: "Promo flash 48h" },
+    { text: "Coulisses de ta boutique" },
+    { text: "Partage ton meilleur score" },
+    { text: "Sondage prochain produit" },
+    { text: "Promo flash 48h" },
   ];
   return (
     <div style={{ background: `linear-gradient(145deg, ${C.orange} 0%, ${C.orangeDark} 100%)`, borderRadius: 20, padding: 16, boxShadow: `0 4px 20px rgba(245,166,35,0.22)` }}>
@@ -698,7 +698,6 @@ function AxiaPanel({ myNom }: { myNom: string }) {
         {tips.map((t, i) => (
           <button key={i} style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.14)", border: "none", borderRadius: 12, padding: "9px 11px", cursor: "pointer", textAlign: "left", transition: "background .15s" }}
             onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")} onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.14)")}>
-            <span>{t.emoji}</span>
             <span style={{ fontSize: 11.5, color: "#fff", fontWeight: 600 }}>{t.text}</span>
           </button>
         ))}

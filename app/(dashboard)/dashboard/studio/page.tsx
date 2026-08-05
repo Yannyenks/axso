@@ -54,7 +54,7 @@ function TabVideo() {
         setVideo(data);
         setProgress(100);
         clearInterval(intervalRef.current);
-        toast.success("🎬 Vidéo générée !");
+        toast.success("Vidéo générée !");
       } else if (data.statut === "erreur") {
         toast.error(data.erreur || "Erreur génération");
         setGenerating(false);
@@ -230,7 +230,7 @@ function TabVoixOff() {
         return;
       }
       setAudioUrl(data.audioUrl);
-      toast.success("🎙️ Voix générée !");
+      toast.success("Voix générée !");
     } catch { toast.error("Erreur réseau"); }
     finally { setGenerating(false); }
   }

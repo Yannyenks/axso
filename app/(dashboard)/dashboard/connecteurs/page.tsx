@@ -1013,7 +1013,7 @@ export default function ConnecteursPage() {
           et <strong>lancer des campagnes Meta Ads</strong> — depuis AXIA ou n'importe quel agent.
         </p>
         <div className="flex flex-wrap gap-2 mt-3">
-          {['📘 "Poste ce produit sur Facebook"', '📸 "Crée un post Instagram avec photo IA"', '📱 "Envoie un WhatsApp à mes VIPs"', '🎯 "Lance une campagne Meta Ads 5000 XAF/jour"'].map(ex => (
+          {['"Poste ce produit sur Facebook"', '"Crée un post Instagram avec photo IA"', '"Envoie un WhatsApp à mes VIPs"', '"Lance une campagne Meta Ads 5000 XAF/jour"'].map(ex => (
             <span key={ex} className="bg-white rounded-xl px-3 py-1.5 text-xs text-gray-600 shadow-sm border border-gray-100">{ex}</span>
           ))}
         </div>
