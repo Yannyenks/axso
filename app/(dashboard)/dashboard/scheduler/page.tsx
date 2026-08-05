@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import {
   Calendar, Plus, Clock,
   Trash2, CheckCircle2, XCircle, Loader2, Sparkles,
-  X, Copy, Edit3, Film, Zap, Bot
+  X, Copy, Edit3, Film, Zap, Bot,
+  Camera, ThumbsUp, Music4, MessageCircle, Bird
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,11 +32,11 @@ interface Post {
 }
 
 const PLATEFORMES = [
-  { id: "instagram", label: "Instagram", color: "#E1306C", icon: "📸" },
-  { id: "facebook",  label: "Facebook",  color: "#1877F2", icon: "👍" },
-  { id: "tiktok",    label: "TikTok",    color: "#010101", icon: "🎵" },
-  { id: "whatsapp",  label: "WhatsApp",  color: "#25D366", icon: "💬" },
-  { id: "twitter",   label: "X/Twitter", color: "#1DA1F2", icon: "🐦" },
+  { id: "instagram", label: "Instagram", color: "#E1306C", Icon: Camera },
+  { id: "facebook",  label: "Facebook",  color: "#1877F2", Icon: ThumbsUp },
+  { id: "tiktok",    label: "TikTok",    color: "#010101", Icon: Music4 },
+  { id: "whatsapp",  label: "WhatsApp",  color: "#25D366", Icon: MessageCircle },
+  { id: "twitter",   label: "X/Twitter", color: "#1DA1F2", Icon: Bird },
 ];
 
 const STATUT_BADGES: Record<Statut, { label: string; color: string; bg: string; icon: any }> = {
@@ -60,7 +61,7 @@ function PostCard({ post, onDelete, onStatut }: { post: Post; onDelete: (id: str
       <div className="p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-lg">{plat?.icon}</span>
+            {plat && <plat.Icon size={16} style={{ color: plat.color }} />}
             <span className="text-xs font-semibold text-gray-700" style={{ color: plat?.color }}>{plat?.label}</span>
           </div>
           <span className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full" style={{ color: statut.color, background: statut.bg }}>
@@ -259,7 +260,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
               <button key={p} onClick={() => setFilterPlateforme(p)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${filterPlateforme === p ? "text-white border-transparent" : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"}`}
                 style={filterPlateforme === p ? { background: plat?.color || "#6b7280" } : {}}>
-                {p === "tous" ? "Tous" : `${plat?.icon} ${plat?.label}`}
+                {p === "tous" ? "Tous" : <span className="flex items-center gap-1">{plat?.Icon && <plat.Icon size={11} />} {plat?.label}</span>}
               </button>
             );
           })}
@@ -311,10 +312,10 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
             <div className="p-6 space-y-5">
               {/* Mode toggle */}
               <div className="flex gap-1 p-1 bg-[#F5F5F7] rounded-xl">
-                {[{ id: true, label: "✨ Générer avec l'IA" }, { id: false, label: "✏️ Manuel" }].map(m => (
+                {[{ id: true, label: "Générer avec l'IA", Icon: Sparkles }, { id: false, label: "Manuel", Icon: Edit3 }].map(m => (
                   <button key={String(m.id)} onClick={() => setAiMode(m.id)}
-                    className={`flex-1 py-2 rounded-lg text-[13px] font-semibold transition-all ${aiMode === m.id ? "bg-white text-[#111111] shadow-sm" : "text-[#AAAAAA]"}`}>
-                    {m.label}
+                    className={`flex-1 py-2 rounded-lg text-[13px] font-semibold transition-all flex items-center justify-center gap-1.5 ${aiMode === m.id ? "bg-white text-[#111111] shadow-sm" : "text-[#AAAAAA]"}`}>
+                    <m.Icon size={13} /> {m.label}
                   </button>
                 ))}
               </div>
@@ -327,7 +328,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
                     <button key={p.id} onClick={() => setForm(f => ({ ...f, plateforme: p.id }))}
                       className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-all ${form.plateforme === p.id ? "text-white border-transparent" : "bg-white border-gray-200 text-gray-600"}`}
                       style={form.plateforme === p.id ? { background: p.color } : {}}>
-                      {p.icon} {p.label}
+                      <p.Icon size={13} /> {p.label}
                     </button>
                   ))}
                 </div>

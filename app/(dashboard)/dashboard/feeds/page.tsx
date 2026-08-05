@@ -1,13 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Copy, Check, ExternalLink, Package, RefreshCw, Info, Zap } from "lucide-react";
+import { Copy, Check, ExternalLink, Package, RefreshCw, Info, Zap, Search, Globe, Music4, CheckCircle, ClipboardList, Gift } from "lucide-react";
 import { toast } from "sonner";
 
 const PLATEFORMES_FEED = [
   {
     id: "google",
     nom: "Google Shopping",
-    icon: "🔍",
+    Icon: Search,
     color: "#4285F4",
     format: "XML (RSS 2.0)",
     path: "/api/feed/google",
@@ -20,13 +20,13 @@ const PLATEFORMES_FEED = [
       "Ajoute un flux → Type : URL planifiée → Colle l'URL ci-dessous",
       "Google indexe tes produits en 24-72h",
     ],
-    badge: "🆓 Gratuit",
+    badge: "Gratuit",
     badgeColor: "#34d399",
   },
   {
     id: "meta",
     nom: "Meta Catalog",
-    icon: "📘",
+    Icon: Globe,
     color: "#1877F2",
     format: "CSV",
     path: "/api/feed/meta",
@@ -38,13 +38,13 @@ const PLATEFORMES_FEED = [
       "Colle l'URL CSV ci-dessous",
       "Synchronisation automatique toutes les 24h",
     ],
-    badge: "💰 Payant",
+    badge: "Payant",
     badgeColor: "#F5A623",
   },
   {
     id: "tiktok",
     nom: "TikTok Shop",
-    icon: "🎵",
+    Icon: Music4,
     color: "#010101",
     format: "CSV",
     path: "/api/feed/tiktok",
@@ -56,7 +56,7 @@ const PLATEFORMES_FEED = [
       "Source de données → URL → Colle l'URL ci-dessous",
       "Mapping des colonnes → Sauvegarde",
     ],
-    badge: "💰 Payant",
+    badge: "Payant",
     badgeColor: "#F5A623",
   },
 ];
@@ -145,8 +145,8 @@ export default function FeedsPage() {
               {/* Header carte */}
               <div className="flex items-center justify-between p-5 border-b border-gray-50">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl" style={{ background: plat.color + "15" }}>
-                    {plat.icon}
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: plat.color + "15" }}>
+                    <plat.Icon size={22} style={{ color: plat.color }} />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
@@ -180,7 +180,7 @@ export default function FeedsPage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   {/* Avantages */}
                   <div>
-                    <p className="text-xs font-semibold text-gray-600 mb-2">✅ Avantages</p>
+                    <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1"><CheckCircle size={12} className="text-green-500" /> Avantages</p>
                     <ul className="space-y-1.5">
                       {plat.avantages.map((a) => (
                         <li key={a} className="flex items-start gap-2 text-xs text-gray-600">
@@ -192,7 +192,7 @@ export default function FeedsPage() {
 
                   {/* Étapes */}
                   <div>
-                    <p className="text-xs font-semibold text-gray-600 mb-2">📋 Comment faire</p>
+                    <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1"><ClipboardList size={12} className="text-gray-500" /> Comment faire</p>
                     <ol className="space-y-1.5">
                       {plat.etapes.map((e, i) => (
                         <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
@@ -215,7 +215,7 @@ export default function FeedsPage() {
       {/* Google Shopping gratuit — CTA spécial */}
       <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-6">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center text-2xl flex-shrink-0">🎁</div>
+          <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center flex-shrink-0"><Gift size={22} className="text-green-600" /></div>
           <div>
             <p className="font-bold text-green-800 text-base">Google Shopping GRATUIT — À faire en priorité</p>
             <p className="text-green-700 text-sm mt-1 leading-relaxed">

@@ -16,15 +16,15 @@ const STATUT_PAIEMENT: Record<string, { label: string; color: string; bg: string
 };
 
 const METHODE_LABEL: Record<string, string> = {
-  card: "💳 Carte",
-  mobilemoney: "📱 Mobile Money",
-  banktransfer: "🏦 Virement",
+  card: "Carte",
+  mobilemoney: "Mobile Money",
+  banktransfer: "Virement",
 };
 
 function methodeLabel(m: string | null) {
   if (!m) return "—";
-  if (m.startsWith("campay:")) return `📱 Campay · ${m.split(":")[1]?.toUpperCase() ?? ""}`;
-  if (m.startsWith("cinetpay:")) return `📱 CinetPay · ${m.split(":")[1]?.toUpperCase() ?? ""}`;
+  if (m.startsWith("campay:")) return `Campay · ${m.split(":")[1]?.toUpperCase() ?? ""}`;
+  if (m.startsWith("cinetpay:")) return `CinetPay · ${m.split(":")[1]?.toUpperCase() ?? ""}`;
   return METHODE_LABEL[m] ?? m;
 }
 

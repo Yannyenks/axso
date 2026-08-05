@@ -3,13 +3,14 @@ import { useState } from "react";
 import {
   Search, Globe, ShoppingBag, Package, ExternalLink,
   Star, MapPin, TrendingUp, Clock, ChevronRight,
+  ShoppingCart, Factory, Link2, Moon, Zap,
 } from "lucide-react";
 
 const FOURNISSEURS = [
   {
     id: "aliexpress",
     nom: "AliExpress",
-    logo: "🛒",
+    Logo: ShoppingCart,
     pays: "Chine → Monde",
     categories: ["Mode", "Tech", "Maison", "Beauté", "Sport"],
     tags: ["dropshipping", "petites-quantites", "worldwide"],
@@ -23,7 +24,7 @@ const FOURNISSEURS = [
   {
     id: "alibaba",
     nom: "Alibaba",
-    logo: "🏭",
+    Logo: Factory,
     pays: "Chine",
     categories: ["Électronique", "Mode", "Industrie", "Alimentaire"],
     tags: ["grossiste", "import", "vrac"],
@@ -37,7 +38,7 @@ const FOURNISSEURS = [
   {
     id: "cjdropshipping",
     nom: "CJ Dropshipping",
-    logo: "⚡",
+    Logo: Zap,
     pays: "Chine → Monde",
     categories: ["Mode", "Bijoux", "Tech", "Maison"],
     tags: ["dropshipping", "auto-fulfillment", "branded"],
@@ -51,7 +52,7 @@ const FOURNISSEURS = [
   {
     id: "jumia",
     nom: "Jumia Marketplace",
-    logo: "🌍",
+    Logo: Globe,
     pays: "Afrique",
     categories: ["Électronique", "Mode", "Alimentation", "Maison"],
     tags: ["afrique", "local", "marketplace"],
@@ -65,7 +66,7 @@ const FOURNISSEURS = [
   {
     id: "jiji",
     nom: "Jiji Afrique",
-    logo: "🛍️",
+    Logo: ShoppingBag,
     pays: "Afrique de l'Ouest",
     categories: ["Mode", "Electronique", "Véhicules", "Services"],
     tags: ["afrique", "petites-annonces", "local"],
@@ -79,7 +80,7 @@ const FOURNISSEURS = [
   {
     id: "bigbuy",
     nom: "BigBuy",
-    logo: "🇪🇺",
+    Logo: Globe,
     pays: "Espagne → Europe",
     categories: ["Maison", "Tech", "Jouets", "Mode"],
     tags: ["europe", "dropshipping", "automatise"],
@@ -93,7 +94,7 @@ const FOURNISSEURS = [
   {
     id: "spocket",
     nom: "Spocket",
-    logo: "🔗",
+    Logo: Link2,
     pays: "USA + Europe",
     categories: ["Mode", "Maison", "Beauté", "Tech"],
     tags: ["usa", "europe", "dropshipping", "marques"],
@@ -107,7 +108,7 @@ const FOURNISSEURS = [
   {
     id: "noon",
     nom: "Noon",
-    logo: "🌙",
+    Logo: Moon,
     pays: "Moyen-Orient",
     categories: ["Tech", "Mode", "Maison", "Beauté"],
     tags: ["golfe", "eau", "ksa", "marketplace"],
@@ -256,9 +257,9 @@ export default function SourcingPage() {
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3.5">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 shadow-sm"
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
                       style={{ background: f.couleur + "12", border: `1.5px solid ${f.couleur}22` }}>
-                      {f.logo}
+                      <f.Logo size={22} style={{ color: f.couleur }} />
                     </div>
                     <div>
                       <p className="font-bold text-gray-900 text-sm leading-tight">{f.nom}</p>

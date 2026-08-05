@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Zap, Trash2, Mail, MessageSquare, Phone } from "lucide-react";
+import { Plus, Zap, Trash2, Mail, MessageSquare, Phone, ShoppingCart, Hand, Package, Gift, Clock } from "lucide-react";
 
 interface Workflow {
   id: string;
@@ -17,12 +17,12 @@ interface Workflow {
   createdAt: string;
 }
 
-const TYPE_CONFIG: Record<string, { label: string; emoji: string; description: string }> = {
-  panier_abandonne: { label: "Panier abandonné", emoji: "🛒", description: "Relance les visiteurs qui n'ont pas finalisé leur achat" },
-  bienvenue: { label: "Bienvenue", emoji: "👋", description: "Accueille les nouveaux clients avec un message personnalisé" },
-  apres_achat: { label: "Après achat", emoji: "📦", description: "Remercie et fidélise après une commande confirmée" },
-  anniversaire: { label: "Anniversaire", emoji: "🎂", description: "Felicite tes clients le jour de leur anniversaire" },
-  inactif: { label: "Client inactif", emoji: "💤", description: "Relance les clients sans achat depuis 30+ jours" },
+const TYPE_CONFIG: Record<string, { label: string; Icon: any; description: string }> = {
+  panier_abandonne: { label: "Panier abandonné", Icon: ShoppingCart, description: "Relance les visiteurs qui n'ont pas finalisé leur achat" },
+  bienvenue: { label: "Bienvenue", Icon: Hand, description: "Accueille les nouveaux clients avec un message personnalisé" },
+  apres_achat: { label: "Après achat", Icon: Package, description: "Remercie et fidélise après une commande confirmée" },
+  anniversaire: { label: "Anniversaire", Icon: Gift, description: "Felicite tes clients le jour de leur anniversaire" },
+  inactif: { label: "Client inactif", Icon: Clock, description: "Relance les clients sans achat depuis 30+ jours" },
 };
 
 const CANAL_ICONS: Record<string, any> = {
@@ -133,7 +133,7 @@ export default function AutomationPage() {
                 onClick={() => { setForm((f) => ({ ...f, type, nom: config.label })); setShowForm(true); }}
               >
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">{config.emoji}</span>
+                  <config.Icon size={24} className="text-[#F5A623] flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-[13px] font-semibold text-[#111]">{config.label}</p>
                     <p className="text-[11px] text-[#888] mt-0.5">{config.description}</p>
@@ -157,7 +157,7 @@ export default function AutomationPage() {
             <div>
               <label className="block text-[11px] text-[#888] mb-1">Type</label>
               <select className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}>
-                {Object.entries(TYPE_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.emoji} {v.label}</option>)}
+                {Object.entries(TYPE_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
               </select>
             </div>
             <div>
@@ -197,12 +197,12 @@ export default function AutomationPage() {
       {workflows.length > 0 && (
         <div className="space-y-2">
           {workflows.map((w) => {
-            const tc = TYPE_CONFIG[w.type] ?? { label: w.type, emoji: "⚡", description: "" };
+            const tc = TYPE_CONFIG[w.type] ?? { label: w.type, Icon: Zap, description: "" };
             const CanalIcon = CANAL_ICONS[w.canal] ?? Mail;
             const cvr = w.declenchements > 0 ? ((w.conversions / w.declenchements) * 100).toFixed(1) : "0";
             return (
               <div key={w.id} className={`bg-white border border-[#F0F0F0] rounded-xl p-4 flex items-center gap-4 ${!w.actif ? "opacity-60" : ""}`}>
-                <span className="text-2xl shrink-0">{tc.emoji}</span>
+                <tc.Icon size={24} className="shrink-0 text-[#F5A623]" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-[13px] font-semibold text-[#111] truncate">{w.nom}</p>

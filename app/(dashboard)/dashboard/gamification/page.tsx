@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trophy } from "lucide-react";
+import { Trophy, Sparkles } from "lucide-react";
 
 interface Badge {
   type: string;
@@ -43,7 +43,7 @@ export default function GamificationPage() {
       {/* Nouveaux badges */}
       {nouveaux.length > 0 && (
         <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-[#F5A623]/30 rounded-xl p-5">
-          <p className="text-[13px] font-bold text-[#111] mb-3">🎉 Nouveau{nouveaux.length > 1 ? "x" : ""} badge{nouveaux.length > 1 ? "s" : ""} obtenu{nouveaux.length > 1 ? "s" : ""} !</p>
+          <p className="text-[13px] font-bold text-[#111] mb-3 flex items-center gap-1.5"><Sparkles size={14} className="text-[#F5A623]" /> Nouveau{nouveaux.length > 1 ? "x" : ""} badge{nouveaux.length > 1 ? "s" : ""} obtenu{nouveaux.length > 1 ? "s" : ""} !</p>
           <div className="flex gap-3 flex-wrap">
             {nouveaux.map((b) => (
               <div key={b.type} className="flex items-center gap-2 bg-white rounded-xl px-4 py-2.5 border border-[#F5A623]/20">

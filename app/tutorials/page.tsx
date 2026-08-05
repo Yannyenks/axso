@@ -1,5 +1,7 @@
 import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
+import { Rocket, CreditCard, Package, Bot, Truck, Smartphone, BarChart3, Plug, Globe, Clapperboard } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -7,16 +9,16 @@ export const metadata: Metadata = {
   description: "Apprenez à maîtriser AXSO avec nos tutoriels vidéo pas à pas.",
 };
 
-const VIDEOS = [
-  { emoji: "🚀", titre: "Créer sa boutique en 3 minutes", duree: "3:42", niveau: "Débutant", views: "12.4K", tag: "#F5A623" },
-  { emoji: "💳", titre: "Configurer Wave & Orange Money", duree: "5:18", niveau: "Débutant", views: "8.9K", tag: "#25D366" },
-  { emoji: "📦", titre: "Ajouter et gérer ses produits", duree: "7:55", niveau: "Débutant", views: "7.2K", tag: "#F5A623" },
-  { emoji: "🤖", titre: "AXIA IA — onboarding automatique", duree: "6:20", niveau: "Intermédiaire", views: "5.1K", tag: "#7c3aed" },
-  { emoji: "🚚", titre: "Livraison GPS et suivi temps réel", duree: "8:44", niveau: "Intermédiaire", views: "4.3K", tag: "#0ea5e9" },
-  { emoji: "📱", titre: "WhatsApp Business — configuration", duree: "10:12", niveau: "Intermédiaire", views: "3.8K", tag: "#25D366" },
-  { emoji: "📊", titre: "Analytics & rapports de ventes", duree: "9:30", niveau: "Avancé", views: "2.9K", tag: "#F5A623" },
-  { emoji: "🔌", titre: "API & webhooks — développeurs", duree: "15:00", niveau: "Avancé", views: "1.7K", tag: "#ef4444" },
-  { emoji: "🌍", titre: "Dropshipping Afrique — de A à Z", duree: "18:30", niveau: "Avancé", views: "6.5K", tag: "#7c3aed" },
+const VIDEOS: { Icon: LucideIcon; titre: string; duree: string; niveau: string; views: string; tag: string }[] = [
+  { Icon: Rocket,     titre: "Créer sa boutique en 3 minutes",       duree: "3:42",  niveau: "Débutant",      views: "12.4K", tag: "#F5A623" },
+  { Icon: CreditCard, titre: "Configurer Wave & Orange Money",        duree: "5:18",  niveau: "Débutant",      views: "8.9K",  tag: "#25D366" },
+  { Icon: Package,    titre: "Ajouter et gérer ses produits",         duree: "7:55",  niveau: "Débutant",      views: "7.2K",  tag: "#F5A623" },
+  { Icon: Bot,        titre: "AXIA IA — onboarding automatique",      duree: "6:20",  niveau: "Intermédiaire", views: "5.1K",  tag: "#7c3aed" },
+  { Icon: Truck,      titre: "Livraison GPS et suivi temps réel",     duree: "8:44",  niveau: "Intermédiaire", views: "4.3K",  tag: "#0ea5e9" },
+  { Icon: Smartphone, titre: "WhatsApp Business — configuration",     duree: "10:12", niveau: "Intermédiaire", views: "3.8K",  tag: "#25D366" },
+  { Icon: BarChart3,  titre: "Analytics & rapports de ventes",        duree: "9:30",  niveau: "Avancé",        views: "2.9K",  tag: "#F5A623" },
+  { Icon: Plug,       titre: "API & webhooks — développeurs",         duree: "15:00", niveau: "Avancé",        views: "1.7K",  tag: "#ef4444" },
+  { Icon: Globe,      titre: "Dropshipping Afrique — de A à Z",      duree: "18:30", niveau: "Avancé",        views: "6.5K",  tag: "#7c3aed" },
 ];
 
 const NIVEAUX = ["Tous", "Débutant", "Intermédiaire", "Avancé"];
@@ -31,7 +33,7 @@ export default function TutorialsPage() {
           style={{ background: "radial-gradient(ellipse, rgba(245,166,35,0.09) 0%, transparent 65%)" }} />
         <div className="max-w-5xl mx-auto">
           <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: "#F5A623" }}>
-            🎬 Tutoriels vidéo
+            <Clapperboard size={14} className="inline-block mr-1.5" />Tutoriels vidéo
           </span>
           <h1 className="text-4xl sm:text-5xl font-bold mb-4 leading-tight">
             Apprenez à votre rythme,<br />
@@ -61,7 +63,7 @@ export default function TutorialsPage() {
                 {/* Thumbnail */}
                 <div className="aspect-video flex items-center justify-center relative"
                   style={{ background: `linear-gradient(135deg, ${v.tag}15, ${v.tag}06)` }}>
-                  <span className="text-5xl">{v.emoji}</span>
+                  <v.Icon size={48} style={{ color: v.tag }} />
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                     style={{ background: "rgba(0,0,0,0.5)" }}>
                     <div className="w-14 h-14 rounded-full flex items-center justify-center text-xl"

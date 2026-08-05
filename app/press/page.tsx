@@ -1,5 +1,7 @@
 import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
+import { Newspaper, Globe, Image as ImageIcon, Palette, Camera } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -8,10 +10,10 @@ export const metadata: Metadata = {
 };
 
 const MENTIONS = [
-  { media: "TechCabal", pays: "🇳🇬", titre: "AXSO : la startup qui veut démocratiser le e-commerce en Afrique", date: "Mars 2026" },
-  { media: "Jeune Afrique", pays: "🌍", titre: "Les 10 startups africaines à surveiller en 2026", date: "Fév. 2026" },
-  { media: "Le Monde Afrique", pays: "🇫🇷", titre: "L'intelligence artificielle au service des commerçants africains", date: "Jan. 2026" },
-  { media: "Disrupt Africa", pays: "🌍", titre: "AXSO raises seed round to expand across West Africa", date: "Déc. 2025" },
+  { media: "TechCabal",       pays: "NG",  titre: "AXSO : la startup qui veut démocratiser le e-commerce en Afrique", date: "Mars 2026" },
+  { media: "Jeune Afrique",   pays: "INT", titre: "Les 10 startups africaines à surveiller en 2026",                  date: "Fév. 2026" },
+  { media: "Le Monde Afrique", pays: "FR",  titre: "L'intelligence artificielle au service des commerçants africains", date: "Jan. 2026" },
+  { media: "Disrupt Africa",  pays: "INT", titre: "AXSO raises seed round to expand across West Africa",              date: "Déc. 2025" },
 ];
 
 const CHIFFRES = [
@@ -19,6 +21,12 @@ const CHIFFRES = [
   { n: "12",     label: "pays couverts" },
   { n: "2023",   label: "année de fondation" },
   { n: "Dakar",  label: "siège social" },
+];
+
+const KIT_ITEMS: { Icon: LucideIcon; titre: string; desc: string; taille: string }[] = [
+  { Icon: ImageIcon, titre: "Logo AXSO",        desc: "PNG, SVG, fond blanc et transparent",       taille: "2.4 MB" },
+  { Icon: Palette,   titre: "Charte graphique", desc: "Couleurs, typographies, composants",         taille: "5.1 MB" },
+  { Icon: Camera,    titre: "Photos d'équipe",  desc: "Portraits et photos lifestyle HD",           taille: "18 MB"  },
 ];
 
 export default function PressPage() {
@@ -32,7 +40,7 @@ export default function PressPage() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-20">
             <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: "#F5A623" }}>
-              📰 Espace presse
+              <Newspaper size={14} className="inline-block mr-1.5" />Espace presse
             </span>
             <h1 className="text-4xl sm:text-5xl font-bold mb-5 leading-tight">
               Ressources pour<br />
@@ -56,14 +64,10 @@ export default function PressPage() {
 
           {/* Kit téléchargement */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-20">
-            {[
-              { emoji: "🖼️", titre: "Logo AXSO", desc: "PNG, SVG, fond blanc et transparent", taille: "2.4 MB" },
-              { emoji: "🎨", titre: "Charte graphique", desc: "Couleurs, typographies, composants", taille: "5.1 MB" },
-              { emoji: "📷", titre: "Photos d'équipe", desc: "Portraits et photos lifestyle HD", taille: "18 MB" },
-            ].map(kit => (
+            {KIT_ITEMS.map(kit => (
               <div key={kit.titre} className="rounded-2xl border p-6 flex flex-col"
                 style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.07)" }}>
-                <span className="text-3xl mb-4">{kit.emoji}</span>
+                <kit.Icon size={30} className="mb-4" style={{ color: "#F5A623" }} />
                 <h3 className="font-bold text-white mb-1">{kit.titre}</h3>
                 <p className="text-white/40 text-sm flex-1 mb-4">{kit.desc}</p>
                 <div className="flex items-center justify-between">
@@ -84,7 +88,9 @@ export default function PressPage() {
               <div key={m.titre} className="rounded-xl border px-6 py-4 flex items-center justify-between"
                 style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.07)" }}>
                 <div>
-                  <span className="text-xs font-bold mr-2">{m.pays}</span>
+                  <span className="inline-flex items-center gap-1 text-xs font-bold mr-2 text-white/50">
+                    <Globe size={12} />{m.pays}
+                  </span>
                   <span className="font-bold text-sm" style={{ color: "#F5A623" }}>{m.media}</span>
                   <p className="text-white/55 text-sm mt-0.5">{m.titre}</p>
                 </div>

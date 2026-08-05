@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { Search, Plus, Minus, Trash2, ShoppingCart, X, Check, Printer } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingCart, X, Check, Printer, Banknote, Smartphone, CreditCard, Building2, ShoppingBag } from "lucide-react";
 
 interface Produit {
   id: string;
@@ -24,10 +24,10 @@ interface LigneCart {
 }
 
 const METHODES = [
-  { id: "especes", label: "Espèces", emoji: "💵" },
-  { id: "mobile_money", label: "Mobile Money", emoji: "📱" },
-  { id: "carte", label: "Carte bancaire", emoji: "💳" },
-  { id: "virement", label: "Virement", emoji: "🏦" },
+  { id: "especes", label: "Espèces", Icon: Banknote },
+  { id: "mobile_money", label: "Mobile Money", Icon: Smartphone },
+  { id: "carte", label: "Carte bancaire", Icon: CreditCard },
+  { id: "virement", label: "Virement", Icon: Building2 },
 ];
 
 export default function POSPage() {
@@ -183,7 +183,7 @@ export default function POSPage() {
                 {p.images[0] ? (
                   <img src={p.images[0]} alt={p.nom} className="w-full h-24 object-cover rounded-xl mb-2" />
                 ) : (
-                  <div className="w-full h-24 bg-[#F5F5F5] rounded-xl mb-2 flex items-center justify-center text-2xl">🛍️</div>
+                  <div className="w-full h-24 bg-[#F5F5F5] rounded-xl mb-2 flex items-center justify-center"><ShoppingBag size={28} className="text-gray-400" /></div>
                 )}
                 <p className="text-[12px] font-semibold text-[#111] leading-tight line-clamp-2">{p.nom}</p>
                 <div className="flex items-center justify-between mt-1">
@@ -251,9 +251,9 @@ export default function POSPage() {
               <button
                 key={m.id}
                 onClick={() => setMethode(m.id)}
-                className={`py-2 px-2 rounded-xl border text-[11px] font-medium transition-all ${methode === m.id ? "bg-[#F5A623] text-white border-[#F5A623]" : "border-[#E8E8E8] text-[#666]"}`}
+                className={`py-2 px-2 rounded-xl border text-[11px] font-medium transition-all flex items-center justify-center gap-1 ${methode === m.id ? "bg-[#F5A623] text-white border-[#F5A623]" : "border-[#E8E8E8] text-[#666]"}`}
               >
-                {m.emoji} {m.label}
+                <m.Icon size={12} /> {m.label}
               </button>
             ))}
           </div>

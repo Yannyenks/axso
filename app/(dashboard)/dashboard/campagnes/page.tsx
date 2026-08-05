@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Eye, MousePointer, Megaphone, Zap, Mail, MessageSquare, Phone, Trophy } from "lucide-react";
+import { Plus, Trash2, Eye, MousePointer, Megaphone, Zap, Mail, MessageSquare, Phone, Trophy, ShoppingCart, Smile, Package, Gift, Clock, Sparkles } from "lucide-react";
 
 const TABS = [
   { id: "popups", label: "Popups" },
@@ -100,12 +100,12 @@ function OngletPopups() {
 }
 
 // ─── Onglet Automation ────────────────────────────────────────────────────────
-const TYPE_CONFIG: Record<string,{label:string;emoji:string}> = {
-  panier_abandonne:{label:"Panier abandonné",emoji:"🛒"},
-  bienvenue:{label:"Bienvenue",emoji:"👋"},
-  apres_achat:{label:"Après achat",emoji:"📦"},
-  anniversaire:{label:"Anniversaire",emoji:"🎂"},
-  inactif:{label:"Client inactif",emoji:"💤"},
+const TYPE_CONFIG: Record<string,{label:string;icon:any}> = {
+  panier_abandonne:{label:"Panier abandonné",icon:ShoppingCart},
+  bienvenue:{label:"Bienvenue",icon:Smile},
+  apres_achat:{label:"Après achat",icon:Package},
+  anniversaire:{label:"Anniversaire",icon:Gift},
+  inactif:{label:"Client inactif",icon:Clock},
 };
 const CANAL_ICONS: Record<string,any> = { email:Mail, sms:Phone, whatsapp:MessageSquare };
 
@@ -152,7 +152,7 @@ function OngletAutomation() {
               className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none col-span-2"/>
             <select value={form.type} onChange={e=>setForm(v=>({...v,type:e.target.value}))}
               className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none">
-              {Object.entries(TYPE_CONFIG).map(([k,v])=><option key={k} value={k}>{v.emoji} {v.label}</option>)}
+              {Object.entries(TYPE_CONFIG).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
             </select>
             <select value={form.canal} onChange={e=>setForm(v=>({...v,canal:e.target.value}))}
               className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none">
@@ -175,11 +175,12 @@ function OngletAutomation() {
 
       {workflows.length === 0 && !showForm && <p className="text-center text-sm text-gray-400 py-8">Aucun workflow</p>}
       {workflows.map(w => {
-        const tc = TYPE_CONFIG[w.type]??{label:w.type,emoji:"⚡"};
+        const tc = TYPE_CONFIG[w.type]??{label:w.type,icon:Zap};
         const CanalIcon = CANAL_ICONS[w.canal]??Zap;
+        const TcIcon = tc.icon;
         return (
           <div key={w.id} className="bg-white border border-gray-100 rounded-xl p-4 flex items-center gap-3">
-            <span className="text-xl shrink-0">{tc.emoji}</span>
+            <TcIcon size={18} className="text-[#F5A623] shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-[12px] font-semibold text-[#111] truncate">{w.nom}</p>
               <p className="text-[11px] text-gray-400 flex items-center gap-1">
@@ -217,7 +218,7 @@ function OngletBadges() {
     <div className="space-y-5">
       {nouveaux.length > 0 && (
         <div className="bg-gradient-to-r from-[#F5A623]/10 to-[#7c3aed]/10 border border-[#F5A623]/20 rounded-2xl p-4">
-          <p className="text-[13px] font-bold text-[#111] mb-2">🎉 Nouveaux badges !</p>
+          <p className="text-[13px] font-bold text-[#111] mb-2 flex items-center gap-1.5"><Sparkles size={14} className="text-[#F5A623]" /> Nouveaux badges !</p>
           <div className="flex gap-2 flex-wrap">
             {nouveaux.map(b=>(
               <div key={b.type} className="bg-white rounded-xl px-3 py-2 flex items-center gap-2 shadow-sm">

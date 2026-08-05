@@ -1,5 +1,7 @@
 import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
+import { MessageCircle, Users2, Target, Video, Globe, Calendar } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -7,11 +9,11 @@ export const metadata: Metadata = {
   description: "Rejoignez des milliers d'entrepreneurs africains qui vendent en ligne avec AXSO.",
 };
 
-const CHANNELS = [
-  { emoji: "💬", nom: "WhatsApp AXSO", desc: "Groupe principal — entraide quotidienne", membres: "3 400+", lien: "#", color: "#25D366" },
-  { emoji: "📘", nom: "Groupe Facebook", desc: "Partage de succès, conseils, stratégies", membres: "8 200+", lien: "#", color: "#1877F2" },
-  { emoji: "🎯", nom: "Discord", desc: "Discussions techniques & entraide", membres: "1 800+", lien: "#", color: "#5865F2" },
-  { emoji: "📺", nom: "YouTube AXSO", desc: "Tutoriels & success stories", membres: "14K abonnés", lien: "#", color: "#FF0000" },
+const CHANNELS: { Icon: LucideIcon; nom: string; desc: string; membres: string; lien: string; color: string }[] = [
+  { Icon: MessageCircle, nom: "WhatsApp AXSO", desc: "Groupe principal — entraide quotidienne", membres: "3 400+", lien: "#", color: "#25D366" },
+  { Icon: Users2, nom: "Groupe Facebook", desc: "Partage de succès, conseils, stratégies", membres: "8 200+", lien: "#", color: "#1877F2" },
+  { Icon: Target, nom: "Discord", desc: "Discussions techniques & entraide", membres: "1 800+", lien: "#", color: "#5865F2" },
+  { Icon: Video, nom: "YouTube AXSO", desc: "Tutoriels & success stories", membres: "14K abonnés", lien: "#", color: "#FF0000" },
 ];
 
 const TEMOIGNAGES = [
@@ -31,7 +33,7 @@ export default function CommunityPage() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-20">
             <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: "#F5A623" }}>
-              🌍 Communauté
+              <Globe size={14} className="inline-block mr-1.5" />Communauté
             </span>
             <h1 className="text-4xl sm:text-5xl font-bold mb-5 leading-tight">
               20 000+ bâtisseurs<br />
@@ -50,7 +52,7 @@ export default function CommunityPage() {
               <a key={c.nom} href={c.lien}
                 className="rounded-2xl border p-6 flex items-start gap-5 group hover:-translate-y-0.5 transition-all duration-300"
                 style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.07)" }}>
-                <span className="text-3xl">{c.emoji}</span>
+                <span className="flex-shrink-0" style={{ color: c.color }}><c.Icon size={30} /></span>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="font-bold text-white group-hover:text-[#F5A623] transition-colors">{c.nom}</h3>
@@ -66,7 +68,7 @@ export default function CommunityPage() {
           {/* Événements */}
           <div className="rounded-3xl border p-8 mb-16"
             style={{ background: "linear-gradient(135deg, rgba(245,166,35,0.06), rgba(245,166,35,0.02))", borderColor: "rgba(245,166,35,0.2)" }}>
-            <h2 className="text-2xl font-bold mb-2">📅 Événements communauté</h2>
+            <h2 className="text-2xl font-bold mb-2"><Calendar size={22} className="inline-block mr-2" />Événements communauté</h2>
             <p className="text-white/45 mb-6">Chaque semaine, des sessions live pour apprendre et grandir.</p>
             <div className="space-y-3">
               {[

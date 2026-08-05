@@ -1,5 +1,6 @@
 import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
+import { Lock } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -49,7 +50,7 @@ export default function PrivacyPage() {
       <section className="pt-36 pb-24 px-6 sm:px-10 lg:px-16 xl:px-24">
         <div className="max-w-3xl mx-auto">
           <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: "#F5A623" }}>
-            🔒 Légal
+            <Lock size={14} className="inline-block mr-1.5" />Légal
           </span>
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">Politique de Confidentialité</h1>
           <p className="text-white/35 text-sm mb-14">Dernière mise à jour : 1er juillet 2026</p>

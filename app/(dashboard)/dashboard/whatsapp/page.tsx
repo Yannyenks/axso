@@ -5,7 +5,7 @@ import {
   Clock, Truck, Package, XCircle, Phone,
   Settings, Wifi, WifiOff, Loader2, ShoppingBag, ArrowLeft,
   CheckCheck, Check, Zap, MapPin, FileText, RefreshCw, Bell,
-  ChevronDown, Plus
+  ChevronDown, Plus, Lightbulb, Lock
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -167,7 +167,7 @@ function ConfigPanel({ onClose, onConnecte }: { onClose: () => void; onConnecte:
                 <Step n="6" text="Ajoutez un numéro de téléphone de test ou votre numéro Business vérifié" />
               </div>
               <div className="rounded-xl p-3 flex gap-3" style={{ background: "rgba(245,166,35,0.07)", border: "1px solid rgba(245,166,35,0.15)" }}>
-                <span className="text-lg">💡</span>
+                <Lightbulb size={18} className="text-[#F5A623] flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-gray-400 leading-relaxed">
                   Pour un usage en production, votre compte WhatsApp doit être un <span className="text-white font-medium">compte Business vérifié par Meta</span>. Le numéro de test gratuit est suffisant pour commencer.
                 </p>
@@ -194,7 +194,7 @@ function ConfigPanel({ onClose, onConnecte }: { onClose: () => void; onConnecte:
               </div>
 
               <div className="rounded-xl p-3 flex gap-3" style={{ background: "rgba(37,211,102,0.06)", border: "1px solid rgba(37,211,102,0.15)" }}>
-                <span className="text-lg">✅</span>
+                <CheckCircle2 size={18} className="text-green-400 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-gray-400 leading-relaxed">
                   Une fois vérifié, Axso recevra automatiquement tous vos messages WhatsApp entrants et les routera vers votre dashboard.
                 </p>
@@ -250,7 +250,7 @@ function ConfigPanel({ onClose, onConnecte }: { onClose: () => void; onConnecte:
               </div>
 
               <div className="rounded-xl p-3 flex gap-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-                <span>🔐</span>
+                <Lock size={18} className="text-gray-400 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-gray-500 leading-relaxed">
                   Vos clés sont chiffrées et stockées uniquement sur votre compte Axso. Elles ne sont jamais partagées.
                 </p>

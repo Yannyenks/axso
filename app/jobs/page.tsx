@@ -1,5 +1,7 @@
 import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
+import { Globe, TrendingUp, DollarSign, GraduationCap, Zap, Handshake, Briefcase } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -16,13 +18,13 @@ const POSTES = [
   { titre: "Community Manager Anglophone", dept: "Marketing", lieu: "Lagos / Remote", type: "CDI", accent: "#25D366" },
 ];
 
-const AVANTAGES = [
-  { emoji: "🌍", titre: "100% remote-first", desc: "Travaillez depuis n'importe où en Afrique" },
-  { emoji: "📈", titre: "Impact direct", desc: "Vos décisions touchent des milliers d'entrepreneurs" },
-  { emoji: "💰", titre: "Salaires compétitifs", desc: "Rémunération alignée sur les standards tech internationaux" },
-  { emoji: "🎓", titre: "Learning & dev", desc: "Budget formation, conférences, livres pris en charge" },
-  { emoji: "⚡", titre: "Move fast", desc: "Pas de bureaucratie — idée à production en jours" },
-  { emoji: "🤝", titre: "Équité & options", desc: "Participation au capital pour les early employees" },
+const AVANTAGES: { Icon: LucideIcon; titre: string; desc: string }[] = [
+  { Icon: Globe,         titre: "100% remote-first",     desc: "Travaillez depuis n'importe où en Afrique" },
+  { Icon: TrendingUp,    titre: "Impact direct",          desc: "Vos décisions touchent des milliers d'entrepreneurs" },
+  { Icon: DollarSign,    titre: "Salaires compétitifs",   desc: "Rémunération alignée sur les standards tech internationaux" },
+  { Icon: GraduationCap, titre: "Learning & dev",         desc: "Budget formation, conférences, livres pris en charge" },
+  { Icon: Zap,           titre: "Move fast",              desc: "Pas de bureaucratie — idée à production en jours" },
+  { Icon: Handshake,     titre: "Équité & options",       desc: "Participation au capital pour les early employees" },
 ];
 
 export default function JobsPage() {
@@ -36,7 +38,7 @@ export default function JobsPage() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-20">
             <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: "#F5A623" }}>
-              💼 Carrières
+              <Briefcase size={14} className="inline-block mr-1.5" />Carrières
             </span>
             <h1 className="text-4xl sm:text-5xl font-bold mb-5 leading-tight">
               Construisons l'Afrique digitale<br />
@@ -54,7 +56,7 @@ export default function JobsPage() {
             {AVANTAGES.map(a => (
               <div key={a.titre} className="rounded-2xl border p-5"
                 style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.07)" }}>
-                <span className="text-2xl block mb-2">{a.emoji}</span>
+                <a.Icon size={24} className="block mb-2" style={{ color: "#F5A623" }} />
                 <p className="font-bold text-white text-sm mb-1">{a.titre}</p>
                 <p className="text-white/40 text-xs leading-relaxed">{a.desc}</p>
               </div>

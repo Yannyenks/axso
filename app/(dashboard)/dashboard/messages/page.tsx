@@ -6,7 +6,8 @@ import {
   Play, X, Camera, Loader2, RefreshCw, Award, Flame, Eye,
   Maximize2, Minimize2, Search, ShoppingBag, Trophy, Video,
   Image, ArrowLeft, MoreHorizontal, Repeat2, TrendingUp,
-  ChevronLeft, ChevronRight, Bell, Hash, AtSign, Smile
+  ChevronLeft, ChevronRight, Bell, Hash, AtSign, Smile,
+  FileText, Music4, User, Globe, BarChart3,
 } from "lucide-react";
 
 // ─── Brand ────────────────────────────────────────────────────────────────────
@@ -178,13 +179,13 @@ function ShareModal({ post, onClose }: { post: PostSocial; onClose: () => void }
         <p style={{ fontWeight: 800, fontSize: 16, margin: "0 0 16px", color: C.gray900 }}>Partager ce post</p>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           {[
-            { label: "WhatsApp",  color: "#25D366", emoji: "💬" },
-            { label: "Instagram", color: "#E1306C", emoji: "📸" },
-            { label: "Facebook",  color: "#1877F2", emoji: "👤" },
-            { label: "TikTok",    color: "#000",    emoji: "🎵" },
+            { label: "WhatsApp",  color: "#25D366", Icon: MessageCircle },
+            { label: "Instagram", color: "#E1306C", Icon: Camera },
+            { label: "Facebook",  color: "#1877F2", Icon: User },
+            { label: "TikTok",    color: "#000",    Icon: Music4 },
           ].map(s => (
             <button key={s.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", minWidth: 64 }}>
-              <div style={{ width: 52, height: 52, borderRadius: 16, background: s.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>{s.emoji}</div>
+              <div style={{ width: 52, height: 52, borderRadius: 16, background: s.color, display: "flex", alignItems: "center", justifyContent: "center" }}><s.Icon size={22} color="#fff" /></div>
               <span style={{ fontSize: 11, fontWeight: 700, color: C.gray600 }}>{s.label}</span>
             </button>
           ))}
@@ -365,7 +366,7 @@ function PostCard({ post, myTenantId, myNom, myLogo, onDelete, onRepost }: {
         {/* Milestone */}
         {post.type === "milestone" && post.scoreLabel && (
           <div style={{ margin: "0 16px 14px", background: `linear-gradient(135deg, ${C.orangePale}, ${C.orangeSoft})`, borderRadius: 18, padding: "18px 20px", display: "flex", alignItems: "center", gap: 16, border: `1px solid ${C.orangeLight}` }}>
-            <div style={{ fontSize: 36 }}>🏆</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}><Trophy size={36} color={C.orangeDark} /></div>
             <div>
               <div style={{ fontWeight: 900, fontSize: 28, color: C.orangeDark, letterSpacing: "-1.5px" }}>{post.scoreValeur?.toLocaleString("fr-FR")}</div>
               <div style={{ fontSize: 13, color: C.orangeDark, fontWeight: 700, opacity: 0.85 }}>{post.scoreLabel}</div>
@@ -486,13 +487,13 @@ function PostCard({ post, myTenantId, myNom, myLogo, onDelete, onRepost }: {
 }
 
 // ─── Post Creator ─────────────────────────────────────────────────────────────
-const TABS: { key: PostType; label: string; emoji: string }[] = [
-  { key: "post",      label: "Post",      emoji: "📝" },
-  { key: "story",     label: "Story 24h", emoji: "⚡" },
-  { key: "video",     label: "Vidéo",     emoji: "🎬" },
-  { key: "produit",   label: "Produit",   emoji: "🛍️" },
-  { key: "milestone", label: "Score",     emoji: "🏆" },
-  { key: "sondage",   label: "Sondage",   emoji: "📊" },
+const TABS: { key: PostType; label: string; Icon: any }[] = [
+  { key: "post",      label: "Post",      Icon: FileText },
+  { key: "story",     label: "Story 24h", Icon: Zap },
+  { key: "video",     label: "Vidéo",     Icon: Video },
+  { key: "produit",   label: "Produit",   Icon: ShoppingBag },
+  { key: "milestone", label: "Score",     Icon: Trophy },
+  { key: "sondage",   label: "Sondage",   Icon: BarChart3 },
 ];
 
 function PostCreator({ myNom, myLogo, onPost }: { myNom: string; myLogo?: string | null; onPost: (p: PostSocial) => void }) {
@@ -540,7 +541,7 @@ function PostCreator({ myNom, myLogo, onPost }: { myNom: string; myLogo?: string
       <div style={{ display: "flex", gap: 4, overflowX: "auto", paddingBottom: 14, scrollbarWidth: "none" }}>
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)} style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 999, padding: "5px 13px", fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer", flexShrink: 0, transition: "all .15s", background: tab === t.key ? C.orange : C.gray50, color: tab === t.key ? "#fff" : C.gray500, boxShadow: tab === t.key ? `0 2px 10px rgba(245,166,35,0.38)` : "none" }}>
-            <span style={{ fontSize: 13 }}>{t.emoji}</span>{t.label}
+            <t.Icon size={13} />{t.label}
           </button>
         ))}
       </div>
@@ -614,7 +615,7 @@ function PostCreator({ myNom, myLogo, onPost }: { myNom: string; myLogo?: string
 
 // ─── Leaderboard ──────────────────────────────────────────────────────────────
 function Leaderboard({ entries }: { entries: LeaderEntry[] }) {
-  const medals = ["🥇", "🥈", "🥉"];
+  const medals = ["1st", "2nd", "3rd"];
   return (
     <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.gray100}`, overflow: "hidden" }}>
       <div style={{ padding: "14px 16px", display: "flex", alignItems: "center", gap: 8, borderBottom: `1px solid ${C.gray50}` }}>
@@ -630,7 +631,7 @@ function Leaderboard({ entries }: { entries: LeaderEntry[] }) {
         {entries.map((e, i) => (
           <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 16px", cursor: "pointer", transition: "background .12s" }}
             onMouseEnter={ev => (ev.currentTarget.style.background = C.gray50)} onMouseLeave={ev => (ev.currentTarget.style.background = "transparent")}>
-            <span style={{ fontSize: i < 3 ? 17 : 12, width: 24, textAlign: "center", fontWeight: 700, color: i >= 3 ? C.gray300 : undefined }}>{i < 3 ? medals[i] : i + 1}</span>
+            <span style={{ fontSize: i < 3 ? 9 : 11, minWidth: 24, textAlign: "center", fontWeight: 800, color: i >= 3 ? C.gray300 : C.orange, background: i < 3 ? C.orangeSoft : undefined, borderRadius: i < 3 ? 999 : undefined, padding: i < 3 ? "1px 4px" : undefined }}>{i < 3 ? medals[i] : i + 1}</span>
             <Avatar url={e.logoUrl} nom={e.nomBoutique} size={32} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 800, fontSize: 12, color: C.gray900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.nomBoutique}</div>
@@ -783,13 +784,13 @@ export default function AxsocialPage() {
   const [repostTarget, setRepostTarget] = useState<PostSocial | null>(null);
 
   const FILTERS = [
-    { key: "tous",      label: "✨ Tous" },
-    { key: "post",      label: "📝 Posts" },
-    { key: "story",     label: "⚡ Stories" },
-    { key: "video",     label: "🎬 Vidéos" },
-    { key: "produit",   label: "🛍️ Produits" },
-    { key: "milestone", label: "🏆 Scores" },
-    { key: "sondage",   label: "📊 Sondages" },
+    { key: "tous",      Icon: Sparkles,    label: "Tous" },
+    { key: "post",      Icon: FileText,    label: "Posts" },
+    { key: "story",     Icon: Zap,         label: "Stories" },
+    { key: "video",     Icon: Video,       label: "Vidéos" },
+    { key: "produit",   Icon: ShoppingBag, label: "Produits" },
+    { key: "milestone", Icon: Trophy,      label: "Scores" },
+    { key: "sondage",   Icon: BarChart3,   label: "Sondages" },
   ];
 
   const loadFeed = useCallback(async (cursor?: string) => {
@@ -950,8 +951,8 @@ export default function AxsocialPage() {
           {/* Filters */}
           <div style={{ display: "flex", gap: 6, marginBottom: 10, overflowX: "auto", scrollbarWidth: "none" }}>
             {FILTERS.map(f => (
-              <button key={f.key} onClick={() => setFilter(f.key)} style={{ borderRadius: 999, padding: "6px 14px", fontSize: 11, fontWeight: 700, flexShrink: 0, border: "none", cursor: "pointer", transition: "all .2s", background: filter === f.key ? C.gray900 : C.white, color: filter === f.key ? C.white : C.gray500, boxShadow: filter === f.key ? "0 2px 10px rgba(0,0,0,0.14)" : "0 1px 3px rgba(0,0,0,0.05)" }}>
-                {f.label}
+              <button key={f.key} onClick={() => setFilter(f.key)} style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 999, padding: "6px 14px", fontSize: 11, fontWeight: 700, flexShrink: 0, border: "none", cursor: "pointer", transition: "all .2s", background: filter === f.key ? C.gray900 : C.white, color: filter === f.key ? C.white : C.gray500, boxShadow: filter === f.key ? "0 2px 10px rgba(0,0,0,0.14)" : "0 1px 3px rgba(0,0,0,0.05)" }}>
+                <f.Icon size={11} />{f.label}
               </button>
             ))}
           </div>
@@ -978,7 +979,7 @@ export default function AxsocialPage() {
             </div>
           ) : posts.length === 0 ? (
             <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.gray100}`, padding: "64px 24px", textAlign: "center" }}>
-              <div style={{ fontSize: 52, marginBottom: 16 }}>🌐</div>
+              <div style={{ marginBottom: 16, display: "flex", justifyContent: "center" }}><Globe size={52} color={C.gray300} /></div>
               <p style={{ fontWeight: 900, color: C.gray700, margin: 0, fontSize: 18 }}>Sois le premier !</p>
               <p style={{ fontSize: 13, color: C.gray400, marginTop: 8, lineHeight: 1.6 }}>Aucun post pour l'instant.<br />Lance la conversation sur Axsocial.</p>
             </div>

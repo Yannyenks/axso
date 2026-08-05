@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Phone, Mail, Package, Clock, CheckCircle, Truck, XCircle, User, CreditCard, Lock, Unlock } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Mail, Package, Clock, CheckCircle, Truck, XCircle, User, CreditCard, Lock, Unlock, FileText, Map, Share2 } from "lucide-react";
 import { formatMontant, dateRelative } from "@/lib/utils";
 import { StatutCommandeSelector } from "@/components/dashboard/StatutCommandeSelector";
 import { AssignerLivreur } from "@/components/dashboard/AssignerLivreur";
@@ -87,7 +87,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
                     {ligne.imageUrl ? (
                       <img src={ligne.imageUrl} alt={ligne.nom} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xl">📦</div>
+                      <div className="w-full h-full flex items-center justify-center"><Package size={24} className="text-gray-300" /></div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -325,14 +325,14 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
                 <a href={`/${(commande as any).tenant?.slug ?? ""}/facture/${(commande as any).trackingToken}`}
                   target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-2 w-full py-2.5 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-300 hover:border-[#F5A623]/30 hover:text-[#F5A623] transition-all">
-                  📄 Voir la facture client
+                  <FileText size={14} /> Voir la facture client
                 </a>
 
                 {/* Tracking client */}
                 <a href={`/${(commande as any).tenant?.slug ?? ""}/tracking/${(commande as any).trackingToken}`}
                   target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-2 w-full py-2.5 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-300 hover:border-[#F5A623]/30 hover:text-[#F5A623] transition-all">
-                  🗺️ Page de suivi (vue client)
+                  <Map size={14} /> Page de suivi (vue client)
                 </a>
 
                 {/* Lien livreur */}
@@ -346,7 +346,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
                       target="_blank" rel="noopener noreferrer"
                       className="flex items-center gap-2 w-full py-2.5 px-4 rounded-xl text-sm font-semibold transition-all text-white"
                       style={{ background:"rgba(37,211,102,0.15)", border:"1px solid rgba(37,211,102,0.25)", color:"#25D366" }}>
-                      📲 Partager avec le livreur (WhatsApp)
+                      <Share2 size={14} /> Partager avec le livreur (WhatsApp)
                     </a>
                   );
                 })()}

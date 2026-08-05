@@ -4,16 +4,17 @@ import {
   Send, Loader2, CheckCircle2, Zap, BrainCircuit,
   TrendingUp, Target, RefreshCw, ChevronRight, Sparkles,
   Mic, MicOff, Image as ImageIcon, X,
+  BarChart3, DollarSign, Megaphone, Package, Users, Truck, User,
 } from "lucide-react";
 import { AgentAvatar3D, AGENT_META } from "@/components/dashboard/AgentAvatar3D";
 
 const SUGGESTIONS = [
-  { cat: "📊 Analytics",  items: ["Fais un rapport complet de mes ventes", "Quels sont mes produits les plus rentables ?", "Analyse mes clients VIP"] },
-  { cat: "💰 Revenus",    items: ["Optimise mes prix pour maximiser le CA", "Crée une offre flash 24h", "Relance les paniers abandonnés"] },
-  { cat: "📣 Marketing",  items: ["Génère un post Instagram pour mes produits", "Lance une campagne email à mes clients", "Crée un code promo -20%"] },
-  { cat: "📦 Stocks",     items: ["Quels produits risquent d'être en rupture ?", "Prépare mes stocks pour la Tabaski", "Audit complet de mon inventaire"] },
-  { cat: "👥 Clients",    items: ["Segmente mes clients en VIP / actifs / inactifs", "Génère un message de fidélité", "Qui n'a pas commandé depuis 30 jours ?"] },
-  { cat: "🚚 Livraisons", items: ["Assigne les livreurs disponibles", "Statut de toutes les livraisons en cours", "Combien de commandes à traiter ?"] },
+  { cat: "Analytics",  Icon: BarChart3,  items: ["Fais un rapport complet de mes ventes", "Quels sont mes produits les plus rentables ?", "Analyse mes clients VIP"] },
+  { cat: "Revenus",    Icon: DollarSign, items: ["Optimise mes prix pour maximiser le CA", "Crée une offre flash 24h", "Relance les paniers abandonnés"] },
+  { cat: "Marketing",  Icon: Megaphone,  items: ["Génère un post Instagram pour mes produits", "Lance une campagne email à mes clients", "Crée un code promo -20%"] },
+  { cat: "Stocks",     Icon: Package,    items: ["Quels produits risquent d'être en rupture ?", "Prépare mes stocks pour la Tabaski", "Audit complet de mon inventaire"] },
+  { cat: "Clients",    Icon: Users,      items: ["Segmente mes clients en VIP / actifs / inactifs", "Génère un message de fidélité", "Qui n'a pas commandé depuis 30 jours ?"] },
+  { cat: "Livraisons", Icon: Truck,      items: ["Assigne les livreurs disponibles", "Statut de toutes les livraisons en cours", "Combien de commandes à traiter ?"] },
 ];
 
 interface Msg { role: "user" | "assistant"; content: string; actions?: string[]; imageUrl?: string; streaming?: boolean }
@@ -471,7 +472,10 @@ export default function AgentsPage() {
                         onClick={() => setCatOuverte(catOuverte === cat.cat ? null : cat.cat)}
                         className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all"
                       >
-                        <span>{cat.cat}</span>
+                        <span className="flex items-center gap-1.5">
+                          <cat.Icon size={14} className="text-gray-400"/>
+                          {cat.cat}
+                        </span>
                         <ChevronRight size={14} className={`text-gray-400 transition-transform ${catOuverte === cat.cat ? "rotate-90" : ""}`}/>
                       </button>
                       {catOuverte === cat.cat && (
@@ -504,8 +508,8 @@ export default function AgentsPage() {
                       <AgentAvatar3D agentId="axia" size={36} pulse={m.streaming}/>
                     </div>
                   ) : (
-                    <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0 mt-1 text-sm">
-                      👤
+                    <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0 mt-1">
+                      <User size={14} className="text-gray-500"/>
                     </div>
                   )}
                   <div className={`flex flex-col gap-1.5 ${estIA ? "max-w-[82%]" : "max-w-[72%]"}`}>

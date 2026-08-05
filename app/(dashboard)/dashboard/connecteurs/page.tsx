@@ -1,8 +1,9 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 import {
   CheckCircle2, XCircle, Loader2, Zap, Calendar, Send,
-  ChevronRight, RefreshCw, AlertCircle, LogOut, Globe, Eye, EyeOff
+  ChevronRight, RefreshCw, AlertCircle, LogOut, Globe, Eye, EyeOff,
+  Smartphone, Video, Bot, Camera, CreditCard, Sparkles,
 } from "lucide-react";
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -29,8 +30,8 @@ interface Publication {
   planifieLe: string; publieLe?: string; statut: string; erreur?: string;
 }
 
-const ICONES_PLAT: Record<string, string> = {
-  facebook: "📘", instagram: "📸", whatsapp: "📱", tiktok: "🎵", twitter: "🐦"
+const PLAT_ICON_MAP: Record<string, any> = {
+  facebook: Globe, instagram: Camera, whatsapp: Smartphone, tiktok: Globe, twitter: Globe,
 };
 
 // ── Sélecteur de page Meta (modal) ──────────────────────────────────────────
@@ -104,15 +105,15 @@ function MetaPageSelector({ metaState, onSelect, onClose }: {
                     onClick={() => setSelectedPageId(page.id)}
                     className="w-full text-left flex items-center gap-3 p-3 rounded-2xl border-2 transition-all"
                     style={{ borderColor: selectedPageId === page.id ? "#1877F2" : "#e5e7eb", background: selectedPageId === page.id ? "#eff6ff" : "white" }}>
-                    <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-lg flex-shrink-0">
-                      📘
+                    <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Globe size={20} className="text-blue-600" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-gray-900 text-sm">{page.name}</p>
                       <p className="text-[11px] text-gray-400">{page.category}</p>
                       {page.ig_account?.username && (
-                        <p className="text-[11px] text-[#E1306C] font-medium mt-0.5">
-                          📸 @{page.ig_account.username}
+                        <p className="text-[11px] text-[#E1306C] font-medium mt-0.5 flex items-center gap-1">
+                          <Camera size={11} /> @{page.ig_account.username}
                         </p>
                       )}
                     </div>
@@ -138,7 +139,7 @@ function MetaPageSelector({ metaState, onSelect, onClose }: {
                     onClick={() => setSelectedPhoneId(phone.id === selectedPhoneId ? "" : phone.id)}
                     className="w-full text-left flex items-center gap-3 p-3 rounded-2xl border-2 transition-all"
                     style={{ borderColor: selectedPhoneId === phone.id ? "#25D366" : "#e5e7eb", background: selectedPhoneId === phone.id ? "#f0fdf4" : "white" }}>
-                    <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-lg flex-shrink-0">📱</div>
+                    <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0"><Smartphone size={20} className="text-green-600" /></div>
                     <div>
                       <p className="font-semibold text-gray-900 text-sm">{phone.verified_name ?? "WhatsApp Business"}</p>
                       <p className="text-[11px] text-gray-400">{phone.display_phone_number}</p>
@@ -217,7 +218,7 @@ function ConnecteurCard({
         <div className="p-5">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl bg-blue-50 border border-blue-100">📘</div>
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-blue-50 border border-blue-100"><Globe size={24} className="text-blue-600" /></div>
               <div>
                 <h3 className="font-bold text-gray-900 text-sm">Facebook & Instagram</h3>
                 <div className="mt-0.5">{isConnected ? <ConnectedBadge/> : <InactiveBadge/>}</div>
@@ -235,7 +236,7 @@ function ConnecteurCard({
             <div className="mb-3 space-y-2">
               {/* Page FB */}
               <div className="flex items-center gap-2 p-2.5 bg-blue-50 rounded-xl">
-                <span className="text-base">📘</span>
+                <Globe size={16} className="text-blue-600 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-gray-800 truncate">{page?.name ?? conn.pageId}</p>
                   <p className="text-[10px] text-gray-400">Page Facebook</p>
@@ -245,7 +246,7 @@ function ConnecteurCard({
               {/* Instagram */}
               {hasIG && (
                 <div className="flex items-center gap-2 p-2.5 bg-pink-50 rounded-xl">
-                  <span className="text-base">📸</span>
+                  <Camera size={16} className="text-pink-600 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-gray-800 truncate">
                       {page?.ig_account?.username ? `@${page.ig_account.username}` : "Instagram connecté"}
@@ -291,7 +292,7 @@ function ConnecteurCard({
         <div className="p-5">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl bg-green-50 border border-green-100">📱</div>
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-green-50 border border-green-100"><Smartphone size={24} className="text-green-600" /></div>
               <div>
                 <h3 className="font-bold text-gray-900 text-sm">WhatsApp Business</h3>
                 <div className="mt-0.5">{isConnected ? <ConnectedBadge/> : <InactiveBadge/>}</div>
@@ -311,7 +312,7 @@ function ConnecteurCard({
               <a href="/api/mcp/oauth/meta"
                 className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-white text-sm font-bold transition-all hover:opacity-90"
                 style={{ background: "#25D366" }}>
-                <span className="text-base">📱</span>
+                <Smartphone size={16} />
                 Connecter WhatsApp Business
               </a>
               <p className="text-[10px] text-gray-400 text-center">
@@ -320,7 +321,7 @@ function ConnecteurCard({
             </div>
           ) : (
             <div className="flex items-center gap-2 p-2.5 bg-green-50 rounded-xl">
-              <span className="text-base">📱</span>
+              <Smartphone size={16} className="text-green-600 flex-shrink-0" />
               <p className="text-xs text-green-700 font-medium">WhatsApp Business connecté via Meta</p>
               <CheckCircle2 size={14} className="text-green-500 ml-auto flex-shrink-0"/>
             </div>
@@ -341,7 +342,7 @@ function ConnecteurCard({
         <div className="p-5">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl bg-red-50 border border-red-100">📧</div>
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-red-50 border border-red-100"><Globe size={24} className="text-red-500" /></div>
               <div>
                 <h3 className="font-bold text-gray-900 text-sm">Gmail</h3>
                 <div className="mt-0.5">{isConnected ? <ConnectedBadge/> : <InactiveBadge/>}</div>
@@ -422,8 +423,8 @@ function ConnecteurCard({
         <div className="p-5">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 4px 20px rgba(99,102,241,0.3)" }}>
-                🎬
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 4px 20px rgba(99,102,241,0.3)" }}>
+                <Video size={22} className="text-white" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -463,14 +464,14 @@ function ConnecteurCard({
               <button onClick={sauvegarder} disabled={loading || !apiKey.trim()}
                 className="w-full py-3 rounded-2xl text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2"
                 style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
-                {loading ? <Loader2 size={14} className="animate-spin"/> : "🎬"}
+                {loading ? <Loader2 size={14} className="animate-spin"/> : <Video size={14} />}
                 Connecter Higgsfield AI
               </button>
             </div>
           ) : (
             <div className="space-y-2">
               <div className="flex items-center gap-2 p-2.5 rounded-xl" style={{ background: "linear-gradient(135deg, #6366f110, #8b5cf610)" }}>
-                <span className="text-base">🎬</span>
+                <Video size={16} className="text-indigo-600 flex-shrink-0" />
                 <div className="flex-1">
                   <p className="text-xs font-semibold text-indigo-700">Higgsfield MCP connecté</p>
                   <p className="text-[10px] text-indigo-400">Génération vidéo + image disponible</p>
@@ -479,7 +480,7 @@ function ConnecteurCard({
               </div>
               <button onClick={testerConnexion} disabled={testLoading}
                 className="w-full py-2 rounded-xl text-indigo-600 text-xs font-semibold border border-indigo-200 hover:bg-indigo-50 flex items-center justify-center gap-1.5">
-                {testLoading ? <Loader2 size={11} className="animate-spin"/> : "✨"}
+                {testLoading ? <Loader2 size={11} className="animate-spin"/> : <Sparkles size={11} />}
                 Voir les {conn.nbOutils} outils disponibles
               </button>
               {showOutils && outils.length > 0 && (
@@ -524,8 +525,8 @@ function ConnecteurCard({
         <div className="p-5">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)", boxShadow: "0 4px 20px rgba(124,58,237,0.25)" }}>
-                🤖
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)", boxShadow: "0 4px 20px rgba(124,58,237,0.25)" }}>
+                <Bot size={22} className="text-white" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -556,13 +557,13 @@ function ConnecteurCard({
               <button onClick={sauvegarder} disabled={loading || !apiKey.trim()}
                 className="w-full py-3 rounded-2xl text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2"
                 style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}>
-                {loading ? <Loader2 size={14} className="animate-spin"/> : "🤖"}
+                {loading ? <Loader2 size={14} className="animate-spin"/> : <Bot size={14} />}
                 Connecter Claude
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-2 p-2.5 rounded-xl" style={{ background: "linear-gradient(135deg, #7c3aed10, #a855f710)" }}>
-              <span className="text-base">🤖</span>
+              <Bot size={16} className="text-violet-600 flex-shrink-0" />
               <div className="flex-1">
                 <p className="text-xs font-semibold text-violet-700">Claude connecté</p>
                 <p className="text-[10px] text-violet-400">Toutes les fonctionnalités IA débloquées</p>
@@ -639,8 +640,8 @@ function ConnecteurCard({
 
 interface ChampAPI { key: string; label: string; placeholder: string; secret?: boolean; aide?: string }
 
-function CarteAPIManuelle({ type, emoji, label, description, couleur, champs, onSaved }: {
-  type: string; emoji: string; label: string; description: string;
+function CarteAPIManuelle({ type, icon, label, description, couleur, champs, onSaved }: {
+  type: string; icon: ReactNode; label: string; description: string;
   couleur: string; champs: ChampAPI[]; onSaved?: () => void;
 }) {
   const [valeurs, setValeurs] = useState<Record<string, string>>({});
@@ -680,8 +681,8 @@ function CarteAPIManuelle({ type, emoji, label, description, couleur, champs, on
   return (
     <div className={`bg-white border rounded-2xl overflow-hidden transition-all ${statut === "actif" ? "border-green-200" : "border-gray-100"}`}>
       <div className="flex items-center gap-3 p-4">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{ background: couleur + "18", border: `1px solid ${couleur}30` }}>
-          {emoji}
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: couleur + "18", border: `1px solid ${couleur}30` }}>
+          {icon}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -799,7 +800,7 @@ function CalendrierPublications() {
               <select value={newPost.plateforme} onChange={e => setNewPost({ ...newPost, plateforme: e.target.value })}
                 className="w-full mt-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none">
                 {["facebook", "instagram", "whatsapp", "tiktok"].map(p => (
-                  <option key={p} value={p}>{ICONES_PLAT[p]} {p}</option>
+                  <option key={p} value={p}>{p}</option>
                 ))}
               </select>
             </div>
@@ -840,7 +841,7 @@ function CalendrierPublications() {
         <div className="space-y-2">
           {posts.map(post => (
             <div key={post.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl group hover:bg-gray-100 transition-colors">
-              <span className="text-lg flex-shrink-0 mt-0.5">{ICONES_PLAT[post.plateforme] ?? "📄"}</span>
+              {(() => { const PI = PLAT_ICON_MAP[post.plateforme] ?? Globe; return <PI size={18} className="flex-shrink-0 mt-0.5 text-gray-500" />; })()}
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-gray-700 line-clamp-2">{post.contenu}</p>
                 <p className="text-[10px] text-gray-400 mt-0.5">
@@ -949,7 +950,7 @@ export default function ConnecteursPage() {
         <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-3">Paiements & Email</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <CarteAPIManuelle
-            type="campay" emoji="📱" couleur="#FF6B35"
+            type="campay" icon={<Smartphone size={20} className="text-[#FF6B35]" />} couleur="#FF6B35"
             label="Campay" description="Mobile Money Cameroun — MTN MoMo & Orange Money"
             champs={[
               { key: "username", label: "Username Campay", placeholder: "votre_username", aide: "Votre identifiant sur campay.net" },
@@ -958,7 +959,7 @@ export default function ConnecteursPage() {
             ]}
           />
           <CarteAPIManuelle
-            type="cinetpay" emoji="💳" couleur="#0066FF"
+            type="cinetpay" icon={<CreditCard size={20} className="text-[#0066FF]" />} couleur="#0066FF"
             label="CinetPay" description="Wave, Orange, MTN — Afrique de l'Ouest francophone"
             champs={[
               { key: "apiKey", label: "Clé API CinetPay", placeholder: "votre_api_key", secret: true, aide: "dashboard.cinetpay.com → Mon compte → API" },
@@ -966,7 +967,7 @@ export default function ConnecteursPage() {
             ]}
           />
           <CarteAPIManuelle
-            type="flutterwave" emoji="🦋" couleur="#F5A623"
+            type="flutterwave" icon={<Sparkles size={20} className="text-[#F5A623]" />} couleur="#F5A623"
             label="Flutterwave" description="Cartes bancaires & Mobile Money international"
             champs={[
               { key: "publicKey", label: "Clé publique", placeholder: "FLWPUBK-…", aide: "dashboard.flutterwave.com → Settings → API" },
@@ -974,7 +975,7 @@ export default function ConnecteursPage() {
             ]}
           />
           <CarteAPIManuelle
-            type="resend" emoji="✉️" couleur="#000000"
+            type="resend" icon={<Globe size={20} className="text-gray-800" />} couleur="#000000"
             label="Resend" description="Envoi d'emails transactionnels — alternative à Gmail"
             champs={[
               { key: "apiKey",    label: "Clé API Resend", placeholder: "re_…", secret: true, aide: "resend.com → API Keys → Create API Key" },
