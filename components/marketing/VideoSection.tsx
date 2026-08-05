@@ -1,4 +1,5 @@
 "use client";
+// v4 — lucide icons only, no emoji
 import { useEffect, useRef, useState } from "react";
 import { Lock, Rocket, Zap, Bot, Globe } from "lucide-react";
 import { CartParallax } from "./CartParallax";

@@ -1,4 +1,5 @@
 "use client";
+// v4 — lucide icons only, no emoji
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Bot, Rocket, TrendingUp, CheckCircle, Zap, Plus } from "lucide-react";
