@@ -1,4 +1,5 @@
 {
+  "buildCommand": "rm -rf .next/cache && next build",
   "functions": {
     "app/api/ai/**": { "maxDuration": 60 },
     "app/api/navigateur/**": { "maxDuration": 60 }
