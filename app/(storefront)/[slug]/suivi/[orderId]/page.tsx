@@ -41,15 +41,21 @@ export default async function SuiviPage({ params }: Props) {
   const etapeActuelle = Math.max(0, ETAPES.findIndex((e) => e.statut === commande.statut));
 
   const peutConfirmer = commande.statut === "livree" || commande.statut === "en_livraison";
-  const dejaCONFIRME = escrow?.statut === "released";
+  // Confirmé si l'escrow est libéré OU si le statut est "livree" sans escrow (pas de retenue)
+  const dejaCONFIRME = escrow ? escrow.statut === "released" : commande.statut === "livree";
 
   async function confirmerReception() {
     "use server";
-    if (!commande || commande.statut === "annulee") return;
+    // Re-fetch fresh data — ne pas capturer les objets Prisma dans la closure
+    const cmd = await prisma.commande.findUnique({ where: { id: orderId } });
+    if (!cmd || cmd.statut === "annulee") return;
+
+    const esc = await prisma.escrow.findUnique({ where: { commandeId: orderId } });
     const now = new Date();
+
     await prisma.$transaction(async (tx) => {
       await tx.commande.update({ where: { id: orderId }, data: { statut: "livree" } });
-      if (escrow && escrow.statut !== "released") {
+      if (esc && esc.statut !== "released") {
         await tx.escrow.update({ where: { commandeId: orderId }, data: { statut: "released", releasedAt: now } });
         const commission = await tx.commission.findUnique({ where: { commandeId: orderId } });
         if (commission && commission.statut !== "captured") {
@@ -58,6 +64,7 @@ export default async function SuiviPage({ params }: Props) {
       }
     });
     revalidatePath(`/${slug}/suivi/${orderId}`);
+    redirect(`/${slug}/suivi/${orderId}`);
   }
 
   return (
