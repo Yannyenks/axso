@@ -99,7 +99,7 @@ export function Sidebar() {
                     title={collapsed ? item.label : undefined}
                     className={cn(
                       "flex items-center gap-2.5 px-2 py-1.5 rounded-xl transition-all duration-150 group",
-                      actif ? "bg-gray-100 shadow-sm" : "hover:bg-gray-50",
+                      actif ? "bg-[#FFF3DC] shadow-sm" : "hover:bg-gray-50",
                       collapsed && "justify-center"
                     )}
                   >
@@ -114,7 +114,7 @@ export function Sidebar() {
                     {!collapsed && (
                       <span className={cn(
                         "text-[12.5px] font-medium flex-1 truncate transition-colors",
-                        actif ? "text-gray-900 font-semibold" : "text-gray-500 group-hover:text-gray-800"
+                        actif ? "text-[#B4740A] font-semibold" : "text-gray-500 group-hover:text-gray-800"
                       )}>
                         {item.label}
                       </span>

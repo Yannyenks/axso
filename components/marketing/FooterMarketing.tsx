@@ -30,7 +30,7 @@ const liens = {
 
 export function FooterMarketing() {
   return (
-    <footer className="bg-gray-900 pt-16 pb-8">
+    <footer className="bg-[#0D1626] pt-16 pb-8">
       <div className="w-full px-6 sm:px-10 lg:px-16 xl:px-24">
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
           <div className="col-span-2 lg:col-span-1">
@@ -46,7 +46,7 @@ export function FooterMarketing() {
             <div className="flex gap-3">
               {(["𝕏", "f", null, "in"] as (string | null)[]).map((s, i) => (
                 <a key={i} href="#"
-                  className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-gray-400 hover:text-[#F5A623] hover:bg-gray-700 transition-all text-xs font-bold">
+                  className="w-8 h-8 rounded-lg bg-[#16223B] flex items-center justify-center text-gray-400 hover:text-[#F5A623] hover:bg-[#1E2E4D] transition-all text-xs font-bold">
                   {s === null ? <Camera size={14} /> : s}
                 </a>
               ))}
@@ -69,7 +69,7 @@ export function FooterMarketing() {
           ))}
         </div>
 
-        <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="border-t border-[#1A2740] pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-gray-500 text-sm">© {new Date().getFullYear()} AXSO Technologies. Tous droits réservés.</p>
           <div className="flex items-center gap-4 text-sm text-gray-500">
             <span className="inline-flex items-center gap-1"><Globe size={13} /> Français</span>

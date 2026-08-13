@@ -242,27 +242,42 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-5">
 
-      {/* ── Greeting + CTA ─────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-4 pt-1 flex-wrap">
-        <div>
-          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">
-            {greeting}, {prenom}
-          </h1>
-          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5 capitalize">
-            {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {d.slug && (
-            <a href={`/${d.slug}`} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-[12px] font-medium border border-[#E8E8E8] rounded-2xl px-3.5 py-2 bg-white text-[#666666] hover:text-[#111111] hover:border-[#CCCCCC] hover:shadow-sm transition-all">
-              <Globe size={13} /> Boutique <ArrowUpRight size={11} />
+      {/* ── Bannière d'accueil ─────────────────────────────────────── */}
+      <div className="relative overflow-hidden rounded-[28px] px-6 py-8 sm:px-9 sm:py-10">
+        <img
+          src="/hero-bg.jpg"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectPosition: "center 30%" }}
+        />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(100deg, rgba(8,8,8,.92) 0%, rgba(8,8,8,.82) 38%, rgba(8,8,8,.55) 70%, rgba(8,8,8,.32) 100%)" }} />
+        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 60% 90% at 15% 30%, rgba(237,169,0,.16) 0%, transparent 70%)" }} />
+
+        <div className="relative flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <span className="inline-flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#F5C55E] bg-[#EDA900]/15 border border-[#EDA900]/30 rounded-full px-2.5 py-1 mb-3">
+              <Sparkles size={11} /> Axso
+            </span>
+            <h1 className="text-[26px] sm:text-[30px] font-extrabold text-white tracking-tight leading-tight">
+              {greeting}, {prenom}
+            </h1>
+            <p className="text-[13px] text-white/60 mt-1 capitalize">
+              {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {d.slug && (
+              <a href={`/${d.slug}`} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-[12px] font-medium border border-white/20 rounded-2xl px-3.5 py-2 bg-white/10 backdrop-blur-sm text-white hover:bg-white/15 hover:border-white/30 transition-all">
+                <Globe size={13} /> Boutique <ArrowUpRight size={11} />
+              </a>
+            )}
+            <a href="/dashboard/produits/nouveau"
+              className="flex items-center gap-1.5 text-[12px] font-semibold rounded-2xl px-4 py-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm"
+              style={{ background: "linear-gradient(135deg,#EDA900,#FFD75E)", color: "#111111" }}>
+              <Plus size={13} /> Nouveau produit
             </a>
-          )}
-          <a href="/dashboard/produits/nouveau"
-            className="flex items-center gap-1.5 text-[12px] font-semibold bg-[#111111] text-white rounded-2xl px-4 py-2 hover:bg-[#2a2a2a] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm">
-            <Plus size={13} /> Nouveau produit
-          </a>
+          </div>
         </div>
       </div>
 
@@ -695,7 +710,7 @@ function KpiCard({
           <Icon size={14} className={accent ? "text-[#F5A623]" : "text-[#888]"} strokeWidth={1.8} />
         </div>
       </div>
-      <p className="text-[22px] font-bold text-[#111111] leading-none tabular-nums tracking-tight mb-2">{value}</p>
+      <p className="text-[27px] font-extrabold text-[#111111] leading-none tabular-nums tracking-tight mb-2.5">{value}</p>
       <div className="flex items-end justify-between gap-2">
         <div>
           {up && (

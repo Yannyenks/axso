@@ -2,7 +2,7 @@
 // v4 — lucide icons only, no emoji
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Bot, Rocket, TrendingUp, CheckCircle, Zap, Plus } from "lucide-react";
+import { Bot, Rocket, TrendingUp, CheckCircle, Plus } from "lucide-react";
 import { CartParallax } from "./CartParallax";
 
 const MOTS = ["en ligne", "digital", "africain", "sans limite"];
@@ -49,21 +49,31 @@ export function HeroSection() {
 
   return (
     <section
-      className="relative min-h-screen w-full flex items-center pt-28 overflow-hidden bg-gradient-to-b from-white via-orange-50/30 to-white"
-      style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}
+      className="relative min-h-screen w-full flex items-center pt-28 overflow-hidden bg-black"
       onMouseMove={handleMouseMove}
       onMouseLeave={() => setMouse({ x: 0, y: 0 })}
     >
+      {/* Background photo */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/hero-bg.jpg"
+          alt=""
+          className="w-full h-full object-cover"
+          style={{ transform: `translateY(${scrollY * 0.08}px) scale(1.06)` }}
+        />
+        {/* Scrim — fort côté texte, plus léger côté mockup, + vignette haut/bas */}
+        <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(8,8,8,.94) 0%, rgba(8,8,8,.86) 32%, rgba(8,8,8,.62) 58%, rgba(8,8,8,.38) 100%)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,.55) 0%, transparent 22%, transparent 72%, rgba(0,0,0,.65) 100%)" }} />
+      </div>
+
       <CartParallax carts={HERO_CARTS} color="#F5A623" />
 
       {/* Ambient glows */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-[1]">
         <div className="absolute top-1/4 left-1/3 w-[900px] h-[700px] rounded-full"
-          style={{ background: "radial-gradient(ellipse, rgba(245,166,35,0.12) 0%, transparent 70%)", transform: `translateY(${-scrollY * 0.1}px)` }}/>
+          style={{ background: "radial-gradient(ellipse, rgba(245,166,35,0.18) 0%, transparent 70%)", transform: `translateY(${-scrollY * 0.1}px)` }}/>
         <div className="absolute bottom-1/3 right-1/4 w-[700px] h-[550px] rounded-full"
-          style={{ background: "radial-gradient(ellipse, rgba(124,58,237,0.07) 0%, transparent 70%)", transform: `translateY(${scrollY * 0.06}px)` }}/>
-        <div className="absolute inset-0 opacity-[0.025]"
-          style={{ backgroundImage: `linear-gradient(#F5A623 1px, transparent 1px), linear-gradient(90deg, #F5A623 1px, transparent 1px)`, backgroundSize: "60px 60px", transform: `translateY(${scrollY * 0.04}px)` }}/>
+          style={{ background: "radial-gradient(ellipse, rgba(245,166,35,0.10) 0%, transparent 70%)", transform: `translateY(${scrollY * 0.06}px)` }}/>
       </div>
 
       <div className="w-full px-6 sm:px-10 lg:px-16 xl:px-24 py-20 relative z-10">
@@ -72,18 +82,9 @@ export function HeroSection() {
           {/* ─── GAUCHE ─── */}
           <div style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateX(-30px)", transition: "all 0.9s cubic-bezier(0.23,1,0.32,1)" }}>
 
-            {/* Badge */}
-            <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full mb-10 bg-[#F5A623]/10 border border-[#F5A623]/25">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F5A623] opacity-75"/>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#F5A623]"/>
-              </span>
-              <span className="text-[#F5A623] text-base font-semibold inline-flex items-center gap-1.5"><Zap size={14} /> 11 agents IA · tout est automatisé</span>
-            </div>
-
             {/* Headline empire */}
             <h1 className="font-bold leading-[1.06] mb-8">
-              <span className="block text-4xl lg:text-5xl xl:text-[4.2rem] 2xl:text-[4.8rem] text-gray-900 uppercase tracking-tight">
+              <span className="block text-4xl lg:text-5xl xl:text-[4.2rem] 2xl:text-[4.8rem] text-white uppercase tracking-tight">
                 Crée ton empire
               </span>
               <span
@@ -100,18 +101,18 @@ export function HeroSection() {
               >
                 {MOTS[motIdx]}
               </span>
-              <span className="block text-4xl lg:text-5xl xl:text-[4.2rem] 2xl:text-[4.8rem] text-gray-900 uppercase tracking-tight">
+              <span className="block text-4xl lg:text-5xl xl:text-[4.2rem] 2xl:text-[4.8rem] text-white uppercase tracking-tight">
                 avec <span style={{ color: "#F5A623" }}>AXSO</span>
               </span>
             </h1>
 
             <p
               style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.25s" }}
-              className="text-lg lg:text-xl xl:text-2xl text-gray-500 leading-relaxed mb-12 max-w-xl"
+              className="text-lg lg:text-xl xl:text-2xl text-white/75 leading-relaxed mb-12 max-w-xl"
             >
               Présente ta vision — AXSO s'occupe du reste.
               <br />
-              <span className="text-base text-gray-400 mt-1 block">
+              <span className="text-base text-white/50 mt-1 block">
                 Boutique, marketing, clients, livraison. Tout en quelques clics.
               </span>
             </p>
@@ -132,7 +133,7 @@ export function HeroSection() {
               </Link>
               <Link
                 href="#video-demo"
-                className="px-10 py-4 rounded-2xl font-semibold text-lg text-gray-700 text-center border border-gray-200 bg-white hover:border-[#F5A623]/40 hover:shadow-md transition-all hover:scale-[1.02]"
+                className="px-10 py-4 rounded-2xl font-semibold text-lg text-white text-center border border-white/25 bg-white/10 backdrop-blur-sm hover:border-[#F5A623]/50 hover:bg-white/15 transition-all hover:scale-[1.02]"
               >
                 ▶ Voir la démo IA
               </Link>
@@ -142,14 +143,14 @@ export function HeroSection() {
             <div className="flex items-center gap-6" style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.6s" }}>
               <div className="flex -space-x-3">
                 {FLAGS.map((f, i) => (
-                  <div key={i} className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-200 to-[#F5A623] border-2 border-white flex items-center justify-center shadow-sm hover:scale-125 hover:z-10 transition-transform">
+                  <div key={i} className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-200 to-[#F5A623] border-2 border-black/40 flex items-center justify-center shadow-sm hover:scale-125 hover:z-10 transition-transform">
                     <span className="text-[9px] font-black text-white/90 tracking-tight">{f}</span>
                   </div>
                 ))}
               </div>
               <div>
-                <p className="text-base font-bold text-gray-900">+1 247 empires lancés</p>
-                <p className="text-sm text-gray-400">dans 10 pays africains</p>
+                <p className="text-base font-bold text-white">+1 247 empires lancés</p>
+                <p className="text-sm text-white/50">dans 10 pays africains</p>
               </div>
             </div>
           </div>

@@ -136,7 +136,7 @@ export function Header({ session, boutiqueSlug, boutiqueNom }: HeaderProps) {
               <img
                 src="/logo.png" alt="axso"
                 style={{
-                  height: "52px", width: "auto", objectFit: "contain",
+                  height: "80px", width: "auto", objectFit: "contain",
                   filter: "drop-shadow(0 2px 6px rgba(0,0,0,.07))",
                   transition: "transform .3s cubic-bezier(.34,1.56,.64,1)",
                 }}

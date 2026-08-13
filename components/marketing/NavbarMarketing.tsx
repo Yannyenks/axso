@@ -80,7 +80,7 @@ export function NavbarMarketing() {
           style={{
             alignItems: "center",
             pointerEvents: "auto",
-            background: "#080808",
+            background: "#0D1626",
             borderRadius: "999px",
             padding: isExpanded ? "8px 10px 8px 18px" : "7px 12px",
             width: isExpanded
@@ -100,7 +100,7 @@ export function NavbarMarketing() {
             <img
               src="/logo.png" alt="axso"
               style={{
-                height: isExpanded ? "42px" : "32px",
+                height: isExpanded ? "80px" : "62px",
                 width: "auto", objectFit: "contain",
                 filter: "brightness(0) invert(1)",
                 transition: "height .45s cubic-bezier(.34,1.56,.64,1)",
@@ -193,7 +193,7 @@ export function NavbarMarketing() {
           style={{
             flexDirection: "column",
             pointerEvents: "auto",
-            background: "#080808",
+            background: "#0D1626",
             borderRadius: mobileOpen ? "28px" : "999px",
             width: "calc(100vw - 28px)",
             overflow: "hidden",
@@ -207,7 +207,7 @@ export function NavbarMarketing() {
           <div style={{ display:"flex", alignItems:"center", padding:"7px 10px 7px 16px", gap:"8px" }}>
             <Link href="/" style={{ display:"flex", alignItems:"center", textDecoration:"none", flexShrink:0 }}>
               <img src="/logo.png" alt="axso" style={{
-                height: mobileOpen ? "38px" : "34px",
+                height: mobileOpen ? "64px" : "58px",
                 filter:"brightness(0) invert(1)", objectFit:"contain",
                 transition: "height .4s cubic-bezier(.34,1.56,.64,1)",
               }} />
