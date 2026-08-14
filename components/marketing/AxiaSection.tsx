@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Mic, Sparkles, Zap } from "lucide-react";
+import { Mic, Zap } from "lucide-react";
 
 const MSG_USER = "Ajoute une promo -20% sur mes sneakers ce week-end";
-const MSG_XIA  = "C'est fait ✓ La promo est active du samedi 00h00 au dimanche 23h59, et j'ai notifié tes 3 derniers clients intéressés.";
+const MSG_AXIA  = "C'est fait ✓ La promo est active du samedi 00h00 au dimanche 23h59, et j'ai notifié tes 3 derniers clients intéressés.";
 
 /** Fait apparaître `text` caractère par caractère, façon machine à écrire, une fois `start` vrai. */
 function useTypewriter(text: string, start: boolean, speed = 16, startDelay = 0) {
@@ -24,11 +24,11 @@ function useTypewriter(text: string, start: boolean, speed = 16, startDelay = 0)
   return out;
 }
 
-export function XiaSection() {
+export function AxiaSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
-  const xiaTyped = useTypewriter(MSG_XIA, visible, 15, 950);
-  const xiaDone = xiaTyped.length >= MSG_XIA.length;
+  const axiaTyped = useTypewriter(MSG_AXIA, visible, 15, 950);
+  const axiaDone = axiaTyped.length >= MSG_AXIA.length;
 
   useEffect(() => {
     const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } }, { threshold: 0.15 });
@@ -44,11 +44,11 @@ export function XiaSection() {
           <div className="order-2 lg:order-1" style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateX(-24px)", transition: "all 0.8s cubic-bezier(0.23,1,0.32,1)" }}>
             <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-5 sm:p-6 max-w-md">
               <div className="flex items-center gap-2.5 pb-4 mb-4 border-b border-gray-100">
-                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#1B2A4A" }}>
-                  <Sparkles size={15} color="#F5A623" />
+                <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0" style={{ background: "#1B2A4A" }}>
+                  <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <p className="font-bold text-sm text-[#111111]">Xia</p>
+                  <p className="font-bold text-sm text-[#111111]">Axia</p>
                   <p className="text-[11px] text-gray-400">Ton assistante IA</p>
                 </div>
                 <Mic size={16} className="ml-auto text-gray-300" />
@@ -63,8 +63,8 @@ export function XiaSection() {
                 {visible && (
                   <div className="flex justify-start" style={{ animation: "slideRevealLeft 0.4s 750ms cubic-bezier(0.23,1,0.32,1) both" }}>
                     <div className="rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed max-w-[85%] bg-gray-50 text-gray-700 border border-gray-100 min-h-[2.5em]">
-                      {xiaTyped}
-                      {!xiaDone && <span className="inline-block w-[2px] h-[13px] ml-0.5 align-middle animate-pulse" style={{ background: "#F5A623" }} />}
+                      {axiaTyped}
+                      {!axiaDone && <span className="inline-block w-[2px] h-[13px] ml-0.5 align-middle animate-pulse" style={{ background: "#F5A623" }} />}
                     </div>
                   </div>
                 )}
@@ -73,9 +73,12 @@ export function XiaSection() {
           </div>
 
           <div className="order-1 lg:order-2" style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateX(24px)", transition: "all 0.8s 0.1s cubic-bezier(0.23,1,0.32,1)" }}>
+            <div className="ax-axia-mascot w-20 h-20 sm:w-24 sm:h-24 mb-5 rounded-3xl overflow-hidden flex items-center justify-center shadow-lg" style={{ background: "#1B2A4A" }}>
+              <img src="/axia-icon.png" alt="Axia, ton assistante IA" className="w-full h-full object-cover" />
+            </div>
             <span className="text-[#F5A623] text-sm font-bold uppercase tracking-widest mb-4 block">Assistante IA</span>
             <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#111111] mb-5 leading-[1.08]">
-              Rencontre Xia, ta copilote au quotidien
+              Rencontre Axia, ta copilote au quotidien
             </h2>
             <p className="text-lg text-gray-500 leading-relaxed mb-8 max-w-lg">
               Parle-lui à l'écrit ou à la voix : elle configure ta boutique, répond à tes clients, lance des promotions et t'alerte sur ce qui compte — 24h/24.
@@ -85,7 +88,7 @@ export function XiaSection() {
             </div>
             <Link href="/inscription" className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-white transition-transform hover:scale-[1.03]"
               style={{ background: "#1B2A4A" }}>
-              Parler à Xia →
+              Parler à Axia →
             </Link>
           </div>
         </div>

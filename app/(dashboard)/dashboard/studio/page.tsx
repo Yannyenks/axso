@@ -202,7 +202,7 @@ function TabVideo() {
 // ─── Tab Voix Off ─────────────────────────────────────────────────
 function TabVoixOff() {
   const [texte, setTexte] = useState("");
-  const [voixId, setVoixId] = useState("EXAVITQu4vr4xnSDxMaL");
+  const [voixId, setVoixId] = useState("Kore");
   const [voix, setVoix] = useState<any[]>([]);
   const [generating, setGenerating] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string|null>(null);
@@ -265,7 +265,7 @@ function TabVoixOff() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-800">{v.nom}</p>
-                  <p className="text-xs text-gray-400">{v.style} · {v.genre === "F" ? "Féminin" : "Masculin"} · {v.langue.toUpperCase()}</p>
+                  <p className="text-xs text-gray-400">{v.style} · {v.genre === "F" ? "Féminin" : "Masculin"}</p>
                 </div>
                 {voixId === v.id && <span className="text-[#F5A623] text-xs font-bold">✓</span>}
               </button>
@@ -310,7 +310,7 @@ function TabVoixOff() {
                     <div className="h-2 bg-gradient-to-r from-purple-400 to-purple-600 rounded-full w-1/3 transition-all" />
                   </div>
                 </div>
-                <a href={audioUrl} download="voix-off.mp3"
+                <a href={audioUrl} download="voix-off.wav"
                   className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-all">
                   <Download size={14} />
                 </a>

@@ -38,7 +38,7 @@ const CHANNELS = [
 const FAQ = [
   { q: "Puis-je tester AXSO gratuitement ?", r: "Oui, le plan Essentiel est gratuit pour toujours. Aucune carte bancaire requise pour démarrer." },
   { q: "AXSO fonctionne-t-il dans mon pays ?", r: "AXSO est disponible dans 12 pays africains : Sénégal, Côte d'Ivoire, Cameroun, Mali, Togo, Burkina Faso, Guinée, Ghana, Bénin, Niger, RDC, Maroc." },
-  { q: "Comment fonctionne l'IA Xia ?", r: "Xia est un agent conversationnel qui exécute de vraies actions dans votre boutique — créer des produits, répondre aux clients, analyser vos ventes — sans formation technique." },
+  { q: "Comment fonctionne l'IA Axia ?", r: "Axia est un agent conversationnel qui exécute de vraies actions dans votre boutique — créer des produits, répondre aux clients, analyser vos ventes — sans formation technique." },
   { q: "Puis-je migrer depuis une autre plateforme ?", r: "Notre équipe vous accompagne gratuitement pour migrer vos produits, clients et commandes depuis Shopify, WooCommerce ou votre boutique actuelle." },
 ];
 

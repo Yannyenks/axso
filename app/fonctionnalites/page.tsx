@@ -10,7 +10,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Fonctionnalités — AXSO, la plateforme e-commerce africaine",
-  description: "Catalogue, paiements Mobile Money, Xia IA, livraison, marketing, analytics — tout pour vendre en Afrique.",
+  description: "Catalogue, paiements Mobile Money, Axia IA, livraison, marketing, analytics — tout pour vendre en Afrique.",
 };
 
 const STATS = [
@@ -246,25 +246,25 @@ export default function FonctionnalitesPage() {
         </div>
       </section>
 
-      {/* ── Feature 3 — Xia IA ─────────────────────────────────────────────── */}
+      {/* ── Feature 3 — Axia IA ─────────────────────────────────────────────── */}
       <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-32">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
             <div className="inline-flex items-center gap-2.5 mb-6 px-3.5 py-2 rounded-xl"
               style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}>
               <Zap size={16} style={{ color: "#7c3aed" }} />
-              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#7c3aed" }}>Xia — IA intégrée</span>
+              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#7c3aed" }}>Axia — IA intégrée</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-black text-[#111111] mb-5 leading-snug">
               Un agent IA qui gère<br />votre boutique à votre place
             </h2>
             <p className="text-[#666666] text-lg leading-relaxed mb-8">
-              Xia n'est pas un chatbot. C'est un vrai agent qui exécute des actions dans votre boutique : crée des produits, analyse vos ventes, répond à vos clients, génère du contenu.
+              Axia n'est pas un chatbot. C'est un vrai agent qui exécute des actions dans votre boutique : crée des produits, analyse vos ventes, répond à vos clients, génère du contenu.
             </p>
             <ul className="space-y-3.5">
               {[
-                "Xia marchande : gère commandes, stock, marketing par conversation",
-                "Xia acheteur : assistant intégré dans votre vitrine pour vos clients",
+                "Axia marchande : gère commandes, stock, marketing par conversation",
+                "Axia acheteur : assistant intégré dans votre vitrine pour vos clients",
                 "11 agents spécialisés coordonnés automatiquement",
                 "Génération de descriptions, photos et posts réseaux sociaux",
                 "Analyse des avis et recommandations d'optimisation",
@@ -286,7 +286,7 @@ export default function FonctionnalitesPage() {
                 <Zap size={14} color="#fff" />
               </div>
               <div>
-                <p className="text-[#111111] font-bold text-sm">Xia</p>
+                <p className="text-[#111111] font-bold text-sm">Axia</p>
                 <p className="text-[#808080] text-xs">Agent e-commerce · En ligne</p>
               </div>
               <div className="ml-auto w-2 h-2 rounded-full bg-green-400" />
@@ -490,7 +490,7 @@ export default function FonctionnalitesPage() {
         </div>
       </section>
 
-      {/* ── Xia Agents ─────────────────────────────────────────────────────── */}
+      {/* ── Axia Agents ─────────────────────────────────────────────────────── */}
       <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-32"
         style={{ background: "linear-gradient(180deg, transparent 0%, rgba(124,58,237,0.05) 50%, transparent 100%)" }}>
         <div className="max-w-5xl mx-auto">
@@ -501,7 +501,7 @@ export default function FonctionnalitesPage() {
             </span>
             <h2 className="text-3xl sm:text-4xl font-black text-[#111111] mb-4">L'équipe IA qui ne dort jamais</h2>
             <p className="text-[#737373] text-lg max-w-2xl mx-auto">
-              Chaque agent Xia maîtrise un domaine précis et travaille en coordination avec les autres — comme une équipe complète sans les charges salariales.
+              Chaque agent Axia maîtrise un domaine précis et travaille en coordination avec les autres — comme une équipe complète sans les charges salariales.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

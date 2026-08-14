@@ -263,6 +263,18 @@ main > section, main > div > section {
   to   { opacity: 1; transform: perspective(800px) rotateX(0deg)  translateY(0); }
 }
 
+/* Mascotte Axia — clin d'œil/sourire idle, utilisé partout où l'icône Axia apparaît */
+.ax-axia-mascot img {
+  animation: axiaWink 4.5s ease-in-out infinite;
+  transform-origin: 50% 85%;
+}
+@keyframes axiaWink {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  4%       { transform: scale(1.08) rotate(-4deg); }
+  8%       { transform: scale(0.94, 1.04) rotate(2deg); }
+  12%      { transform: scale(1) rotate(0deg); }
+}
+
 @keyframes slideRevealLeft {
   from { opacity: 0; transform: translateX(-50px) perspective(600px) rotateY(10deg); }
   to   { opacity: 1; transform: translateX(0)     perspective(600px) rotateY(0deg); }

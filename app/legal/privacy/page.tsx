@@ -18,7 +18,7 @@ const SECTIONS = [
   },
   {
     titre: "3. Finalités du traitement",
-    contenu: `Vos données sont utilisées pour : la fourniture et l'amélioration de nos services, la gestion de votre compte et de votre boutique, l'envoi de communications transactionnelles (confirmations, factures), l'envoi de communications marketing (avec consentement), la prévention de la fraude et la sécurité de la plateforme, l'amélioration de notre IA Xia.`,
+    contenu: `Vos données sont utilisées pour : la fourniture et l'amélioration de nos services, la gestion de votre compte et de votre boutique, l'envoi de communications transactionnelles (confirmations, factures), l'envoi de communications marketing (avec consentement), la prévention de la fraude et la sécurité de la plateforme, l'amélioration de notre IA Axia.`,
   },
   {
     titre: "4. Base légale du traitement",

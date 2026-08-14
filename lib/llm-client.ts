@@ -1,14 +1,14 @@
 /**
  * LLM Client — Gemini only, via le SDK officiel @google/genai
  *
- * Toute la solution Axso tourne exclusivement sur Google Gemini pour le
- * raisonnement/texte. Aucun autre fournisseur (Claude, GPT, Groq, NVIDIA,
- * Cerebras, Together, SambaNova, OpenRouter...) n'est utilisé pour la génération
- * de texte ou l'exécution d'outils.
+ * Toute la solution Axso tourne exclusivement sur Google Gemini, texte comme
+ * média. Aucun autre fournisseur (Claude, GPT, Groq, NVIDIA, Cerebras,
+ * Together, SambaNova, OpenRouter, fal.ai, ElevenLabs, Pollinations...) n'est
+ * utilisé pour la génération de texte, d'image, de vidéo, de voix ou
+ * l'exécution d'outils.
  *
- * La génération média (images/vidéo/audio) reste un sujet distinct — voir
- * pollinationsImageUrl / pollinationsVideoUrl / pollinationsAudioUrl ci-dessous,
- * ainsi que lib/image-gen.ts.
+ * Génération média : voir generateSpeechGemini / generateImageGemini /
+ * startVideoGemini / pollVideoGemini ci-dessous, ainsi que lib/image-gen.ts.
  */
 import { GoogleGenAI } from "@google/genai";
 
@@ -44,6 +44,7 @@ export interface CompletionWithToolsResult {
 }
 
 const GEMINI_MODEL = "gemini-3.1-flash-lite";
+const GEMINI_TTS_MODEL = "gemini-3.1-flash-tts-preview";
 
 // ─── Client Gemini (singleton) ────────────────────────────────────────────────
 
@@ -289,22 +290,103 @@ export async function completionWithToolsAuto(
   return completionWithToolsGemini(messages, tools, maxTokens);
 }
 
-// ─── Génération média (Pollinations — hors périmètre du moteur de raisonnement) ─
+// ─── Génération média — Gemini exclusif (images, vidéo, voix) ─────────────────
+//
+// Comme pour le texte, toute génération média d'Axso passe exclusivement par
+// Gemini (@google/genai) : plus aucun fournisseur tiers (fal.ai, Pollinations,
+// ElevenLabs...). Note : sur le plan gratuit, les modèles image (gemini-*-image)
+// et vidéo (veo-*) peuvent renvoyer un quota de 0 requête tant qu'aucun compte
+// de facturation n'est rattaché au projet Google AI — c'est un vrai palier de
+// plan, pas un bug ; le texte et la voix (TTS) fonctionnent sans facturation.
 
-const POLLINATIONS_BASE = "https://gen.pollinations.ai";
+const GEMINI_IMAGE_MODEL = "gemini-3.1-flash-image";
+const GEMINI_VIDEO_MODEL = "veo-3.1-fast-generate-preview";
 
-export function pollinationsImageUrl(prompt: string, model: "gptimage" | "seedream-pro" | "flux" | "ideogram-v4-quality" = "flux", seed?: number): string {
-  const s = seed ?? Math.floor(Math.random() * 999999);
-  const keyParam = process.env.POLLINATIONS_API_KEY ? `&key=${process.env.POLLINATIONS_API_KEY}` : "";
-  return `${POLLINATIONS_BASE}/image/${encodeURIComponent(prompt)}?model=${model}&width=1024&height=1024&nologo=true&enhance=true&seed=${s}${keyParam}`;
+export const GEMINI_TTS_VOICES = [
+  { id: "Kore",    nom: "Kore",    genre: "F", style: "Ferme, professionnelle" },
+  { id: "Puck",    nom: "Puck",    genre: "M", style: "Enjoué, dynamique" },
+  { id: "Zephyr",  nom: "Zephyr",  genre: "F", style: "Légère, chaleureuse" },
+  { id: "Charon",  nom: "Charon",  genre: "M", style: "Grave, posé" },
+  { id: "Fenrir",  nom: "Fenrir",  genre: "M", style: "Énergique" },
+  { id: "Aoede",   nom: "Aoede",   genre: "F", style: "Douce, apaisante" },
+  { id: "Leda",    nom: "Leda",    genre: "F", style: "Jeune, vive" },
+  { id: "Orus",    nom: "Orus",    genre: "M", style: "Autoritaire" },
+] as const;
+
+/** Enveloppe un flux PCM brut (tel que renvoyé par les modèles TTS Gemini) dans un en-tête WAV lisible partout. */
+function pcmToWav(pcmBase64: string, sampleRate: number, channels: number, bitsPerSample: number): Buffer {
+  const pcm = Buffer.from(pcmBase64, "base64");
+  const byteRate = (sampleRate * channels * bitsPerSample) / 8;
+  const blockAlign = (channels * bitsPerSample) / 8;
+  const header = Buffer.alloc(44);
+  header.write("RIFF", 0);
+  header.writeUInt32LE(36 + pcm.length, 4);
+  header.write("WAVE", 8);
+  header.write("fmt ", 12);
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20);
+  header.writeUInt16LE(channels, 22);
+  header.writeUInt32LE(sampleRate, 24);
+  header.writeUInt32LE(byteRate, 28);
+  header.writeUInt16LE(blockAlign, 32);
+  header.writeUInt16LE(bitsPerSample, 34);
+  header.write("data", 36);
+  header.writeUInt32LE(pcm.length, 40);
+  return Buffer.concat([header, pcm]);
 }
 
-export function pollinationsVideoUrl(prompt: string, model: "seedance-2.0" | "veo" | "wan-pro-1080p" | "wan" = "seedance-2.0", duration = 5): string {
-  const keyParam = process.env.POLLINATIONS_API_KEY ? `&key=${process.env.POLLINATIONS_API_KEY}` : "";
-  return `${POLLINATIONS_BASE}/video/${encodeURIComponent(prompt)}?model=${model}&duration=${duration}&nologo=true${keyParam}`;
+/** Génère une voix off via le TTS natif Gemini — retourne un data: URL WAV prêt à jouer. */
+export async function generateSpeechGemini(texte: string, voiceName: string = "Kore"): Promise<string> {
+  const client = getGeminiClient();
+  const response = await client.models.generateContent({
+    model: GEMINI_TTS_MODEL,
+    contents: [{ role: "user", parts: [{ text: texte }] }],
+    config: {
+      responseModalities: ["AUDIO"],
+      speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName } } },
+    },
+  });
+  const part = response.candidates?.[0]?.content?.parts?.find((p) => p.inlineData);
+  const inline = part?.inlineData;
+  if (!inline?.data) throw new Error("Aucun audio renvoyé par Gemini");
+
+  const rateMatch = /rate=(\d+)/.exec(inline.mimeType ?? "");
+  const sampleRate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
+  const wav = pcmToWav(inline.data, sampleRate, 1, 16);
+  return `data:audio/wav;base64,${wav.toString("base64")}`;
 }
 
-export function pollinationsAudioUrl(text: string, voice = "nova", model: "elevenlabs" | "eleven-multilingual-v2" | "qwen-tts" = "eleven-multilingual-v2"): string {
-  const keyParam = process.env.POLLINATIONS_API_KEY ? `&key=${process.env.POLLINATIONS_API_KEY}` : "";
-  return `${POLLINATIONS_BASE}/audio/${encodeURIComponent(text)}?voice=${voice}&model=${model}&nologo=true${keyParam}`;
+/** Génère une image via le modèle multimodal Gemini — retourne un data: URL, ou null si aucune image n'est renvoyée. */
+export async function generateImageGemini(prompt: string): Promise<string | null> {
+  const client = getGeminiClient();
+  const response = await client.models.generateContent({
+    model: GEMINI_IMAGE_MODEL,
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+  });
+  const part = response.candidates?.[0]?.content?.parts?.find((p) => p.inlineData);
+  const inline = part?.inlineData;
+  if (!inline?.data) return null;
+  return `data:${inline.mimeType ?? "image/png"};base64,${inline.data}`;
+}
+
+/** Lance une génération vidéo Veo (asynchrone) — retourne le nom de l'opération à sonder via pollVideoGemini. */
+export async function startVideoGemini(prompt: string, ratio: "16:9" | "9:16" | "1:1" = "16:9"): Promise<string> {
+  const client = getGeminiClient();
+  const operation = await client.models.generateVideos({
+    model: GEMINI_VIDEO_MODEL,
+    source: { prompt },
+    config: { numberOfVideos: 1, aspectRatio: ratio } as any,
+  });
+  if (!operation.name) throw new Error("Gemini n'a renvoyé aucun identifiant d'opération vidéo");
+  return operation.name;
+}
+
+/** Sonde une opération vidéo Veo en cours — retourne son état et, une fois prête, l'URI de la vidéo générée. */
+export async function pollVideoGemini(operationName: string): Promise<{ done: boolean; videoUri?: string; error?: string }> {
+  const client = getGeminiClient();
+  const operation = await client.operations.getVideosOperation({ operation: { name: operationName } as any });
+  if (!operation.done) return { done: false };
+  if (operation.error) return { done: true, error: String((operation.error as any)?.message ?? "Erreur Veo") };
+  const uri = operation.response?.generatedVideos?.[0]?.video?.uri;
+  return { done: true, videoUri: uri };
 }

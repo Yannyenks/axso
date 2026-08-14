@@ -300,16 +300,16 @@ export default function MagicImportPage() {
           <h2 className="text-2xl font-black text-gray-900 mb-2">Catalogue importé !</h2>
           <p className="text-gray-400 text-sm mb-8 max-w-md">
             {importedCount} produit{importedCount > 1 ? "s" : ""} ajouté{importedCount > 1 ? "s" : ""} à votre boutique avec des images Flux.1 haute définition.
-            Xia peut maintenant les enrichir et les promouvoir.
+            Axia peut maintenant les enrichir et les promouvoir.
           </p>
           <div className="flex gap-3">
             <Link href="/dashboard/produits"
               className="px-6 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200 transition-all">
               Voir les produits
             </Link>
-            <Link href="/dashboard/xia"
+            <Link href="/dashboard/axia"
               className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-violet-600 text-white font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2">
-              <Sparkles size={14} /> Demander à Xia de promouvoir
+              <Sparkles size={14} /> Demander à Axia de promouvoir
             </Link>
             <button onClick={reset}
               className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-semibold text-sm hover:opacity-90 transition-all">

@@ -13,7 +13,7 @@ const SECTIONS = [
   { Icon: ShoppingBag, titre: "Boutique & produits", articles: ["Catalogue multi-type", "Gestion des variantes", "Produits digitaux", "Import en masse CSV"], accent: "#7c3aed" },
   { Icon: CreditCard,  titre: "Paiements", articles: ["Wave, Orange Money, MTN MoMo", "Stripe — cartes internationales", "CinetPay & CampPay", "Gestion des remboursements"], accent: "#25D366" },
   { Icon: Truck,       titre: "Livraison", articles: ["Zones et tarifs de livraison", "Intégration livreurs", "Suivi GPS temps réel", "Livraison digitale automatique"], accent: "#0ea5e9" },
-  { Icon: Cpu,         titre: "Xia — Intelligence artificielle", articles: ["Présentation d'Xia", "Chatbot client automatique", "Génération de descriptions", "Onboarding boutique IA"], accent: "#ef4444" },
+  { Icon: Cpu,         titre: "Axia — Intelligence artificielle", articles: ["Présentation d'Axia", "Chatbot client automatique", "Génération de descriptions", "Onboarding boutique IA"], accent: "#ef4444" },
   { Icon: Plug,        titre: "API & intégrations", articles: ["API REST v1 — authentification", "Webhooks — événements", "Connecteurs WhatsApp Business", "SDK JavaScript"], accent: "#F5A623" },
 ];
 

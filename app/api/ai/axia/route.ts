@@ -1,10 +1,10 @@
-// Xia — assistant IA conversationnel du dashboard, orchestrateur des 11 agents experts
+// Axia — assistant IA conversationnel du dashboard, orchestrateur des 11 agents experts
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { aiLimiter, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
-import { runXia, runXiaStream } from "@/lib/xia/engine";
-import { XIA_TOOLS, executeXiaTool } from "@/lib/xia/tools";
+import { runAxia, runAxiaStream } from "@/lib/axia/engine";
+import { AXIA_TOOLS, executeAxiaTool } from "@/lib/axia/tools";
 import { z } from "zod";
 
 const schema = z.object({
@@ -17,7 +17,7 @@ const schema = z.object({
   stream: z.boolean().optional(),
 });
 
-const BASE_SYSTEM_PROMPT = `Tu t'appelles Xia. Tu es l'assistante IA intégrée au dashboard de la boutique sur Axso — une plateforme e-commerce pour l'Afrique francophone et la diaspora.
+const BASE_SYSTEM_PROMPT = `Tu t'appelles Axia. Tu es l'assistante IA intégrée au dashboard de la boutique sur Axso — une plateforme e-commerce pour l'Afrique francophone et la diaspora.
 
 ─── IDENTITÉ ────────────────────────────────────────────────────────────────
 
@@ -139,17 +139,17 @@ export async function POST(request: Request) {
       : { maxIterations: 6, toolDeadlineMs: 65_000, synthesisDeadlineMs: 25_000 };
 
     if (stream) {
-      const sseStream = runXiaStream(SYSTEM_PROMPT, enrichedMessages, XIA_TOOLS, tenantId, executeXiaTool, engineOpts);
+      const sseStream = runAxiaStream(SYSTEM_PROMPT, enrichedMessages, AXIA_TOOLS, tenantId, executeAxiaTool, engineOpts);
       return new Response(sseStream, {
         headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no" },
       });
     }
 
-    const result = await runXia(SYSTEM_PROMPT, enrichedMessages, XIA_TOOLS, tenantId, executeXiaTool, engineOpts);
+    const result = await runAxia(SYSTEM_PROMPT, enrichedMessages, AXIA_TOOLS, tenantId, executeAxiaTool, engineOpts);
     return NextResponse.json(result);
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ message: "Format invalide" }, { status: 400 });
-    console.error("[XIA]", err);
-    return NextResponse.json({ reponse: "Xia a rencontré une erreur momentanée. Réessaie dans un instant.", actions: [] }, { status: 200 });
+    console.error("[AXIA]", err);
+    return NextResponse.json({ reponse: "Axia a rencontré une erreur momentanée. Réessaie dans un instant.", actions: [] }, { status: 200 });
   }
 }

@@ -2,7 +2,7 @@ import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { HeroSection } from "@/components/marketing/HeroSection";
 import { PartenairesSection } from "@/components/marketing/PartenairesSection";
 import { ConstructeurSection } from "@/components/marketing/ConstructeurSection";
-import { XiaSection } from "@/components/marketing/XiaSection";
+import { AxiaSection } from "@/components/marketing/AxiaSection";
 import { VideoSection } from "@/components/marketing/VideoSection";
 import { TarifsSection } from "@/components/marketing/TarifsSection";
 import { TemoignagesSection } from "@/components/marketing/TemoignagesSection";
@@ -17,7 +17,7 @@ export default function HomePage() {
       <HeroSection/>
       <PartenairesSection/>
       <ConstructeurSection/>
-      <XiaSection/>
+      <AxiaSection/>
       <VideoSection/>
       <TarifsSection/>
       <TemoignagesSection/>

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 const VALEURS = [
   { Icon: Globe,  accent: "#F5A623", titre: "Africa-first", desc: "Tout ce que nous construisons est pensé pour les réalités du marché africain — Mobile Money, langues locales, logistique adaptée." },
   { Icon: Zap,    accent: "#F5A623", titre: "Simplicité radicale", desc: "Un entrepreneur à Dakar ou Douala ne doit pas avoir besoin d'un développeur. AXSO est puissant et simple à la fois." },
-  { Icon: Cpu,    accent: "#7c3aed", titre: "IA au service du marchand", desc: "Xia, notre IA embarquée, automatise ce qui prend du temps — descriptions, réponses clients, gestion des commandes." },
+  { Icon: Cpu,    accent: "#7c3aed", titre: "IA au service du marchand", desc: "Axia, notre IA embarquée, automatise ce qui prend du temps — descriptions, réponses clients, gestion des commandes." },
   { Icon: Shield, accent: "#10b981", titre: "Confiance & transparence", desc: "Pas de frais cachés. Pas de commissions surprises. Votre boutique, vos données, votre argent." },
 ];
 

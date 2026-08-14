@@ -159,28 +159,26 @@ export async function analyserBusinessEtCreerPlan(
     plan.devise = PAYS_DEVISES[plan.pays];
   }
 
-  // Générer images Flux pour chaque produit dès la création de la boutique
+  // Génère les visuels produits via Gemini dès la création de la boutique
+  // (échec silencieux par image — ne doit jamais faire échouer la création de boutique)
   if (Array.isArray(plan.produits)) {
-    plan.produits = plan.produits.map((p: any, i: number) => ({
+    plan.produits = await Promise.all(plan.produits.map(async (p: any) => ({
       ...p,
-      imageUrl: generateProductImageUrl(
-        buildProductImagePrompt(p.nom, p.categorie || plan.categorie),
-        i * 7919 + Date.now() % 10000
-      ),
-    }));
+      imageUrl: await generateProductImageUrl(buildProductImagePrompt(p.nom, p.categorie || plan.categorie)),
+    })));
   }
 
-  // Convertir les imagePrompts des sections gallery en vraies URLs Pollinations
+  // Convertit les imagePrompts des sections gallery en vraies images Gemini
   if (Array.isArray(plan.sections)) {
-    plan.sections = plan.sections.map((section: any, si: number) => {
+    plan.sections = await Promise.all(plan.sections.map(async (section: any) => {
       if (section.type === "gallery" && Array.isArray(section.config?.imagePrompts)) {
-        const images = section.config.imagePrompts.map((prompt: string, pi: number) =>
-          generateProductImageUrl(prompt, si * 1000 + pi * 17 + Date.now() % 5000)
+        const images = await Promise.all(
+          section.config.imagePrompts.map((prompt: string) => generateProductImageUrl(prompt))
         );
         return { ...section, config: { ...section.config, images, imagePrompts: undefined } };
       }
       return section;
-    });
+    }));
   }
 
   return plan;

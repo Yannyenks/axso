@@ -204,15 +204,14 @@ function EtapeIA({ onBack, compte }: { onBack: () => void; compte: CompteData })
   return (
     <div className="space-y-4">
       <div className="mb-2">
-        <h2 className="text-xl font-bold text-[#111111]">L'IA crée votre boutique</h2>
+        <h2 className="text-xl font-bold text-[#111111]">Axia crée votre boutique</h2>
         <p className="text-[#808080] text-sm mt-0.5">Décrivez votre business en quelques mots</p>
       </div>
 
       {phase === "saisie" && (
         <div className="flex gap-3">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: "rgba(245,166,35,0.12)", border: "1px solid rgba(245,166,35,0.2)" }}>
-            <Bot size={14} style={{ color: ACCENT }} />
+          <div className="ax-axia-mascot w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0" style={{ background: "#1B2A4A" }}>
+            <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
           </div>
           <div className="flex-1 rounded-2xl px-4 py-3"
             style={{ background: "rgba(245,166,35,0.06)", border: "1px solid rgba(245,166,35,0.15)" }}>
@@ -300,12 +299,12 @@ export default function InscriptionPage() {
         <div className="max-w-sm">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-7"
             style={{ background: "rgba(245,166,35,0.1)", border: "1px solid rgba(245,166,35,0.25)", color: ACCENT }}>
-            <Sparkles size={11} /> Inscription gratuite · Propulsée par l'IA
+            <Sparkles size={11} /> Inscription gratuite · Propulsée par Axia
           </div>
           <h1 className="text-3xl font-bold text-[#111111] leading-tight mb-4">
-            Décrivez votre business,<br />
+            Crée ta boutique avec<br />
             <span style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              l'IA crée tout
+              Axia
             </span>
           </h1>
           <p className="text-[#737373] text-sm leading-relaxed mb-8">
@@ -315,7 +314,7 @@ export default function InscriptionPage() {
           <div className="space-y-3">
             {[
               { icon: Store, label: "Votre compte",       desc: "Email et mot de passe",     done: etape > 0 },
-              { icon: Bot,   label: "L'IA configure tout", desc: "Décrivez votre business",  done: false },
+              { icon: Bot,   label: "Axia configure tout", desc: "Décrivez votre business",  done: false },
             ].map((s, i) => (
               <div key={i}
                 className="flex items-center gap-3 p-3.5 rounded-2xl transition-all"
@@ -353,7 +352,7 @@ export default function InscriptionPage() {
         <div className="w-full max-w-md pt-16 lg:pt-0">
           {/* Mobile stepper */}
           <div className="flex items-center justify-center gap-2 mb-6 lg:hidden">
-            {["Compte", "Boutique IA"].map((label, i) => (
+            {["Compte", "Boutique Axia"].map((label, i) => (
               <div key={i} className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
                   style={{ background: i <= etape ? `linear-gradient(135deg,${ACCENT},${ACCENT_DARK})` : "rgba(0,0,0,0.08)", color: i <= etape ? "#080808" : "rgba(0,0,0,0.4)" }}>
@@ -394,7 +393,7 @@ export default function InscriptionPage() {
                 <button type="submit"
                   className="w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-95 mt-2"
                   style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, color: "#080808", boxShadow: `0 8px 30px rgba(245,166,35,0.3)` }}>
-                  <Bot size={16} /> Continuer avec l'IA <ArrowRight size={16} />
+                  <Bot size={16} /> Continuer avec Axia <ArrowRight size={16} />
                 </button>
               </form>
             )}

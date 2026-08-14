@@ -1,19 +1,19 @@
-// Xia — surface d'outils complète (actions boutique + connecteurs MCP + délégation experte)
+// Axia — surface d'outils complète (actions boutique + connecteurs MCP + délégation experte)
 import { prisma } from "@/lib/prisma";
 import { Resend } from "resend";
 import type { AgentTool, ToolExecutor } from "@/lib/agent-runner";
-import { getXiaAgentById, XIA_AGENTS } from "./agents";
+import { getAxiaAgentById, AXIA_AGENTS } from "./agents";
 import { notifierMarchand } from "@/lib/notifications-marchand";
 import { executerOutilMcp } from "@/lib/mcp/executor";
 import { generateProductImage, buildProductImagePrompt } from "@/lib/image-gen";
-import { pollinationsVideoUrl, pollinationsAudioUrl, pollinationsImageUrl } from "@/lib/llm-client";
+import { generateSpeechGemini, startVideoGemini, GEMINI_TTS_VOICES } from "@/lib/llm-client";
 import { slugify } from "@/lib/utils";
 
-export const XIA_TOOLS: AgentTool[] = [
+export const AXIA_TOOLS: AgentTool[] = [
   // ─── IMAGES ───────────────────────────────────────────────────────────────
   {
     name: "generer_image",
-    description: "Génère une image produit ultra HD via fal.ai FLUX.1-dev ou Pollinations (gptimage/seedream-pro/flux). TOUJOURS appeler avant ajouter_produit.",
+    description: "Génère une image produit ultra HD via Gemini (modèle image natif). TOUJOURS appeler avant ajouter_produit.",
     parameters: {
       type: "object" as const,
       properties: {
@@ -27,13 +27,12 @@ export const XIA_TOOLS: AgentTool[] = [
   // ─── VIDÉO ────────────────────────────────────────────────────────────────
   {
     name: "generer_video",
-    description: "Génère une vidéo IA (Seedance 2.0, Veo, Wan Pro 1080p) depuis un prompt. Retourne l'URL de la vidéo MP4.",
+    description: "Lance une génération vidéo IA (Gemini Veo) depuis un prompt. La génération prend plusieurs minutes : l'outil démarre le rendu et le marchand retrouve la vidéo prête dans Contenus dès qu'elle est prête.",
     parameters: {
       type: "object" as const,
       properties: {
         prompt: { type: "string", description: "Description cinématique précise de la vidéo" },
-        model: { type: "string", enum: ["seedance-2.0", "veo", "wan-pro-1080p", "wan"], description: "Modèle vidéo" },
-        duration: { type: "number", description: "Durée en secondes (3-10)" },
+        ratio: { type: "string", enum: ["16:9", "9:16", "1:1"], description: "Format vidéo" },
         sujet: { type: "string", description: "Contexte : produit à filmer, style, ambiance" },
       },
       required: ["prompt"],
@@ -42,13 +41,12 @@ export const XIA_TOOLS: AgentTool[] = [
   // ─── AUDIO / TTS ──────────────────────────────────────────────────────────
   {
     name: "generer_voiceover",
-    description: "Génère un audio voix off professionnel (ElevenLabs/Eleven Multilingual). Retourne l'URL MP3.",
+    description: "Génère un audio voix off professionnel via le TTS natif Gemini. Retourne l'audio au format WAV.",
     parameters: {
       type: "object" as const,
       properties: {
         texte: { type: "string", description: "Texte à lire (max 500 mots)" },
-        voix: { type: "string", enum: ["nova", "alloy", "echo", "shimmer", "onyx", "rachel", "bella", "charlotte", "dorothy"], description: "Voix TTS" },
-        langue: { type: "string", description: "Langue : fr, en, ar, wo, etc." },
+        voix: { type: "string", enum: GEMINI_TTS_VOICES.map(v => v.id), description: "Voix TTS Gemini" },
       },
       required: ["texte"],
     },
@@ -683,38 +681,37 @@ export const XIA_TOOLS: AgentTool[] = [
 ];
 
 // ─── EXÉCUTEUR ────────────────────────────────────────────────────────────────
-export const executeXiaTool: ToolExecutor = async (nom, args, tenantId) => {
+export const executeAxiaTool: ToolExecutor = async (nom, args, tenantId) => {
   try {
     switch (nom) {
 
       case "generer_image": {
         const prompt = buildProductImagePrompt(args.description, args.categorie, args.style || "product_white");
-        let url: string;
-        if (process.env.FAL_KEY) {
-          url = await generateProductImage({ prompt });
-        } else if (process.env.POLLINATIONS_API_KEY) {
-          url = pollinationsImageUrl(prompt, "gptimage");
-        } else {
-          url = await generateProductImage({ prompt });
-        }
+        const url = await generateProductImage({ prompt });
+        if (!url) return { succes: false, resultat: "Génération d'image indisponible pour le moment (quota Gemini atteint) — réessaie dans quelques instants." };
         return { succes: true, resultat: `IMAGE:${url}` };
       }
 
       case "generer_video": {
-        const model = args.model || "seedance-2.0";
-        const duration = Math.min(Math.max(args.duration || 5, 3), 10);
         const fullPrompt = args.sujet ? `${args.prompt}, ${args.sujet}` : args.prompt;
-        const url = pollinationsVideoUrl(fullPrompt, model, duration);
-        return { succes: true, resultat: `VIDEO:${url}` };
+        try {
+          const operationName = await startVideoGemini(fullPrompt, args.ratio || "16:9");
+          await prisma.videoGeneree.create({
+            data: { tenantId, prompt: fullPrompt, style: "product", statut: "en_cours", requestId: operationName },
+          });
+          return { succes: true, resultat: "La génération vidéo a démarré (Gemini Veo) — elle apparaîtra dans Contenus dans quelques minutes." };
+        } catch (err: any) {
+          return { succes: false, resultat: `Génération vidéo indisponible pour le moment : ${err?.message?.slice(0, 150) ?? "erreur Gemini"}` };
+        }
       }
 
       case "generer_voiceover": {
-        if (!process.env.POLLINATIONS_API_KEY) {
-          return { succes: false, resultat: "POLLINATIONS_API_KEY requise pour la voix off. Ajoute-la dans .env.local" };
+        try {
+          const url = await generateSpeechGemini(args.texte, args.voix || "Kore");
+          return { succes: true, resultat: `AUDIO:${url}` };
+        } catch (err: any) {
+          return { succes: false, resultat: `Voix off indisponible pour le moment : ${err?.message?.slice(0, 150) ?? "erreur Gemini"}` };
         }
-        const voix = args.voix || "nova";
-        const url = pollinationsAudioUrl(args.texte, voix, "eleven-multilingual-v2");
-        return { succes: true, resultat: `AUDIO:${url}` };
       }
 
       case "ajouter_produit": {
@@ -984,7 +981,7 @@ export const executeXiaTool: ToolExecutor = async (nom, args, tenantId) => {
         await notifierMarchand({
           tenantId,
           type: "escalade_humain",
-          titre: `[${urgenceLabel}] Escalade Xia`,
+          titre: `[${urgenceLabel}] Escalade Axia`,
           message: `${args.raison}${args.contexte ? `\nContexte : ${args.contexte}` : ""}`,
         });
         return { succes: true, resultat: `Escalade enregistrée (urgence: ${urgenceLabel}). L'équipe sera notifiée pour traiter : ${args.raison}` };
@@ -1264,8 +1261,8 @@ export const executeXiaTool: ToolExecutor = async (nom, args, tenantId) => {
       }
 
       case "deleguer_vers_agent": {
-        const agentDef = getXiaAgentById(args.agent);
-        if (!agentDef) return { succes: false, resultat: `Agent inconnu : "${args.agent}". Agents disponibles : ${XIA_AGENTS.map(a => a.id).join(", ")}` };
+        const agentDef = getAxiaAgentById(args.agent);
+        if (!agentDef) return { succes: false, resultat: `Agent inconnu : "${args.agent}". Agents disponibles : ${AXIA_AGENTS.map(a => a.id).join(", ")}` };
 
         const tenantCtx = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true, pays: true, devise: true, categorie: true } }).catch(() => null);
 
@@ -1277,13 +1274,13 @@ export const executeXiaTool: ToolExecutor = async (nom, args, tenantId) => {
           tenantCtx?.categorie ? `Catégorie : ${tenantCtx.categorie}` : "",
         ].filter(Boolean).join("\n");
 
-        const agentTools = XIA_TOOLS.filter(t => agentDef.tools.includes(t.name));
+        const agentTools = AXIA_TOOLS.filter(t => agentDef.tools.includes(t.name));
         const tacheComplete = args.contexte_supplementaire ? `${args.tache}\n\nContexte supplémentaire : ${args.contexte_supplementaire}` : args.tache;
 
         try {
           // Import différé pour éviter la dépendance circulaire (engine importe tools pour le prompt de base uniquement)
-          const { runXia } = await import("./engine");
-          const result = await runXia(agentSystemPrompt, [{ role: "user", content: tacheComplete }], agentTools, tenantId, executeXiaTool, {
+          const { runAxia } = await import("./engine");
+          const result = await runAxia(agentSystemPrompt, [{ role: "user", content: tacheComplete }], agentTools, tenantId, executeAxiaTool, {
             maxIterations: 4,
             toolDeadlineMs: 18_000,
             synthesisDeadlineMs: 10_000,

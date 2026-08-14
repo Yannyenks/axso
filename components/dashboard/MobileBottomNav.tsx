@@ -10,14 +10,14 @@ import {
   Package2, Bot, Zap,
 } from "lucide-react";
 import {
-  IconAccueil, IconProduits, IconXia, IconCommandes,
+  IconAccueil, IconProduits, IconAxia, IconCommandes,
 } from "@/components/dashboard/AppIcons";
 
 const GROUPS = [
   {
     label: "Intelligence IA", color: "#1B2A4A",
     items: [
-      { href: "/dashboard/xia",       label: "Xia — Assistante IA", icon: Zap },
+      { href: "/dashboard/axia",       label: "Axia — Assistante IA", icon: Zap },
       { href: "/dashboard/scheduler", label: "Planificateur",    icon: Calendar },
     ],
   },
@@ -85,7 +85,7 @@ export function MobileBottomNav() {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const xiaActive = pathname.startsWith("/dashboard/xia");
+  const axiaActive = pathname.startsWith("/dashboard/axia");
 
   return (
     <>
@@ -96,16 +96,16 @@ export function MobileBottomNav() {
       >
         <div className="relative flex items-end">
 
-          {/* Xia — flottante au-dessus du centre */}
+          {/* Axia — flottante au-dessus du centre */}
           <Link
-            href="/dashboard/xia"
+            href="/dashboard/axia"
             className="absolute left-1/2 -translate-x-1/2 -top-10 z-10 flex flex-col items-center gap-0.5"
           >
             <div
               className="transition-transform active:scale-90"
-              style={{ filter: `drop-shadow(0 4px 14px rgba(27,42,74,${xiaActive ? "0.55" : "0.35"}))` }}
+              style={{ filter: `drop-shadow(0 4px 14px rgba(27,42,74,${axiaActive ? "0.55" : "0.35"}))` }}
             >
-              <IconXia size={52} />
+              <IconAxia size={52} />
             </div>
           </Link>
 
@@ -148,15 +148,15 @@ export function MobileBottomNav() {
               );
             })}
 
-            {/* Espace central pour Xia */}
+            {/* Espace central pour Axia */}
             <div className="w-14 flex-shrink-0 flex flex-col items-center pt-1 pb-0.5">
               <span
                 className="text-[9.5px] font-bold leading-none"
-                style={{ color: xiaActive ? "#1B2A4A" : "#CCCCCC" }}
+                style={{ color: axiaActive ? "#1B2A4A" : "#CCCCCC" }}
               >
-                Xia
+                Axia
               </span>
-              {xiaActive && (
+              {axiaActive && (
                 <div className="w-1 h-1 rounded-full bg-[#1B2A4A] mt-0.5" />
               )}
             </div>

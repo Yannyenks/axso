@@ -15,8 +15,8 @@ function makeId() {
   return Math.random().toString(36).slice(2);
 }
 
-// ─── XIA ──────────────────────────────────────────────────────────────────────
-export function IconXia({ size = 32 }: IconProps) {
+// ─── AXIA ──────────────────────────────────────────────────────────────────────
+export function IconAxia({ size = 32 }: IconProps) {
   return (
     <div
       style={{
@@ -25,7 +25,7 @@ export function IconXia({ size = 32 }: IconProps) {
         flexShrink: 0,
       }}
     >
-      <img src="/xia-logo.jpg" alt="Xia" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      <img src="/axia-icon.png" alt="Axia" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
     </div>
   );
 }

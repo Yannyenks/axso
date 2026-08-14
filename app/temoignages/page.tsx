@@ -26,7 +26,7 @@ const TEMOIGNAGES = [
     accentBg: "#F5A623",
     note: 5,
     chiffre: "+280% de CA en 4 mois",
-    contenu: "Avant AXSO, je gérais tout sur WhatsApp et les transferts manuels. Aujourd'hui j'ai une vraie boutique en ligne, mes clients paient via Wave ou Orange Money et je reçois mes fonds directement dans mon wallet. Xia gère mes descriptions produits et même mes relances clients — c'est comme avoir une assistante disponible 24h/24.",
+    contenu: "Avant AXSO, je gérais tout sur WhatsApp et les transferts manuels. Aujourd'hui j'ai une vraie boutique en ligne, mes clients paient via Wave ou Orange Money et je reçois mes fonds directement dans mon wallet. Axia gère mes descriptions produits et même mes relances clients — c'est comme avoir une assistante disponible 24h/24.",
   },
   {
     nom: "Moussa Traoré",
@@ -59,7 +59,7 @@ const TEMOIGNAGES = [
     accentBg: "#3b82f6",
     note: 5,
     chiffre: "84% de taux de fidélisation",
-    contenu: "Le programme d'affiliation d'AXSO est une révolution. J'ai 34 affiliés qui recommandent mes produits naturels et je ne paie qu'à la commission. Xia gère les relances, envoie les SMS automatiques et segmente mes clients — mon taux de fidélisation est passé de 31% à 84% en 8 mois.",
+    contenu: "Le programme d'affiliation d'AXSO est une révolution. J'ai 34 affiliés qui recommandent mes produits naturels et je ne paie qu'à la commission. Axia gère les relances, envoie les SMS automatiques et segmente mes clients — mon taux de fidélisation est passé de 31% à 84% en 8 mois.",
   },
   {
     nom: "Issa Coulibaly",
@@ -70,7 +70,7 @@ const TEMOIGNAGES = [
     accentBg: "#ef4444",
     note: 5,
     chiffre: "Zero rupture de stock",
-    contenu: "La gestion de stock en temps réel d'AXSO m'a sauvé. Avant je découvrais les ruptures quand les clients réclamaient. Maintenant Xia me prévient dès que j'atteins le seuil critique et peut même passer une commande fournisseur automatiquement. Plus aucune vente perdue pour cause de rupture.",
+    contenu: "La gestion de stock en temps réel d'AXSO m'a sauvé. Avant je découvrais les ruptures quand les clients réclamaient. Maintenant Axia me prévient dès que j'atteins le seuil critique et peut même passer une commande fournisseur automatiquement. Plus aucune vente perdue pour cause de rupture.",
   },
   {
     nom: "Nadia Benali",
@@ -81,7 +81,7 @@ const TEMOIGNAGES = [
     accentBg: "#F5A623",
     note: 5,
     chiffre: "450K XOF le premier mois",
-    contenu: "J'ai commencé avec zéro stock grâce au dropshipping intégré dans AXSO. J'importe des produits depuis AliExpress en quelques clics, les descriptions sont générées en français par Xia, et mes clients ne voient aucune différence. Premier mois : 450 000 XOF de chiffre d'affaires sans un seul article en stock.",
+    contenu: "J'ai commencé avec zéro stock grâce au dropshipping intégré dans AXSO. J'importe des produits depuis AliExpress en quelques clics, les descriptions sont générées en français par Axia, et mes clients ne voient aucune différence. Premier mois : 450 000 XOF de chiffre d'affaires sans un seul article en stock.",
   },
   {
     nom: "Boubacar Barry",
@@ -92,7 +92,7 @@ const TEMOIGNAGES = [
     accentBg: "#7c3aed",
     note: 5,
     chiffre: "2 boutiques, 1 dashboard",
-    contenu: "J'ai deux boutiques — une d'artisanat et une de déco intérieure. Sur AXSO je les gère depuis un seul tableau de bord. Xia me génère du contenu différent pour chaque boutique, adapté au ton et aux produits. Le plan Illimité me coûte moins qu'un seul employé et fait bien plus.",
+    contenu: "J'ai deux boutiques — une d'artisanat et une de déco intérieure. Sur AXSO je les gère depuis un seul tableau de bord. Axia me génère du contenu différent pour chaque boutique, adapté au ton et aux produits. Le plan Illimité me coûte moins qu'un seul employé et fait bien plus.",
   },
   {
     nom: "Grace Akosua",
@@ -183,7 +183,7 @@ export default function TemoignagesPage() {
             {Array(5).fill(0).map((_, i) => <Star key={i} size={18} fill="#F5A623" style={{ color: "#F5A623" }} />)}
           </div>
           <blockquote className="text-xl sm:text-2xl font-medium text-[#333333] leading-relaxed mb-8 max-w-3xl">
-            "Avant AXSO, je gérais tout sur WhatsApp et les transferts manuels. Aujourd'hui j'ai une vraie boutique en ligne, mes clients paient via Wave ou Orange Money et je reçois mes fonds directement dans mon wallet. Xia gère mes descriptions produits et même mes relances clients — c'est comme avoir une assistante disponible 24h/24."
+            "Avant AXSO, je gérais tout sur WhatsApp et les transferts manuels. Aujourd'hui j'ai une vraie boutique en ligne, mes clients paient via Wave ou Orange Money et je reçois mes fonds directement dans mon wallet. Axia gère mes descriptions produits et même mes relances clients — c'est comme avoir une assistante disponible 24h/24."
           </blockquote>
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0"

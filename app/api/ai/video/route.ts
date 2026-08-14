@@ -1,13 +1,12 @@
-// API Génération Vidéo IA — fal.ai
-// Docs : https://fal.ai/models/fal-ai/wan-video
-// Clé gratuite : https://fal.ai → Dashboard → API Keys (crédits offerts à l'inscription)
+// API Génération Vidéo IA — Gemini Veo (long-running, sondé via GET)
+// Note quota : le modèle vidéo Veo peut renvoyer 429 (quota 0) sur le plan
+// gratuit tant qu'aucun compte de facturation Google n'est rattaché au projet.
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-
-const FAL_BASE = "https://queue.fal.run";
+import { startVideoGemini, pollVideoGemini } from "@/lib/llm-client";
 
 const schemaGenerer = z.object({
   prompt: z.string().min(5),
@@ -34,14 +33,6 @@ export async function POST(req: NextRequest) {
     if (!session) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     const tenantId = (session.user as any)?.tenantId;
 
-    const falKey = process.env.FAL_KEY;
-    if (!falKey) {
-      return NextResponse.json({
-        message: "FAL_KEY manquante dans .env.local. Créez un compte sur fal.ai pour obtenir votre clé gratuite.",
-        signup: "https://fal.ai",
-      }, { status: 503 });
-    }
-
     const body = await req.json();
     const { prompt, style, duree, ratio } = schemaGenerer.parse(body);
     const promptEnrichi = enrichirPrompt(prompt, style);
@@ -51,35 +42,17 @@ export async function POST(req: NextRequest) {
       data: { tenantId, prompt: promptEnrichi, style, statut: "en_cours" },
     });
 
-    // Lancer la génération sur fal.ai (async queue)
-    const falRes = await fetch(`${FAL_BASE}/fal-ai/wan-video`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Key ${falKey}`,
-      },
-      body: JSON.stringify({
-        prompt: promptEnrichi,
-        num_frames: duree === "10s" ? 81 : 49,
-        fps: 8,
-        aspect_ratio: ratio,
-        negative_prompt: "blurry, low quality, watermark, text overlay, distorted",
-      }),
-    });
-
-    if (!falRes.ok) {
-      const err = await falRes.text();
-      await prisma.videoGeneree.update({ where: { id: video.id }, data: { statut: "erreur", erreur: err } });
-      return NextResponse.json({ message: `fal.ai erreur: ${err}` }, { status: 500 });
+    try {
+      const operationName = await startVideoGemini(promptEnrichi, ratio);
+      await prisma.videoGeneree.update({ where: { id: video.id }, data: { requestId: operationName } });
+      return NextResponse.json({ videoId: video.id, statut: "en_cours" });
+    } catch (genErr: any) {
+      const message = genErr?.message?.includes("429") || genErr?.message?.includes("RESOURCE_EXHAUSTED")
+        ? "Quota Gemini Veo atteint pour le moment. Réessaie dans quelques instants."
+        : `Erreur Gemini Veo : ${genErr?.message ?? "inconnue"}`;
+      await prisma.videoGeneree.update({ where: { id: video.id }, data: { statut: "erreur", erreur: message } });
+      return NextResponse.json({ message }, { status: 500 });
     }
-
-    const falData = await falRes.json();
-    const requestId = falData.request_id || falData.id;
-
-    // Sauvegarder le requestId pour polling
-    await prisma.videoGeneree.update({ where: { id: video.id }, data: { requestId } });
-
-    return NextResponse.json({ videoId: video.id, requestId, statut: "en_cours" });
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ message: "Données invalides" }, { status: 400 });
     console.error("[API/VIDEO]", err);
@@ -100,49 +73,35 @@ export async function GET(req: NextRequest) {
     if (!video) return NextResponse.json({ message: "Vidéo introuvable" }, { status: 404 });
 
     // Si déjà terminée ou en erreur, retourner directement
-    if (video.statut !== "en_cours") {
+    if (video.statut !== "en_cours" || !video.requestId) {
       return NextResponse.json(video);
     }
 
-    // Checker le statut chez fal.ai
-    const falKey = process.env.FAL_KEY;
-    if (!falKey || !video.requestId) {
-      return NextResponse.json(video);
+    const etat = await pollVideoGemini(video.requestId);
+
+    if (!etat.done) return NextResponse.json(video);
+
+    if (etat.error) {
+      const updated = await prisma.videoGeneree.update({
+        where: { id: videoId },
+        data: { statut: "erreur", erreur: etat.error },
+      });
+      return NextResponse.json(updated);
     }
 
-    const statusRes = await fetch(`${FAL_BASE}/fal-ai/wan-video/requests/${video.requestId}/status`, {
-      headers: { Authorization: `Key ${falKey}` },
+    if (!etat.videoUri) {
+      const updated = await prisma.videoGeneree.update({
+        where: { id: videoId },
+        data: { statut: "erreur", erreur: "Aucune vidéo renvoyée par Gemini" },
+      });
+      return NextResponse.json(updated);
+    }
+
+    const updated = await prisma.videoGeneree.update({
+      where: { id: videoId },
+      data: { videoUrl: etat.videoUri, statut: "pret" },
     });
-
-    if (!statusRes.ok) return NextResponse.json(video);
-
-    const statusData = await statusRes.json();
-
-    if (statusData.status === "COMPLETED") {
-      // Récupérer le résultat
-      const resultRes = await fetch(`${FAL_BASE}/fal-ai/wan-video/requests/${video.requestId}`, {
-        headers: { Authorization: `Key ${falKey}` },
-      });
-      const result = await resultRes.json();
-      const videoUrl = result.video?.url || result.output?.video?.url;
-      const thumbnailUrl = result.thumbnail?.url;
-
-      const updated = await prisma.videoGeneree.update({
-        where: { id: videoId },
-        data: { videoUrl, thumbnailUrl, statut: "pret", duree: statusData.duration },
-      });
-      return NextResponse.json(updated);
-    }
-
-    if (statusData.status === "FAILED") {
-      const updated = await prisma.videoGeneree.update({
-        where: { id: videoId },
-        data: { statut: "erreur", erreur: statusData.error || "Génération échouée" },
-      });
-      return NextResponse.json(updated);
-    }
-
-    return NextResponse.json({ ...video, progress: statusData.progress });
+    return NextResponse.json(updated);
   } catch (err) {
     console.error("[API/VIDEO/STATUS]", err);
     return NextResponse.json({ message: "Erreur" }, { status: 500 });

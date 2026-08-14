@@ -26,7 +26,7 @@ const ARTICLES = [
   },
   {
     tag: "IA", tagColor: "#7c3aed",
-    titre: "Xia IA : comment l'intelligence artificielle booste vos ventes",
+    titre: "Axia IA : comment l'intelligence artificielle booste vos ventes",
     extrait: "Descriptions auto-générées, réponses clients, suggestions de prix — voici comment l'IA travaille pour vous 24h/24.",
     date: "5 juil. 2026", lecture: "5 min",
     Icon: Cpu, featured: false,

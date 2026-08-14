@@ -1,7 +1,7 @@
 /**
- * Xia — moteur d'orchestration robuste (Gemini exclusif, @google/genai)
+ * Axia — moteur d'orchestration robuste (Gemini exclusif, @google/genai)
  *
- * Objectif : tant que l'appel API Gemini aboutit, Xia produit toujours une
+ * Objectif : tant que l'appel API Gemini aboutit, Axia produit toujours une
  * réponse de qualité — jamais de réponse vide, jamais de crash silencieux.
  *
  * Garanties :
@@ -12,22 +12,22 @@
  */
 import { hasGemini, completionWithToolsAuto, streamGemini, type ToolDefinition } from "@/lib/llm-client";
 
-export type XiaTool = ToolDefinition;
-export interface XiaResult { reponse: string; actions: string[]; }
+export type AxiaTool = ToolDefinition;
+export interface AxiaResult { reponse: string; actions: string[]; }
 export type ToolExecutor = (
   name: string,
   args: Record<string, any>,
   tenantId: string
 ) => Promise<{ succes: boolean; resultat: string }>;
 
-export interface XiaRunOptions {
+export interface AxiaRunOptions {
   maxIterations?: number;
   toolDeadlineMs?: number;
   synthesisDeadlineMs?: number;
   retryAttempts?: number;
 }
 
-const DEFAULTS: Required<XiaRunOptions> = {
+const DEFAULTS: Required<AxiaRunOptions> = {
   maxIterations: 6,
   toolDeadlineMs: 45_000,
   synthesisDeadlineMs: 25_000,
@@ -82,10 +82,10 @@ function fallbackReponse(toolResults: string[], phase1Text: string): string {
 async function toolPhase(
   systemPrompt: string,
   messages: Array<{ role: "user" | "assistant"; content: string }>,
-  tools: XiaTool[],
+  tools: AxiaTool[],
   tenantId: string,
   executeOutil: ToolExecutor,
-  opts: Required<XiaRunOptions>
+  opts: Required<AxiaRunOptions>
 ) {
   const start = Date.now();
   const actionsEffectuees: string[] = [];
@@ -106,7 +106,7 @@ async function toolPhase(
           "tool_call"
         );
       } catch (err: any) {
-        console.warn("[xia] tool_call abandonné:", err?.message?.slice(0, 100));
+        console.warn("[axia] tool_call abandonné:", err?.message?.slice(0, 100));
         break;
       }
 
@@ -140,22 +140,22 @@ async function toolPhase(
       break;
     }
   } catch (err: any) {
-    console.warn("[xia] tool phase:", err?.message?.slice(0, 100));
+    console.warn("[axia] tool phase:", err?.message?.slice(0, 100));
   }
 
   return { actionsEffectuees, toolResults, phase1Text };
 }
 
-// ─── runXia (non-streaming) ────────────────────────────────────────────────────
+// ─── runAxia (non-streaming) ────────────────────────────────────────────────────
 
-export async function runXia(
+export async function runAxia(
   systemPrompt: string,
   messages: Array<{ role: "user" | "assistant"; content: string }>,
-  tools: XiaTool[],
+  tools: AxiaTool[],
   tenantId: string,
   executeOutil: ToolExecutor,
-  options: XiaRunOptions = {}
-): Promise<XiaResult> {
+  options: AxiaRunOptions = {}
+): Promise<AxiaResult> {
   const opts = { ...DEFAULTS, ...options };
   const { actionsEffectuees, toolResults, phase1Text } = await toolPhase(systemPrompt, messages, tools, tenantId, executeOutil, opts);
 
@@ -183,22 +183,22 @@ export async function runXia(
       );
       return { reponse, actions: actionsEffectuees };
     } catch (err: any) {
-      console.warn("[xia] synthesis échouée:", err?.message?.slice(0, 100));
+      console.warn("[axia] synthesis échouée:", err?.message?.slice(0, 100));
     }
   }
 
   return { reponse: fallbackReponse(toolResults, phase1Text), actions: actionsEffectuees };
 }
 
-// ─── runXiaStream (SSE) ─────────────────────────────────────────────────────
+// ─── runAxiaStream (SSE) ─────────────────────────────────────────────────────
 
-export function runXiaStream(
+export function runAxiaStream(
   systemPrompt: string,
   messages: Array<{ role: "user" | "assistant"; content: string | any[] }>,
-  tools: XiaTool[],
+  tools: AxiaTool[],
   tenantId: string,
   executeOutil: ToolExecutor,
-  options: XiaRunOptions = {}
+  options: AxiaRunOptions = {}
 ): ReadableStream<Uint8Array> {
   const opts = { ...DEFAULTS, ...options };
   const encoder = new TextEncoder();
@@ -248,7 +248,7 @@ export function runXiaStream(
           })(), opts.synthesisDeadlineMs, "stream_synthesis");
           if (gotToken) { finish(actionsEffectuees); return; }
         } catch (err: any) {
-          console.warn("[xia] stream synthesis échouée:", err?.message?.slice(0, 100));
+          console.warn("[axia] stream synthesis échouée:", err?.message?.slice(0, 100));
         }
       }
 

@@ -1,61 +1,56 @@
-// Génération d'images produits — fal.ai FLUX.1-dev (ultra HD) ou Pollinations flux-pro (gratuit)
-// SDK : @fal-ai/client (installé) | Fallback : Pollinations (aucune clé requise)
+// Génération d'images produits — Gemini natif exclusif (gemini-3.1-flash-image)
+//
+// Note quota : sur le plan gratuit Gemini, les modèles image peuvent renvoyer
+// une erreur 429 (quota 0) tant qu'aucun compte de facturation Google n'est
+// rattaché au projet — ce n'est pas un bug. generateProductImage() échoue
+// alors silencieusement (retourne null) pour ne jamais bloquer la création
+// d'un produit ou d'une boutique faute d'image.
 
-import { fal } from "@fal-ai/client";
+import { put } from "@vercel/blob";
+import { generateImageGemini } from "./llm-client";
 
 export interface ImageGenOptions {
   prompt: string;
-  width?: number;
-  height?: number;
-  seed?: number;
 }
 
-// fal.ai FLUX.1-dev — qualité maximale, ~5-10s par image
-async function generateViaFal(prompt: string): Promise<string | null> {
-  const falKey = process.env.FAL_KEY;
-  if (!falKey) return null;
-
+/** Upload une image générée (data: URL) vers Vercel Blob si configuré, sinon la garde en data: URL. */
+async function persistGeneratedImage(dataUrl: string): Promise<string> {
+  if (!process.env.BLOB_READ_WRITE_TOKEN) return dataUrl;
   try {
-    fal.config({ credentials: falKey });
-
-    const result = await fal.subscribe("fal-ai/flux/dev", {
-      input: {
-        prompt,
-        image_size: "square_hd",      // 1024×1024
-        num_inference_steps: 28,
-        guidance_scale: 3.5,
-        num_images: 1,
-        enable_safety_checker: false,
-      },
+    const [meta, base64] = dataUrl.split(",");
+    const mimeType = meta.match(/data:(.*?);base64/)?.[1] ?? "image/png";
+    const ext = mimeType.split("/")[1]?.split("+")[0] ?? "png";
+    const buffer = Buffer.from(base64, "base64");
+    const blob = await put(`ia-generation/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`, buffer, {
+      access: "public",
+      contentType: mimeType,
     });
-
-    const url = (result.data as any)?.images?.[0]?.url;
-    return url ?? null;
+    return blob.url;
   } catch (err) {
-    console.error("[image-gen/fal]", err);
+    console.error("[image-gen/blob]", err);
+    return dataUrl;
+  }
+}
+
+/** Génère une image produit via Gemini. Retourne null (jamais d'exception) si le quota ou le réseau échoue. */
+export async function generateProductImage(opts: ImageGenOptions): Promise<string | null> {
+  try {
+    const dataUrl = await generateImageGemini(opts.prompt);
+    if (!dataUrl) return null;
+    return await persistGeneratedImage(dataUrl);
+  } catch (err) {
+    console.error("[image-gen/gemini]", (err as any)?.message ?? err);
     return null;
   }
 }
 
-// Pollinations flux-pro — gratuit, URL construite (image chargée par le navigateur)
-export function pollinationsUrl(prompt: string, seed?: number): string {
-  const s = seed ?? Math.floor(Math.random() * 999999);
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&model=flux-pro&enhance=true&seed=${s}`;
+/** Version historique attendue par les appelants existants — retourne "" plutôt que null en cas d'échec (pas d'image cassée dans l'UI). */
+export async function generateProductImageUrl(prompt: string): Promise<string> {
+  const url = await generateProductImage({ prompt });
+  return url ?? "";
 }
 
-// Génère une image — FLUX.1-dev via fal.ai si FAL_KEY disponible, sinon Pollinations
-export async function generateProductImage(opts: ImageGenOptions): Promise<string> {
-  const falUrl = await generateViaFal(opts.prompt);
-  if (falUrl) return falUrl;
-  return pollinationsUrl(opts.prompt, opts.seed);
-}
-
-// Version instantanée (URL uniquement, pas d'appel API) — pour imports en masse
-export function generateProductImageUrl(prompt: string, seed?: number): string {
-  return pollinationsUrl(prompt, seed);
-}
-
-// Construit le prompt d'image optimisé pour FLUX.1-dev
+// Construit le prompt d'image optimisé pour Gemini
 export function buildProductImagePrompt(nom: string, categorie: string, style = "product_white"): string {
   const styleMap: Record<string, string> = {
     product_white: "professional product photography, pure white background, studio lighting, e-commerce, sharp details, 8K quality",

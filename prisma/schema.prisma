@@ -651,7 +651,7 @@ model VideoGeneree {
   thumbnailUrl String?
   duree       Int?     // secondes
   statut      String   @default("en_cours") // en_cours | pret | erreur
-  requestId   String?  // ID de la requête fal.ai pour polling
+  requestId   String?  // nom de l'opération Gemini Veo pour polling
   erreur      String?
   createdAt   DateTime @default(now())
 }

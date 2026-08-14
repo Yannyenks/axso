@@ -17,7 +17,7 @@ const SECTIONS = [
   },
   {
     titre: "3. Services proposés",
-    contenu: `AXSO propose une plateforme SaaS permettant la création et la gestion de boutiques en ligne, incluant : la gestion de catalogue produits, le traitement des paiements via Mobile Money et cartes bancaires, la gestion logistique et de livraison, des outils de marketing et d'analyse, une assistance par intelligence artificielle (Xia).`,
+    contenu: `AXSO propose une plateforme SaaS permettant la création et la gestion de boutiques en ligne, incluant : la gestion de catalogue produits, le traitement des paiements via Mobile Money et cartes bancaires, la gestion logistique et de livraison, des outils de marketing et d'analyse, une assistance par intelligence artificielle (Axia).`,
   },
   {
     titre: "4. Obligations de l'utilisateur",

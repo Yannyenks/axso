@@ -74,17 +74,17 @@ export async function POST(request: Request) {
 
     let produits: any[] = JSON.parse(jsonMatch[0]);
 
-    // Ajouter URLs images Flux (instantané — chargées par le navigateur)
-    produits = produits.map((p, i) => {
+    // Génère les visuels produits via Gemini (échoue silencieusement par produit — jamais tout l'import)
+    produits = await Promise.all(produits.map(async (p, i) => {
       const imagePrompt = p.imagePrompt || buildProductImagePrompt(p.nom, p.categorie);
       return {
         ...p,
-        imageUrl: generateProductImageUrl(imagePrompt, (i + 1) * 13337 + Date.now() % 1000),
+        imageUrl: await generateProductImageUrl(imagePrompt),
         imagePrompt,
         slug: slugify(p.nom) + "-" + Date.now().toString(36) + i,
         devise,
       };
-    });
+    }));
 
     return NextResponse.json({ produits, total: produits.length });
   } catch (err: any) {

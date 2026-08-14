@@ -4,10 +4,10 @@ import { Send, Loader2, User, Mic, MicOff } from "lucide-react";
 
 interface Msg { role: "user" | "assistant"; content: string; streaming?: boolean }
 
-export default function XiaPage() {
+export default function AxiaPage() {
   const [messages, setMessages] = useState<Msg[]>([{
     role: "assistant",
-    content: "Bonjour ! Je suis Xia, ton assistante IA.\n\nPose-moi n'importe quelle question sur ta boutique : ventes, stocks, clients, marketing…",
+    content: "Bonjour ! Je suis Axia, ton assistante IA.\n\nPose-moi n'importe quelle question sur ta boutique : ventes, stocks, clients, marketing…",
   }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -43,7 +43,7 @@ export default function XiaPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/ai/xia", {
+      const res = await fetch("/api/ai/axia", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -113,10 +113,10 @@ export default function XiaPage() {
       {/* Header */}
       <div className="flex-shrink-0 flex items-center gap-3 px-6 py-4 bg-white border-b border-gray-100">
         <div className="w-10 h-10 rounded-2xl overflow-hidden flex-shrink-0">
-          <img src="/xia-logo.jpg" alt="Xia" className="w-full h-full object-cover" />
+          <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
         </div>
         <div>
-          <h1 className="text-base font-bold text-gray-900">Xia — Assistante IA</h1>
+          <h1 className="text-base font-bold text-gray-900">Axia — Assistante IA</h1>
           <p className="text-xs text-gray-400">Marketing · Stocks · Revenus · Clients · Livraisons</p>
         </div>
         <div className="ml-auto flex items-center gap-1.5 bg-green-50 border border-green-200 rounded-full px-3 py-1">
@@ -131,7 +131,7 @@ export default function XiaPage() {
           <div key={i} className={`flex gap-3 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
             <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 overflow-hidden ${m.role === "assistant" ? "" : "bg-[#F5A623]"}`}>
               {m.role === "assistant"
-                ? <img src="/xia-logo.jpg" alt="Xia" className="w-full h-full object-cover" />
+                ? <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
                 : <User size={13} className="text-white" />}
             </div>
             <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
@@ -174,7 +174,7 @@ export default function XiaPage() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); envoyer(); } }}
-            placeholder="Pose une question à Xia…"
+            placeholder="Pose une question à Axia…"
             disabled={loading}
             className="flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400"
           />
@@ -193,7 +193,7 @@ export default function XiaPage() {
           </button>
         </div>
         <p className="text-center text-[10px] text-gray-300 mt-2">
-          Xia peut créer des produits, envoyer des campagnes et analyser tes ventes.
+          Axia peut créer des produits, envoyer des campagnes et analyser tes ventes.
         </p>
       </div>
 

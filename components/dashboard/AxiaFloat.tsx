@@ -25,33 +25,33 @@ function renderMarkdown(raw: string): string {
   let s = raw
     // Fenced code blocks
     .replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) =>
-      `<pre class="xia-pre"><code class="xia-code">${code.replace(/</g, "&lt;").replace(/>/g, "&gt;").trim()}</code></pre>`)
+      `<pre class="axia-pre"><code class="axia-code">${code.replace(/</g, "&lt;").replace(/>/g, "&gt;").trim()}</code></pre>`)
     // Inline code
-    .replace(/`([^`\n]+)`/g, '<code class="xia-inline-code">$1</code>')
+    .replace(/`([^`\n]+)`/g, '<code class="axia-inline-code">$1</code>')
     // Bold + italic
     .replace(/\*\*\*([^*]+)\*\*\*/g, "<strong><em>$1</em></strong>")
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
     .replace(/\*([^*\n]+)\*/g, "<em>$1</em>")
     // Headings
-    .replace(/^### (.+)$/gm, '<p class="xia-h3">$1</p>')
-    .replace(/^## (.+)$/gm, '<p class="xia-h2">$1</p>')
-    .replace(/^# (.+)$/gm, '<p class="xia-h1">$1</p>')
+    .replace(/^### (.+)$/gm, '<p class="axia-h3">$1</p>')
+    .replace(/^## (.+)$/gm, '<p class="axia-h2">$1</p>')
+    .replace(/^# (.+)$/gm, '<p class="axia-h1">$1</p>')
     // Blockquotes
-    .replace(/^> (.+)$/gm, '<blockquote class="xia-bq">$1</blockquote>')
+    .replace(/^> (.+)$/gm, '<blockquote class="axia-bq">$1</blockquote>')
     // Horizontal rule
-    .replace(/^---+$/gm, '<hr class="xia-hr"/>')
+    .replace(/^---+$/gm, '<hr class="axia-hr"/>')
     // Links
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="xia-link">$1</a>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="axia-link">$1</a>')
     // Lists
-    .replace(/^[-•*] (.+)$/gm, '<li class="xia-li">$1</li>')
-    .replace(/^\d+\. (.+)$/gm, '<li class="xia-li xia-ol">$1</li>')
+    .replace(/^[-•*] (.+)$/gm, '<li class="axia-li">$1</li>')
+    .replace(/^\d+\. (.+)$/gm, '<li class="axia-li axia-ol">$1</li>')
     // Paragraphs
-    .replace(/\n\n+/g, '</p><p class="xia-p">')
+    .replace(/\n\n+/g, '</p><p class="axia-p">')
     .replace(/\n/g, "<br/>");
 
   // Wrap list items
-  s = s.replace(/(<li class="xia-li[^"]*">[\s\S]*?<\/li>)+/g, m => `<ul class="xia-ul">${m}</ul>`);
-  return `<p class="xia-p">${s}</p>`;
+  s = s.replace(/(<li class="axia-li[^"]*">[\s\S]*?<\/li>)+/g, m => `<ul class="axia-ul">${m}</ul>`);
+  return `<p class="axia-p">${s}</p>`;
 }
 
 // ── Media parser ──────────────────────────────────────────────────────────────
@@ -71,7 +71,7 @@ function parseContent(content: string): { text: string; images: string[]; videos
 }
 
 // ── Persistence ───────────────────────────────────────────────────────────────
-const STORAGE_KEY = "xia_msgs_v1";
+const STORAGE_KEY = "axia_msgs_v1";
 function loadMessages(): Msg[] {
   if (typeof window === "undefined") return [];
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]"); } catch { return []; }
@@ -86,21 +86,21 @@ const WAVE_HEIGHTS = Array.from({ length: 20 }, () => 8 + Math.floor(Math.random
 
 // ── Voice phase config ────────────────────────────────────────────────────────
 const PHASE_CONFIG: Record<VoicePhase, { label: string; sub: string; orbGrad: string; orbShadow: string; ringColor: string }> = {
-  idle:      { label: "Xia",           sub: "Appuyez pour parler",       orbGrad: "radial-gradient(circle at 35% 35%, #1B2A4A, #12203d)",    orbShadow: "0 0 40px rgba(27,42,74,0.35), inset 0 1px 1px rgba(255,255,255,0.12)", ringColor: "#1B2A4A" },
+  idle:      { label: "Axia",           sub: "Appuyez pour parler",       orbGrad: "radial-gradient(circle at 35% 35%, #1B2A4A, #12203d)",    orbShadow: "0 0 40px rgba(27,42,74,0.35), inset 0 1px 1px rgba(255,255,255,0.12)", ringColor: "#1B2A4A" },
   listening: { label: "J'écoute…",     sub: "Parlez maintenant",         orbGrad: "radial-gradient(circle at 35% 35%, #3a5480, #1B2A4A)",    orbShadow: "0 0 90px rgba(27,42,74,0.75), 0 0 180px rgba(27,42,74,0.35), inset 0 1px 1px rgba(255,255,255,0.2)", ringColor: "#1B2A4A" },
-  thinking:  { label: "Xia réfléchit…",sub: "Analyse en cours",         orbGrad: "radial-gradient(circle at 35% 35%, #F5A623, #d4820a)",    orbShadow: "0 0 80px rgba(245,166,35,0.6), 0 0 160px rgba(245,166,35,0.25)", ringColor: "#F5A623" },
-  speaking:  { label: "Xia répond",    sub: "Touchez pour interrompre",  orbGrad: "radial-gradient(circle at 35% 35%, #10b981, #047857)",    orbShadow: "0 0 80px rgba(16,185,129,0.55), 0 0 160px rgba(16,185,129,0.25)", ringColor: "#10b981" },
+  thinking:  { label: "Axia réfléchit…",sub: "Analyse en cours",         orbGrad: "radial-gradient(circle at 35% 35%, #F5A623, #d4820a)",    orbShadow: "0 0 80px rgba(245,166,35,0.6), 0 0 160px rgba(245,166,35,0.25)", ringColor: "#F5A623" },
+  speaking:  { label: "Axia répond",    sub: "Touchez pour interrompre",  orbGrad: "radial-gradient(circle at 35% 35%, #10b981, #047857)",    orbShadow: "0 0 80px rgba(16,185,129,0.55), 0 0 160px rgba(16,185,129,0.25)", ringColor: "#10b981" },
 };
 
 // ── Thinking messages ─────────────────────────────────────────────────────────
 const THINKING_MSGS = [
-  "Xia réfléchit…",
-  "Xia analyse les données…",
-  "Xia vérifie ta boutique…",
-  "Xia prépare sa réponse…",
-  "Xia compare les options…",
-  "Xia consulte le catalogue…",
-  "Xia peaufine sa réponse…",
+  "Axia réfléchit…",
+  "Axia analyse les données…",
+  "Axia vérifie ta boutique…",
+  "Axia prépare sa réponse…",
+  "Axia compare les options…",
+  "Axia consulte le catalogue…",
+  "Axia peaufine sa réponse…",
 ];
 
 // Phrases courtes prononcées à voix haute pendant la réflexion, pour éviter tout silence mort
@@ -120,7 +120,7 @@ const SUGGESTIONS = [
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export function XiaFloat() {
+export function AxiaFloat() {
   const [open, setOpen]             = useState(false);
   const [voiceMode, setVoiceMode]   = useState(false);
   const [voicePhase, setVoicePhase] = useState<VoicePhase>("idle");
@@ -224,7 +224,7 @@ export function XiaFloat() {
 
     (async () => {
       try {
-        const res = await fetch("/api/ai/xia/voix", {
+        const res = await fetch("/api/ai/axia/voix", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ texte: cleanText }),
@@ -249,7 +249,7 @@ export function XiaFloat() {
     speak(text, () => { if (voiceModeRef.current) setTimeout(() => startListening(), 250); });
   }, [speak]);
 
-  // Annonce vocale courte pendant que Xia traite la demande (appel d'outils, délégation…),
+  // Annonce vocale courte pendant que Axia traite la demande (appel d'outils, délégation…),
   // pour ne jamais laisser un silence pendant les quelques secondes de traitement.
   const speakThinkingFiller = useCallback(() => {
     if (!ttsRef.current) return;
@@ -269,7 +269,7 @@ export function XiaFloat() {
     let finalActions: string[] = [];
 
     try {
-      const res = await fetch("/api/ai/xia", {
+      const res = await fetch("/api/ai/axia", {
         method: "POST",
         signal: abortRef.current.signal,
         headers: { "Content-Type": "application/json" },
@@ -313,7 +313,7 @@ export function XiaFloat() {
           } else if (evt.type === "done") {
             finalActions = (evt.actions as string[]) ?? [];
           } else if (evt.type === "error") {
-            throw new Error((evt.text as string) || "Erreur Xia");
+            throw new Error((evt.text as string) || "Erreur Axia");
           }
         }
       }
@@ -493,7 +493,7 @@ export function XiaFloat() {
             {[180, 260, 340, 430].map((s, i) => (
               <div key={i} className="absolute rounded-full border"
                 style={{ width: s, height: s, borderColor: phase.ringColor, opacity: isOrb ? 0.22 - i * 0.04 : 0.06,
-                  animation: isOrb ? `xiaRing ${2.4 + i * 0.5}s ${i * 0.3}s ease-in-out infinite` : undefined,
+                  animation: isOrb ? `axiaRing ${2.4 + i * 0.5}s ${i * 0.3}s ease-in-out infinite` : undefined,
                   transition: "opacity 0.6s" }} />
             ))}
           </div>
@@ -541,7 +541,7 @@ export function XiaFloat() {
                 ? <div className="w-10 h-10 rounded-full border-4 border-white/20 border-t-white animate-spin" />
                 : (
                   <div className="w-full h-full rounded-full overflow-hidden border-2 border-white/25">
-                    <img src="/xia-logo.jpg" alt="Xia" className="w-full h-full object-cover" />
+                    <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
                   </div>
                 )}
               {voicePhase === "listening" && (
@@ -561,7 +561,7 @@ export function XiaFloat() {
                 {WAVE_HEIGHTS.map((h, i) => (
                   <div key={i} className="rounded-full"
                     style={{ width: 3, height: h, background: "linear-gradient(to top, #1B2A4A, #FFD280)",
-                      animation: `xiaWave ${0.5 + (i % 4) * 0.2}s ${i * 0.06}s ease-in-out infinite alternate` }} />
+                      animation: `axiaWave ${0.5 + (i % 4) * 0.2}s ${i * 0.06}s ease-in-out infinite alternate` }} />
                 ))}
               </div>
             )}
@@ -570,7 +570,7 @@ export function XiaFloat() {
                 {Array.from({ length: 12 }).map((_, i) => (
                   <div key={i} className="rounded-full"
                     style={{ width: 4, background: "linear-gradient(to top, #10b981, #6ee7b7)",
-                      animation: `xiaSpeak ${0.7 + (i % 3) * 0.3}s ${i * 0.09}s ease-in-out infinite alternate`,
+                      animation: `axiaSpeak ${0.7 + (i % 3) * 0.3}s ${i * 0.09}s ease-in-out infinite alternate`,
                       height: 8 + (i % 6) * 7 }} />
                 ))}
               </div>
@@ -579,7 +579,7 @@ export function XiaFloat() {
               <div className="flex items-center gap-1.5">
                 {[0, 1, 2].map(j => (
                   <div key={j} className="w-2.5 h-2.5 rounded-full bg-[#F5A623]"
-                    style={{ animation: `xiaDot 1s ${j * 0.2}s ease-in-out infinite` }} />
+                    style={{ animation: `axiaDot 1s ${j * 0.2}s ease-in-out infinite` }} />
                 ))}
               </div>
             )}
@@ -618,12 +618,12 @@ export function XiaFloat() {
             <div className="flex items-center gap-3">
               <div className="relative w-9 h-9 rounded-xl overflow-hidden flex-shrink-0"
                 style={{ boxShadow: "0 0 16px rgba(27,42,74,0.5)" }}>
-                <img src="/xia-logo.jpg" alt="Xia" className="w-full h-full object-cover" />
+                <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
                 <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#0d1526]" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <p className="text-white text-sm font-bold leading-none">Xia</p>
+                  <p className="text-white text-sm font-bold leading-none">Axia</p>
                   <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full tracking-wide"
                     style={{ background: "rgba(245,166,35,0.25)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.4)" }}>PRO</span>
                 </div>
@@ -661,9 +661,9 @@ export function XiaFloat() {
               <div className="text-center pt-4 pb-2">
                 <div className="w-16 h-16 rounded-2xl mx-auto mb-4 overflow-hidden"
                   style={{ boxShadow: "0 8px 24px rgba(27,42,74,0.3)" }}>
-                  <img src="/xia-logo.jpg" alt="Xia" className="w-full h-full object-cover" />
+                  <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
                 </div>
-                <p className="text-gray-900 font-bold text-[15px]">Bonjour, je suis Xia</p>
+                <p className="text-gray-900 font-bold text-[15px]">Bonjour, je suis Axia</p>
                 <p className="text-gray-400 text-xs mt-1.5 leading-relaxed max-w-[280px] mx-auto">
                   Je peux créer des produits, analyser tes ventes, lancer des campagnes, générer des images & vidéos IA — et bien plus.
                 </p>
@@ -692,7 +692,7 @@ export function XiaFloat() {
                 <div key={i} className={`flex gap-2.5 ${isUser ? "flex-row-reverse" : ""}`}>
                   {!isUser && (
                     <div className="w-7 h-7 rounded-lg flex-shrink-0 overflow-hidden mt-0.5">
-                      <img src="/xia-logo.jpg" alt="Xia" className="w-full h-full object-cover" />
+                      <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
                     </div>
                   )}
                   <div className="flex flex-col gap-2" style={{ maxWidth: "85%" }}>
@@ -709,7 +709,7 @@ export function XiaFloat() {
                         }`} style={isUser ? { background: "linear-gradient(135deg,#0d1526,#12203d)" } : {}}>
                           {isUser
                             ? <span className="whitespace-pre-wrap">{text}</span>
-                            : <div className="xia-md" dangerouslySetInnerHTML={{ __html: renderMarkdown(text) }} />}
+                            : <div className="axia-md" dangerouslySetInnerHTML={{ __html: renderMarkdown(text) }} />}
                         </div>
                         {!isUser && (
                           <div className="absolute -bottom-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
@@ -764,7 +764,7 @@ export function XiaFloat() {
                       <div key={j} className="rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-white">
                         <div className="flex items-center gap-1.5 px-2.5 py-1.5 border-b border-gray-100">
                           <Music size={11} className="text-[#1B2A4A]" />
-                          <span className="text-[10px] font-semibold text-gray-500">Audio généré par Xia</span>
+                          <span className="text-[10px] font-semibold text-gray-500">Audio généré par Axia</span>
                         </div>
                         <audio src={url} controls className="w-full p-2" />
                       </div>
@@ -789,13 +789,13 @@ export function XiaFloat() {
             {loading && (
               <div className="flex gap-2.5">
                 <div className="w-7 h-7 rounded-lg flex-shrink-0 overflow-hidden">
-                  <img src="/xia-logo.jpg" alt="Xia" className="w-full h-full object-cover" />
+                  <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
                 </div>
                 <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm flex items-center gap-2.5">
                   <div className="flex gap-1 items-center">
                     {[0, 1, 2].map(j => (
                       <div key={j} className="w-1.5 h-1.5 rounded-full"
-                        style={{ background: "#1B2A4A", animation: `xiaDot 1s ${j * 0.18}s ease-in-out infinite` }} />
+                        style={{ background: "#1B2A4A", animation: `axiaDot 1s ${j * 0.18}s ease-in-out infinite` }} />
                     ))}
                   </div>
                   <span className="text-xs text-gray-400 transition-all duration-500">
@@ -835,7 +835,7 @@ export function XiaFloat() {
               <textarea ref={inputRef} value={input} rows={1}
                 onChange={e => { setInput(e.target.value); autoGrowInput(e.target); }}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendChat(); } }}
-                placeholder="Parle à Xia… (Maj+Entrée pour une nouvelle ligne)"
+                placeholder="Parle à Axia… (Maj+Entrée pour une nouvelle ligne)"
                 className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none min-w-0 resize-none py-0.5 leading-relaxed"
                 style={{ maxHeight: 120 }} />
               {loading ? (
@@ -859,7 +859,7 @@ export function XiaFloat() {
 
       {/* ── Floating Button ──────────────────────────────────────────────────── */}
       {!voiceMode && (
-        <button onClick={() => setOpen(v => !v)} aria-label="Xia"
+        <button onClick={() => setOpen(v => !v)} aria-label="Axia"
           className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9991] transition-all duration-200 hover:scale-105 active:scale-95"
           style={{ filter: "drop-shadow(0 4px 24px rgba(27,42,74,0.5))" }}>
           <div className="flex items-center gap-2.5 transition-all duration-300 relative"
@@ -882,10 +882,10 @@ export function XiaFloat() {
             {open ? <X size={18} className="text-white" /> : (
               <>
                 <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
-                  <img src="/xia-logo.jpg" alt="Xia" className="w-full h-full object-cover" />
+                  <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
                   <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 animate-pulse border border-[#0d1526]" />
                 </div>
-                <span className="text-white font-bold text-[13px] tracking-wider">Xia</span>
+                <span className="text-white font-bold text-[13px] tracking-wider">Axia</span>
               </>
             )}
           </div>
@@ -893,29 +893,29 @@ export function XiaFloat() {
       )}
 
       <style>{`
-        @keyframes xiaDot   { 0%,80%,100%{transform:scale(0.55);opacity:0.45} 40%{transform:scale(1);opacity:1} }
-        @keyframes xiaWave  { to { transform: scaleY(0.12); } }
-        @keyframes xiaSpeak { to { transform: scaleY(0.18); } }
-        @keyframes xiaRing  { 0%,100%{transform:scale(1);opacity:0.22} 50%{transform:scale(1.07);opacity:0.09} }
+        @keyframes axiaDot   { 0%,80%,100%{transform:scale(0.55);opacity:0.45} 40%{transform:scale(1);opacity:1} }
+        @keyframes axiaWave  { to { transform: scaleY(0.12); } }
+        @keyframes axiaSpeak { to { transform: scaleY(0.18); } }
+        @keyframes axiaRing  { 0%,100%{transform:scale(1);opacity:0.22} 50%{transform:scale(1.07);opacity:0.09} }
 
-        .xia-md { line-height:1.65; font-size:13.5px; }
-        .xia-md .xia-p { margin:0 0 6px 0; }
-        .xia-md .xia-p:last-child { margin-bottom:0; }
-        .xia-md .xia-h1 { font-size:15px; font-weight:700; margin:10px 0 4px; color:#0d1526; }
-        .xia-md .xia-h2 { font-size:14px; font-weight:700; margin:8px 0 3px; color:#14213d; }
-        .xia-md .xia-h3 { font-size:13px; font-weight:600; margin:6px 0 2px; color:#12203d; }
-        .xia-md .xia-bq { border-left:3px solid #1B2A4A; padding:4px 10px; margin:6px 0; background:#eef1f6; border-radius:0 6px 6px 0; color:#12203d; font-style:italic; }
-        .xia-md .xia-hr { border:none; border-top:1px solid #dde3ee; margin:8px 0; }
-        .xia-md .xia-link { color:#1B2A4A; text-decoration:underline; text-underline-offset:2px; }
-        .xia-md .xia-ul { margin:4px 0 4px 4px; padding:0; list-style:none; }
-        .xia-md .xia-li { position:relative; padding-left:14px; margin:2px 0; }
-        .xia-md .xia-li::before { content:"•"; position:absolute; left:2px; color:#1B2A4A; font-weight:bold; }
-        .xia-md .xia-li.xia-ol::before { content:"→"; }
-        .xia-md .xia-pre { background:#eef1f6; border:1px solid #dde3ee; border-radius:10px; padding:10px 12px; margin:8px 0; overflow-x:auto; }
-        .xia-md .xia-code { font-family:'Monaco','Menlo','Consolas',monospace; font-size:12px; color:#12203d; white-space:pre; }
-        .xia-md .xia-inline-code { background:#eef1f6; border:1px solid #dde3ee; border-radius:4px; padding:1px 5px; font-family:'Monaco','Menlo',monospace; font-size:11px; color:#1B2A4A; }
-        .xia-md strong { font-weight:700; color:#111; }
-        .xia-md em { font-style:italic; color:#4b5563; }
+        .axia-md { line-height:1.65; font-size:13.5px; }
+        .axia-md .axia-p { margin:0 0 6px 0; }
+        .axia-md .axia-p:last-child { margin-bottom:0; }
+        .axia-md .axia-h1 { font-size:15px; font-weight:700; margin:10px 0 4px; color:#0d1526; }
+        .axia-md .axia-h2 { font-size:14px; font-weight:700; margin:8px 0 3px; color:#14213d; }
+        .axia-md .axia-h3 { font-size:13px; font-weight:600; margin:6px 0 2px; color:#12203d; }
+        .axia-md .axia-bq { border-left:3px solid #1B2A4A; padding:4px 10px; margin:6px 0; background:#eef1f6; border-radius:0 6px 6px 0; color:#12203d; font-style:italic; }
+        .axia-md .axia-hr { border:none; border-top:1px solid #dde3ee; margin:8px 0; }
+        .axia-md .axia-link { color:#1B2A4A; text-decoration:underline; text-underline-offset:2px; }
+        .axia-md .axia-ul { margin:4px 0 4px 4px; padding:0; list-style:none; }
+        .axia-md .axia-li { position:relative; padding-left:14px; margin:2px 0; }
+        .axia-md .axia-li::before { content:"•"; position:absolute; left:2px; color:#1B2A4A; font-weight:bold; }
+        .axia-md .axia-li.axia-ol::before { content:"→"; }
+        .axia-md .axia-pre { background:#eef1f6; border:1px solid #dde3ee; border-radius:10px; padding:10px 12px; margin:8px 0; overflow-x:auto; }
+        .axia-md .axia-code { font-family:'Monaco','Menlo','Consolas',monospace; font-size:12px; color:#12203d; white-space:pre; }
+        .axia-md .axia-inline-code { background:#eef1f6; border:1px solid #dde3ee; border-radius:4px; padding:1px 5px; font-family:'Monaco','Menlo',monospace; font-size:11px; color:#1B2A4A; }
+        .axia-md strong { font-weight:700; color:#111; }
+        .axia-md em { font-style:italic; color:#4b5563; }
       `}</style>
     </>
   );

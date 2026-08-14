@@ -9,9 +9,9 @@ export const metadata: Metadata = {
 };
 
 const PLANS = [
-  { nom: "Essentiel", prix: "Gratuit", engagement: "Sans engagement", inclus: ["30 commandes/mois", "1 boutique", "Xia essentielle", "Support communauté"], accent: "#6b7280" },
-  { nom: "Pro", prix: "5 000 XOF/mois", engagement: "Mensuel, résiliable à tout moment", inclus: ["Commandes illimitées", "Xia avancée", "Analytics", "Support prioritaire"], accent: "#F5A623", popular: true },
-  { nom: "Illimité", prix: "20 000 XOF/mois", engagement: "Mensuel, résiliable à tout moment", inclus: ["Tout inclus sans limite", "Xia complète", "Boutiques illimitées", "Support 24/7"], accent: "#7c3aed" },
+  { nom: "Essentiel", prix: "Gratuit", engagement: "Sans engagement", inclus: ["30 commandes/mois", "1 boutique", "Axia essentielle", "Support communauté"], accent: "#6b7280" },
+  { nom: "Pro", prix: "5 000 XOF/mois", engagement: "Mensuel, résiliable à tout moment", inclus: ["Commandes illimitées", "Axia avancée", "Analytics", "Support prioritaire"], accent: "#F5A623", popular: true },
+  { nom: "Illimité", prix: "20 000 XOF/mois", engagement: "Mensuel, résiliable à tout moment", inclus: ["Tout inclus sans limite", "Axia complète", "Boutiques illimitées", "Support 24/7"], accent: "#7c3aed" },
 ];
 
 const SECTIONS = [
