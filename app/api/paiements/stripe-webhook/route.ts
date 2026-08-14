@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
 import { traiterPaiementDigital } from "@/lib/affiliation";
+import { notifierMarchand } from "@/lib/notifications-marchand";
+import { formatMontant } from "@/lib/utils";
 
 export const maxDuration = 60;
 
@@ -54,6 +56,15 @@ export async function POST(req: NextRequest) {
         stripeChargeId: chargeId,
         paiementStatut: "completed",
       },
+    });
+
+    await notifierMarchand({
+      tenantId: commande.tenantId,
+      type: "nouvelle_commande",
+      titre: `Nouvelle commande #${commande.numero}`,
+      message: `${commande.clientNom} · ${commande.lignes.length} article(s) · ${formatMontant(commande.montantTotal, commande.devise)} · payé en ligne`,
+      lien: `/dashboard/commandes/${commande.id}`,
+      commandeId: commande.id,
     });
 
     const hasDigital      = commande.lignes.some((l) => l.produit?.type === "digital");

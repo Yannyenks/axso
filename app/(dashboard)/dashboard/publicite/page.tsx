@@ -4,7 +4,7 @@ import {
   Megaphone, Plus, Loader2, X, Sparkles, TrendingUp,
   Eye, MousePointer, ShoppingCart, DollarSign, Pause,
   Play, Trash2, ExternalLink, Zap, Target, BarChart2,
-  Facebook, Music, Search
+  Users, Music, Search
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -36,7 +36,7 @@ interface Campagne {
 }
 
 const PLATEFORMES = [
-  { id: "meta",   label: "Meta Ads",   Icon: Facebook, color: "#1877F2", desc: "Facebook + Instagram" },
+  { id: "meta",   label: "Meta Ads",   Icon: Users,    color: "#1877F2", desc: "Facebook + Instagram" },
   { id: "google", label: "Google Ads", Icon: Search,   color: "#4285F4", desc: "Search + Display + YouTube" },
   { id: "tiktok", label: "TikTok Ads", Icon: Music,    color: "#010101", desc: "Short-form video ads" },
 ];

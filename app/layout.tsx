@@ -11,6 +11,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://axso.vercel.app"),
   title: {
     default: "Axso — Ta boutique en ligne en 3 minutes",
     template: "%s | Axso",

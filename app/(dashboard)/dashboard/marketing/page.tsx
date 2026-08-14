@@ -13,6 +13,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 
 export default async function MarketingPage() {
   const session = await auth();
@@ -77,7 +78,7 @@ export default async function MarketingPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#111111] font-poppins">Marketing</h1>
+          <h1 className="text-2xl font-bold text-[#111111] font-poppins inline-flex items-center gap-2">Marketing <AgentActiveIndicator label="Agent Marketing actif" /></h1>
           <p className="text-[#717171] text-sm mt-1">Boostez vos ventes avec des outils ciblés</p>
         </div>
         <div className="flex items-center gap-2 bg-white border border-[#E8E8E8] rounded-xl px-4 py-2">

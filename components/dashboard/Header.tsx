@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   Search, Bell, ChevronDown, LogOut, Settings,
   User, ExternalLink, Store, X, ShoppingBag, DollarSign, Star,
+  Package, AlertTriangle, MessageCircle, Info,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { initiales } from "@/lib/utils";
@@ -15,12 +16,60 @@ interface HeaderProps {
   boutiqueNom?:  string;
 }
 
+interface NotifMarchand {
+  id: string; type: string; titre: string; message: string;
+  lien?: string | null; lu: boolean; createdAt: string;
+}
+
+const NOTIF_ICONS: Record<string, { Icon: any; color: string }> = {
+  nouvelle_commande:   { Icon: ShoppingBag,    color: "#D97706" },
+  commande_whatsapp:   { Icon: MessageCircle,  color: "#25D366" },
+  escalade_humain:     { Icon: AlertTriangle,  color: "#DC2626" },
+  paiement:            { Icon: DollarSign,     color: "#16A34A" },
+  avis:                { Icon: Star,           color: "#F59E0B" },
+  stock_bas:           { Icon: Package,        color: "#DC2626" },
+};
+function iconPourType(type: string) { return NOTIF_ICONS[type] ?? { Icon: Info, color: "#6B7280" }; }
+function tempsEcoule(iso: string) {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return "À l'instant";
+  if (min < 60) return `Il y a ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `Il y a ${h}h`;
+  return `Il y a ${Math.floor(h / 24)}j`;
+}
+
 export function Header({ session, boutiqueSlug, boutiqueNom }: HeaderProps) {
   const [profileOpen,   setProfileOpen]   = useState(false);
   const [notifOpen,     setNotifOpen]     = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [notifications, setNotifications] = useState<NotifMarchand[]>([]);
+  const [nonLues, setNonLues] = useState(0);
   const searchRef = useRef<HTMLInputElement>(null);
   const pillRef   = useRef<HTMLDivElement>(null);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await fetch("/api/notifications-marchand");
+      if (!res.ok) return;
+      const data = await res.json();
+      setNotifications(data.notifications ?? []);
+      setNonLues(data.nonLues ?? 0);
+    } catch { /* silencieux — pas de blocage UI si l'API est temporairement indisponible */ }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const id = setInterval(fetchNotifications, 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const marquerToutLu = async () => {
+    setNonLues(0);
+    setNotifications(prev => prev.map(n => ({ ...n, lu: true })));
+    try { await fetch("/api/notifications-marchand", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ toutMarquer: true }) }); } catch {}
+  };
 
   const nom      = session.user?.name  || "Marchand";
   const email    = session.user?.email || "";
@@ -189,15 +238,17 @@ export function Header({ session, boutiqueSlug, boutiqueNom }: HeaderProps) {
                 aria-label="Notifications"
               >
                 <Bell size={15} style={{ color: "#555" }} />
-                <span style={{
-                  position: "absolute", top: "-2px", right: "-2px",
-                  width: "15px", height: "15px",
-                  background: "#F5A623", borderRadius: "50%",
-                  fontSize: "8px", fontWeight: 800, color: "#fff",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  border: "2px solid #fff",
-                  animation: "hdrBadge 2.5s ease-in-out infinite",
-                }}>3</span>
+                {nonLues > 0 && (
+                  <span style={{
+                    position: "absolute", top: "-2px", right: "-2px",
+                    minWidth: "15px", height: "15px", padding: "0 3px",
+                    background: "#F5A623", borderRadius: "999px",
+                    fontSize: "8px", fontWeight: 800, color: "#fff",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    border: "2px solid #fff",
+                    animation: "hdrBadge 2.5s ease-in-out infinite",
+                  }}>{nonLues > 9 ? "9+" : nonLues}</span>
+                )}
               </button>
 
               {notifOpen && (
@@ -212,31 +263,43 @@ export function Header({ session, boutiqueSlug, boutiqueNom }: HeaderProps) {
                 }}>
                   <div style={{ padding: "14px 18px 12px", borderBottom: "1px solid #f2f2f2", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                     <span style={{ fontSize:"13px", fontWeight:700, color:"#111" }}>Notifications</span>
-                    <span style={{ fontSize:"11px", fontWeight:600, color:"#F5A623", background:"rgba(245,166,35,.1)", padding:"3px 9px", borderRadius:"999px" }}>3 nouvelles</span>
+                    {nonLues > 0 && (
+                      <span style={{ fontSize:"11px", fontWeight:600, color:"#F5A623", background:"rgba(245,166,35,.1)", padding:"3px 9px", borderRadius:"999px" }}>{nonLues} nouvelle{nonLues > 1 ? "s" : ""}</span>
+                    )}
                   </div>
-                  {[
-                    { Icon: ShoppingBag, color: "#D97706", msg:"Nouvelle commande #1042 reçue",      temps:"Il y a 2 min"  },
-                    { Icon: DollarSign,  color: "#16A34A", msg:"Paiement confirmé — 25 000 XOF",     temps:"Il y a 15 min" },
-                    { Icon: Star,        color: "#F59E0B", msg:"Nouvel avis 5 étoiles reçu",         temps:"Il y a 1h"     },
-                  ].map((n, i) => (
-                    <div key={i} className="hdr-item" style={{
-                      display:"flex", alignItems:"flex-start", gap:"12px",
-                      padding:"13px 18px", cursor:"pointer",
-                      borderBottom: i < 2 ? "1px solid #f7f7f7" : "none",
-                      transition:"background .15s",
-                    }}>
-                      <n.Icon size={16} style={{ color: n.color, flexShrink:0, marginTop:"2px" }} />
-                      <div>
-                        <p style={{ fontSize:"13px", color:"#333", margin:0, lineHeight:"1.4" }}>{n.msg}</p>
-                        <p style={{ fontSize:"11px", color:"#bbb", margin:"3px 0 0" }}>{n.temps}</p>
-                      </div>
+                  {notifications.length === 0 && (
+                    <div style={{ padding: "28px 18px", textAlign: "center" }}>
+                      <Bell size={20} style={{ color: "#ddd", margin: "0 auto 8px" }} />
+                      <p style={{ fontSize: "12px", color: "#aaa" }}>Aucune notification pour l'instant</p>
                     </div>
-                  ))}
-                  <div style={{ padding:"10px 18px 14px", borderTop:"1px solid #f2f2f2" }}>
-                    <button style={{ background:"none", border:"none", fontSize:"12px", fontWeight:600, color:"#F5A623", cursor:"pointer", fontFamily:"inherit" }}>
-                      Voir toutes les notifications
-                    </button>
-                  </div>
+                  )}
+                  {notifications.map((n, i) => {
+                    const { Icon, color } = iconPourType(n.type);
+                    const content = (
+                      <div key={n.id} className="hdr-item" style={{
+                        display:"flex", alignItems:"flex-start", gap:"12px",
+                        padding:"13px 18px", cursor: n.lien ? "pointer" : "default",
+                        borderBottom: i < notifications.length - 1 ? "1px solid #f7f7f7" : "none",
+                        background: n.lu ? "transparent" : "rgba(245,166,35,0.04)",
+                        transition:"background .15s",
+                      }}>
+                        <Icon size={16} style={{ color, flexShrink:0, marginTop:"2px" }} />
+                        <div>
+                          <p style={{ fontSize:"13px", color:"#333", margin:0, lineHeight:"1.4", fontWeight: n.lu ? 400 : 600 }}>{n.titre}</p>
+                          <p style={{ fontSize:"12px", color:"#999", margin:"2px 0 0", lineHeight:"1.4" }}>{n.message}</p>
+                          <p style={{ fontSize:"11px", color:"#bbb", margin:"3px 0 0" }}>{tempsEcoule(n.createdAt)}</p>
+                        </div>
+                      </div>
+                    );
+                    return n.lien ? <Link key={n.id} href={n.lien} onClick={() => setNotifOpen(false)}>{content}</Link> : content;
+                  })}
+                  {notifications.length > 0 && (
+                    <div style={{ padding:"10px 18px 14px", borderTop:"1px solid #f2f2f2" }}>
+                      <button onClick={marquerToutLu} style={{ background:"none", border:"none", fontSize:"12px", fontWeight:600, color:"#F5A623", cursor:"pointer", fontFamily:"inherit" }}>
+                        Tout marquer comme lu
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

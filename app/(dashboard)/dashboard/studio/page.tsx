@@ -275,7 +275,7 @@ function TabVoixOff() {
 
         <button onClick={generer} disabled={generating || !texte.trim()}
           className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-50"
-          style={{ background: "linear-gradient(135deg, #7c3aed, #9f67f5)", boxShadow: "0 4px 20px rgba(124,58,237,0.3)" }}>
+          style={{ background: "linear-gradient(135deg, #1B2A4A, #3a5480)", boxShadow: "0 4px 20px rgba(124,58,237,0.3)" }}>
           {generating ? <><Loader2 size={16} className="animate-spin" /> Génération…</> : <><Volume2 size={16} /> Générer la voix</>}
         </button>
         <p className="text-center text-xs text-gray-400">
@@ -302,7 +302,7 @@ function TabVoixOff() {
               <div className="flex items-center gap-3">
                 <button onClick={togglePlay}
                   className="w-12 h-12 rounded-full flex items-center justify-center text-white flex-shrink-0 transition-all hover:scale-110"
-                  style={{ background: "linear-gradient(135deg, #7c3aed, #9f67f5)", boxShadow: "0 4px 20px rgba(124,58,237,0.3)" }}>
+                  style={{ background: "linear-gradient(135deg, #1B2A4A, #3a5480)", boxShadow: "0 4px 20px rgba(124,58,237,0.3)" }}>
                   {playing ? <Pause size={18} /> : <Play size={18} />}
                 </button>
                 <div className="flex-1">

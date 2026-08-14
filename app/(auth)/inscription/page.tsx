@@ -293,8 +293,8 @@ export default function InscriptionPage() {
       {/* ── Left panel ── */}
       <div className="hidden lg:flex flex-col justify-between w-[44%] px-14 py-12 relative">
         <Link href="/">
-          <img src="/logo.png" alt="axso"
-            style={{ height: "52px", width: "auto", objectFit: "contain", filter: "brightness(0) invert(1)" }} />
+          <img src="/logo-dark.png" alt="axso"
+            style={{ height: "34px", width: "auto", objectFit: "contain" }} />
         </Link>
 
         <div className="max-w-sm">
@@ -345,8 +345,8 @@ export default function InscriptionPage() {
       <div className="flex-1 flex items-center justify-center px-6 py-12 relative">
         <div className="absolute top-8 left-6 lg:hidden">
           <Link href="/">
-            <img src="/logo.png" alt="axso"
-              style={{ height: "44px", width: "auto", objectFit: "contain", filter: "brightness(0) invert(1)" }} />
+            <img src="/logo-dark.png" alt="axso"
+              style={{ height: "30px", width: "auto", objectFit: "contain" }} />
           </Link>
         </div>
 

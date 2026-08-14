@@ -62,11 +62,20 @@ export interface ThemeAnimations {
 // ─── Sections custom (bibliothèque) ──────────────────────────────────────────
 export interface CustomSection {
   id: string;
-  type: "features" | "stats" | "countdown" | "brands" | "video" | "gallery" | "social-proof" | "spacer" | "richtext" | "cta-band";
+  type: "features" | "stats" | "countdown" | "brands" | "video" | "gallery" | "social-proof" | "spacer" | "richtext" | "cta-band" | "tabs" | "columns";
   actif: boolean;
   label: string;
   animation?: string;
   ordre: number;
+  config: Record<string, any>;
+}
+
+// ─── Sous-sections (blocs) — ajoutables dans n'importe quelle section ────────
+// Permet d'imbriquer du contenu de forme libre à l'intérieur de toute section
+// (built-in ou custom, y compris onglets et colonnes), façon Shopify.
+export interface SousBloc {
+  id: string;
+  type: "photos" | "temoignage" | "promo" | "texte" | "video" | "stats" | "features" | "countdown" | "logos" | "confiance" | "liste" | "spacer";
   config: Record<string, any>;
 }
 
@@ -191,6 +200,9 @@ export interface ThemeConfig {
   animations?: ThemeAnimations;
   customSections?: CustomSection[];
   sectionOrder?: string[];
+  // Sous-sections personnalisées ajoutées dans n'importe quelle section (built-in ou custom),
+  // indexées par id de section. Permet d'ajouter photos/témoignages/promo/texte dans toute section.
+  sectionSousBlocs?: Record<string, SousBloc[]>;
   customCss?: string;
   sections: ThemeSections;
   builderHtml?: string;
@@ -412,6 +424,7 @@ export function resolveThemeConfig(themeId: string, savedConfig: Record<string, 
     animations: { ...base.animations, ...(savedConfig.animations || {}), sectionAnimations: { ...(base.animations?.sectionAnimations || {}), ...(savedConfig.animations?.sectionAnimations || {}) } },
     customSections: savedConfig.customSections ?? base.customSections,
     sectionOrder: savedConfig.sectionOrder ?? base.sectionOrder,
+    sectionSousBlocs: savedConfig.sectionSousBlocs ?? base.sectionSousBlocs ?? {},
     customCss: savedConfig.customCss ?? base.customCss,
     sections: {
       annonce: { ...base.sections.annonce, ...(savedConfig.sections?.annonce || {}) },

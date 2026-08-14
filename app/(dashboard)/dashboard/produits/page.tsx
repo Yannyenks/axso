@@ -7,6 +7,7 @@ import {
   Star, ChevronRight, Eye, EyeOff,
 } from "lucide-react";
 import { formatMontant } from "@/lib/utils";
+import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 
 const FILTER_TABS = [
   { key: "all",      label: "Tous"         },
@@ -72,7 +73,7 @@ export default async function ProduitsPage({
       <div className="flex items-start justify-between gap-4 flex-wrap pt-1">
         <div>
           <div className="flex items-center gap-2.5 mb-1">
-            <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Produits</h1>
+            <h1 className="text-[20px] font-bold text-[#111111] tracking-tight inline-flex items-center gap-2">Produits <AgentActiveIndicator label="Agent Produits actif" /></h1>
             <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
               {tous.length}
             </span>

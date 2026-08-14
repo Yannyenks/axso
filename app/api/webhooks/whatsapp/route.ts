@@ -193,7 +193,7 @@ async function autoRepondre(tenantId: string, de: string, messageRecu: string, p
   const { executerOutilMcp } = await import("@/lib/mcp/executor");
   const systeme = `Tu es AXIA, l'assistante IA de "${tenant?.nomBoutique ?? "cette boutique"}". Style: ${cfg.personnalite ?? "professionnel"}. Langue: ${cfg.langue ?? "fr"}. Réponds naturellement en 2-3 phrases. Ne mentionne jamais que tu es un bot.`;
 
-  const result = await executerOutilMcp("claude_generer_texte", { instruction: systeme, contenu: messageRecu }, tenantId);
+  const result = await executerOutilMcp("gemini_generer_texte", { instruction: systeme, contenu: messageRecu }, tenantId);
   if (!result.succes || !result.resultat) return;
 
   const waConfig = await prisma.connecteurConfig.findFirst({ where: { tenantId, type: "whatsapp" } });

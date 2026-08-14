@@ -5,8 +5,13 @@ import { useEffect, useRef, useState } from "react";
 import { Bot, Rocket, TrendingUp, CheckCircle, Plus } from "lucide-react";
 import { CartParallax } from "./CartParallax";
 
-const MOTS = ["en ligne", "digital", "africain", "sans limite"];
 const FLAGS = ["SN", "CM", "CI", "GH", "NG", "KE", "MA"];
+const BADGES = [
+  "✓ Gratuit pour toujours",
+  "🟠 Orange Money · 📱 MTN · 💙 Wave",
+  "🤖 IA intégrée",
+  "🌍 Déjà 1 247 boutiques actives en Afrique",
+];
 
 const HERO_CARTS = [
   { size: 700, top: "6%",  duration: 18, delay: 0,   opacity: 0.07, direction: "rtl" as const },
@@ -16,15 +21,9 @@ const HERO_CARTS = [
 ];
 
 export function HeroSection() {
-  const [motIdx, setMotIdx] = useState(0);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [scrollY, setScrollY] = useState(0);
   const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const t = setInterval(() => setMotIdx((i) => (i + 1) % MOTS.length), 2800);
-    return () => clearInterval(t);
-  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrollY(window.scrollY);
@@ -82,14 +81,13 @@ export function HeroSection() {
           {/* ─── GAUCHE ─── */}
           <div style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateX(-30px)", transition: "all 0.9s cubic-bezier(0.23,1,0.32,1)" }}>
 
-            {/* Headline empire */}
-            <h1 className="font-bold leading-[1.06] mb-8">
-              <span className="block text-4xl lg:text-5xl xl:text-[4.2rem] 2xl:text-[4.8rem] text-white uppercase tracking-tight">
-                Crée ton empire
+            {/* Headline */}
+            <h1 className="font-bold leading-[1.06] mb-6">
+              <span className="block text-4xl lg:text-5xl xl:text-[4.2rem] 2xl:text-[4.8rem] text-white tracking-tight">
+                Tu vends sur WhatsApp.
               </span>
               <span
-                key={motIdx}
-                className="block text-4xl lg:text-5xl xl:text-[4.2rem] 2xl:text-[4.8rem] uppercase tracking-tight"
+                className="block text-4xl lg:text-5xl xl:text-[4.2rem] 2xl:text-[4.8rem] tracking-tight"
                 style={{
                   background: "linear-gradient(135deg, #F5A623 0%, #e8950f 50%, #FFD280 100%)",
                   backgroundSize: "200% auto",
@@ -99,27 +97,34 @@ export function HeroSection() {
                   animation: "heroWordIn 0.5s cubic-bezier(0.23,1,0.32,1) both, shimmer 3s linear infinite",
                 }}
               >
-                {MOTS[motIdx]}
-              </span>
-              <span className="block text-4xl lg:text-5xl xl:text-[4.2rem] 2xl:text-[4.8rem] text-white uppercase tracking-tight">
-                avec <span style={{ color: "#F5A623" }}>AXSO</span>
+                Il est temps de vendre partout.
               </span>
             </h1>
 
             <p
               style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.25s" }}
-              className="text-lg lg:text-xl xl:text-2xl text-white/75 leading-relaxed mb-12 max-w-xl"
+              className="text-lg lg:text-xl xl:text-2xl text-white/75 leading-relaxed mb-6 max-w-xl"
             >
-              Présente ta vision — AXSO s'occupe du reste.
+              AXSO te donne une boutique en ligne professionnelle en 3 minutes — avec Orange Money, MTN et Wave intégrés dès le départ.
               <br />
               <span className="text-base text-white/50 mt-1 block">
-                Boutique, marketing, clients, livraison. Tout en quelques clics.
+                Pas besoin de développeur. Pas besoin de budget.
               </span>
             </p>
 
+            {/* Trust badges */}
+            <div
+              className="flex flex-wrap gap-x-5 gap-y-2 mb-10"
+              style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.32s" }}
+            >
+              {BADGES.map((b) => (
+                <span key={b} className="text-sm text-white/60 whitespace-nowrap">{b}</span>
+              ))}
+            </div>
+
             {/* CTAs */}
             <div
-              className="flex flex-col sm:flex-row gap-5 mb-14"
+              className="flex flex-col sm:flex-row gap-5 mb-4"
               style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.4s" }}
             >
               <Link
@@ -129,15 +134,19 @@ export function HeroSection() {
               >
                 <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                   style={{ background: "linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.25) 50%, transparent 80%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s linear infinite" }}/>
-                <span className="relative z-10 inline-flex items-center gap-2"><Rocket size={18} /> Lancer mon empire →</span>
+                <span className="relative z-10 inline-flex items-center gap-2"><Rocket size={18} /> Créer ma boutique gratuite →</span>
               </Link>
               <Link
                 href="#video-demo"
                 className="px-10 py-4 rounded-2xl font-semibold text-lg text-white text-center border border-white/25 bg-white/10 backdrop-blur-sm hover:border-[#F5A623]/50 hover:bg-white/15 transition-all hover:scale-[1.02]"
               >
-                ▶ Voir la démo IA
+                ▶ Voir comment ça marche (60 sec)
               </Link>
             </div>
+
+            <p className="text-sm text-white/40 mb-10" style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.5s" }}>
+              Aucune carte bancaire · Boutique live en 3 minutes · 0% de frais sur le plan gratuit
+            </p>
 
             {/* Social proof */}
             <div className="flex items-center gap-6" style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.6s" }}>
@@ -149,8 +158,8 @@ export function HeroSection() {
                 ))}
               </div>
               <div>
-                <p className="text-base font-bold text-white">+1 247 empires lancés</p>
-                <p className="text-sm text-white/50">dans 10 pays africains</p>
+                <p className="text-base font-bold text-white">1 247 boutiques actives · 10 pays</p>
+                <p className="text-sm text-white/50">3 min pour lancer</p>
               </div>
             </div>
           </div>

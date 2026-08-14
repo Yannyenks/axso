@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { hasNVIDIA, completionNVIDIA } from "@/lib/llm-client";
+import { hasGemini, completionAuto } from "@/lib/llm-client";
 import { generateProductImageUrl, buildProductImagePrompt } from "@/lib/image-gen";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
@@ -58,16 +58,13 @@ export async function POST(request: Request) {
     const pays = tenant?.pays || "SN";
     const devise = tenant?.devise || "XOF";
 
-    if (!hasNVIDIA()) {
-      return NextResponse.json({ message: "NVIDIA NIM non configuré. Vérifiez NVIDIA_KEY_DEEPSEEK dans .env.local" }, { status: 503 });
+    if (!hasGemini()) {
+      return NextResponse.json({ message: "Gemini non configuré. Vérifiez GEMINI_API_KEY dans .env.local" }, { status: 503 });
     }
 
-    // DeepSeek V4 Flash — rapide pour JSON structuré
-    const model = process.env.NVIDIA_MODEL_DEEPSEEK ?? "deepseek-ai/deepseek-v4-flash";
-    const result = await completionNVIDIA(
+    const result = await completionAuto(
       [{ role: "user", content: buildPrompt(body.description, body.nombreProduits, pays, devise) }],
-      6000,
-      model
+      6000
     );
 
     const jsonMatch = result.text.match(/\[[\s\S]*\]/);

@@ -1,7 +1,7 @@
 {
-  "buildCommand": "rm -rf .next/cache && next build",
+  "buildCommand": "rm -rf .next/cache && prisma generate && next build",
   "functions": {
-    "app/api/ai/**": { "maxDuration": 60 },
-    "app/api/navigateur/**": { "maxDuration": 60 }
+    "app/api/ai/xia/**": { "maxDuration": 120 },
+    "app/api/ai/**": { "maxDuration": 60 }
   }
 }

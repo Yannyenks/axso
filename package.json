@@ -3,9 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently --kill-others-on-fail --names axso,freellmapi --prefix-colors cyan,yellow \"next dev\" \"npm run dev --prefix freellmapi\"",
-    "dev:axso": "next dev",
-    "dev:freellmapi": "npm run dev --prefix freellmapi",
+    "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start -p ${PORT:-3000}",
     "db:seed": "tsx prisma/seed.ts",
@@ -17,10 +15,10 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.95.1",
     "@auth/prisma-adapter": "^2.11.2",
     "@base-ui/react": "^1.4.1",
     "@fal-ai/client": "^1.10.1",
+    "@google/genai": "^2.17.1",
     "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/adapter-pg": "^7.8.0",

@@ -1,4 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { completionAuto } from "./llm-client";
 import { generateProductImageUrl, buildProductImagePrompt } from "./image-gen";
 
@@ -187,8 +186,14 @@ export async function analyserBusinessEtCreerPlan(
   return plan;
 }
 
-// Outils pour le copilote dashboard (tool use — Claude uniquement, API native)
-export const OUTILS_COPILOTE: Anthropic.Tool[] = [
+// Outils pour le copilote dashboard (tool use — moteur Gemini)
+interface CopiloteTool {
+  name: string;
+  description: string;
+  input_schema: Record<string, any>;
+}
+
+export const OUTILS_COPILOTE: CopiloteTool[] = [
   {
     name: "ajouter_produit",
     description: "Ajoute un nouveau produit à la boutique du marchand",

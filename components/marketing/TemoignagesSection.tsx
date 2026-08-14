@@ -4,24 +4,19 @@ import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 
 const temoignages = [
   {
-    nom: "Aminata Diallo", role: "Créatrice de mode, Dakar", pays: "SN", note: 5,
-    texte: "En 3 mois avec Axso, j'ai multiplié mes ventes par 4. Le paiement Wave intégré a tout changé — mes clientes peuvent payer en quelques secondes. L'IA m'a même aidé à rédiger mes fiches produits !",
-    ventes: "847 000 XOF", avatar: "A", couleur: "#1B4FD8",
+    nom: "Fatou N.", role: "Cosmétiques · Douala-Akwa · Plan Pro depuis 3 mois", pays: "CM", note: 5,
+    texte: "Avant AXSO, je vendais sur WhatsApp et je perdais des commandes tous les jours. Le premier mois avec AXSO, j'ai fait 180 000 FCFA de ventes — et j'ai tout encaissé via Orange Money directement.",
+    ventes: "+180 000 FCFA le 1er mois · 34 commandes · 0 frais cachés", avatar: "F", couleur: "#F5A623",
   },
   {
-    nom: "Jean-Pierre Mbarga", role: "Artisan, Douala", pays: "CM", note: 5,
-    texte: "Je vendais mes produits artisanaux au marché. Aujourd'hui j'expédie dans toute l'Afrique Centrale grâce à Axso. Le dashboard est tellement simple à utiliser, même sans formation informatique.",
-    ventes: "2 340 000 XAF", avatar: "J", couleur: "#c2622d",
+    nom: "Eric M.", role: "Mode homme · Yaoundé-Bastos · Plan Gratuit", pays: "CM", note: 5,
+    texte: "J'avais peur que ce soit compliqué. En 3 minutes ma boutique était en ligne. Le premier paiement Orange Money est arrivé le même jour.",
+    ventes: "12 ventes la première semaine", avatar: "E", couleur: "#10b981",
   },
   {
-    nom: "Grâce Kouassi", role: "Cosméticienne, Abidjan", pays: "CI", note: 5,
-    texte: "Le thème Violet Cosmos correspond parfaitement à mon image de marque. Mes clientes adorent l'expérience d'achat. Les avis certifiés ont boosté ma crédibilité. Je recommande à 100% !",
-    ventes: "1 200 000 XOF", avatar: "G", couleur: "#7c3aed",
-  },
-  {
-    nom: "Fatou Sow", role: "Épicerie fine, Saint-Louis", pays: "SN", note: 5,
-    texte: "L'assistant IA m'a suggéré des prix parfaits pour mon marché local. Les clients reçoivent leur confirmation automatiquement par WhatsApp. Axso pense à tout !",
-    ventes: "560 000 XOF", avatar: "F", couleur: "#10b981",
+    nom: "Sandrine K.", role: "Alimentation · Douala-Bonamoussadi · Plan Business", pays: "CM", note: 5,
+    texte: "Shopify c'était 19 000 FCFA par mois et tout en anglais. AXSO c'est 4 900 FCFA, en français, et mon manager me répond sur WhatsApp en moins d'une heure.",
+    ventes: "3 boutiques actives · 890 000 FCFA de CA en 2 mois", avatar: "S", couleur: "#7c3aed",
   },
 ];
 
@@ -174,7 +169,7 @@ export function TemoignagesSection() {
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 tracking-wide">{t.pays}</span>
                 </div>
                 <p className="text-gray-400 text-sm">{t.role}</p>
-                <p className="text-sm font-semibold mt-0.5" style={{ color: t.couleur }}>{t.ventes} de ventes</p>
+                <p className="text-sm font-semibold mt-0.5" style={{ color: t.couleur }}>📈 {t.ventes}</p>
               </div>
             </div>
           </div>

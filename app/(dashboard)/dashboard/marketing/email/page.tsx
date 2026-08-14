@@ -1,19 +1,10 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import {
   Send, Wand2, Users, Clock, CheckCircle2, XCircle,
-  Mail, RefreshCw, ChevronDown, Sparkles, Eye, Zap,
+  Mail, RefreshCw, ChevronDown, Sparkles, Eye,
   Gem, Moon, Flame, Crown, UserPlus
 } from "lucide-react";
-
-const EMAIL_PLATFORMS = [
-  { id: "mailchimp", label: "Mailchimp",    url: "https://mailchimp.com/login/",   d: "mailchimp.com",    color: "#FFE01B", bg: "#fffce0" },
-  { id: "brevo",     label: "Brevo",        url: "https://app.brevo.com",          d: "brevo.com",        color: "#0B96CC", bg: "#eff6ff" },
-  { id: "klaviyo",   label: "Klaviyo",      url: "https://www.klaviyo.com/login",  d: "klaviyo.com",      color: "#28b900", bg: "#f0fff0" },
-  { id: "sendgrid",  label: "SendGrid",     url: "https://app.sendgrid.com",       d: "sendgrid.com",     color: "#1a82e2", bg: "#eff6ff" },
-];
-
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface Stats {
@@ -149,7 +140,6 @@ export default function EmailMarketingPage() {
     }
   }
 
-  const router = useRouter();
   const nbDest = stats?.segments?.[segment as keyof typeof stats.segments] ?? "...";
 
 
@@ -330,22 +320,6 @@ export default function EmailMarketingPage() {
               >
                 {sending ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
                 {sending ? "Envoi..." : `Envoyer (${nbDest})`}
-              </button>
-              <button
-                onClick={() => {
-                  const p = EMAIL_PLATFORMS[0];
-                  const instr = sujet
-                    ? `Ouvre Mailchimp et crée une campagne email avec le sujet "${sujet}" et ce contenu : ${corps.slice(0,400)}`
-                    : "Ouvre Mailchimp et aide-moi à créer une campagne email";
-                  router.push(`/dashboard/navigateur?url=${encodeURIComponent(p.url)}&instruction=${encodeURIComponent(instr)}`);
-                }}
-                disabled={!sujet && !corps}
-                title="Créer sur Mailchimp avec AXIA"
-                className="flex items-center justify-center gap-1.5 px-4 py-3.5 rounded-2xl font-bold text-xs transition-all hover:opacity-90 disabled:opacity-30"
-                style={{ background: "linear-gradient(135deg,#000018,#001830)", border: "1px solid rgba(0,212,255,0.3)", color: "#00D4FF" }}
-              >
-                <Zap size={13} />
-                AXIA
               </button>
             </div>
           </div>

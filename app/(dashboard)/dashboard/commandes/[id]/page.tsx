@@ -10,7 +10,7 @@ import { AssignerLivreur } from "@/components/dashboard/AssignerLivreur";
 const STATUT_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
   en_attente:    { label: "En attente",      icon: Clock,        color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
   confirmee:     { label: "Confirmée",       icon: CheckCircle,  color: "#60a5fa", bg: "rgba(96,165,250,0.1)" },
-  en_preparation:{ label: "En préparation",  icon: Package,      color: "#a78bfa", bg: "rgba(167,139,250,0.1)" },
+  en_preparation:{ label: "En préparation",  icon: Package,      color: "#FFD280", bg: "rgba(167,139,250,0.1)" },
   expediee:      { label: "Expédiée",        icon: Truck,        color: "#38bdf8", bg: "rgba(56,189,248,0.1)" },
   livree:        { label: "Livrée",          icon: CheckCircle,  color: "#34d399", bg: "rgba(52,211,153,0.1)" },
   annulee:       { label: "Annulée",         icon: XCircle,      color: "#f87171", bg: "rgba(248,113,113,0.1)" },

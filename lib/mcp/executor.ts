@@ -11,7 +11,7 @@ import {
 import {
   genererTexte, genererEmailHtml, genererDescriptionProduit,
   genererPostSocial, traduire, analyserImageProduit,
-} from "./connectors/claude";
+} from "./connectors/gemini";
 
 export interface McpResult {
   succes: boolean;
@@ -330,32 +330,32 @@ export async function executerOutilMcp(
       }
     }
 
-    // ── CLAUDE (Anthropic) ───────────────────────────────────────────────────
-    if (toolName.startsWith("claude_")) {
-      const claudeCfg = await getConfig(tenantId, "claude");
-      const apiKey = claudeCfg?.accessToken || process.env.ANTHROPIC_API_KEY;
-      if (!apiKey) return { succes: false, resultat: "Claude non connecté — allez dans Connecteurs → Claude IA pour saisir votre clé API Anthropic" };
+    // ── GEMINI (Google) ──────────────────────────────────────────────────────
+    if (toolName.startsWith("gemini_")) {
+      const geminiCfg = await getConfig(tenantId, "gemini");
+      const apiKey = geminiCfg?.accessToken || process.env.GEMINI_API_KEY;
+      if (!apiKey) return { succes: false, resultat: "Gemini non connecté — allez dans Connecteurs → Gemini IA pour saisir votre clé API Google" };
 
       const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true, devise: true } });
       const boutique = tenant?.nomBoutique ?? "Ma boutique";
       const devise = tenant?.devise ?? "XAF";
 
-      if (toolName === "claude_generer_texte") {
+      if (toolName === "gemini_generer_texte") {
         return genererTexte({ prompt: args.prompt, contexte: args.contexte, apiKey });
       }
-      if (toolName === "claude_generer_email_html") {
+      if (toolName === "gemini_generer_email_html") {
         return genererEmailHtml({ sujet: args.sujet, contexte: args.contexte, boutique, couleurPrimaire: args.couleurPrimaire, apiKey });
       }
-      if (toolName === "claude_generer_description_produit") {
+      if (toolName === "gemini_generer_description_produit") {
         return genererDescriptionProduit({ nomProduit: args.nomProduit, categorie: args.categorie, prix: args.prix, devise, langue: args.langue, apiKey });
       }
-      if (toolName === "claude_generer_post_social") {
+      if (toolName === "gemini_generer_post_social") {
         return genererPostSocial({ plateforme: args.plateforme, theme: args.theme, boutique, produit: args.produit, apiKey });
       }
-      if (toolName === "claude_traduire") {
+      if (toolName === "gemini_traduire") {
         return traduire({ texte: args.texte, langueCible: args.langueCible, langueSource: args.langueSource, apiKey });
       }
-      if (toolName === "claude_analyser_image") {
+      if (toolName === "gemini_analyser_image") {
         return analyserImageProduit({ imageUrl: args.imageUrl, question: args.question, apiKey });
       }
     }

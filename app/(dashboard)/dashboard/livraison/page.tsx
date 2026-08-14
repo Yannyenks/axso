@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Truck, Plus, Trash2, Save, Package, CheckCircle, Clock, MapPin } from "lucide-react";
+import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 
 interface ReglePort {
   id: string;
@@ -33,7 +34,7 @@ interface Commande {
 
 const STATUT_COLORS: Record<string, string> = {
   non_expediee: "#6b7280",
-  en_preparation: "#7c3aed",
+  en_preparation: "#1B2A4A",
   expediee: "#3b82f6",
   livree: "#10b981",
   retour: "#ef4444",
@@ -117,7 +118,7 @@ export default function LivraisonPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Livraison</h1>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight inline-flex items-center gap-2">Livraison <AgentActiveIndicator label="Agent Livraison actif" /></h1>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">Règles tarifaires et suivi expéditions</p>
         </div>
         {tab === "regles" && (
@@ -135,7 +136,7 @@ export default function LivraisonPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "Non expédiées", value: stats.nonExpediees, color: "#6b7280", icon: Clock },
-          { label: "En préparation", value: stats.enPrep, color: "#7c3aed", icon: Package },
+          { label: "En préparation", value: stats.enPrep, color: "#1B2A4A", icon: Package },
           { label: "Expédiées", value: stats.expediees, color: "#3b82f6", icon: Truck },
           { label: "Livrées", value: stats.livrees, color: "#10b981", icon: CheckCircle },
         ].map(({ label, value, color, icon: Icon }) => (

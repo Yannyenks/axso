@@ -5,6 +5,7 @@ import { formatDate, formatMontant } from "@/lib/utils";
 import {
   Users, TrendingUp, ShoppingBag, Star, ChevronRight, ArrowUpRight,
 } from "lucide-react";
+import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 
 const AVATAR_COLORS = [
   ["#FFF8EC","#F5A623"],["#EFF6FF","#3B82F6"],["#F0FDF4","#16A34A"],
@@ -105,7 +106,7 @@ export default async function ClientsPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap pt-1">
         <div>
           <div className="flex items-center gap-2.5 mb-1">
-            <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Clients</h1>
+            <h1 className="text-[20px] font-bold text-[#111111] tracking-tight inline-flex items-center gap-2">Clients <AgentActiveIndicator label="Agent Clients actif" /></h1>
             <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
               {totalClients}
             </span>

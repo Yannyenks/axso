@@ -30,7 +30,7 @@ const TYPES_PRODUIT = [
     icon: Download,
     label: "Digital",
     desc: "PDF, vidéo, logiciel — livré par email",
-    color: "#7c3aed",
+    color: "#1B2A4A",
   },
   {
     id: "dropshipping",
@@ -714,7 +714,7 @@ export default function NouveauProduitPage() {
                 <span className="inline-block mt-2 text-[10px] px-2 py-0.5 rounded-full font-medium"
                   style={{
                     background: form.type === "digital" ? "rgba(124,58,237,0.1)" : form.type === "dropshipping" ? "rgba(52,211,153,0.1)" : "rgba(245,166,35,0.1)",
-                    color: form.type === "digital" ? "#7c3aed" : form.type === "dropshipping" ? "#059669" : "#F5A623",
+                    color: form.type === "digital" ? "#1B2A4A" : form.type === "dropshipping" ? "#059669" : "#F5A623",
                   }}>
                   {form.type === "digital" ? <><FileText size={11} className="inline-block mr-1" />Digital</> : form.type === "dropshipping" ? <><Truck size={11} className="inline-block mr-1" />Dropshipping</> : <><Package size={11} className="inline-block mr-1" />Physique</>}
                 </span>

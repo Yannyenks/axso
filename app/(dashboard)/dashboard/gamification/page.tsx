@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Trophy, Sparkles } from "lucide-react";
+import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 
 interface Badge {
   type: string;
@@ -36,7 +37,7 @@ export default function GamificationPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Trophées & Badges</h1>
+        <h1 className="text-[20px] font-bold text-[#111111] tracking-tight inline-flex items-center gap-2">Trophées & Badges <AgentActiveIndicator label="Agent Fidélité actif" /></h1>
         <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">Récompenses obtenues et objectifs à atteindre</p>
       </div>
 

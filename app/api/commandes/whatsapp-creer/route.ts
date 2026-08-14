@@ -2,13 +2,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { genererNumeroCommande, formatMontant } from "@/lib/utils";
+import { notifierMarchand } from "@/lib/notifications-marchand";
 import { randomBytes } from "crypto";
 
 function genToken() { return randomBytes(20).toString("hex"); }
 
 export async function POST(req: NextRequest) {
   try {
-    const { tenantId, slug, client, items, total, devise, codePromo, localisation } = await req.json();
+    const { tenantId, slug, client, items, total, devise, codePromo, localisation, canal, champPersonnalise } = await req.json();
+    const viaWhatsapp = canal !== "direct";
 
     if (!tenantId || !items?.length || !client?.nom || !client?.telephone) {
       return NextResponse.json({ error: "Données manquantes" }, { status: 400 });
@@ -59,7 +61,7 @@ export async function POST(req: NextRequest) {
         devise,
         statut: "en_attente",
         paiementStatut: "pending",
-        methodePaiement: "whatsapp_cod",
+        methodePaiement: viaWhatsapp ? "whatsapp_cod" : "direct_cod",
         trackingToken,
         livreurToken,
         latitudeClient: localisation?.lat ?? null,
@@ -113,6 +115,7 @@ export async function POST(req: NextRequest) {
       `📞 *Tél :* ${client.telephone}`,
       adresseLivraison ? `📍 *Adresse :* ${adresseLivraison}` : null,
       mapsLien ? `🗺️ *Google Maps :* ${mapsLien}` : null,
+      champPersonnalise?.valeur ? `📝 *${champPersonnalise.label} :* ${champPersonnalise.valeur}` : null,
       ``,
       `🛒 *Articles :*`,
       lignesTexte,
@@ -126,6 +129,16 @@ export async function POST(req: NextRequest) {
 
     const numero = (tenant.whatsappNumero || (tenant as any).whatsapp || "").replace(/\D/g, "");
     const whatsappUrl = numero ? `https://wa.me/${numero}?text=${encodeURIComponent(messageMarchand)}` : null;
+
+    // Notification dashboard — toujours créée, quel que soit le canal choisi par l'acheteur
+    await notifierMarchand({
+      tenantId,
+      type: viaWhatsapp ? "commande_whatsapp" : "nouvelle_commande",
+      titre: `Nouvelle commande #${commande.numero}`,
+      message: `${client.nom} · ${items.length} article(s) · ${formatMontant(total, devise)}${champPersonnalise?.valeur ? ` · ${champPersonnalise.label}: ${champPersonnalise.valeur}` : ""}`,
+      lien: `/dashboard/commandes/${commande.id}`,
+      commandeId: commande.id,
+    });
 
     // Message WhatsApp client (confirmation automatique)
     const telClient = client.telephone.replace(/\D/g, "");
@@ -152,6 +165,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       commandeId: commande.id,
       numero: commande.numero,
+      viaWhatsapp,
       whatsappUrl,
       whatsappClientUrl,
       trackingToken,

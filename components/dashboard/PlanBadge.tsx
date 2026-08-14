@@ -5,7 +5,7 @@ type Plan = "gratuit" | "starter" | "pro" | "business";
 const PLAN_CONFIG: Record<Plan, { label: string; couleur: string; bg: string; border: string }> = {
   gratuit:  { label: "Gratuit",  couleur: "#6b7280", bg: "#6b728015", border: "#6b728030" },
   starter:  { label: "Starter",  couleur: "#3b82f6", bg: "#3b82f615", border: "#3b82f630" },
-  pro:      { label: "Pro",      couleur: "#7c3aed", bg: "#7c3aed15", border: "#7c3aed30" },
+  pro:      { label: "Pro",      couleur: "#1B2A4A", bg: "#1B2A4A15", border: "#1B2A4A30" },
   business: { label: "Business", couleur: "#F5A623", bg: "#F5A62315", border: "#F5A62330" },
 };
 

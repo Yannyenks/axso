@@ -144,7 +144,7 @@ export function CtaFinal() {
             animation: visible ? "slideRevealLeft 0.8s 0.2s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          Présente ta vision.
+          Arrête de perdre des ventes sur WhatsApp.
           <br />
           <span
             className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5A623] via-[#FFD280] to-[#E09015]"
@@ -153,7 +153,7 @@ export function CtaFinal() {
               animation: "shimmer 3s linear infinite",
             }}
           >
-            AXSO bâtit ton empire.
+            Ta boutique professionnelle t'attend.
           </span>
         </h2>
 
@@ -164,9 +164,9 @@ export function CtaFinal() {
             animation: visible ? "flip3dIn 0.7s 0.4s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          11 agents IA, zéro friction. En quelques clics, ton empire digital est en ligne.
+          En 3 minutes, tu as une boutique en ligne professionnelle avec Orange Money intégré.
           <br className="hidden sm:block" />
-          Rejoins 1 247 entrepreneurs africains qui dominent avec AXSO.
+          Gratuit pour commencer — tu paies seulement quand tu vends.
         </p>
 
         {/* Magnetic CTA button */}
@@ -201,7 +201,7 @@ export function CtaFinal() {
             />
             <Sparkles size={22} className="relative z-10" />
             <Rocket size={20} className="relative z-10" />
-            <span className="relative z-10">Lancer mon empire maintenant</span>
+            <span className="relative z-10">Créer ma boutique gratuite maintenant</span>
             <ArrowRight size={22} className="relative z-10 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
@@ -213,7 +213,7 @@ export function CtaFinal() {
             animation: visible ? "flip3dIn 0.6s 0.7s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          Dès 1 200 XOF/mois · Annulation à tout moment · Empire live en 3 minutes
+          Gratuit pour toujours · Orange Money & MTN acceptés · Boutique live en 3 minutes
         </p>
       </div>
     </section>

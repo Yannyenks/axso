@@ -6,6 +6,7 @@ import { formatMontant, pourcentageRemise } from "@/lib/utils";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import Link from "next/link";
 import { AddToCartButton } from "@/components/storefront/AddToCartButton";
+import { ViewContentTracker } from "@/components/storefront/ViewContentTracker";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { Package, AlertTriangle, Smartphone, Lock, RotateCcw, Check } from "lucide-react";
@@ -70,6 +71,7 @@ export default async function ProduitPage({ params }: Props) {
   return (
     <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
       <ThemeEffect themeId={tenant.themeId} />
+      <ViewContentTracker produitId={produit.id} nom={produit.nom} prix={produit.prix} devise={tenant.devise} />
       <StorefrontNavbar
         slug={slug}
         nomBoutique={tenant.nomBoutique}

@@ -49,7 +49,7 @@ export default function MagicImportPage() {
       if (!res.ok) throw new Error(data.message);
       setProduits(data.produits.map((p: any) => ({ ...p, selected: true })));
       setPhase("review");
-      toast.success(`${data.total} produits générés par NVIDIA`);
+      toast.success(`${data.total} produits générés par Gemini`);
     } catch (err: any) {
       toast.error(err.message || "Erreur de génération");
     } finally {
@@ -100,7 +100,7 @@ export default function MagicImportPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900 font-poppins">Magic Import</h1>
-          <p className="text-gray-400 text-sm">NVIDIA + Flux.1 génère votre catalogue complet avec images ultra HD en quelques secondes</p>
+          <p className="text-gray-400 text-sm">Gemini + Flux.1 génère votre catalogue complet avec images ultra HD en quelques secondes</p>
         </div>
         {phase === "review" && (
           <button onClick={reset}
@@ -120,7 +120,7 @@ export default function MagicImportPage() {
               <div>
                 <p className="text-sm font-bold text-amber-800 mb-1">Comment ça marche</p>
                 <p className="text-sm text-amber-700 leading-relaxed">
-                  Décrivez votre boutique en quelques mots → <strong>NVIDIA DeepSeek V4</strong> génère un catalogue
+                  Décrivez votre boutique en quelques mots → <strong>Gemini</strong> génère un catalogue
                   complet avec descriptions, prix adaptés au marché africain, tags SEO et prompts optimisés pour
                   <strong> Flux.1-dev</strong>. Les images Flux.1 ultra HD se chargent automatiquement.
                   Sélectionnez vos produits et importez en 1 clic.
@@ -171,7 +171,7 @@ export default function MagicImportPage() {
             <button onClick={generer} disabled={generating || !description.trim()}
               className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold text-[15px] flex items-center justify-center gap-3 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-amber-200/60">
               {generating ? (
-                <><Loader2 size={19} className="animate-spin" /> NVIDIA génère votre catalogue...</>
+                <><Loader2 size={19} className="animate-spin" /> Gemini génère votre catalogue...</>
               ) : (
                 <><Wand2 size={19} /> Générer {nombreProduits} produits avec Flux.1-dev</>
               )}
@@ -300,16 +300,16 @@ export default function MagicImportPage() {
           <h2 className="text-2xl font-black text-gray-900 mb-2">Catalogue importé !</h2>
           <p className="text-gray-400 text-sm mb-8 max-w-md">
             {importedCount} produit{importedCount > 1 ? "s" : ""} ajouté{importedCount > 1 ? "s" : ""} à votre boutique avec des images Flux.1 haute définition.
-            AXIA peut maintenant les enrichir et les promouvoir.
+            Xia peut maintenant les enrichir et les promouvoir.
           </p>
           <div className="flex gap-3">
             <Link href="/dashboard/produits"
               className="px-6 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200 transition-all">
               Voir les produits
             </Link>
-            <Link href="/dashboard/ia"
+            <Link href="/dashboard/xia"
               className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-violet-600 text-white font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2">
-              <Sparkles size={14} /> Demander à AXIA de promouvoir
+              <Sparkles size={14} /> Demander à Xia de promouvoir
             </Link>
             <button onClick={reset}
               className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-semibold text-sm hover:opacity-90 transition-all">

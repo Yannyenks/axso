@@ -1,7 +1,7 @@
 // Registre MCP Axso — liste tous les connecteurs et leurs outils disponibles
 // Inspiré du Model Context Protocol : chaque connecteur expose des "tools" que les agents peuvent appeler
 
-export type ConnecteurType = "meta" | "whatsapp" | "gmail" | "google_ads" | "tiktok" | "sms" | "higgsfield" | "claude";
+export type ConnecteurType = "meta" | "whatsapp" | "gmail" | "google_ads" | "tiktok" | "sms" | "higgsfield" | "gemini";
 
 export interface McpTool {
   name: string;
@@ -358,29 +358,29 @@ export const MCP_CONNECTEURS: ConnecteurDef[] = [
     ],
   },
   {
-    type: "claude",
-    nom: "Claude IA (Anthropic)",
+    type: "gemini",
+    nom: "Gemini IA (Google)",
     description: "Génération de texte, descriptions produits, posts sociaux, emails HTML, traduction en langues africaines, analyse d'images.",
-    icone: "🧠",
-    couleur: "#7C3AED",
+    icone: "✨",
+    couleur: "#4285F4",
     outils: [
       {
-        name: "claude_generer_texte",
-        description: "Génère du texte libre avec Claude (réponses, scripts, contenus)",
-        connecteur: "claude",
+        name: "gemini_generer_texte",
+        description: "Génère du texte libre avec Gemini (réponses, scripts, contenus)",
+        connecteur: "gemini",
         parameters: {
           type: "object",
           properties: {
-            prompt: { type: "string", description: "Instruction ou question à envoyer à Claude" },
+            prompt: { type: "string", description: "Instruction ou question à envoyer à Gemini" },
             contexte: { type: "string", description: "Contexte système optionnel" },
           },
           required: ["prompt"],
         },
       },
       {
-        name: "claude_generer_email_html",
+        name: "gemini_generer_email_html",
         description: "Génère un email marketing HTML complet prêt à envoyer",
-        connecteur: "claude",
+        connecteur: "gemini",
         parameters: {
           type: "object",
           properties: {
@@ -392,9 +392,9 @@ export const MCP_CONNECTEURS: ConnecteurDef[] = [
         },
       },
       {
-        name: "claude_generer_description_produit",
+        name: "gemini_generer_description_produit",
         description: "Génère une description produit optimisée pour la boutique",
-        connecteur: "claude",
+        connecteur: "gemini",
         parameters: {
           type: "object",
           properties: {
@@ -407,9 +407,9 @@ export const MCP_CONNECTEURS: ConnecteurDef[] = [
         },
       },
       {
-        name: "claude_generer_post_social",
+        name: "gemini_generer_post_social",
         description: "Génère un post optimisé pour Instagram, Facebook, TikTok ou WhatsApp",
-        connecteur: "claude",
+        connecteur: "gemini",
         parameters: {
           type: "object",
           properties: {
@@ -421,9 +421,9 @@ export const MCP_CONNECTEURS: ConnecteurDef[] = [
         },
       },
       {
-        name: "claude_traduire",
+        name: "gemini_traduire",
         description: "Traduit du contenu en langues africaines (wolof, haoussa, swahili, yoruba, igbo, twi…)",
-        connecteur: "claude",
+        connecteur: "gemini",
         parameters: {
           type: "object",
           properties: {
@@ -435,9 +435,9 @@ export const MCP_CONNECTEURS: ConnecteurDef[] = [
         },
       },
       {
-        name: "claude_analyser_image",
+        name: "gemini_analyser_image",
         description: "Analyse une image produit et génère une description ou répond à une question",
-        connecteur: "claude",
+        connecteur: "gemini",
         parameters: {
           type: "object",
           properties: {

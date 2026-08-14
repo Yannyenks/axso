@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ItemPanier } from "@/types";
+import { trackPixelEvent } from "@/components/storefront/MetaPixel";
 
 interface CartStore {
   items: ItemPanier[];
@@ -34,6 +35,12 @@ export const useCartStore = create<CartStore>()(
 
       ajouterItem: (nouvelItem) => {
         const quantite = nouvelItem.quantite ?? 1;
+        trackPixelEvent("AddToCart", {
+          content_ids: [nouvelItem.produitId],
+          content_name: nouvelItem.nom,
+          content_type: "product",
+          value: nouvelItem.prix * quantite,
+        });
         set((state) => {
           const existant = state.items.findIndex(
             (i) => i.produitId === nouvelItem.produitId && i.variante === nouvelItem.variante

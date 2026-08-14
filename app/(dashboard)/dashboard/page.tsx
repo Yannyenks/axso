@@ -217,7 +217,7 @@ export default async function DashboardPage() {
   if (d.topVilles.length > 0 && topVilleShare > 0) insights.push({
     Icon: MapPin,
     color: "#7C3AED",
-    bg:    "#F5F3FF",
+    bg:    "#EEF1F6",
     title: "Ville principale",
     value: d.topVilles[0]!.ville || "Inconnue",
     sub:   `${topVilleShare}% des commandes ce mois`,
@@ -234,7 +234,7 @@ export default async function DashboardPage() {
 
   // Etapes de l'entonnoir
   const funnelSteps = [
-    { label: "Visiteurs",  value: Math.round(d.visitors), color: "#7C3AED", bg: "#F5F3FF",  Icon: Eye },
+    { label: "Visiteurs",  value: Math.round(d.visitors), color: "#7C3AED", bg: "#EEF1F6",  Icon: Eye },
     { label: "Commandes",  value: d.monthCount,            color: "#F5A623", bg: "#FFF8EC",  Icon: ShoppingBag },
     { label: "Livrées",    value: livrees,                  color: "#16A34A", bg: "#F0FDF4",  Icon: CheckCircle },
   ];
@@ -464,7 +464,7 @@ export default async function DashboardPage() {
             <p className="ax-label mb-3">Accès rapides</p>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { href: "/dashboard/produits/nouveau", label: "Nouveau produit", Icon: Package,     color: "#7C3AED", bg: "#F5F3FF" },
+                { href: "/dashboard/produits/nouveau", label: "Nouveau produit", Icon: Package,     color: "#7C3AED", bg: "#EEF1F6" },
                 { href: "/dashboard/commandes",        label: "Commandes",       Icon: ShoppingBag, color: "#D97706", bg: "#FFFBEB" },
                 { href: "/dashboard/clients",          label: "Clients",         Icon: Users,       color: "#0891B2", bg: "#ECFEFF" },
                 { href: "/dashboard/analytics",        label: "Analytics",       Icon: TrendingUp,  color: "#16A34A", bg: "#ECFDF5" },

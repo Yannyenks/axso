@@ -99,7 +99,7 @@ function inlineMarkdown(text: string): React.ReactNode {
     if (token.startsWith("**") && token.endsWith("**")) {
       parts.push(<strong key={i++} className="font-bold text-[#111]">{token.slice(2, -2)}</strong>);
     } else if (token.startsWith("`") && token.endsWith("`")) {
-      parts.push(<code key={i++} className="bg-gray-100 text-[#7c3aed] text-[11px] px-1.5 py-0.5 rounded font-mono">{token.slice(1, -1)}</code>);
+      parts.push(<code key={i++} className="bg-gray-100 text-[#1B2A4A] text-[11px] px-1.5 py-0.5 rounded font-mono">{token.slice(1, -1)}</code>);
     } else if (token.startsWith("*") && token.endsWith("*")) {
       parts.push(<em key={i++} className="italic">{token.slice(1, -1)}</em>);
     } else if (token.startsWith("[")) {
@@ -196,7 +196,7 @@ function OrchestratorPanel({ onClose }: { onClose: () => void }) {
 
         <button onClick={orchestrer} disabled={loading}
           className="w-full py-3.5 rounded-2xl text-white font-bold text-sm transition-all disabled:opacity-60 flex items-center justify-center gap-2 shadow-lg"
-          style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", boxShadow: "0 8px 20px rgba(124,58,237,0.3)" }}>
+          style={{ background: "linear-gradient(135deg, #1B2A4A, #4f46e5)", boxShadow: "0 8px 20px rgba(124,58,237,0.3)" }}>
           {loading ? <><Loader2 size={14} className="animate-spin"/> Orchestration en cours…</> : <><Zap size={14}/> Activer tous les agents maintenant</>}
         </button>
 
@@ -234,10 +234,10 @@ function OrchestratorPanel({ onClose }: { onClose: () => void }) {
               <div key={obj.id} className="ax-card p-3 mb-2">
                 <div className="flex justify-between mb-1.5">
                   <p className="text-sm font-semibold text-gray-800">{obj.titre}</p>
-                  <span className="text-xs font-bold" style={{ color: pct >= 100 ? "#16a34a" : "#7c3aed" }}>{pct}%</span>
+                  <span className="text-xs font-bold" style={{ color: pct >= 100 ? "#16a34a" : "#1B2A4A" }}>{pct}%</span>
                 </div>
                 <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg,#7c3aed,#4f46e5)" }}/>
+                  <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg,#1B2A4A,#4f46e5)" }}/>
                 </div>
                 <div className="flex justify-between mt-1">
                   <span className="text-[10px] text-gray-400">{obj.actuel?.toLocaleString()} {obj.devise}</span>
@@ -441,7 +441,7 @@ export default function AgentsPage() {
         <button
           onClick={() => setShowOrchestrator(true)}
           className="ml-auto flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all border hover:shadow-md flex-shrink-0"
-          style={{ background: "linear-gradient(135deg, #7c3aed12, #4f46e512)", borderColor: "#7c3aed30", color: "#7c3aed" }}
+          style={{ background: "linear-gradient(135deg, #1B2A4A12, #4f46e512)", borderColor: "#1B2A4A30", color: "#1B2A4A" }}
         >
           <BrainCircuit size={14}/>
           <span className="hidden sm:inline">Mode Autonome</span>

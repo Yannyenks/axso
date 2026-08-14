@@ -6,6 +6,7 @@ import {
   ChevronRight, Sparkles, Search, BarChart2, DollarSign,
   ArrowUpRight, CheckCircle2, Loader2, X, Info,
 } from "lucide-react";
+import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 
 const TABS = [
   { id: "agent", label: "Agent IA", icon: Zap },
@@ -212,7 +213,7 @@ function OngletAgentIA() {
         <div className="relative flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: "linear-gradient(135deg,#7c3aed,#a78bfa)", boxShadow: "0 4px 16px rgba(124,58,237,0.4)" }}>
+              style={{ background: "linear-gradient(135deg,#1B2A4A,#FFD280)", boxShadow: "0 4px 16px rgba(124,58,237,0.4)" }}>
               <Zap size={18} color="#fff" />
             </div>
             <div>
@@ -236,7 +237,7 @@ function OngletAgentIA() {
               { icon: ShoppingBag, label: "Import",    val: "1 clic" },
             ].map(({ icon: Icon, label, val }) => (
               <div key={label} className="text-center hidden sm:block">
-                <Icon size={14} style={{ color: "#a78bfa", margin: "0 auto 2px" }} />
+                <Icon size={14} style={{ color: "#FFD280", margin: "0 auto 2px" }} />
                 <p className="text-[10px] font-bold" style={{ color: "rgba(255,255,255,0.6)" }}>{label}</p>
                 <p className="text-[9px]" style={{ color: "rgba(255,255,255,0.3)" }}>{val}</p>
               </div>
@@ -252,7 +253,7 @@ function OngletAgentIA() {
             <div className="text-center mb-6">
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3"
                 style={{ background: "linear-gradient(135deg,rgba(124,58,237,0.15),rgba(245,166,35,0.1))", border: "1px solid rgba(124,58,237,0.2)" }}>
-                <Sparkles size={24} style={{ color: "#a78bfa" }} />
+                <Sparkles size={24} style={{ color: "#FFD280" }} />
               </div>
               <h3 className="font-bold text-[14px] text-[#111] mb-1">Commence par une question</h3>
               <p className="text-[12px] text-gray-400">L'agent analyse les tendances et te propose des produits gagnants à importer directement.</p>
@@ -266,7 +267,7 @@ function OngletAgentIA() {
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(124,58,237,0.12)"; (e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.03)"; }}>
                   <div className="flex items-center justify-between">
                     <span className="text-[12px] font-semibold text-gray-700">{s.label}</span>
-                    <ChevronRight size={13} className="text-gray-300 group-hover:text-[#7c3aed] transition-colors" />
+                    <ChevronRight size={13} className="text-gray-300 group-hover:text-[#1B2A4A] transition-colors" />
                   </div>
                   <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{s.prompt}</p>
                 </button>
@@ -279,7 +280,7 @@ function OngletAgentIA() {
           <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             {msg.role === "assistant" && (
               <div className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 mr-2 mt-0.5"
-                style={{ background: "linear-gradient(135deg,#7c3aed,#a78bfa)", boxShadow: "0 2px 8px rgba(124,58,237,0.3)" }}>
+                style={{ background: "linear-gradient(135deg,#1B2A4A,#FFD280)", boxShadow: "0 2px 8px rgba(124,58,237,0.3)" }}>
                 <Zap size={12} color="#fff" />
               </div>
             )}
@@ -288,7 +289,7 @@ function OngletAgentIA() {
                 ? "text-white rounded-tr-sm"
                 : "bg-white border border-gray-100 rounded-tl-sm shadow-sm"
               }`}
-              style={msg.role === "user" ? { background: "linear-gradient(135deg,#7c3aed,#5b21b6)" } : {}}>
+              style={msg.role === "user" ? { background: "linear-gradient(135deg,#1B2A4A,#12203d)" } : {}}>
               {msg.role === "user" ? (
                 <p className="text-[12px] leading-relaxed">{msg.content}</p>
               ) : (
@@ -298,7 +299,7 @@ function OngletAgentIA() {
                     <div className="flex flex-wrap gap-1 mt-3 pt-2 border-t border-gray-100">
                       {msg.actions.slice(0, 4).map((a, ai) => (
                         <span key={ai} className="text-[9px] px-2 py-0.5 rounded-full font-mono"
-                          style={{ background: "rgba(124,58,237,0.08)", color: "#7c3aed" }}>
+                          style={{ background: "rgba(124,58,237,0.08)", color: "#1B2A4A" }}>
                           {a.split("(")[0]}
                         </span>
                       ))}
@@ -316,12 +317,12 @@ function OngletAgentIA() {
         {loading && (
           <div className="flex justify-start">
             <div className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 mr-2"
-              style={{ background: "linear-gradient(135deg,#7c3aed,#a78bfa)" }}>
+              style={{ background: "linear-gradient(135deg,#1B2A4A,#FFD280)" }}>
               <Zap size={12} color="#fff" />
             </div>
             <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
               <div className="flex items-center gap-2">
-                <Loader2 size={13} className="animate-spin" style={{ color: "#7c3aed" }} />
+                <Loader2 size={13} className="animate-spin" style={{ color: "#1B2A4A" }} />
                 <span className="text-[12px] text-gray-400">Analyse en cours…</span>
               </div>
             </div>
@@ -347,7 +348,7 @@ function OngletAgentIA() {
           onClick={() => sendMessage()}
           disabled={!input.trim() || loading}
           className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-40 disabled:scale-95 hover:scale-105"
-          style={{ background: "linear-gradient(135deg,#7c3aed,#5b21b6)", boxShadow: "0 3px 12px rgba(124,58,237,0.35)" }}>
+          style={{ background: "linear-gradient(135deg,#1B2A4A,#12203d)", boxShadow: "0 3px 12px rgba(124,58,237,0.35)" }}>
           <Send size={14} color="#fff" />
         </button>
       </div>
@@ -757,13 +758,13 @@ export default function DropshippingPage() {
     <div className="p-5 max-w-4xl mx-auto space-y-5" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-[18px] font-bold text-[#111]">Dropshipping</h1>
+          <h1 className="text-[18px] font-bold text-[#111] inline-flex items-center gap-2">Dropshipping <AgentActiveIndicator label="Agent Dropshipping actif" /></h1>
           <p className="text-[12px] text-gray-500">Agent IA, fournisseurs, commandes et import catalogue</p>
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
           style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.15)" }}>
-          <Zap size={11} style={{ color: "#7c3aed" }} />
-          <span className="text-[11px] font-semibold" style={{ color: "#7c3aed" }}>Propulsé par AXIA</span>
+          <Zap size={11} style={{ color: "#1B2A4A" }} />
+          <span className="text-[11px] font-semibold" style={{ color: "#1B2A4A" }}>Propulsé par AXIA</span>
         </div>
       </div>
 
@@ -772,10 +773,10 @@ export default function DropshippingPage() {
           <button key={id} onClick={() => setOnglet(id)}
             className={`flex-1 py-2 rounded-xl text-[12px] font-semibold transition-all flex items-center justify-center gap-1.5 ${onglet === id ? "bg-white shadow-sm text-[#111]" : "text-gray-500 hover:text-gray-700"}`}
             style={onglet === id && id === "agent" ? { boxShadow: "0 1px 4px rgba(124,58,237,0.15)" } : {}}>
-            <Icon size={13} style={{ color: onglet === id && id === "agent" ? "#7c3aed" : "inherit" }} />
+            <Icon size={13} style={{ color: onglet === id && id === "agent" ? "#1B2A4A" : "inherit" }} />
             <span className="hidden sm:inline">{label}</span>
             {id === "agent" && onglet !== "agent" && (
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] animate-pulse" />
             )}
           </button>
         ))}

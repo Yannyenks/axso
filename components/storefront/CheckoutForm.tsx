@@ -11,10 +11,18 @@ import {
   Receipt, Save, ClipboardList, Check
 } from "lucide-react";
 import { StripeCheckout } from "./StripeCheckout";
+import { trackPixelEvent } from "./MetaPixel";
+
+interface ParametresCommande {
+  demanderEmail?: boolean;
+  demanderGps?: boolean;
+  champPersonnalise?: { actif: boolean; label: string };
+}
 
 interface Props {
   theme: { fond: string; accent: string; texte: string; surface: string };
   slug: string; devise: string; tenantId: string; nomBoutique: string; logoUrl?: string;
+  parametresCommande?: ParametresCommande;
 }
 
 // ─── Config opérateurs ───────────────────────────────────────────────────────
@@ -91,11 +99,17 @@ function Field({ label, required, children }: { label: string; required?: boolea
 // ═══════════════════════════════════════════════════════════════════════════════
 // CHECKOUT PHYSIQUE — Paiement à la livraison → WhatsApp
 // ═══════════════════════════════════════════════════════════════════════════════
-function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePromo, viderPanier }: any) {
+function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePromo, viderPanier, parametresCommande }: any) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState<{ commandeId: string; numero: string; whatsappUrl: string | null; trackingToken?: string } | null>(null);
+  const cfg: ParametresCommande = parametresCommande || {};
+  const demanderEmail = cfg.demanderEmail ?? true;
+  const demanderGps = cfg.demanderGps ?? true;
+  const champPerso = cfg.champPersonnalise?.actif ? cfg.champPersonnalise.label : null;
+  const [loadingCanal, setLoadingCanal] = useState<"whatsapp" | "direct" | null>(null);
+  const loading = loadingCanal !== null;
+  const [done, setDone] = useState<{ commandeId: string; numero: string; viaWhatsapp: boolean; whatsappUrl: string | null; trackingToken?: string } | null>(null);
   const [form, setForm] = useState({ nom: "", telephone: "", adresse: "", ville: "", pays: "Sénégal", email: "" });
+  const [champPersoValeur, setChampPersoValeur] = useState("");
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsBloque, setGpsBloque] = useState(false);
@@ -190,29 +204,40 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
     obtenirPosition();
   }
 
-  async function commander() {
+  async function commander(canal: "whatsapp" | "direct") {
     if (!form.nom.trim() || !form.telephone.trim()) { toast.error("Nom et téléphone obligatoires"); return; }
-    setLoading(true);
+    setLoadingCanal(canal);
     try {
       const res = await fetch("/api/commandes/whatsapp-creer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tenantId, slug,
+          tenantId, slug, canal,
           client: form,
           items: items.map((i: any) => ({ produitId: i.produitId, nom: i.nom, prix: i.prix, quantite: i.quantite, variante: i.variante, imageUrl: i.imageUrl })),
           total, devise, codePromo,
           localisation: gps ? { lat: gps.lat, lng: gps.lng, adresseExacte: adresseExacte || form.adresse } : null,
+          champPersonnalise: champPerso && champPersoValeur.trim() ? { label: champPerso, valeur: champPersoValeur.trim() } : undefined,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+      trackPixelEvent("Purchase", {
+        content_ids: items.map((i: any) => i.produitId),
+        contents: items.map((i: any) => ({ id: i.produitId, quantity: i.quantite })),
+        value: total,
+        currency: devise,
+        num_items: items.length,
+      });
       viderPanier();
       setDone(data);
+      if (canal === "whatsapp" && data.whatsappUrl) {
+        window.open(data.whatsappUrl, "_blank", "noopener,noreferrer");
+      }
     } catch (e: any) {
       toast.error(e.message || "Erreur");
     } finally {
-      setLoading(false);
+      setLoadingCanal(null);
     }
   }
 
@@ -229,16 +254,20 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
           </div>
           <div>
             <h2 className="text-2xl font-bold font-playfair mb-2" style={{ color: theme.accent }}>Commande #{done.numero} confirmée !</h2>
-            <p className="text-sm opacity-60">Votre commande est enregistrée. Vous paierez à la livraison.</p>
+            <p className="text-sm opacity-60">
+              {done.viaWhatsapp
+                ? "Votre commande est enregistrée et un onglet WhatsApp s'est ouvert pour la confirmer auprès du vendeur."
+                : "Votre commande est enregistrée. Le vendeur a été notifié et vous contactera pour la livraison."}
+            </p>
           </div>
         </div>
 
         <div className="space-y-3">
-          {done.whatsappUrl && (
+          {done.viaWhatsapp && done.whatsappUrl && (
             <a href={done.whatsappUrl} target="_blank" rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-bold text-base hover:opacity-90 transition-all"
               style={{ background: "#25D366", color: "#fff", boxShadow: "0 4px 20px rgba(37,211,102,0.35)" }}>
-              <MessageCircle size={18} /> Confirmer via WhatsApp
+              <MessageCircle size={18} /> L'onglet ne s'est pas ouvert ? Cliquez ici
             </a>
           )}
           {invoiceUrl && (
@@ -292,12 +321,21 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
                 <input type="tel" value={form.telephone} onChange={e => set("telephone", e.target.value)} placeholder="+221 77 000 00 00" className={inp} style={{ ...inpStyle, paddingLeft: "2.25rem" }} />
               </div>
             </Field>
-            <Field label="Email (optionnel)">
-              <div className="relative">
-                <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40" />
-                <input type="email" value={form.email} onChange={e => set("email", e.target.value)} placeholder="email@exemple.com" className={inp} style={{ ...inpStyle, paddingLeft: "2.25rem" }} />
+            {demanderEmail && (
+              <Field label="Email (optionnel)">
+                <div className="relative">
+                  <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40" />
+                  <input type="email" value={form.email} onChange={e => set("email", e.target.value)} placeholder="email@exemple.com" className={inp} style={{ ...inpStyle, paddingLeft: "2.25rem" }} />
+                </div>
+              </Field>
+            )}
+            {champPerso && (
+              <div className={demanderEmail ? "" : "sm:col-span-2"}>
+                <Field label={champPerso}>
+                  <input value={champPersoValeur} onChange={e => setChampPersoValeur(e.target.value)} className={inp} style={inpStyle} />
+                </Field>
               </div>
-            </Field>
+            )}
           </div>
         </div>
 
@@ -317,6 +355,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
             </div>
 
             {/* GPS Picker */}
+            {demanderGps && (
             <div className="sm:col-span-2 space-y-2">
               {/* Succès */}
               {gps && !gpsBloque && (
@@ -531,6 +570,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
                 </button>
               )}
             </div>
+            )}
 
             <Field label="Ville">
               <input value={form.ville} onChange={e => set("ville", e.target.value)} placeholder="Dakar" className={inp} style={inpStyle} />
@@ -549,11 +589,18 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
         <div className="lg:sticky lg:top-24 space-y-4">
           <Recap theme={theme} devise={devise} items={items} total={total} codePromo={codePromo} label="Votre commande" />
 
-          <button onClick={commander} disabled={loading}
+          <button onClick={() => commander("whatsapp")} disabled={loading}
             className="w-full py-4 rounded-2xl font-bold text-base transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-3 shadow-lg"
             style={{ background: "#25D366", color: "#fff", boxShadow: "0 4px 20px rgba(37,211,102,0.4)" }}>
-            {loading ? <Loader2 size={18} className="animate-spin" /> : <MessageCircle size={18} />}
-            {loading ? "Création de la commande…" : "Commander via WhatsApp"}
+            {loadingCanal === "whatsapp" ? <Loader2 size={18} className="animate-spin" /> : <MessageCircle size={18} />}
+            {loadingCanal === "whatsapp" ? "Création de la commande…" : "Commander via WhatsApp"}
+          </button>
+
+          <button onClick={() => commander("direct")} disabled={loading}
+            className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-3 border-2"
+            style={{ borderColor: theme.accent, color: theme.accent, background: `${theme.accent}08` }}>
+            {loadingCanal === "direct" ? <Loader2 size={16} className="animate-spin" /> : <ClipboardList size={16} />}
+            {loadingCanal === "direct" ? "Création de la commande…" : "Commander maintenant"}
           </button>
 
           <div className="flex items-center gap-2 text-xs opacity-40 justify-center">
@@ -622,6 +669,13 @@ function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codeProm
 
   function onPaiementSucces() {
     try { localStorage.removeItem("axso_ref"); } catch {}
+    trackPixelEvent("Purchase", {
+      content_ids: items.map((i: any) => i.produitId),
+      contents: items.map((i: any) => ({ id: i.produitId, quantity: i.quantite })),
+      value: total,
+      currency: devise,
+      num_items: items.length,
+    });
     viderPanier();
     router.push(`/${slug}/confirmation/${commandeId}`);
   }
@@ -768,7 +822,7 @@ function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codeProm
 // ═══════════════════════════════════════════════════════════════════════════════
 // CHECKOUT MIXTE — Avertissement + deux sections
 // ═══════════════════════════════════════════════════════════════════════════════
-function CheckoutMixte({ theme, slug, devise, tenantId, nomBoutique, logoUrl, items, total, codePromo, viderPanier }: any) {
+function CheckoutMixte({ theme, slug, devise, tenantId, nomBoutique, logoUrl, items, total, codePromo, viderPanier, parametresCommande }: any) {
   const itemsPhysiques = items.filter((i: any) => i.type === "physique");
   const itemsDigitaux  = items.filter((i: any) => i.type === "digital" || i.type === "dropshipping");
   const totalPhysique  = itemsPhysiques.reduce((s: number, i: any) => s + i.prix * i.quantite, 0);
@@ -803,7 +857,7 @@ function CheckoutMixte({ theme, slug, devise, tenantId, nomBoutique, logoUrl, it
       </div>
 
       {section === "physique" && itemsPhysiques.length > 0 && (
-        <CheckoutPhysique theme={theme} slug={slug} devise={devise} tenantId={tenantId} items={itemsPhysiques} total={totalPhysique} codePromo={null} viderPanier={() => {}} />
+        <CheckoutPhysique theme={theme} slug={slug} devise={devise} tenantId={tenantId} items={itemsPhysiques} total={totalPhysique} codePromo={null} viderPanier={() => {}} parametresCommande={parametresCommande} />
       )}
       {section === "digital" && itemsDigitaux.length > 0 && (
         <CheckoutDigital theme={theme} slug={slug} devise={devise} tenantId={tenantId} nomBoutique={nomBoutique} logoUrl={logoUrl} items={itemsDigitaux} total={totalDigital} codePromo={null} viderPanier={() => {}} />
@@ -815,7 +869,7 @@ function CheckoutMixte({ theme, slug, devise, tenantId, nomBoutique, logoUrl, it
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPOSANT PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
-export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoUrl }: Props) {
+export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoUrl, parametresCommande }: Props) {
   const { items, totalAvecReduction, viderPanier, codePromo } = useCartStore();
   const total = totalAvecReduction();
 
@@ -831,6 +885,18 @@ export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoU
     return "physique";
   }, [items]);
 
+  useEffect(() => {
+    if (items.length === 0) return;
+    trackPixelEvent("InitiateCheckout", {
+      content_ids: items.map((i: any) => i.produitId),
+      contents: items.map((i: any) => ({ id: i.produitId, quantity: i.quantite })),
+      value: total,
+      currency: devise,
+      num_items: items.length,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (items.length === 0) {
     return (
       <div className="text-center py-20">
@@ -840,7 +906,7 @@ export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoU
     );
   }
 
-  const commonProps = { theme, slug, devise, tenantId, nomBoutique, logoUrl, items, total, codePromo, viderPanier };
+  const commonProps = { theme, slug, devise, tenantId, nomBoutique, logoUrl, items, total, codePromo, viderPanier, parametresCommande };
 
   return (
     <>

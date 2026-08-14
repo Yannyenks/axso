@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { AxiaStorefront } from "@/components/storefront/AxiaStorefront";
 import { StorefrontPopups } from "@/components/storefront/StorefrontPopups";
+import { MetaPixel } from "@/components/storefront/MetaPixel";
 
 interface Props {
   children: React.ReactNode;
@@ -13,7 +14,7 @@ export default async function StorefrontLayout({ children, params }: Props) {
 
   const tenant = await prisma.tenant.findUnique({
     where: { slug },
-    select: { id: true, nomBoutique: true, themeId: true, themeConfig: true },
+    select: { id: true, nomBoutique: true, themeId: true, themeConfig: true, metaPixelId: true },
   });
 
   if (!tenant) return <>{children}</>;
@@ -26,6 +27,7 @@ export default async function StorefrontLayout({ children, params }: Props) {
       {children}
       <AxiaStorefront slug={slug} nomBoutique={tenant.nomBoutique} accentColor={accent} />
       <StorefrontPopups slug={slug} accentColor={accent} />
+      {tenant.metaPixelId && <MetaPixel pixelId={tenant.metaPixelId} />}
     </>
   );
 }

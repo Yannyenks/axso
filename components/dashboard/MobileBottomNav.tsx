@@ -10,14 +10,14 @@ import {
   Wallet, Package2, Bot, Zap,
 } from "lucide-react";
 import {
-  IconAccueil, IconProduits, IconAxia, IconCommandes,
+  IconAccueil, IconProduits, IconXia, IconCommandes,
 } from "@/components/dashboard/AppIcons";
 
 const GROUPS = [
   {
-    label: "Intelligence IA", color: "#7c3aed",
+    label: "Intelligence IA", color: "#1B2A4A",
     items: [
-      { href: "/dashboard/ia",        label: "AXIA — Chat IA",   icon: Zap },
+      { href: "/dashboard/xia",       label: "Xia — Assistante IA", icon: Zap },
       { href: "/dashboard/studio",    label: "Studio Contenu",   icon: Film },
       { href: "/dashboard/scheduler", label: "Planificateur",    icon: Calendar },
     ],
@@ -69,7 +69,7 @@ const GROUPS = [
     ],
   },
   {
-    label: "Analytiques", color: "#a78bfa",
+    label: "Analytiques", color: "#FFD280",
     items: [
       { href: "/dashboard/analytics",  label: "Analytics",        icon: BarChart3 },
       { href: "/dashboard/parametres", label: "Paramètres",       icon: Settings },
@@ -87,7 +87,7 @@ export function MobileBottomNav() {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const axiaActive = pathname.startsWith("/dashboard/ia") || pathname.startsWith("/dashboard/axia");
+  const xiaActive = pathname.startsWith("/dashboard/xia");
 
   return (
     <>
@@ -98,16 +98,16 @@ export function MobileBottomNav() {
       >
         <div className="relative flex items-end">
 
-          {/* AXIA — flottant au-dessus du centre */}
+          {/* Xia — flottante au-dessus du centre */}
           <Link
-            href="/dashboard/ia"
+            href="/dashboard/xia"
             className="absolute left-1/2 -translate-x-1/2 -top-10 z-10 flex flex-col items-center gap-0.5"
           >
             <div
               className="transition-transform active:scale-90"
-              style={{ filter: `drop-shadow(0 4px 14px rgba(124,58,237,${axiaActive ? "0.55" : "0.35"}))` }}
+              style={{ filter: `drop-shadow(0 4px 14px rgba(27,42,74,${xiaActive ? "0.55" : "0.35"}))` }}
             >
-              <IconAxia size={52} />
+              <IconXia size={52} />
             </div>
           </Link>
 
@@ -150,16 +150,16 @@ export function MobileBottomNav() {
               );
             })}
 
-            {/* Espace central pour AXIA */}
+            {/* Espace central pour Xia */}
             <div className="w-14 flex-shrink-0 flex flex-col items-center pt-1 pb-0.5">
               <span
                 className="text-[9.5px] font-bold leading-none"
-                style={{ color: axiaActive ? "#7c3aed" : "#CCCCCC" }}
+                style={{ color: xiaActive ? "#1B2A4A" : "#CCCCCC" }}
               >
-                AXIA
+                Xia
               </span>
-              {axiaActive && (
-                <div className="w-1 h-1 rounded-full bg-[#7c3aed] mt-0.5" />
+              {xiaActive && (
+                <div className="w-1 h-1 rounded-full bg-[#1B2A4A] mt-0.5" />
               )}
             </div>
 

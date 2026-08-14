@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   Save, Globe, Bell, Users, ExternalLink, Copy, Check,
-  Settings, MessageCircle, ChevronRight,
+  Settings, MessageCircle, ChevronRight, ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -24,6 +24,8 @@ export default function ParametresPage() {
   const [copied, setCopied] = useState(false);
   const [whatsappNumero, setWhatsappNumero] = useState("");
   const [savingWhatsapp, setSavingWhatsapp] = useState(false);
+  const [formCommande, setFormCommande] = useState({ demanderEmail: true, demanderGps: true, champActif: false, champLabel: "" });
+  const [savingCommande, setSavingCommande] = useState(false);
 
   useEffect(() => {
     fetch("/api/tenants/moi-complet").then(r => r.json()).then(data => {
@@ -36,9 +38,36 @@ export default function ParametresPage() {
           categorie: data.categorie || "", pays: data.pays || "", devise: data.devise || "XOF",
         });
         setWhatsappNumero(data.whatsappNumero || "");
+        const pc = data.parametresCommande || {};
+        setFormCommande({
+          demanderEmail: pc.demanderEmail ?? true,
+          demanderGps: pc.demanderGps ?? true,
+          champActif: pc.champPersonnalise?.actif ?? false,
+          champLabel: pc.champPersonnalise?.label ?? "",
+        });
       }
     });
   }, []);
+
+  async function sauvegarderCommande() {
+    setSavingCommande(true);
+    try {
+      const res = await fetch("/api/tenants", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          parametresCommande: {
+            demanderEmail: formCommande.demanderEmail,
+            demanderGps: formCommande.demanderGps,
+            champPersonnalise: { actif: formCommande.champActif, label: formCommande.champLabel },
+          },
+        }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Formulaire de commande mis à jour !");
+    } catch { toast.error("Erreur lors de la sauvegarde"); }
+    finally { setSavingCommande(false); }
+  }
 
   async function sauvegarderWhatsapp(e: React.FormEvent) {
     e.preventDefault();
@@ -247,6 +276,50 @@ export default function ParametresPage() {
           {savingWhatsapp ? "Enregistrement…" : "Enregistrer le numéro"}
         </button>
       </form>
+
+      {/* ── Formulaire de commande "Commander maintenant" ── */}
+      <div className="ax-card p-6 space-y-4">
+        <div className="flex items-center gap-2 mb-1">
+          <ClipboardList size={14} className="text-[#F5A623]" />
+          <h2 className="text-[13px] font-semibold text-[#111111]">Formulaire de commande</h2>
+        </div>
+        <p className="text-[12px] text-[#AAAAAA]">
+          Personnalisez les informations demandées à l'acheteur qui choisit "Commander maintenant" (sans passer par WhatsApp).
+        </p>
+
+        <label className="flex items-center justify-between py-2 cursor-pointer">
+          <span className="text-[13px] text-[#333333]">Demander l'adresse email</span>
+          <input type="checkbox" checked={formCommande.demanderEmail}
+            onChange={e => setFormCommande(f => ({ ...f, demanderEmail: e.target.checked }))}
+            className="w-4 h-4 accent-[#F5A623]" />
+        </label>
+        <label className="flex items-center justify-between py-2 cursor-pointer border-t border-[#F5F5F5]">
+          <span className="text-[13px] text-[#333333]">Proposer le partage de la position GPS</span>
+          <input type="checkbox" checked={formCommande.demanderGps}
+            onChange={e => setFormCommande(f => ({ ...f, demanderGps: e.target.checked }))}
+            className="w-4 h-4 accent-[#F5A623]" />
+        </label>
+        <label className="flex items-center justify-between py-2 cursor-pointer border-t border-[#F5F5F5]">
+          <span className="text-[13px] text-[#333333]">Ajouter un champ personnalisé</span>
+          <input type="checkbox" checked={formCommande.champActif}
+            onChange={e => setFormCommande(f => ({ ...f, champActif: e.target.checked }))}
+            className="w-4 h-4 accent-[#F5A623]" />
+        </label>
+        {formCommande.champActif && (
+          <div>
+            <label className={labelCls}>Libellé du champ</label>
+            <input value={formCommande.champLabel} onChange={e => setFormCommande(f => ({ ...f, champLabel: e.target.value }))}
+              placeholder="Ex : Précisions sur la commande, Code postal…" className={inputCls} />
+          </div>
+        )}
+
+        <button type="button" onClick={sauvegarderCommande} disabled={savingCommande}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-semibold text-[13px] text-white transition-all hover:scale-[1.01] disabled:opacity-50"
+          style={{ background: "linear-gradient(135deg, #F5A623, #D4911A)", boxShadow: "0 4px 16px rgba(245,166,35,0.25)" }}>
+          <Save size={14} />
+          {savingCommande ? "Enregistrement…" : "Enregistrer"}
+        </button>
+      </div>
 
       {/* ── Plan actuel ── */}
       {tenant && (

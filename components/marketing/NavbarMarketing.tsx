@@ -84,7 +84,7 @@ export function NavbarMarketing() {
             borderRadius: "999px",
             padding: isExpanded ? "8px 10px 8px 18px" : "7px 12px",
             width: isExpanded
-              ? "min(880px, calc(100vw - 32px))"
+              ? "min(1120px, calc(100vw - 32px))"
               : "min(190px, calc(100vw - 32px))",
             transition:
               "width .55s cubic-bezier(.34,1.56,.64,1), padding .4s ease, box-shadow .35s ease",
@@ -98,11 +98,10 @@ export function NavbarMarketing() {
           {/* Logo */}
           <Link href="/" style={{ display:"flex", alignItems:"center", flexShrink:0, textDecoration:"none", zIndex:2 }}>
             <img
-              src="/logo.png" alt="axso"
+              src="/logo-dark.png" alt="axso"
               style={{
-                height: isExpanded ? "80px" : "62px",
+                height: isExpanded ? "42px" : "32px",
                 width: "auto", objectFit: "contain",
-                filter: "brightness(0) invert(1)",
                 transition: "height .45s cubic-bezier(.34,1.56,.64,1)",
               }}
             />
@@ -163,7 +162,7 @@ export function NavbarMarketing() {
               transition: "transform .18s, box-shadow .18s",
               display: "inline-block",
             }}>
-              Commencer&nbsp;→
+              Créer ma boutique gratuite&nbsp;→
             </Link>
           </div>
 
@@ -206,9 +205,9 @@ export function NavbarMarketing() {
           {/* ── Ligne du haut — toujours visible ── */}
           <div style={{ display:"flex", alignItems:"center", padding:"7px 10px 7px 16px", gap:"8px" }}>
             <Link href="/" style={{ display:"flex", alignItems:"center", textDecoration:"none", flexShrink:0 }}>
-              <img src="/logo.png" alt="axso" style={{
-                height: mobileOpen ? "64px" : "58px",
-                filter:"brightness(0) invert(1)", objectFit:"contain",
+              <img src="/logo-dark.png" alt="axso" style={{
+                height: mobileOpen ? "34px" : "30px",
+                objectFit:"contain",
                 transition: "height .4s cubic-bezier(.34,1.56,.64,1)",
               }} />
             </Link>
@@ -225,7 +224,7 @@ export function NavbarMarketing() {
               transition: "opacity .2s ease, transform .3s cubic-bezier(.34,1.56,.64,1)",
               pointerEvents: mobileOpen ? "none" : "auto",
             }}>
-              Commencer
+              Créer gratuitement
             </Link>
             <button
               onClick={() => setMobileOpen(v => !v)}
@@ -293,7 +292,7 @@ export function NavbarMarketing() {
                     textDecoration: "none",
                     boxShadow: "0 4px 20px rgba(245,166,35,.5)",
                   }}>
-                    Créer ma boutique
+                    Créer ma boutique gratuite
                   </Link>
                 </div>
               </div>

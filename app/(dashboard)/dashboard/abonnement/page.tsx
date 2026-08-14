@@ -59,7 +59,7 @@ const PLANS = [
     palier: "Palier 2",
     prixXAF: 20000,
     description: "Aucune limite — puissance totale",
-    couleur: "#7c3aed",
+    couleur: "#1B2A4A",
     bg: "rgba(124,58,237,0.08)",
     border: "rgba(124,58,237,0.35)",
     icone: Crown,

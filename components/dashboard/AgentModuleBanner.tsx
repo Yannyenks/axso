@@ -105,9 +105,9 @@ export function AgentModuleBanner() {
   const pathname = usePathname();
   const config = getModuleConfig(pathname);
 
-  // Ne pas afficher sur /dashboard/ia (déjà intégré) et /dashboard/agents
+  // Ne pas afficher sur /dashboard/xia (déjà intégré) et /dashboard/agents
   if (!config) return null;
-  if (pathname === "/dashboard/ia" || pathname.startsWith("/dashboard/agents")) return null;
+  if (pathname === "/dashboard/xia" || pathname.startsWith("/dashboard/agents")) return null;
 
   return (
     <AgentWelcomeBox

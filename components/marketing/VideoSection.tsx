@@ -76,7 +76,7 @@ export function VideoSection() {
           </span>
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-5 leading-tight"
             style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
-            Présente ta vision.
+            3 minutes.
             <br />
             <span
               style={{
@@ -88,12 +88,12 @@ export function VideoSection() {
                 animation: "shimmer 3s linear infinite",
               }}
             >
-              AXSO crée tout.
+              C'est tout ce qu'il faut.
             </span>
           </h2>
           <p className="text-xl text-gray-500 max-w-2xl mx-auto">
-            En 60 secondes, AXSO comprend ton business et génère ta boutique complète,
-            tes produits, tes prix, ton marketing. Regarde.
+            Dis-nous ce que tu vends. AXSO crée ta boutique, tes prix, tes visuels et ton
+            premier post Instagram. En direct. Sous tes yeux.
           </p>
         </div>
 
@@ -241,9 +241,9 @@ export function VideoSection() {
           style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.6s" }}
         >
           {[
-            { icon: <Zap size={36} />, title: "60 secondes", desc: "De ta vision à la boutique live" },
-            { icon: <Bot size={36} />, title: "11 agents IA", desc: "Travaillent pour toi en continu" },
-            { icon: <Globe size={36} />, title: "10 pays", desc: "Paiements et livraisons localisés" },
+            { icon: <Zap size={36} />, title: "3 min pour lancer", desc: "De ta vision à la boutique live" },
+            { icon: <Bot size={36} />, title: "11 IA qui bossent pour toi", desc: "Travaillent pour toi en continu" },
+            { icon: <Globe size={36} />, title: "Actif dans 10 pays africains", desc: "Paiements et livraisons localisés" },
           ].map((item) => (
             <div key={item.title} className="group">
               <div

@@ -4,13 +4,13 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Store, Palette, Globe, Link2, Truck, Save, Loader2,
-  ExternalLink, Copy, Check, Instagram, Facebook, Music, Twitter, Lock,
+  ExternalLink, Copy, Check, Camera, Users, Music, MessageCircle, Lock,
 } from "lucide-react";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 
 const THEMES = [
   { id: "noir-obsidien",      nom: "Noir Obsidien",       desc: "Luxe & Mode",               fond: "#0a0a0a", accent: "#1B4FD8", texte: "#F5F5F0", badge: "✦ Premium" },
-  { id: "violet-cosmos",      nom: "Violet Cosmos",       desc: "Beauté & Art",              fond: "#1a0a2e", accent: "#7c3aed", texte: "#f0eaff", badge: "✦ Premium" },
+  { id: "violet-cosmos",      nom: "Violet Cosmos",       desc: "Beauté & Art",              fond: "#1a0a2e", accent: "#1B2A4A", texte: "#f0eaff", badge: "✦ Premium" },
   { id: "terre-et-or",        nom: "Terre & Or",          desc: "Artisanat & Culture",       fond: "#fff8f0", accent: "#c2622d", texte: "#2c1503", badge: null },
   { id: "ocean-atlantique",   nom: "Océan Atlantique",    desc: "Luxe Côtier & Marine",      fond: "#010d1f", accent: "#00b4d8", texte: "#e0f4ff", badge: "~ 3D" },
   { id: "kente-royal",        nom: "Kente Royal",         desc: "Artisanat Africain Premium",fond: "#1a0e00", accent: "#1b4fd8", texte: "#fff8e8", badge: "♦ 3D" },
@@ -271,10 +271,10 @@ export default function BoutiquePage() {
         <div className="ax-card p-6 space-y-4">
           <h2 className="text-[13px] font-semibold text-[#111111]">Vos liens sociaux</h2>
           {[
-            { key: "instagram", label: "Instagram",   placeholder: "https://instagram.com/votre_boutique", Icon: Instagram },
-            { key: "facebook",  label: "Facebook",    placeholder: "https://facebook.com/votre_boutique",  Icon: Facebook  },
-            { key: "tiktok",    label: "TikTok",      placeholder: "https://tiktok.com/@votre_boutique",   Icon: Music     },
-            { key: "twitter",   label: "X / Twitter", placeholder: "https://twitter.com/votre_boutique",   Icon: Twitter   },
+            { key: "instagram", label: "Instagram",   placeholder: "https://instagram.com/votre_boutique", Icon: Camera        },
+            { key: "facebook",  label: "Facebook",    placeholder: "https://facebook.com/votre_boutique",  Icon: Users         },
+            { key: "tiktok",    label: "TikTok",      placeholder: "https://tiktok.com/@votre_boutique",   Icon: Music         },
+            { key: "twitter",   label: "X / Twitter", placeholder: "https://twitter.com/votre_boutique",   Icon: MessageCircle },
           ].map(s => (
             <div key={s.key}>
               <label className={`${labelCls} flex items-center gap-1.5`}><s.Icon size={13} /> {s.label}</label>

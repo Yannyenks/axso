@@ -18,7 +18,7 @@ const CATEGORIES = [
 
 const TYPES_PRODUIT = [
   { id: "physique",     icon: Package,  label: "Physique",      desc: "Stock, livraison, poids",                 color: "#F5A623" },
-  { id: "digital",      icon: Download, label: "Digital",       desc: "PDF, vidéo, logiciel — livré par email",  color: "#7c3aed" },
+  { id: "digital",      icon: Download, label: "Digital",       desc: "PDF, vidéo, logiciel — livré par email",  color: "#1B2A4A" },
   { id: "dropshipping", icon: Truck,    label: "Dropshipping",  desc: "Fournisseur externe, envoi direct",       color: "#34d399" },
 ] as const;
 

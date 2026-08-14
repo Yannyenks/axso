@@ -7,6 +7,7 @@ import {
   ArrowUpRight, Wallet, Send, Filter, Search, RefreshCw,
   Award, Target, Percent, Edit3, Trash2, UserCheck, UserX,
 } from "lucide-react";
+import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Programme {
@@ -98,7 +99,7 @@ function OngletStats() {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label="Affiliés actifs"      value={String(stats.affiliesActifs)}                         Icon={Users}       color="#7c3aed" sub={`/ ${stats.totalAffilies} total`} />
+        <StatCard label="Affiliés actifs"      value={String(stats.affiliesActifs)}                         Icon={Users}       color="#1B2A4A" sub={`/ ${stats.totalAffilies} total`} />
         <StatCard label="Commissions versées"  value={`${stats.commissionsPaid.toLocaleString()} XAF`}      Icon={DollarSign}  color="#10b981" />
         <StatCard label="En attente de paiement" value={`${stats.commissionsPending.toLocaleString()} XAF`} Icon={Clock}       color="#F5A623" />
         <StatCard label="GMV généré"           value={`${stats.gmvAffilies.toLocaleString()} XAF`}          Icon={TrendingUp}  color="#0ea5e9" sub="via affiliés" />
@@ -110,7 +111,7 @@ function OngletStats() {
         <div className="flex items-end gap-2">
           {[
             { label: "Clics", value: stats.funnel.clics,      color: "#0ea5e9" },
-            { label: "Ventes", value: stats.funnel.conversions, color: "#7c3aed" },
+            { label: "Ventes", value: stats.funnel.conversions, color: "#1B2A4A" },
             { label: "Payés",  value: stats.funnel.paiements,   color: "#10b981" },
           ].map((f, i) => {
             const max = Math.max(stats.funnel.clics, 1);
@@ -139,7 +140,7 @@ function OngletStats() {
               <div key={a.id} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
                 <span className="text-[11px] font-bold text-gray-300 w-4">{i + 1}</span>
                 <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                  style={{ background: ["#F5A623","#7c3aed","#0ea5e9","#10b981","#ef4444"][i] }}>
+                  style={{ background: ["#F5A623","#1B2A4A","#0ea5e9","#10b981","#ef4444"][i] }}>
                   {a.nom.slice(0,1).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -428,7 +429,7 @@ function OngletAffilies() {
           {affilies.map(a => (
             <div key={a.id} className="bg-white border border-gray-100 rounded-2xl p-4">
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-full bg-[#7c3aed]/15 flex items-center justify-center text-[12px] font-bold text-[#7c3aed] shrink-0">
+                <div className="w-9 h-9 rounded-full bg-[#1B2A4A]/15 flex items-center justify-center text-[12px] font-bold text-[#1B2A4A] shrink-0">
                   {a.nom.slice(0, 1).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -630,7 +631,7 @@ function OngletLiens() {
           { label: "Total gagné",    value: `${totaux.total.toLocaleString()} XAF`,   color: "#10b981" },
           { label: "En attente",     value: `${totaux.pending.toLocaleString()} XAF`,  color: "#F5A623" },
           { label: "Clics",          value: totalClics.toLocaleString(),                color: "#0ea5e9" },
-          { label: "Conversions",    value: totalConversions.toLocaleString(),          color: "#7c3aed" },
+          { label: "Conversions",    value: totalConversions.toLocaleString(),          color: "#1B2A4A" },
         ].map(s => (
           <div key={s.label} className="bg-white border border-gray-100 rounded-2xl p-4">
             <p className="text-[20px] font-bold" style={{ color: s.color }}>{s.value}</p>
@@ -691,7 +692,7 @@ export default function AffiliationPage() {
   return (
     <div className="p-5 max-w-4xl mx-auto space-y-5" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
       <div>
-        <h1 className="text-[18px] font-bold text-[#111]">Affiliation</h1>
+        <h1 className="text-[18px] font-bold text-[#111] inline-flex items-center gap-2">Affiliation <AgentActiveIndicator label="Agent Growth actif" /></h1>
         <p className="text-[12px] text-gray-500">Programme d'affiliation, affiliés et commissions</p>
       </div>
 

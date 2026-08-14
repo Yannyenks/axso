@@ -27,7 +27,7 @@ interface Stats {
 
 const STATUT_CONFIG: Record<string, { label: string; color: string }> = {
   ouvert: { label: "Ouvert", color: "#f59e0b" },
-  en_cours: { label: "En cours", color: "#7c3aed" },
+  en_cours: { label: "En cours", color: "#1B2A4A" },
   accepte: { label: "Accepté", color: "#10b981" },
   rejete: { label: "Rejeté", color: "#ef4444" },
   clos: { label: "Clos", color: "#6b7280" },
@@ -118,7 +118,7 @@ export default function RetoursPage() {
         {[
           { label: "Total", value: stats.total, color: "#111" },
           { label: "Ouverts", value: stats.ouverts, color: "#f59e0b" },
-          { label: "En cours", value: stats.enCours, color: "#7c3aed" },
+          { label: "En cours", value: stats.enCours, color: "#1B2A4A" },
           { label: "Acceptés", value: stats.acceptes, color: "#10b981" },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white border border-[#F0F0F0] rounded-xl p-4">
@@ -221,7 +221,7 @@ export default function RetoursPage() {
                         </button>
                       )}
                       {r.statut !== "en_cours" && r.statut !== "clos" && (
-                        <button onClick={() => updateStatut(r.id, "en_cours")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-[12px] font-semibold" style={{ background: "#7c3aed" }}>
+                        <button onClick={() => updateStatut(r.id, "en_cours")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-[12px] font-semibold" style={{ background: "#1B2A4A" }}>
                           <Clock size={12} /> En cours
                         </button>
                       )}

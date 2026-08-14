@@ -43,14 +43,14 @@ function initiales(nom: string | null, tel: string) {
   return tel.slice(-2);
 }
 function avatarColor(seed: string) {
-  const colors = ["#25D366","#F5A623","#7c3aed","#0ea5e9","#ec4899","#f97316","#10b981"];
+  const colors = ["#25D366","#F5A623","#1B2A4A","#0ea5e9","#ec4899","#f97316","#10b981"];
   return colors[seed.charCodeAt(seed.length - 1) % colors.length];
 }
 
 const STATUT_LABEL: Record<string, { label: string; color: string; icon: any }> = {
   en_attente:     { label: "En attente",     color: "#f59e0b", icon: Clock },
   confirmee:      { label: "Confirmée",      color: "#60a5fa", icon: CheckCircle2 },
-  en_preparation: { label: "En préparation", color: "#a78bfa", icon: Package },
+  en_preparation: { label: "En préparation", color: "#FFD280", icon: Package },
   expediee:       { label: "Expédiée",       color: "#38bdf8", icon: Truck },
   livree:         { label: "Livrée",         color: "#34d399", icon: CheckCircle2 },
   annulee:        { label: "Annulée",        color: "#f87171", icon: XCircle },
@@ -714,7 +714,7 @@ export default function WhatsAppPage() {
                       {cmd.trackingToken && (
                         <button onClick={() => envoyerFacture(cmd)}
                           className="w-full text-[11px] py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 hover:bg-white/8 transition-all"
-                          style={{ color: "#a78bfa", background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.15)" }}>
+                          style={{ color: "#FFD280", background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.15)" }}>
                           <FileText size={10} /> Envoyer facture
                         </button>
                       )}

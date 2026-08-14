@@ -35,13 +35,13 @@ export function FooterMarketing() {
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
           <div className="col-span-2 lg:col-span-1">
             <Link href="/" className="inline-block mb-4">
-              <img src="/logo.png" alt="axso" style={{ height: "44px", width: "auto", objectFit: "contain", filter: "brightness(0) invert(1)" }} />
+              <img src="/logo-dark.png" alt="axso" style={{ height: "34px", width: "auto", objectFit: "contain" }} />
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed mb-2">
-              Bâtis ton empire digital.
+              Vends partout. Encaisse facilement. Grandis sans limite.
             </p>
             <p className="text-gray-500 text-xs leading-relaxed mb-5">
-              AXSO s'occupe du reste — boutique, marketing, clients, livraison.
+              AXSO est la plateforme e-commerce faite pour l'Afrique.
             </p>
             <div className="flex gap-3">
               {(["𝕏", "f", null, "in"] as (string | null)[]).map((s, i) => (

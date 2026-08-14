@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, type ReactNode } from "react";
 import {
   CheckCircle2, XCircle, Loader2, Zap, Calendar, Send,
   ChevronRight, RefreshCw, AlertCircle, LogOut, Globe, Eye, EyeOff,
-  Smartphone, Video, Bot, Camera, CreditCard, Sparkles,
+  Smartphone, Video, Bot, Camera, CreditCard, Sparkles, Target,
 } from "lucide-react";
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -419,7 +419,7 @@ function ConnecteurCard({
     };
 
     return (
-      <div className="bg-white border border-indigo-100 rounded-2xl overflow-hidden shadow-sm" style={{ background: "linear-gradient(145deg, #fafaff, white)" }}>
+      <div className="bg-white border border-[#dde3ee] rounded-2xl overflow-hidden shadow-sm" style={{ background: "linear-gradient(145deg, #fafaff, white)" }}>
         <div className="p-5">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
@@ -429,7 +429,7 @@ function ConnecteurCard({
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-bold text-gray-900 text-sm">Higgsfield AI</h3>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-600">MCP</span>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#dde3ee] text-[#1B2A4A]">MCP</span>
                 </div>
                 <div className="mt-0.5">{isConnected ? <ConnectedBadge/> : <InactiveBadge/>}</div>
               </div>
@@ -446,7 +446,7 @@ function ConnecteurCard({
           {/* Modèles disponibles */}
           <div className="flex flex-wrap gap-1.5 mb-4">
             {["Kling 3.0", "Veo 3.1", "Sora 2", "Cinema 3.5", "GPT Image", "Recraft 4.1"].map(m => (
-              <span key={m} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">{m}</span>
+              <span key={m} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#EEF1F6] text-[#1B2A4A] border border-[#dde3ee]">{m}</span>
             ))}
           </div>
 
@@ -458,7 +458,7 @@ function ConnecteurCard({
                 value={apiKey}
                 onChange={e => setApiKey(e.target.value)}
                 placeholder="hf_xxxxxxxxxxxxxxxxxxxxxxxx"
-                className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-400 font-mono"
+                className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#6b7ea3] font-mono"
               />
               <p className="text-[10px] text-gray-400">Trouvez votre clé sur <strong>higgsfield.ai/settings/api</strong></p>
               <button onClick={sauvegarder} disabled={loading || !apiKey.trim()}
@@ -471,15 +471,15 @@ function ConnecteurCard({
           ) : (
             <div className="space-y-2">
               <div className="flex items-center gap-2 p-2.5 rounded-xl" style={{ background: "linear-gradient(135deg, #6366f110, #8b5cf610)" }}>
-                <Video size={16} className="text-indigo-600 flex-shrink-0" />
+                <Video size={16} className="text-[#1B2A4A] flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="text-xs font-semibold text-indigo-700">Higgsfield MCP connecté</p>
-                  <p className="text-[10px] text-indigo-400">Génération vidéo + image disponible</p>
+                  <p className="text-xs font-semibold text-[#12203d]">Higgsfield MCP connecté</p>
+                  <p className="text-[10px] text-[#6b7ea3]">Génération vidéo + image disponible</p>
                 </div>
-                <CheckCircle2 size={14} className="text-indigo-500 flex-shrink-0"/>
+                <CheckCircle2 size={14} className="text-[#EEF1F6]0 flex-shrink-0"/>
               </div>
               <button onClick={testerConnexion} disabled={testLoading}
-                className="w-full py-2 rounded-xl text-indigo-600 text-xs font-semibold border border-indigo-200 hover:bg-indigo-50 flex items-center justify-center gap-1.5">
+                className="w-full py-2 rounded-xl text-[#1B2A4A] text-xs font-semibold border border-[#c5d0e3] hover:bg-[#EEF1F6] flex items-center justify-center gap-1.5">
                 {testLoading ? <Loader2 size={11} className="animate-spin"/> : <Sparkles size={11} />}
                 Voir les {conn.nbOutils} outils disponibles
               </button>
@@ -487,7 +487,7 @@ function ConnecteurCard({
                 <div className="bg-gray-50 rounded-xl p-3 max-h-36 overflow-y-auto space-y-1.5">
                   {outils.map((o: any) => (
                     <div key={o.nom ?? o.name} className="text-[10px] text-gray-600">
-                      <span className="font-semibold text-indigo-600">{o.nom ?? o.name}</span>
+                      <span className="font-semibold text-[#1B2A4A]">{o.nom ?? o.name}</span>
                       {o.description && <span className="text-gray-400"> — {o.description.slice(0, 60)}{o.description.length > 60 ? "…" : ""}</span>}
                     </div>
                   ))}
@@ -496,15 +496,15 @@ function ConnecteurCard({
             </div>
           )}
         </div>
-        <div className="px-5 pb-4 flex items-center gap-1.5 text-[10px] text-indigo-400">
+        <div className="px-5 pb-4 flex items-center gap-1.5 text-[10px] text-[#6b7ea3]">
           <Zap size={10}/> {conn.nbOutils} outils Axso · 40+ outils Higgsfield disponibles
         </div>
       </div>
     );
   }
 
-  // ── Claude (Anthropic) ───────────────────────────────────────────────────────
-  if (conn.type === "claude") {
+  // ── Gemini (Google) ──────────────────────────────────────────────────────────
+  if (conn.type === "gemini") {
     const isConnected = conn.statut === "actif";
     const [apiKey, setApiKey] = useState("");
 
@@ -514,24 +514,24 @@ function ConnecteurCard({
       await fetch("/api/mcp/connecteurs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "claude", config: { apiKey }, statut: "actif" }),
+        body: JSON.stringify({ type: "gemini", config: { apiKey }, statut: "actif" }),
       });
       setLoading(false);
       onRefresh();
     };
 
     return (
-      <div className="bg-white border border-violet-100 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-white border border-blue-100 rounded-2xl overflow-hidden shadow-sm">
         <div className="p-5">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)", boxShadow: "0 4px 20px rgba(124,58,237,0.25)" }}>
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #4285F4, #8AB4F8)", boxShadow: "0 4px 20px rgba(66,133,244,0.25)" }}>
                 <Bot size={22} className="text-white" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-gray-900 text-sm">Claude (Anthropic)</h3>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-600">MCP</span>
+                  <h3 className="font-bold text-gray-900 text-sm">Gemini (Google)</h3>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600">MCP</span>
                 </div>
                 <div className="mt-0.5">{isConnected ? <ConnectedBadge/> : <InactiveBadge/>}</div>
               </div>
@@ -545,34 +545,34 @@ function ConnecteurCard({
           <p className="text-xs text-gray-500 mb-4">{conn.description}</p>
           <div className="flex flex-wrap gap-1.5 mb-4">
             {["Texte IA", "Emails HTML", "Descriptions", "Posts sociaux", "Traduction", "Vision"].map(f => (
-              <span key={f} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-violet-50 text-violet-600 border border-violet-100">{f}</span>
+              <span key={f} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">{f}</span>
             ))}
           </div>
           {!isConnected ? (
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Clé API Anthropic</label>
-              <input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="sk-ant-api03-…"
-                className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-violet-400 font-mono"/>
-              <p className="text-[10px] text-gray-400">Obtenez votre clé sur <strong>console.anthropic.com</strong></p>
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Clé API Gemini</label>
+              <input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="AIza…"
+                className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-blue-400 font-mono"/>
+              <p className="text-[10px] text-gray-400">Obtenez votre clé sur <strong>aistudio.google.com/apikey</strong></p>
               <button onClick={sauvegarder} disabled={loading || !apiKey.trim()}
                 className="w-full py-3 rounded-2xl text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2"
-                style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}>
+                style={{ background: "linear-gradient(135deg, #4285F4, #8AB4F8)" }}>
                 {loading ? <Loader2 size={14} className="animate-spin"/> : <Bot size={14} />}
-                Connecter Claude
+                Connecter Gemini
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2 p-2.5 rounded-xl" style={{ background: "linear-gradient(135deg, #7c3aed10, #a855f710)" }}>
-              <Bot size={16} className="text-violet-600 flex-shrink-0" />
+            <div className="flex items-center gap-2 p-2.5 rounded-xl" style={{ background: "linear-gradient(135deg, #4285F410, #8AB4F810)" }}>
+              <Bot size={16} className="text-blue-600 flex-shrink-0" />
               <div className="flex-1">
-                <p className="text-xs font-semibold text-violet-700">Claude connecté</p>
-                <p className="text-[10px] text-violet-400">Toutes les fonctionnalités IA débloquées</p>
+                <p className="text-xs font-semibold text-blue-700">Gemini connecté</p>
+                <p className="text-[10px] text-blue-400">Toutes les fonctionnalités IA débloquées</p>
               </div>
-              <CheckCircle2 size={14} className="text-violet-500 flex-shrink-0"/>
+              <CheckCircle2 size={14} className="text-blue-500 flex-shrink-0"/>
             </div>
           )}
         </div>
-        <div className="px-5 pb-4 flex items-center gap-1.5 text-[10px] text-violet-400">
+        <div className="px-5 pb-4 flex items-center gap-1.5 text-[10px] text-blue-400">
           <Zap size={10}/> {conn.nbOutils} outils disponibles
         </div>
       </div>
@@ -740,6 +740,96 @@ function CarteAPIManuelle({ type, icon, label, description, couleur, champs, onS
   );
 }
 
+// ── Meta Pixel — tracking publicitaire (stocké directement sur Tenant.metaPixelId) ──
+function CarteMetaPixel() {
+  const [pixelId, setPixelId] = useState("");
+  const [saved, setSaved] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/tenants/moi-complet").then(r => r.json()).then(d => {
+      if (d?.metaPixelId) { setPixelId(d.metaPixelId); setSaved(d.metaPixelId); }
+    }).catch(() => {});
+  }, []);
+
+  const sauvegarder = async () => {
+    setSaving(true);
+    await fetch("/api/tenants", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ metaPixelId: pixelId.trim() || null }),
+    });
+    setSaving(false);
+    setSaved(pixelId.trim() || null);
+    setOpen(false);
+  };
+
+  const deconnecter = async () => {
+    await fetch("/api/tenants", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ metaPixelId: null }) });
+    setPixelId(""); setSaved(null);
+  };
+
+  return (
+    <div className={`bg-white border rounded-2xl overflow-hidden transition-all ${saved ? "border-green-200" : "border-gray-100"}`}>
+      <div className="flex items-center gap-3 p-4">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#1877F218", border: "1px solid #1877F230" }}>
+          <Target size={20} className="text-[#1877F2]" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-gray-900 text-sm">Meta Pixel</h3>
+            {saved
+              ? <span className="flex items-center gap-1 text-[10px] bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-semibold"><span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"/> Actif</span>
+              : <span className="text-[10px] text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">Non configuré</span>
+            }
+          </div>
+          <p className="text-xs text-gray-400 mt-0.5 truncate">Tracking visiteurs pour vos publicités Facebook/Instagram</p>
+        </div>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {saved && (
+            <button onClick={deconnecter} className="p-2 rounded-xl text-gray-300 hover:text-red-400 hover:bg-red-50 transition-all" title="Retirer">
+              <LogOut size={13}/>
+            </button>
+          )}
+          <button onClick={() => setOpen(o => !o)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-all">
+            {open ? "Fermer" : saved ? "Modifier" : "Configurer"}
+          </button>
+        </div>
+      </div>
+      {open && (
+        <div className="border-t border-gray-100 p-4 bg-gray-50/50 space-y-3">
+          <div>
+            <label className="text-xs font-semibold text-gray-600 mb-1.5 block">ID du Pixel Meta</label>
+            <input
+              value={pixelId}
+              onChange={e => setPixelId(e.target.value)}
+              placeholder="1234567890123456"
+              className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none font-mono"
+            />
+            <p className="text-[10px] text-gray-400 mt-1">
+              Business Manager Meta → Gestionnaire d'événements → Sources de données → votre Pixel → l'identifiant à 15-16 chiffres en haut de la page.
+            </p>
+          </div>
+          <div className="rounded-xl bg-blue-50 border border-blue-100 p-3">
+            <p className="text-[11px] text-blue-700 leading-relaxed">
+              Une fois enregistré, le Pixel se charge automatiquement sur votre boutique et envoie les événements standards
+              (PageView, ViewContent, AddToCart, InitiateCheckout, Purchase) à chaque visite, ajout panier et commande —
+              exactement ce qu'exige votre compte publicitaire Facebook pour optimiser vos campagnes correctement.
+            </p>
+          </div>
+          <button onClick={sauvegarder} disabled={saving || !pixelId.trim()}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-50"
+            style={{ background: "linear-gradient(135deg, #1877F2, #1877F2cc)" }}>
+            {saving ? <><Loader2 size={13} className="animate-spin"/> Sauvegarde…</> : <><CheckCircle2 size={13}/> Activer le Pixel</>}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Calendrier publications ──────────────────────────────────────────────────
 
 function CalendrierPublications() {
@@ -782,18 +872,18 @@ function CalendrierPublications() {
     <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Calendar size={18} className="text-[#7c3aed]"/>
+          <Calendar size={18} className="text-[#1B2A4A]"/>
           <h3 className="font-bold text-gray-900">Calendrier éditorial</h3>
-          <span className="text-xs bg-purple-100 text-purple-600 font-semibold px-2 py-0.5 rounded-full">{posts.length}</span>
+          <span className="text-xs bg-[#FDE68A]/40 text-[#D4911A] font-semibold px-2 py-0.5 rounded-full">{posts.length}</span>
         </div>
         <button onClick={() => setForm(!form)}
-          className="text-xs text-[#7c3aed] font-semibold bg-purple-50 px-3 py-1.5 rounded-xl hover:bg-purple-100 transition-colors flex items-center gap-1">
+          className="text-xs text-[#1B2A4A] font-semibold bg-[#FFF8EC] px-3 py-1.5 rounded-xl hover:bg-[#FDE68A]/40 transition-colors flex items-center gap-1">
           <Send size={11}/> Planifier
         </button>
       </div>
 
       {form && (
-        <div className="border border-purple-200 bg-purple-50/40 rounded-2xl p-4 mb-4 space-y-3">
+        <div className="border border-[#FDE68A] bg-[#FFF8EC]/40 rounded-2xl p-4 mb-4 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Plateforme</label>
@@ -824,7 +914,7 @@ function CalendrierPublications() {
           </div>
           <button onClick={planifier} disabled={saving || !newPost.contenu || !newPost.planifieLe}
             className="w-full py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-            style={{ background: "linear-gradient(135deg, #7c3aed, #F5A623)" }}>
+            style={{ background: "linear-gradient(135deg, #1B2A4A, #F5A623)" }}>
             {saving ? <Loader2 size={13} className="animate-spin"/> : <Send size={13}/>}
             Planifier
           </button>
@@ -910,7 +1000,7 @@ export default function ConnecteursPage() {
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Globe size={20} className="text-[#7c3aed]"/>
+            <Globe size={20} className="text-[#1B2A4A]"/>
             <h1 className="text-2xl font-bold text-gray-900">Connecteurs</h1>
           </div>
           <p className="text-sm text-gray-500">
@@ -918,7 +1008,7 @@ export default function ConnecteursPage() {
           </p>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-[#7c3aed]">{actifs}</div>
+          <div className="text-2xl font-bold text-[#1B2A4A]">{actifs}</div>
           <div className="text-xs text-gray-400">actif{actifs !== 1 ? "s" : ""}</div>
         </div>
       </div>
@@ -944,6 +1034,14 @@ export default function ConnecteursPage() {
           ))}
         </div>
       )}
+
+      {/* ── Section Tracking publicitaire ── */}
+      <div>
+        <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-3">Tracking publicitaire</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <CarteMetaPixel />
+        </div>
+      </div>
 
       {/* ── Section Paiements & Email ── */}
       <div>
@@ -1002,9 +1100,9 @@ export default function ConnecteursPage() {
       )}
 
       {/* Explication */}
-      <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100 rounded-2xl p-5">
+      <div className="bg-gradient-to-r from-[#FFF8EC] to-blue-50 border border-[#FDE68A]/40 rounded-2xl p-5">
         <div className="flex items-center gap-2 mb-2">
-          <Zap size={16} className="text-[#7c3aed]"/>
+          <Zap size={16} className="text-[#1B2A4A]"/>
           <h3 className="font-bold text-gray-800 text-sm">Comment ça marche</h3>
         </div>
         <p className="text-xs text-gray-600 leading-relaxed">

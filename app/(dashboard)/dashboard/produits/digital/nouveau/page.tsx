@@ -19,7 +19,7 @@ type TypeLien = "instant" | "compte";
 type ExpirationAcces = 7 | 30 | 90 | 365 | null;
 
 const TYPES_DIGITAL: { id: TypeDigital; label: string; icon: any; desc: string; color: string; acceptedFiles: string }[] = [
-  { id: "ebook",    label: "Ebook / PDF",  icon: BookOpen,  desc: "Livres numériques, guides PDF",         color: "#7c3aed", acceptedFiles: ".pdf,.epub,.mobi" },
+  { id: "ebook",    label: "Ebook / PDF",  icon: BookOpen,  desc: "Livres numériques, guides PDF",         color: "#1B2A4A", acceptedFiles: ".pdf,.epub,.mobi" },
   { id: "cours",    label: "Cours",        icon: Video,     desc: "Formations vidéo, cours en ligne",      color: "#0ea5e9", acceptedFiles: ".mp4,.mkv,.zip,.pdf" },
   { id: "logiciel", label: "Logiciel",     icon: Monitor,   desc: "Apps, scripts, outils digitaux",        color: "#16a34a", acceptedFiles: ".zip,.exe,.dmg,.pkg" },
   { id: "template", label: "Template",     icon: FileText,  desc: "Modèles, maquettes, fichiers design",   color: "#d97706", acceptedFiles: ".zip,.fig,.psd,.xd,.sketch" },
@@ -501,7 +501,7 @@ export default function NouveauProduitDigitalPage() {
               <div
                 className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
                   dragOver
-                    ? "border-[#7c3aed] bg-[#f5f3ff]"
+                    ? "border-[#1B2A4A] bg-[#eef1f6]"
                     : "border-[#E8E8E8] hover:border-[#D0D0D0] hover:bg-[#F5F5F5]"
                 }`}
                 onClick={() => fileRef.current?.click()}
@@ -511,7 +511,7 @@ export default function NouveauProduitDigitalPage() {
               >
                 {uploadingFile ? (
                   <div className="flex flex-col items-center gap-3">
-                    <Loader2 size={28} className="animate-spin text-[#7c3aed]" />
+                    <Loader2 size={28} className="animate-spin text-[#1B2A4A]" />
                     <p className="text-sm text-[#666666]">Upload en cours…</p>
                   </div>
                 ) : (
@@ -849,7 +849,7 @@ export default function NouveauProduitDigitalPage() {
           {/* Post-achat */}
           <SectionCard
             icon={MessageSquare}
-            iconColor="#7c3aed"
+            iconColor="#1B2A4A"
             title="Après l'achat"
             subtitle="Message et offre complémentaire envoyés avec le lien de téléchargement"
           >

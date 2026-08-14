@@ -37,7 +37,7 @@ Règles importantes :
 
 Quand tu appelles un outil, explique toujours ce que tu vas faire AVANT de l'appeler.`;
 
-// Convertit les outils Anthropic en format ToolDefinition universel
+// Convertit les outils du copilote en format ToolDefinition universel
 const OUTILS_UNIVERSELS: ToolDefinition[] = OUTILS_COPILOTE.map((t) => ({
   name: t.name,
   description: t.description ?? "",
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { messages } = schema.parse(body);
 
-    // Utilise runAgent : Claude → Groq → Gemini → NVIDIA → Pollinations (fallback automatique)
+    // Utilise runAgent : moteur Gemini (function calling + synthèse en streaming)
     const { reponse, actions } = await runAgent(
       PROMPT_COPILOTE,
       messages,

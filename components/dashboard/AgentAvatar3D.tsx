@@ -10,12 +10,12 @@ export const AGENT_META: Record<AgentId, {
   nom: string; role: string; color: string; colorAlt: string; glow: string;
 }> = {
   orion: { nom: "ORION", role: "Onboarding",  color: "#1B4FD8", colorAlt: "#7B9EFF", glow: "rgba(27,79,216,0.5)" },
-  axia:  { nom: "AXIA",  role: "Copilote IA", color: "#7c3aed", colorAlt: "#a78bfa", glow: "rgba(124,58,237,0.5)" },
+  axia:  { nom: "AXIA",  role: "Copilote IA", color: "#1B2A4A", colorAlt: "#FFD280", glow: "rgba(124,58,237,0.5)" },
   nova:  { nom: "NOVA",  role: "Marketing",   color: "#f472b6", colorAlt: "#fb7185", glow: "rgba(244,114,182,0.5)" },
   kira:  { nom: "KIRA",  role: "Produits",    color: "#34d399", colorAlt: "#6ee7b7", glow: "rgba(52,211,153,0.5)" },
   zeta:  { nom: "ZETA",  role: "Clients",     color: "#22d3ee", colorAlt: "#67e8f9", glow: "rgba(34,211,238,0.5)" },
   atlas: { nom: "ATLAS", role: "Livraison",   color: "#fb923c", colorAlt: "#fcd34d", glow: "rgba(251,146,60,0.5)" },
-  lyra:  { nom: "LYRA",  role: "Analytics",   color: "#a78bfa", colorAlt: "#c4b5fd", glow: "rgba(167,139,250,0.5)" },
+  lyra:  { nom: "LYRA",  role: "Analytics",   color: "#FFD280", colorAlt: "#c4b5fd", glow: "rgba(167,139,250,0.5)" },
   // Agents autonomes
   rex:   { nom: "REX",   role: "Revenue",     color: "#16a34a", colorAlt: "#4ade80", glow: "rgba(22,163,74,0.5)" },
   veil:  { nom: "VEIL",  role: "Veille",      color: "#0891b2", colorAlt: "#22d3ee", glow: "rgba(8,145,178,0.5)" },

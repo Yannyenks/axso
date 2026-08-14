@@ -15,6 +15,7 @@ import {
   Calendar,
   Package,
 } from "lucide-react";
+import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 
 export default async function AnalyticsPage() {
   const session = await auth();
@@ -122,7 +123,7 @@ export default async function AnalyticsPage() {
   const statutStyles: Record<string, { label: string; badgeClass: string }> = {
     en_attente:     { label: "En attente",     badgeClass: "bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]" },
     confirmee:      { label: "Confirmée",      badgeClass: "bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]" },
-    en_preparation: { label: "En préparation", badgeClass: "bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]" },
+    en_preparation: { label: "En préparation", badgeClass: "bg-[#EEF1F6] text-[#7C3AED] border border-[#DDD6FE]" },
     en_livraison:   { label: "En livraison",   badgeClass: "bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]" },
     livree:         { label: "Livrée",         badgeClass: "bg-[#ECFDF5] text-[#16A34A] border border-[#BBF7D0]" },
     annulee:        { label: "Annulée",        badgeClass: "bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]" },
@@ -166,7 +167,7 @@ export default async function AnalyticsPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#111111] font-poppins">Analytics</h1>
+          <h1 className="text-2xl font-bold text-[#111111] font-poppins inline-flex items-center gap-2">Analytics <AgentActiveIndicator label="Agent Analytics actif" /></h1>
           <p className="text-[#717171] text-sm mt-1">Activité réelle de votre boutique</p>
         </div>
         <div className="flex items-center gap-2 bg-white border border-[#E8E8E8] rounded-xl px-4 py-2">

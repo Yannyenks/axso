@@ -217,7 +217,7 @@ function OngletBadges() {
   return (
     <div className="space-y-5">
       {nouveaux.length > 0 && (
-        <div className="bg-gradient-to-r from-[#F5A623]/10 to-[#7c3aed]/10 border border-[#F5A623]/20 rounded-2xl p-4">
+        <div className="bg-gradient-to-r from-[#F5A623]/10 to-[#1B2A4A]/10 border border-[#F5A623]/20 rounded-2xl p-4">
           <p className="text-[13px] font-bold text-[#111] mb-2 flex items-center gap-1.5"><Sparkles size={14} className="text-[#F5A623]" /> Nouveaux badges !</p>
           <div className="flex gap-2 flex-wrap">
             {nouveaux.map(b=>(

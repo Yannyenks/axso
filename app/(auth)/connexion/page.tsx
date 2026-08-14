@@ -150,8 +150,8 @@ export default function ConnexionPage() {
       {/* ── Left panel — branding ── */}
       <div className="hidden lg:flex flex-col justify-between w-[52%] px-16 py-12 relative">
         <Link href="/">
-          <img src="/logo.png" alt="axso"
-            style={{ height: "52px", width: "auto", objectFit: "contain", filter: "brightness(0) invert(1)" }} />
+          <img src="/logo-dark.png" alt="axso"
+            style={{ height: "34px", width: "auto", objectFit: "contain" }} />
         </Link>
 
         <div className="max-w-md">
@@ -214,8 +214,8 @@ export default function ConnexionPage() {
       <div className="flex-1 flex items-center justify-center px-6 py-12 relative">
         <div className="absolute top-8 left-1/2 -translate-x-1/2 lg:hidden">
           <Link href="/">
-            <img src="/logo.png" alt="axso"
-              style={{ height: "44px", width: "auto", objectFit: "contain", filter: "brightness(0) invert(1)" }} />
+            <img src="/logo-dark.png" alt="axso"
+              style={{ height: "30px", width: "auto", objectFit: "contain" }} />
           </Link>
         </div>
 

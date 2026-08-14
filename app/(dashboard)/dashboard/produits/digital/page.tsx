@@ -67,7 +67,7 @@ type GraphData = { date: string; count: number }[];
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const TYPE_LABELS: Record<string, { label: string; icon: any; color: string; bg: string }> = {
-  ebook:    { label: "Ebook",     icon: BookOpen,  color: "#7c3aed", bg: "#f5f3ff" },
+  ebook:    { label: "Ebook",     icon: BookOpen,  color: "#1B2A4A", bg: "#eef1f6" },
   cours:    { label: "Cours",     icon: Video,     color: "#0ea5e9", bg: "#f0f9ff" },
   logiciel: { label: "Logiciel",  icon: Monitor,   color: "#16a34a", bg: "#f0fdf4" },
   template: { label: "Template",  icon: FileText,  color: "#d97706", bg: "#fffbeb" },
@@ -141,7 +141,7 @@ function MiniBarChart({ data }: { data: GraphData }) {
               width={barW}
               height={barH}
               rx={2}
-              fill={d.count > 0 ? "#7c3aed" : "#E8E8E8"}
+              fill={d.count > 0 ? "#1B2A4A" : "#E8E8E8"}
               opacity={d.count > 0 ? 0.85 : 1}
             />
           </g>
@@ -564,7 +564,7 @@ function ProductCard({
             <span className="text-[#111111] font-semibold">{produit.ventes}</span> vente{produit.ventes !== 1 ? "s" : ""}
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-[#AAAAAA]">
-            <Download size={10} className="text-[#7c3aed]" />
+            <Download size={10} className="text-[#1B2A4A]" />
             <span className="text-[#111111] font-semibold">{produit.downloadCount}</span> DL
           </div>
         </div>
@@ -716,8 +716,8 @@ export default function DigitalProduitsPage() {
               label: "Téléchargements",
               value: stats.totalTelechargements,
               icon: Download,
-              iconColor: "#7c3aed",
-              bgColor: "#f5f3ff",
+              iconColor: "#1B2A4A",
+              bgColor: "#eef1f6",
             },
             {
               label: "Revenu total",
@@ -872,8 +872,8 @@ export default function DigitalProduitsPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-white border border-[#E8E8E8] rounded-2xl p-16 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-[#F5F3FF] border border-[#EDE9FE] flex items-center justify-center mx-auto mb-5">
-            <Download size={32} className="text-[#7c3aed]" />
+          <div className="w-16 h-16 rounded-2xl bg-[#EEF1F6] border border-[#EDE9FE] flex items-center justify-center mx-auto mb-5">
+            <Download size={32} className="text-[#1B2A4A]" />
           </div>
           <h3 className="text-[#111111] font-semibold text-base mb-2">
             {search || typeFilter !== "tous" || statutFilter !== "tous"

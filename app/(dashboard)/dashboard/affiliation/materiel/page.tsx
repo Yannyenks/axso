@@ -13,7 +13,7 @@ interface Lien {
   produit: { nom: string; images: string[]; prix: number } | null;
 }
 
-const COULEURS = ["#F5A623", "#7c3aed", "#22c55e", "#3b82f6", "#ef4444"];
+const COULEURS = ["#F5A623", "#1B2A4A", "#22c55e", "#3b82f6", "#ef4444"];
 const FORMATS = [
   { label: "Bandeau 728×90", w: 728, h: 90 },
   { label: "Carré 300×250", w: 300, h: 250 },

@@ -1,21 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import {
   Calendar, Plus, Clock,
   Trash2, CheckCircle2, XCircle, Loader2, Sparkles,
-  X, Copy, Edit3, Film, Zap, Bot,
+  X, Copy, Edit3, Film, Zap,
   Camera, ThumbsUp, Music4, MessageCircle, Bird
 } from "lucide-react";
 import { toast } from "sonner";
-
-const PLATFORMS_NAV: Record<string, string> = {
-  instagram: "https://www.instagram.com",
-  facebook:  "https://www.facebook.com",
-  tiktok:    "https://www.tiktok.com",
-  twitter:   "https://twitter.com",
-  whatsapp:  "https://web.whatsapp.com",
-};
 
 type Statut = "planifie" | "publie" | "annule";
 
@@ -104,7 +95,6 @@ function PostCard({ post, onDelete, onStatut }: { post: Post; onDelete: (id: str
 }
 
 export default function SchedulerPage() {
-  const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -393,24 +383,6 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
                   className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-50"
                   style={{ background: "linear-gradient(135deg, #E1306C, #833AB4)" }}>
                   {saving ? <><Loader2 size={16} className="animate-spin" /> Planification…</> : <><Calendar size={16} /> Planifier</>}
-                </button>
-                <button
-                  onClick={() => {
-                    const platUrl = PLATFORMS_NAV[form.plateforme] || "https://www.buffer.com";
-                    const platLabel = PLATEFORMES.find(p => p.id === form.plateforme)?.label || form.plateforme;
-                    const date = form.planifieLe ? new Date(form.planifieLe).toLocaleString("fr-FR") : "maintenant";
-                    const instr = form.contenu
-                      ? `Sur ${platLabel}, publie ou programme le post suivant pour le ${date} : "${form.contenu.slice(0, 400)}"${form.hashtags?.length ? ". Ajoute ces hashtags : " + form.hashtags.join(" ") : ""}`
-                      : `Ouvre ${platLabel} et aide-moi à programmer un post`;
-                    router.push(`/dashboard/navigateur?url=${encodeURIComponent(platUrl)}&instruction=${encodeURIComponent(instr)}`);
-                  }}
-                  disabled={!form.contenu}
-                  title="Publier via AXIA dans le Navigateur"
-                  className="flex items-center justify-center gap-1.5 px-4 rounded-xl font-bold text-xs transition-all disabled:opacity-30"
-                  style={{ background: "linear-gradient(135deg,#000018,#001830)", border: "1px solid rgba(0,212,255,0.3)", color: "#00D4FF" }}
-                >
-                  <Bot size={13} />
-                  AXIA
                 </button>
               </div>
             </div>

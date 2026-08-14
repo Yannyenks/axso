@@ -6,7 +6,7 @@ import { formatDate } from "@/lib/utils";
 
 const ROLES: Record<string, { label: string; color: string; desc: string }> = {
   admin: { label: "Admin", color: "#F5A623", desc: "Accès complet à tous les paramètres" },
-  editeur: { label: "Éditeur", color: "#7c3aed", desc: "Peut gérer produits et commandes" },
+  editeur: { label: "Éditeur", color: "#1B2A4A", desc: "Peut gérer produits et commandes" },
   lecteur: { label: "Lecteur", color: "#6b7280", desc: "Accès en lecture seule" },
 };
 

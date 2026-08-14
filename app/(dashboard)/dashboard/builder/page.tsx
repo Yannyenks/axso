@@ -17,7 +17,6 @@ import { THEME_DEFAULTS, resolveThemeConfig, type ThemeConfig, type CustomSectio
 type Device = "desktop" | "tablet" | "mobile";
 type Panel = "sections" | "couleurs" | "typo" | "layout" | "medias" | "animations" | "boutons" | "avance";
 type SectionId = "annonce" | "hero" | "confiance" | "vedettes" | "collections" | "about" | "promo" | "faq" | "avis" | "newsletter";
-type EditorMode = "builder" | "grapesjs";
 
 // ─── Google Fonts ─────────────────────────────────────────────────────────────
 const FONTS = [
@@ -55,6 +54,23 @@ const CUSTOM_SECTION_TYPES = [
   { type: "cta-band",      label: "Bande CTA",            Icon: Target,       desc: "Bandeau pleine largeur avec appel à l'action fort" },
   { type: "richtext",      label: "Texte riche",          Icon: FileText,     desc: "Bloc de texte libre avec titre, sous-titre et bouton" },
   { type: "spacer",        label: "Espacement",           Icon: ArrowUpDown,  desc: "Espace vertical personnalisable entre deux sections" },
+  { type: "tabs",          label: "Onglets",              Icon: LayoutTemplate, desc: "Contenu organisé en onglets — photos, témoignages, promo (style Shopify)" },
+  { type: "columns",       label: "Colonnes",             Icon: LayoutGrid,   desc: "Colonnes personnalisables, chacune avec ses propres blocs de contenu" },
+] as const;
+
+const SOUS_BLOC_TYPES = [
+  { type: "photos",     label: "Photos",       Icon: ImageIcon },
+  { type: "temoignage", label: "Témoignage",   Icon: Star },
+  { type: "promo",      label: "Bannière CTA", Icon: Target },
+  { type: "texte",      label: "Texte",        Icon: FileText },
+  { type: "video",      label: "Vidéo",        Icon: Video },
+  { type: "stats",      label: "Statistiques", Icon: BarChart3 },
+  { type: "features",   label: "Avantages",    Icon: Zap },
+  { type: "countdown",  label: "Compte à rebours", Icon: Timer },
+  { type: "logos",      label: "Logos partenaires", Icon: Building2 },
+  { type: "confiance",  label: "Preuve sociale", Icon: Shield },
+  { type: "liste",      label: "Liste à puces", Icon: Check },
+  { type: "spacer",     label: "Espacement",   Icon: ArrowUpDown },
 ] as const;
 
 const DEFAULT_SECTION_ORDER: SectionId[] = ["annonce","hero","confiance","vedettes","collections","about","promo","faq","avis","newsletter"];
@@ -113,7 +129,6 @@ function generateAnimationCss(anim: ThemeConfig["animations"]): string {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function BuilderPage() {
-  const [mode, setMode]               = useState<EditorMode>("builder");
   const [device, setDevice]           = useState<Device>("desktop");
   const [panel, setPanel]             = useState<Panel>("sections");
   const [tenant, setTenant]           = useState<any>(null);
@@ -125,8 +140,6 @@ export default function BuilderPage() {
   const [saved, setSaved]             = useState(false);
   const [iframeKey, setIframeKey]     = useState(0);
   const iframeRef   = useRef<HTMLIFrameElement>(null);
-  const gjsRef      = useRef<any>(null);
-  const gjsContainer = useRef<HTMLDivElement>(null);
   const debounce    = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -138,21 +151,6 @@ export default function BuilderPage() {
       setOriginalConfig(resolved);
     });
   }, []);
-
-  useEffect(() => {
-    if (mode !== "grapesjs" || !tenant || gjsRef.current || !gjsContainer.current) return;
-    (async () => {
-      const grapesjs = (await import("grapesjs")).default;
-      await import("grapesjs/dist/css/grapes.min.css");
-      const gjsBlocks = (await import("grapesjs-blocks-basic")).default;
-      const savedHtml = (tenant.themeConfig as any)?.builderHtml || "";
-      const savedCss  = (tenant.themeConfig as any)?.builderCss || "";
-      const ed = grapesjs.init({ container: gjsContainer.current!, height: "100%", width: "100%", storageManager: false, plugins: [gjsBlocks], pluginsOpts: { [gjsBlocks as any]: { flexGrid: true } } });
-      if (savedHtml) ed.setComponents(savedHtml);
-      if (savedCss) ed.setStyle(savedCss);
-      gjsRef.current = ed;
-    })();
-  }, [mode, tenant]);
 
   const injectLive = useCallback(() => {
     if (!iframeRef.current || !config) return;
@@ -193,6 +191,15 @@ export default function BuilderPage() {
       "cta-band":   { titre: "Prêt à découvrir ?", texte: "Rejoignez des milliers de clients satisfaits", ctaTexte: "Commencer maintenant", ctaLien: "produits", style: "gradient" },
       richtext:     { titre: "Notre engagement", texte: "Nous sommes passionnés par la qualité et l'authenticité. Chaque produit que vous trouvez ici a été sélectionné avec le plus grand soin.", ctaTexte: "", ctaLien: "" },
       spacer:       { hauteur: "80px" },
+      tabs:         { titre: "Découvrez-en plus", onglets: [
+        { id: `tab_${Date.now()}_1`, label: "Photos", blocs: [] },
+        { id: `tab_${Date.now()}_2`, label: "Témoignages", blocs: [] },
+      ] },
+      columns:      { titre: "", nombreColonnes: 3, colonnes: [
+        { id: `col_${Date.now()}_1`, blocs: [] },
+        { id: `col_${Date.now()}_2`, blocs: [] },
+        { id: `col_${Date.now()}_3`, blocs: [] },
+      ] },
     };
     set(p => ({
       ...p,
@@ -223,9 +230,6 @@ export default function BuilderPage() {
     if (!config || !tenant) return;
     setSaving(true);
     try {
-      let builderHtml = (tenant.themeConfig as any)?.builderHtml;
-      let builderCss  = (tenant.themeConfig as any)?.builderCss;
-      if (gjsRef.current) { builderHtml = gjsRef.current.getHtml(); builderCss = gjsRef.current.getCss(); }
       // Merge animation CSS into customCss
       const animCss = generateAnimationCss(config.animations);
       const finalCss = (config.customCss || "").replace(/\/\* __anim__ \*\/[\s\S]*?\/\* __endanim__ \*\//g, "").trim();
@@ -233,7 +237,7 @@ export default function BuilderPage() {
       await fetch("/api/tenants", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ themeConfig: { ...config, customCss: mergedCss, builderHtml, builderCss } }),
+        body: JSON.stringify({ themeConfig: { ...config, customCss: mergedCss } }),
       });
       setOriginalConfig(config);
       setSaved(true);
@@ -277,24 +281,18 @@ export default function BuilderPage() {
           {saved && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-400">✓ Sauvegardé</span>}
         </div>
 
-        <div className="flex items-center gap-0.5 bg-white/5 rounded-lg p-0.5">
-          {(["builder","grapesjs"] as EditorMode[]).map(m => (
-            <button key={m} onClick={() => setMode(m)} className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${mode===m?"bg-white/10 text-white":"text-gray-600 hover:text-gray-400"}`}>
-              {m === "builder" ? <><Layers size={10} /> Constructeur</> : <><Code2 size={10} /> Éditeur libre</>}
-            </button>
-          ))}
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium bg-white/10 text-white">
+          <Layers size={10} /> Constructeur
         </div>
 
         <div className="flex items-center gap-2">
-          {mode === "builder" && (
-            <div className="flex gap-0.5 bg-white/5 rounded-lg p-0.5">
-              {([["desktop",Monitor],["tablet",Tablet],["mobile",Smartphone]] as [Device, any][]).map(([d,Icon]) => (
-                <button key={d} onClick={() => setDevice(d)} className={`w-7 h-7 rounded flex items-center justify-center transition-all ${device===d?"bg-[#F5A623]/20 text-[#F5A623]":"text-gray-600 hover:text-gray-400"}`}>
-                  <Icon size={13} />
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="flex gap-0.5 bg-white/5 rounded-lg p-0.5">
+            {([["desktop",Monitor],["tablet",Tablet],["mobile",Smartphone]] as [Device, any][]).map(([d,Icon]) => (
+              <button key={d} onClick={() => setDevice(d)} className={`w-7 h-7 rounded flex items-center justify-center transition-all ${device===d?"bg-[#F5A623]/20 text-[#F5A623]":"text-gray-600 hover:text-gray-400"}`}>
+                <Icon size={13} />
+              </button>
+            ))}
+          </div>
           <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-gray-500 hover:text-white border border-white/10 hover:border-white/20 transition-all">
             <ExternalLink size={10} /> Voir
           </a>
@@ -307,9 +305,7 @@ export default function BuilderPage() {
 
       {/* MAIN */}
       <div className="flex-1 flex overflow-hidden">
-        {mode === "builder" && (
-          <>
-            {/* Icon sidebar */}
+        {/* Icon sidebar */}
             <div className="w-11 flex-shrink-0 bg-[#08080f] border-r border-white/5 flex flex-col items-center py-3 gap-1">
               {NAV_TABS.map(t => (
                 <button key={t.id} onClick={() => setPanel(t.id)} title={t.tooltip}
@@ -333,7 +329,7 @@ export default function BuilderPage() {
                 {showLibrary && panel === "sections" && (
                   <SectionLibrary onAdd={addCustomSection} onClose={() => setShowLibrary(false)} />
                 )}
-                {!showLibrary && panel === "sections"   && <PanelSections config={config} activeSection={activeSection} setActiveSection={setActiveSection} setSection={setSection} sectionOrder={sectionOrder as SectionId[]} moveSection={moveSection} updateCustomSection={updateCustomSection} removeCustomSection={removeCustomSection} />}
+                {!showLibrary && panel === "sections"   && <PanelSections config={config} set={set} activeSection={activeSection} setActiveSection={setActiveSection} setSection={setSection} sectionOrder={sectionOrder as SectionId[]} moveSection={moveSection} updateCustomSection={updateCustomSection} removeCustomSection={removeCustomSection} />}
                 {panel === "couleurs"   && <PanelCouleurs  config={config} setColors={setColors} />}
                 {panel === "typo"       && <PanelTypo      config={config} setFonts={setFonts} />}
                 {panel === "layout"     && <PanelLayout    config={config} setLayout={setLayout} set={set} />}
@@ -368,14 +364,6 @@ export default function BuilderPage() {
                 </div>
               </div>
             </div>
-          </>
-        )}
-
-        {mode === "grapesjs" && (
-          <div className="flex-1 relative overflow-hidden">
-            <div ref={gjsContainer} className="w-full h-full" />
-          </div>
-        )}
       </div>
     </div>
   );
@@ -407,9 +395,11 @@ function SectionLibrary({ onAdd, onClose }: { onAdd: (t: CustomSection["type"]) 
 }
 
 // ─── Panel Sections ───────────────────────────────────────────────────────────
-function PanelSections({ config, activeSection, setActiveSection, setSection, sectionOrder, moveSection, updateCustomSection, removeCustomSection }: any) {
+function PanelSections({ config, set, activeSection, setActiveSection, setSection, sectionOrder, moveSection, updateCustomSection, removeCustomSection }: any) {
   const sec = config.sections as any;
   const custom: CustomSection[] = config.customSections || [];
+  const sousBlocsMap: Record<string, any[]> = config.sectionSousBlocs || {};
+  const setSousBlocs = (sectionId: string, blocs: any[]) => set((p: any) => ({ ...p, sectionSousBlocs: { ...(p.sectionSousBlocs || {}), [sectionId]: blocs } }));
 
   const allSections: Array<{ id: string; label: string; Icon: any; isCustom: boolean; actif: boolean }> = [
     ...sectionOrder.map((id: SectionId) => ({ id, label: SECTION_META[id].label, Icon: SECTION_META[id].Icon, isCustom: false, actif: sec[id]?.actif ?? true })),
@@ -455,6 +445,12 @@ function PanelSections({ config, activeSection, setActiveSection, setSection, se
               <div className="px-3 pb-4 space-y-2.5">
                 {!item.isCustom && <BuiltinSectionControls id={item.id as SectionId} sec={builtinSec} setSection={setSection} />}
                 {item.isCustom && customSec && <CustomSectionControls section={customSec} update={updateCustomSection} />}
+
+                {/* Sous-sections personnalisées — disponibles dans TOUTE section, built-in ou custom */}
+                <div className="pt-3 mt-1 border-t border-white/5">
+                  <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.15em] mb-2">Sous-sections</p>
+                  <SousBlocsEditor blocs={sousBlocsMap[item.id] || []} onChange={(blocs: any[]) => setSousBlocs(item.id, blocs)} />
+                </div>
               </div>
             )}
           </div>
@@ -759,7 +755,171 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
     <FSel label="Hauteur" value={c.hauteur||"80px"} onChange={v=>up({hauteur:v})} opts={[{v:"40px",l:"Petit (40px)"},{v:"80px",l:"Moyen (80px)"},{v:"120px",l:"Grand (120px)"},{v:"160px",l:"XL (160px)"}]} />
   );
 
+  if (section.type === "tabs") return (
+    <>
+      <FInp label="Titre (optionnel)" value={c.titre||""} onChange={v=>up({titre:v})} />
+      {(c.onglets||[]).map((tab: any, i: number) => (
+        <div key={tab.id} className="bg-white/[0.03] rounded-xl p-3 space-y-2.5 border border-white/5">
+          <div className="flex gap-2 items-center">
+            <div className="flex-1"><FInp label="Nom de l'onglet" value={tab.label} onChange={v=>{ const t=[...c.onglets]; t[i]={...t[i],label:v}; up({onglets:t}); }} /></div>
+            <button onClick={()=>up({onglets:c.onglets.filter((_:any,j:number)=>j!==i)})} className="text-red-500/40 hover:text-red-400 flex-shrink-0 mt-4"><Trash2 size={13}/></button>
+          </div>
+          <SousBlocsEditor blocs={tab.blocs||[]} onChange={(blocs: any[])=>{ const t=[...c.onglets]; t[i]={...t[i],blocs}; up({onglets:t}); }} />
+        </div>
+      ))}
+      <button onClick={()=>up({onglets:[...(c.onglets||[]),{id:`tab_${Date.now()}`,label:"Nouvel onglet",blocs:[]}]})} className="w-full text-[10px] text-gray-500 border border-dashed border-white/10 rounded-lg py-1.5 hover:border-white/20">+ Ajouter un onglet</button>
+    </>
+  );
+
+  if (section.type === "columns") return (
+    <>
+      <FInp label="Titre (optionnel)" value={c.titre||""} onChange={v=>up({titre:v})} />
+      <FSel label="Nombre de colonnes" value={String(c.nombreColonnes||3)} onChange={v=>up({nombreColonnes:Number(v)})} opts={[{v:"2",l:"2"},{v:"3",l:"3"},{v:"4",l:"4 colonnes"}]} />
+      {(c.colonnes||[]).map((col: any, i: number) => (
+        <div key={col.id} className="bg-white/[0.03] rounded-xl p-3 space-y-2.5 border border-white/5">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] text-gray-500 font-semibold">Colonne {i+1}</p>
+            <button onClick={()=>up({colonnes:c.colonnes.filter((_:any,j:number)=>j!==i)})} className="text-red-500/40 hover:text-red-400"><Trash2 size={13}/></button>
+          </div>
+          <SousBlocsEditor blocs={col.blocs||[]} onChange={(blocs: any[])=>{ const cols=[...c.colonnes]; cols[i]={...cols[i],blocs}; up({colonnes:cols}); }} />
+        </div>
+      ))}
+      <button onClick={()=>up({colonnes:[...(c.colonnes||[]),{id:`col_${Date.now()}`,blocs:[]}]})} className="w-full text-[10px] text-gray-500 border border-dashed border-white/10 rounded-lg py-1.5 hover:border-white/20">+ Ajouter une colonne</button>
+    </>
+  );
+
   return null;
+}
+
+// ─── Éditeur de sous-blocs (utilisé par les sections Onglets & Colonnes) ──────
+function SousBlocsEditor({ blocs, onChange }: { blocs: any[]; onChange: (b: any[]) => void }) {
+  const addBloc = (type: string) => {
+    const defaults: Record<string, any> = {
+      photos: { images: [""] },
+      temoignage: { nom: "", texte: "", note: 5 },
+      promo: { titre: "", texte: "", ctaTexte: "" },
+      texte: { titre: "", texte: "" },
+      video: { videoUrl: "" },
+      stats: { items: [{ valeur: "10K+", label: "Clients" }, { valeur: "500+", label: "Produits" }] },
+      features: { items: [{ icone: "★", titre: "Avantage", texte: "Description" }] },
+      countdown: { texte: "Offre limitée dans le temps", dateFin: new Date(Date.now() + 7*24*3600*1000).toISOString().slice(0,16), ctaTexte: "Profiter maintenant" },
+      logos: { logos: [""] },
+      confiance: { note: "4.9/5", nbClients: "12 000+", certifications: ["✓ Paiement sécurisé"] },
+      liste: { items: [""] },
+      spacer: { hauteur: "40px" },
+    };
+    onChange([...blocs, { id: `bloc_${Date.now()}`, type, config: defaults[type] }]);
+  };
+  const updateBloc = (i: number, patch: any) => {
+    const next = [...blocs]; next[i] = { ...next[i], config: { ...next[i].config, ...patch } }; onChange(next);
+  };
+  const removeBloc = (i: number) => onChange(blocs.filter((_, j) => j !== i));
+
+  return (
+    <div className="space-y-2 pl-2 border-l-2 border-white/5">
+      {blocs.map((b, i) => {
+        const meta = SOUS_BLOC_TYPES.find(t => t.type === b.type);
+        return (
+          <div key={b.id} className="bg-black/20 rounded-lg p-2 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                {meta && <meta.Icon size={10} />} {meta?.label}
+              </span>
+              <button onClick={() => removeBloc(i)} className="text-red-500/40 hover:text-red-400"><Trash2 size={10} /></button>
+            </div>
+            {b.type === "photos" && (
+              <div>
+                {(b.config.images || [""]).map((url: string, j: number) => (
+                  <div key={j} className="mb-1"><FInp label="" value={url} onChange={v => { const imgs = [...(b.config.images || [""])]; imgs[j] = v; updateBloc(i, { images: imgs }); }} /></div>
+                ))}
+                <button onClick={() => updateBloc(i, { images: [...(b.config.images || []), ""] })} className="text-[9px] text-gray-500 hover:text-gray-300">+ photo</button>
+              </div>
+            )}
+            {b.type === "temoignage" && (<>
+              <FInp label="Nom" value={b.config.nom || ""} onChange={v => updateBloc(i, { nom: v })} />
+              <FInp label="Texte" value={b.config.texte || ""} onChange={v => updateBloc(i, { texte: v })} multiline />
+            </>)}
+            {b.type === "promo" && (<>
+              <FInp label="Titre" value={b.config.titre || ""} onChange={v => updateBloc(i, { titre: v })} />
+              <FInp label="Texte" value={b.config.texte || ""} onChange={v => updateBloc(i, { texte: v })} multiline />
+              <FInp label="Bouton" value={b.config.ctaTexte || ""} onChange={v => updateBloc(i, { ctaTexte: v })} />
+            </>)}
+            {b.type === "texte" && (<>
+              <FInp label="Titre" value={b.config.titre || ""} onChange={v => updateBloc(i, { titre: v })} />
+              <FInp label="Texte" value={b.config.texte || ""} onChange={v => updateBloc(i, { texte: v })} multiline />
+            </>)}
+            {b.type === "video" && (
+              <FInp label="URL vidéo (YouTube, Vimeo ou .mp4)" value={b.config.videoUrl || ""} onChange={v => updateBloc(i, { videoUrl: v })} />
+            )}
+            {b.type === "stats" && (
+              <div>
+                {(b.config.items || []).map((it: any, j: number) => (
+                  <div key={j} className="grid grid-cols-2 gap-1 mb-1">
+                    <FInp label="" value={it.valeur || ""} onChange={v => { const items = [...(b.config.items || [])]; items[j] = { ...items[j], valeur: v }; updateBloc(i, { items }); }} />
+                    <FInp label="" value={it.label || ""} onChange={v => { const items = [...(b.config.items || [])]; items[j] = { ...items[j], label: v }; updateBloc(i, { items }); }} />
+                  </div>
+                ))}
+                <button onClick={() => updateBloc(i, { items: [...(b.config.items || []), { valeur: "", label: "" }] })} className="text-[9px] text-gray-500 hover:text-gray-300">+ statistique</button>
+              </div>
+            )}
+            {b.type === "features" && (
+              <div>
+                {(b.config.items || []).map((it: any, j: number) => (
+                  <div key={j} className="space-y-1 mb-2 pb-2 border-b border-white/5 last:border-0">
+                    <FInp label="Icône (emoji)" value={it.icone || ""} onChange={v => { const items = [...(b.config.items || [])]; items[j] = { ...items[j], icone: v }; updateBloc(i, { items }); }} />
+                    <FInp label="Titre" value={it.titre || ""} onChange={v => { const items = [...(b.config.items || [])]; items[j] = { ...items[j], titre: v }; updateBloc(i, { items }); }} />
+                    <FInp label="Texte" value={it.texte || ""} onChange={v => { const items = [...(b.config.items || [])]; items[j] = { ...items[j], texte: v }; updateBloc(i, { items }); }} />
+                  </div>
+                ))}
+                <button onClick={() => updateBloc(i, { items: [...(b.config.items || []), { icone: "★", titre: "", texte: "" }] })} className="text-[9px] text-gray-500 hover:text-gray-300">+ avantage</button>
+              </div>
+            )}
+            {b.type === "countdown" && (<>
+              <FInp label="Texte" value={b.config.texte || ""} onChange={v => updateBloc(i, { texte: v })} />
+              <label className="block text-[9px] text-gray-500 mb-0.5 mt-1">Date de fin</label>
+              <input type="datetime-local" value={b.config.dateFin || ""} onChange={e => updateBloc(i, { dateFin: e.target.value })} className="w-full bg-black/30 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] text-white mb-1.5" />
+              <FInp label="Bouton" value={b.config.ctaTexte || ""} onChange={v => updateBloc(i, { ctaTexte: v })} />
+            </>)}
+            {b.type === "logos" && (
+              <div>
+                {(b.config.logos || [""]).map((url: string, j: number) => (
+                  <div key={j} className="mb-1"><FInp label="" value={url} onChange={v => { const logos = [...(b.config.logos || [""])]; logos[j] = v; updateBloc(i, { logos }); }} /></div>
+                ))}
+                <button onClick={() => updateBloc(i, { logos: [...(b.config.logos || []), ""] })} className="text-[9px] text-gray-500 hover:text-gray-300">+ logo</button>
+              </div>
+            )}
+            {b.type === "confiance" && (<>
+              <FInp label="Note" value={b.config.note || ""} onChange={v => updateBloc(i, { note: v })} />
+              <FInp label="Nb clients" value={b.config.nbClients || ""} onChange={v => updateBloc(i, { nbClients: v })} />
+              {(b.config.certifications || []).map((cert: string, j: number) => (
+                <div key={j} className="mb-1"><FInp label="" value={cert} onChange={v => { const certs = [...(b.config.certifications || [])]; certs[j] = v; updateBloc(i, { certifications: certs }); }} /></div>
+              ))}
+              <button onClick={() => updateBloc(i, { certifications: [...(b.config.certifications || []), ""] })} className="text-[9px] text-gray-500 hover:text-gray-300">+ certification</button>
+            </>)}
+            {b.type === "liste" && (
+              <div>
+                {(b.config.items || [""]).map((it: string, j: number) => (
+                  <div key={j} className="mb-1"><FInp label="" value={it} onChange={v => { const items = [...(b.config.items || [""])]; items[j] = v; updateBloc(i, { items }); }} /></div>
+                ))}
+                <button onClick={() => updateBloc(i, { items: [...(b.config.items || []), ""] })} className="text-[9px] text-gray-500 hover:text-gray-300">+ élément</button>
+              </div>
+            )}
+            {b.type === "spacer" && (
+              <FInp label="Hauteur (ex: 40px)" value={b.config.hauteur || ""} onChange={v => updateBloc(i, { hauteur: v })} />
+            )}
+          </div>
+        );
+      })}
+      <div className="flex flex-wrap gap-1">
+        {SOUS_BLOC_TYPES.map(t => (
+          <button key={t.type} onClick={() => addBloc(t.type)}
+            className="text-[9px] px-2 py-1 rounded-lg border border-dashed border-white/10 text-gray-500 hover:border-white/20 hover:text-gray-300 flex items-center gap-1">
+            <Plus size={9} /> {t.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 // ─── Panel Couleurs ───────────────────────────────────────────────────────────
@@ -778,14 +938,14 @@ function PanelCouleurs({ config, setColors }: any) {
     {l:"Crème",    c:{fond:"#fff8f0",accent:"#c2622d",texte:"#2c1503",surface:"#fef3e8",texteMuted:"#8a6248",bordure:"#f0e0d0"}},
     {l:"Ocean",    c:{fond:"#010d1f",accent:"#00b4d8",texte:"#e0f4ff",surface:"#021a33",texteMuted:"#6aa8c4",bordure:"#0a2a40"}},
     {l:"Forêt",   c:{fond:"#071a0b",accent:"#4ade80",texte:"#e8ffe0",surface:"#0d2912",texteMuted:"#6aad6a",bordure:"#163d1e"}},
-    {l:"Cosmos",   c:{fond:"#1a0a2e",accent:"#7c3aed",texte:"#f0eaff",surface:"#200a3e",texteMuted:"#9876cc",bordure:"#2d1058"}},
+    {l:"Cosmos",   c:{fond:"#1a0a2e",accent:"#1B2A4A",texte:"#f0eaff",surface:"#200a3e",texteMuted:"#9876cc",bordure:"#2d1058"}},
     {l:"Rose",     c:{fond:"#fff5f7",accent:"#e91e8c",texte:"#1a0010",surface:"#fff0f4",texteMuted:"#b0607a",bordure:"#f5c0d0"}},
     {l:"Slate",    c:{fond:"#f8fafc",accent:"#3b82f6",texte:"#0f172a",surface:"#f1f5f9",texteMuted:"#64748b",bordure:"#e2e8f0"}},
     {l:"Or royal", c:{fond:"#1a0e00",accent:"#f5a623",texte:"#fff8e8",surface:"#261400",texteMuted:"#c8a060",bordure:"#3a2200"}},
     {l:"Nude",     c:{fond:"#f5ede8",accent:"#a0522d",texte:"#2c1503",surface:"#ede0d8",texteMuted:"#8a6b55",bordure:"#e0cfc8"}},
     {l:"Neige",    c:{fond:"#ffffff",accent:"#111111",texte:"#111111",surface:"#f5f5f5",texteMuted:"#888888",bordure:"#e5e5e5"}},
     {l:"Nuit",     c:{fond:"#0d1117",accent:"#58a6ff",texte:"#c9d1d9",surface:"#161b22",texteMuted:"#8b949e",bordure:"#30363d"}},
-    {l:"Lavande",  c:{fond:"#faf5ff",accent:"#9333ea",texte:"#1e0a3c",surface:"#f5eeff",texteMuted:"#7e5bab",bordure:"#e9d5ff"}},
+    {l:"Lavande",  c:{fond:"#faf5ff",accent:"#9333ea",texte:"#1e0a3c",surface:"#f5eeff",texteMuted:"#7e5bab",bordure:"#dde3ee"}},
   ];
 
   return (

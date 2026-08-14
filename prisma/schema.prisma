@@ -41,6 +41,8 @@ model Tenant {
   kycDocUrl           String?
   snapActif             Boolean  @default(false)
   parametresAffiliation Json?    @default("{}")
+  parametresCommande    Json     @default("{}") // formulaire "Commander maintenant" : champs actifs/personnalisés
+  metaPixelId           String? // Meta Pixel ID du marchand, injecté sur la vitrine
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
@@ -65,6 +67,7 @@ model Tenant {
   programmeAffiliation   ProgrammeAffiliation?
   affilies               Affilie[]
   commissionsAffilie     CommissionAffilie[]
+  notificationsMarchand  NotificationMarchand[]
 }
 
 // =====================
@@ -320,6 +323,26 @@ model Notification {
   createdAt  DateTime @default(now())
 
   livreur Livreur @relation(fields: [livreurId], references: [id])
+}
+
+// =====================
+// NOTIFICATION MARCHAND (dashboard)
+// =====================
+model NotificationMarchand {
+  id         String   @id @default(cuid())
+  tenantId   String
+  type       String // nouvelle_commande | commande_whatsapp | escalade_humain | stock_bas | avis | ...
+  titre      String
+  message    String
+  lien       String? // deep-link dashboard, ex: /dashboard/commandes/xxx
+  commandeId String?
+  lu         Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, lu])
+  @@index([tenantId, createdAt])
 }
 
 // =====================

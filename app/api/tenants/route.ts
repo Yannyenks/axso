@@ -114,6 +114,7 @@ export async function PATCH(request: Request) {
       "themeId", "logoUrl", "bannerUrl", "description", "metaTitle", "metaDescription",
       "whatsapp", "nomBoutique", "telephone", "adresse", "email", "categorie", "pays", "devise",
       "socialLinks", "parametresLivraison", "parametresPaiement", "themeConfig",
+      "parametresCommande", "metaPixelId",
     ];
     for (const key of autorises) {
       if (body[key] !== undefined) champs[key] = body[key];

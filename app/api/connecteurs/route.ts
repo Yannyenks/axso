@@ -95,10 +95,10 @@ export async function PATCH(req: NextRequest) {
       if (!cfg.apiKey) throw new Error("Clé API manquante");
       return NextResponse.json({ connecte: true, message: "Clé API Higgsfield configurée" });
     }
-    if (type === "claude") {
+    if (type === "gemini") {
       const cfg = config.config as any;
       if (!cfg.apiKey) throw new Error("Clé API manquante");
-      return NextResponse.json({ connecte: true, message: "Clé API Claude configurée" });
+      return NextResponse.json({ connecte: true, message: "Clé API Gemini configurée" });
     }
     return NextResponse.json({ connecte: true, message: "Connecteur actif" });
   } catch (err: any) {

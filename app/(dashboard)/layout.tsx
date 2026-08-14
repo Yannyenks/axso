@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Header } from "@/components/dashboard/Header";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
-import { AxiaFloat } from "@/components/dashboard/AxiaFloat";
+import { XiaFloat } from "@/components/dashboard/XiaFloat";
 
 const FULLBLEED_ROUTES: string[] = [];
 
@@ -53,8 +53,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <MobileBottomNav />
       </div>
 
-      {/* ─── AXIA flottant (desktop + mobile) ───────────────────── */}
-      <AxiaFloat />
+      {/* ─── Xia flottante (desktop uniquement — sur mobile, Xia est accessible
+           via le bouton central de MobileBottomNav → /dashboard/xia, la bulle
+           flottante chevaucherait sinon la barre de navigation basse) ───────── */}
+      <div className="hidden md:block">
+        <XiaFloat />
+      </div>
     </>
   );
 }

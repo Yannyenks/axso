@@ -98,7 +98,7 @@ const FOURNISSEURS = [
     pays: "USA + Europe",
     categories: ["Mode", "Maison", "Beauté", "Tech"],
     tags: ["usa", "europe", "dropshipping", "marques"],
-    couleur: "#7c3aed",
+    couleur: "#1B2A4A",
     description: "Fournisseurs dropshipping US & EU avec livraison rapide 2–5 jours.",
     url: "https://www.spocket.co",
     note: 4.5,

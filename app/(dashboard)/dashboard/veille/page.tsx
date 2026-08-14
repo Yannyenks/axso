@@ -6,6 +6,7 @@ import {
   Trash2, Eye, BarChart2
 } from "lucide-react";
 import { toast } from "sonner";
+import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 
 interface VeilleItem {
   id: string;
@@ -116,7 +117,7 @@ Format: liste claire avec emojis. Adapté marché africain.`,
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Veille Concurrentielle</h1>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight inline-flex items-center gap-2">Veille Concurrentielle <AgentActiveIndicator label="Agent Veille actif" /></h1>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">Surveillez vos concurrents, détectez les opportunités</p>
         </div>
         <button onClick={() => setShowModal(true)}

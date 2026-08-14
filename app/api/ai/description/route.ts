@@ -1,7 +1,7 @@
 // API Route — Génération de description produit par IA
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { genererDescriptionProduit } from "@/lib/anthropic";
+import { genererDescriptionProduit } from "@/lib/gemini";
 import { z } from "zod";
 
 const schemaDescription = z.object({
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ description });
   } catch (err) {
-    if ((err as any)?.message?.includes("ANTHROPIC_API_KEY")) {
+    if ((err as any)?.message?.includes("GEMINI_API_KEY")) {
       return NextResponse.json({
         description: "Un produit exceptionnel qui saura séduire vos clients. Qualité irréprochable et authenticité africaine garanties.",
       });

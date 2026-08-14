@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 const STATUTS = [
   { value: "en_attente",     label: "En attente",      color: "#f59e0b" },
   { value: "confirmee",      label: "Confirmée",       color: "#60a5fa" },
-  { value: "en_preparation", label: "En préparation",  color: "#a78bfa" },
+  { value: "en_preparation", label: "En préparation",  color: "#FFD280" },
   { value: "expediee",       label: "Expédiée",        color: "#38bdf8" },
   { value: "livree",         label: "Livrée",          color: "#34d399" },
   { value: "annulee",        label: "Annulée",         color: "#f87171" },

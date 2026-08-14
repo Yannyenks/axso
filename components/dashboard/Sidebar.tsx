@@ -5,9 +5,9 @@ import { ChevronLeft, ChevronRight, Zap } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
-  IconAxia, IconAccueil, IconBoutique, IconBuilder, IconProduits,
+  IconAccueil, IconBoutique, IconBuilder, IconProduits,
   IconCommandes, IconClients, IconWallet, IconRevenus,
-  IconMarketing, IconMessages, IconContenus, IconNavigateur, IconLivraisons,
+  IconMarketing, IconMessages, IconContenus, IconLivraisons,
   IconAnalytics, IconConnecteurs, IconAbonnement, IconParametres, IconIA,
   IconWhatsApp, IconAvis, IconPaiements, IconSourcing, IconThemes,
 } from "./AppIcons";
@@ -38,7 +38,6 @@ const NAV_GROUPS = [
       { href: "/dashboard/marketing", label: "Marketing",    Icone: IconMarketing },
       { href: "/dashboard/messages",  label: "Axsocial",     Icone: IconMessages,   badge: true },
       { href: "/dashboard/studio",    label: "Contenus",     Icone: IconContenus },
-      { href: "/dashboard/navigateur",label: "Navigateur",   Icone: IconNavigateur },
     ],
   },
   {

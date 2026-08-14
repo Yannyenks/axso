@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
   // Générer description IA
   if (actions.includes("description")) {
-    const r = await executerOutilMcp("claude_generer_description_produit", {
+    const r = await executerOutilMcp("gemini_generer_description_produit", {
       nom: produit.nom,
       prix: produit.prix,
       details: produit.description ?? "",
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
 
   // Générer post Instagram
   if (actions.includes("post_instagram")) {
-    const r = await executerOutilMcp("claude_generer_post_social", {
+    const r = await executerOutilMcp("gemini_generer_post_social", {
       produit: produit.nom,
       prix: produit.prix,
       plateforme: "instagram",
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
 
   // Générer post Facebook
   if (actions.includes("post_facebook")) {
-    const r = await executerOutilMcp("claude_generer_post_social", {
+    const r = await executerOutilMcp("gemini_generer_post_social", {
       produit: produit.nom,
       prix: produit.prix,
       plateforme: "facebook",

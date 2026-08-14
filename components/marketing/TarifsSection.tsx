@@ -1,12 +1,12 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Check, X, Zap, Star, Trophy, Lock } from "lucide-react";
+import { Check, X, Zap, Star, Lock } from "lucide-react";
 import Link from "next/link";
 
 const PLANS = [
   {
-    id: "essentiel",
-    nom: "Essentiel",
+    id: "gratuit",
+    nom: "Gratuit",
     prix: 0,
     couleur: "#6b7280",
     gradFrom: "#6b7280",
@@ -14,7 +14,7 @@ const PLANS = [
     bg: "#f9fafb",
     borderColor: "rgba(107,114,128,0.25)",
     shadowColor: "rgba(107,114,128,0.15)",
-    desc: "Pour planter les premières graines de ton empire",
+    desc: "Lance-toi sans risquer un franc. Tu n'as pas besoin de budget pour commencer : crée ta boutique, mets tes produits en ligne, accepte les paiements mobile money dès aujourd'hui. On prend 3% uniquement quand tu vends — zéro vente, zéro frais.",
     features: [
       "30 commandes / mois",
       "1 boutique en ligne",
@@ -25,19 +25,19 @@ const PLANS = [
     ],
     notIncluded: ["Commandes illimitées", "Navigateur AXIA", "Sourcing dropshipping mondial"],
     recommande: false,
-    cta: "Démarrer gratuitement →",
+    cta: "Démarrer gratuitement — sans carte bancaire",
   },
   {
     id: "pro",
     nom: "Pro",
-    prix: 5000,
+    prix: 4900,
     couleur: "#F5A623",
     gradFrom: "#F5A623",
     gradTo: "#FFD280",
     bg: "#fffbeb",
     borderColor: "rgba(245,166,35,0.35)",
     shadowColor: "rgba(245,166,35,0.25)",
-    desc: "L'empire prend de l'ampleur — tout ce qu'il faut pour dominer",
+    desc: "Pour vendre sérieusement. Commandes illimitées, IA pour tes visuels pub, analytics pour voir ce qui marche — et zéro commission sur tes ventes. À 4 900 FCFA, c'est moins cher qu'un bon repas au restaurant. Et ça rapporte bien plus.",
     features: [
       "Commandes illimitées",
       "Social Media intégré",
@@ -49,19 +49,19 @@ const PLANS = [
     ],
     notIncluded: ["Sourcing dropshipping mondial"],
     recommande: true,
-    cta: "Lancer mon empire →",
+    cta: "Essayer Pro 14 jours gratuits →",
   },
   {
-    id: "illimite",
-    nom: "Illimité",
-    prix: 20000,
+    id: "business",
+    nom: "Business",
+    prix: 12900,
     couleur: "#7c3aed",
     gradFrom: "#7c3aed",
     gradTo: "#a78bfa",
     bg: "#f5f3ff",
     borderColor: "rgba(124,58,237,0.25)",
     shadowColor: "rgba(124,58,237,0.18)",
-    desc: "L'empire sans frontières — zéro limite, contrôle total",
+    desc: "Pour les PME qui scalent. Boutiques multiples, équipe jusqu'à 3 membres, pub Meta & TikTok intégrée, manager de compte dédié. Le plan des vendeurs qui font plus de 500 000 FCFA de ventes par mois.",
     features: [
       "AUCUNE LIMITE — tout inclus",
       "AXIA IA — version complète",
@@ -74,7 +74,7 @@ const PLANS = [
     ],
     notIncluded: [],
     recommande: false,
-    cta: "Empire sans limites →",
+    cta: "Parler à un conseiller AXSO →",
   },
 ];
 
@@ -120,12 +120,12 @@ export function TarifsSection() {
           </span>
           <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-5"
             style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
-            Choisis ton palier d'empire
+            Commence gratuit. Grandis quand tu es prêt.
           </h2>
           <p className="text-gray-400 text-xl max-w-2xl mx-auto">
-            De l'essentiel à l'illimité — chaque plan est un tremplin vers plus grand.
+            Pas de frais cachés. Pas de carte bancaire requise pour démarrer.
             <br className="hidden sm:block" />
-            AXSO grandit avec toi.
+            Tu peux annuler à tout moment. Et tu peux payer ton abonnement directement par Orange Money ou MTN.
           </p>
         </div>
 
@@ -143,34 +143,36 @@ export function TarifsSection() {
 
         {/* Comparaison Axso vs concurrents */}
         <div
-          className="mt-20 max-w-4xl mx-auto"
+          className="mt-20 max-w-3xl mx-auto"
           style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.8s" }}
         >
-          <p className="text-center text-sm font-bold uppercase tracking-widest text-gray-300 mb-8">
-            Pourquoi AXSO bat la concurrence
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <h3 className="text-center text-2xl sm:text-3xl font-bold text-gray-900 mb-8"
+            style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+            Tout ce que Shopify ne fera jamais pour toi
+          </h3>
+          <div className="rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="grid grid-cols-4 bg-gray-50 border-b border-gray-100">
+              <div className="p-4 text-xs font-bold uppercase tracking-widest text-gray-400">Critère</div>
+              <div className="p-4 text-center text-sm font-bold" style={{ color: "#F5A623" }}>AXSO</div>
+              <div className="p-4 text-center text-sm font-bold text-gray-400">Shopify</div>
+              <div className="p-4 text-center text-sm font-bold text-gray-400">WooCommerce</div>
+            </div>
             {[
-              { plateforme: "AXSO",        cout: "Gratuit pour démarrer", highlight: true,  note: "Fait pour l'Afrique" },
-              { plateforme: "Shopify",     cout: "~19 000 XOF/mois",  highlight: false, note: "Aucun support local" },
-              { plateforme: "WooCommerce", cout: "Hébergement + dev",  highlight: false, note: "Complexe à gérer" },
-              { plateforme: "Squarespace", cout: "~14 000 XOF/mois",  highlight: false, note: "Pas fait pour vous" },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="p-5 rounded-2xl border text-center transition-all duration-300"
-                style={{
-                  background: item.highlight ? "#fffbeb" : "white",
-                  borderColor: item.highlight ? "rgba(245,166,35,0.4)" : "#f0f0f0",
-                  boxShadow: item.highlight ? "0 8px 30px rgba(245,166,35,0.15)" : "none",
-                }}
-              >
-                <p className="font-bold text-sm mb-1.5 inline-flex items-center gap-1" style={{ color: item.highlight ? "#F5A623" : "#9ca3af" }}>
-                  {item.plateforme}
-                  {item.highlight && <Trophy size={12} className="ml-1" />}
-                </p>
-                <p className="text-xs font-semibold text-gray-700 mb-1">{item.cout}</p>
-                <p className="text-[10px] text-gray-400">{item.note}</p>
+              { critere: "Paiement Orange Money natif",       axso: true, shopify: false, woo: "✗" },
+              { critere: "Interface en français local",       axso: true, shopify: false, woo: "partiel" },
+              { critere: "Support WhatsApp en 2h",             axso: true, shopify: false, woo: "✗" },
+              { critere: "IA visuels pub intégrée",            axso: true, shopify: false, woo: "✗" },
+              { critere: "Payer l'abonnement en mobile money", axso: true, shopify: false, woo: "✗" },
+            ].map((row, i) => (
+              <div key={row.critere} className={`grid grid-cols-4 items-center ${i % 2 === 1 ? "bg-gray-50/50" : ""}`}>
+                <div className="p-4 text-sm text-gray-700">{row.critere}</div>
+                <div className="p-4 flex justify-center" style={{ background: "rgba(245,166,35,0.06)" }}>
+                  <Check size={16} strokeWidth={3} style={{ color: "#F5A623" }} />
+                </div>
+                <div className="p-4 flex justify-center">
+                  <X size={16} strokeWidth={3} className="text-gray-300" />
+                </div>
+                <div className="p-4 text-center text-xs text-gray-400">{row.woo === "partiel" ? "Partiel" : <X size={16} strokeWidth={3} className="text-gray-300 inline-block" />}</div>
               </div>
             ))}
           </div>
@@ -182,7 +184,7 @@ export function TarifsSection() {
           style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 1s" }}
         >
           <p className="text-sm text-gray-400 inline-flex items-center gap-1.5">
-            <Lock size={13} /> Paiement sécurisé · Annulation à tout moment · Pas de frais cachés
+            <Lock size={13} /> Paiement par Orange Money ou MTN · Annulation à tout moment · 0 frais cachés · Support WhatsApp inclus
           </p>
         </div>
       </div>
@@ -241,7 +243,7 @@ function PlanCard({
           }}
         >
           <Star size={11} fill="white" />
-          LE PLUS POPULAIRE
+          LE PLUS CHOISI
           <Star size={11} fill="white" />
         </div>
       )}

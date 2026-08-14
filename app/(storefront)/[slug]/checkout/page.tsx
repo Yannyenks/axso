@@ -49,7 +49,8 @@ export default async function CheckoutPage({ params }: Props) {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-        <CheckoutForm theme={theme} slug={slug} devise={tenant.devise} tenantId={tenant.id} nomBoutique={tenant.nomBoutique} logoUrl={tenant.logoUrl || undefined} />
+        <CheckoutForm theme={theme} slug={slug} devise={tenant.devise} tenantId={tenant.id} nomBoutique={tenant.nomBoutique} logoUrl={tenant.logoUrl || undefined}
+          parametresCommande={(tenant.parametresCommande as any) || {}} />
       </div>
 
       <footer className="border-t py-8 text-center text-sm opacity-50" style={{ borderColor: `${theme.accent}20` }}>

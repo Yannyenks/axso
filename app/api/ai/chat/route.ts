@@ -1,9 +1,9 @@
-// API Route — Chat IA avec Claude
+// API Route — Chat IA avec Gemini
 import { NextResponse } from "next/server";
 
 export const maxDuration = 60;
 import { auth } from "@/lib/auth";
-import { chatAvecIA } from "@/lib/anthropic";
+import { chatAvecIA } from "@/lib/gemini";
 import { z } from "zod";
 
 const schemaChat = z.object({
@@ -34,9 +34,9 @@ export async function POST(request: Request) {
     }
 
     // Si la clé API manque, renvoyer une réponse de démonstration
-    if ((err as any)?.message?.includes("ANTHROPIC_API_KEY")) {
+    if ((err as any)?.message?.includes("GEMINI_API_KEY")) {
       return NextResponse.json({
-        reponse: "🤖 L'assistant IA nécessite une clé ANTHROPIC_API_KEY dans votre .env.local. Configurez-la pour activer toutes les fonctionnalités IA.",
+        reponse: "🤖 L'assistant IA nécessite une clé GEMINI_API_KEY dans votre .env.local. Configurez-la pour activer toutes les fonctionnalités IA.",
       });
     }
 

@@ -1,19 +1,14 @@
 /**
- * Agent AXIA — Gemini en priorité absolue
+ * Agent AXIA — moteur Gemini exclusif (SDK officiel @google/genai)
  *
- * Phase 1 — Tool execution : Gemini → Groq → NVIDIA → …
- * Phase 2 — Streaming réponse : Gemini streaming → Groq → Claude (dernier recours)
+ * Phase 1 — Tool execution : Gemini (function calling)
+ * Phase 2 — Synthèse de réponse : Gemini streaming natif
  */
-import Anthropic from "@anthropic-ai/sdk";
 import {
-  hasOpenAI,
-  completionWithToolsOpenAI,
-  hasAnthropic,
   hasGemini,
-  hasGroq,
   completionWithToolsAuto,
+  streamGemini,
   type ToolDefinition,
-  type ToolCall,
 } from "./llm-client";
 
 export type AgentTool = ToolDefinition;
@@ -24,159 +19,12 @@ export type ToolExecutor = (
   tenantId: string
 ) => Promise<{ succes: boolean; resultat: string }>;
 
-function toAnthropicTools(tools: AgentTool[]): Anthropic.Tool[] {
-  return tools.map((t) => ({
-    name: t.name,
-    description: t.description,
-    input_schema: t.parameters as Anthropic.Tool["input_schema"],
-  }));
-}
-
-const CLAUDE_MODELS = [
-  "claude-sonnet-4-6",
-  "claude-3-5-sonnet-20241022",
-  "claude-3-5-haiku-20241022",
-];
-
 function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
 
 function buildSynthesisUserMessage(originalQuestion: string, toolResults: string[]): string {
   if (toolResults.length === 0) return originalQuestion;
   const ctx = toolResults.join("\n\n");
   return `${originalQuestion}\n\n---\nContexte (utilise-le pour répondre, ne le répète pas) :\n${ctx}`;
-}
-
-// ─── Gemini streaming natif (Phase 2 — priorité) ─────────────────────────────
-
-async function geminiSynthesisStream(
-  send: (data: object) => void,
-  systemPrompt: string,
-  messages: Array<{ role: "user" | "assistant"; content: string }>
-): Promise<void> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY manquante");
-
-  const res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model: "gemini-2.0-flash",
-      max_tokens: 4000,
-      temperature: 0.75,
-      stream: true,
-      messages: [{ role: "system", content: systemPrompt }, ...messages],
-    }),
-  });
-
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`Gemini synthesis HTTP ${res.status}: ${txt.slice(0, 120)}`);
-  }
-
-  const reader = res.body!.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue;
-      const payload = line.slice(6).trim();
-      if (payload === "[DONE]") return;
-      try {
-        const chunk = JSON.parse(payload);
-        const text = chunk.choices?.[0]?.delta?.content;
-        if (text) send({ type: "token", text });
-      } catch {}
-    }
-  }
-}
-
-// ─── Groq streaming (Phase 2 — fallback 1) ───────────────────────────────────
-
-async function groqSynthesisStream(
-  send: (data: object) => void,
-  systemPrompt: string,
-  messages: Array<{ role: "user" | "assistant"; content: string }>
-): Promise<void> {
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) throw new Error("GROQ_API_KEY manquante");
-
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
-      max_tokens: 4000,
-      temperature: 0.75,
-      stream: true,
-      messages: [{ role: "system", content: systemPrompt }, ...messages],
-    }),
-  });
-
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`Groq synthesis HTTP ${res.status}: ${txt.slice(0, 120)}`);
-  }
-
-  const reader = res.body!.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue;
-      const payload = line.slice(6).trim();
-      if (payload === "[DONE]") return;
-      try {
-        const chunk = JSON.parse(payload);
-        const text = chunk.choices?.[0]?.delta?.content;
-        if (text) send({ type: "token", text });
-      } catch {}
-    }
-  }
-}
-
-// ─── Claude streaming natif (Phase 2 — dernier recours) ──────────────────────
-
-async function claudeSynthesisStream(
-  send: (data: object) => void,
-  systemPrompt: string,
-  claudeMessages: Anthropic.MessageParam[],
-): Promise<void> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
-
-  for (const model of CLAUDE_MODELS) {
-    try {
-      const runner = client.messages.stream({
-        model,
-        max_tokens: 4000,
-        temperature: 0.75,
-        system: systemPrompt,
-        messages: claudeMessages,
-      });
-      runner.on("text", (text: string) => send({ type: "token", text }));
-      await runner.finalMessage();
-      return;
-    } catch (e: any) {
-      const msg = (e?.message ?? "").toLowerCase();
-      if (msg.includes("model") || msg.includes("not_found") || msg.includes("404") || e?.status === 404) {
-        console.warn(`[claude-stream] ${model} indisponible`);
-        continue;
-      }
-      throw e;
-    }
-  }
-  throw new Error("Aucun modèle Claude disponible");
 }
 
 // ─── runAgent (non-streaming) ─────────────────────────────────────────────────
@@ -205,7 +53,7 @@ export async function runAgent(
       }
       if (result.stopReason === "tool_use" && result.toolCalls?.length) {
         toolsUsed = true;
-        conversation.push({ role: "assistant", content: null, tool_calls: result.toolCalls.map(tc => ({ id: tc.id, type: "function", function: { name: tc.name, arguments: JSON.stringify(tc.arguments) } })) });
+        conversation.push({ role: "assistant", content: null, tool_calls: result.toolCalls.map(tc => ({ id: tc.id, type: "function", function: { name: tc.name, arguments: JSON.stringify(tc.arguments) }, signature: tc.signature })) });
         for (const tc of result.toolCalls) {
           const { resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
           actionsEffectuees.push(resultat);
@@ -225,39 +73,15 @@ export async function runAgent(
   const prevMessages = messages.slice(0, -1).map(m => ({ role: m.role, content: m.content }));
   const synthMessages = [...prevMessages, { role: "user" as const, content: synthMsg }];
 
-  // Gemini (priorité)
   if (hasGemini()) {
     try {
-      const res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.GEMINI_API_KEY}` },
-        body: JSON.stringify({ model: "gemini-2.0-flash", max_tokens: 4000, messages: [{ role: "system", content: systemPrompt }, ...synthMessages] }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        return { reponse: data.choices?.[0]?.message?.content ?? "", actions: actionsEffectuees };
+      let reponse = "";
+      for await (const token of streamGemini(systemPrompt, synthMessages, 4000)) {
+        reponse += token;
       }
+      return { reponse, actions: actionsEffectuees };
     } catch (err: any) {
       console.warn("[agent] gemini synthesis:", err?.message?.slice(0, 80));
-    }
-  }
-
-  // Claude (dernier recours)
-  if (hasAnthropic()) {
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
-    for (const model of CLAUDE_MODELS) {
-      try {
-        const response = await (client.messages.create as any)({
-          model, max_tokens: 4000, system: systemPrompt,
-          messages: synthMessages,
-        });
-        const t = response.content?.find((b: any) => b.type === "text");
-        return { reponse: t?.text ?? "", actions: actionsEffectuees };
-      } catch (err: any) {
-        const msg = (err?.message ?? "").toLowerCase();
-        if (msg.includes("model") || msg.includes("not_found") || err?.status === 404) continue;
-        break;
-      }
     }
   }
 
@@ -294,7 +118,7 @@ export function runAgentStream(
       const toolResults: string[] = [];
       let phase1Text = "";
 
-      // ── Phase 1 : Tool execution (Gemini → Groq → …) ────────────────────────
+      // ── Phase 1 : Tool execution (Gemini function calling) ─────────────────
       try {
         const conversation: any[] = [
           { role: "system", content: systemPrompt },
@@ -315,7 +139,7 @@ export function runAgentStream(
           if (result.stopReason === "tool_use" && result.toolCalls?.length) {
             conversation.push({
               role: "assistant", content: null,
-              tool_calls: result.toolCalls.map(tc => ({ id: tc.id, type: "function", function: { name: tc.name, arguments: JSON.stringify(tc.arguments) } })),
+              tool_calls: result.toolCalls.map(tc => ({ id: tc.id, type: "function", function: { name: tc.name, arguments: JSON.stringify(tc.arguments) }, signature: tc.signature })),
             });
             for (const tc of result.toolCalls) {
               const { succes, resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
@@ -336,7 +160,7 @@ export function runAgentStream(
         console.warn("[stream] phase1 failed:", err?.message?.slice(0, 100));
       }
 
-      // ── Phase 2 : Streaming synthèse (Gemini → Groq → Claude) ───────────────
+      // ── Phase 2 : Streaming synthèse (Gemini natif) ─────────────────────────
       const originalQuestion = (() => {
         const last = messages[messages.length - 1];
         if (!last) return "";
@@ -367,36 +191,15 @@ export function runAgentStream(
         { role: "user", content: synthesisMsg },
       ];
 
-      // Claude streaming (priorité — meilleure qualité de langue)
-      if (hasAnthropic()) {
-        try {
-          await claudeSynthesisStream(send, systemPrompt, synthMessages);
-          finish(actionsEffectuees);
-          return;
-        } catch (err: any) {
-          console.warn("[stream] claude synthesis failed:", err?.message?.slice(0, 100));
-        }
-      }
-
-      // Gemini streaming (fallback 1)
       if (hasGemini()) {
         try {
-          await geminiSynthesisStream(send, systemPrompt, synthMessages);
+          for await (const token of streamGemini(systemPrompt, synthMessages, 4000)) {
+            send({ type: "token", text: token });
+          }
           finish(actionsEffectuees);
           return;
         } catch (err: any) {
           console.warn("[stream] gemini synthesis failed:", err?.message?.slice(0, 100));
-        }
-      }
-
-      // Groq streaming (fallback 2)
-      if (hasGroq()) {
-        try {
-          await groqSynthesisStream(send, systemPrompt, synthMessages);
-          finish(actionsEffectuees);
-          return;
-        } catch (err: any) {
-          console.warn("[stream] groq synthesis failed:", err?.message?.slice(0, 100));
         }
       }
 

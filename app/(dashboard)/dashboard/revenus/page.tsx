@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { formatMontant } from "@/lib/utils";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, DollarSign, BarChart3, ArrowRight, Wallet } from "lucide-react";
+import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 
 export default async function RevenusPage() {
   const session = await auth();
@@ -83,7 +84,7 @@ export default async function RevenusPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[#111111] font-poppins">Revenus</h1>
+        <h1 className="text-2xl font-bold text-[#111111] font-poppins inline-flex items-center gap-2">Revenus <AgentActiveIndicator label="Agent Revenue actif" /></h1>
         <p className="text-[#717171] text-sm mt-1">Analyse financière de votre boutique</p>
       </div>
 

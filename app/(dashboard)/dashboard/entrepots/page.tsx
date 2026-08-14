@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 
 interface Entrepot {
   id: string;
@@ -63,7 +64,7 @@ export default function EntrepotsPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-[22px] font-bold text-[#111]">Entrepôts</h1>
+        <h1 className="text-[22px] font-bold text-[#111] inline-flex items-center gap-2">Entrepôts <AgentActiveIndicator label="Agent Stock actif" /></h1>
         <p className="text-[13px] text-[#888] mt-0.5">Gestion des stocks multi-entrepôts</p>
       </div>
 
