@@ -62,10 +62,11 @@ export function HeroSection() {
   }
 
   return (
-    <section className="relative w-full h-screen min-h-[640px] bg-white overflow-hidden">
+    <section className="relative w-full pt-24 pb-10 sm:pt-28 sm:pb-14 bg-white overflow-hidden">
+      <div className="px-3 sm:px-6 lg:px-8 max-w-[1700px] mx-auto">
 
-      {/* ─── Collage photo — mosaïque plein cadre, façon Shopify ─── */}
-      <div className="ax-mosaic absolute inset-0">
+      {/* ─── Collage photo — mosaïque façon Shopify ─── */}
+      <div className="ax-mosaic relative h-[640px] sm:h-[760px] lg:h-[860px] xl:h-[920px] rounded-[28px] overflow-hidden">
         <div className="ax-tile ax-tile-desktop" style={{ gridArea: "chart" }}>
           <div className="w-full h-full bg-white flex flex-col justify-between p-4 sm:p-5">
             <div>
@@ -119,51 +120,52 @@ export function HeroSection() {
         <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center z-20">
           <Heart size={16} style={{ color: "#F5A623" }} fill="#F5A623" />
         </div>
-      </div>
 
-      {/* ─── Carte flottante centrale ─── */}
-      <div className="absolute inset-0 z-10 flex items-center justify-center px-4 pointer-events-none">
-        <div className="flex flex-col items-center pointer-events-auto" style={{
-          maxWidth: "480px",
-          opacity: mounted ? 1 : 0,
-          transform: mounted ? "translateY(0) scale(1)" : "translateY(18px) scale(0.97)",
-          transition: "opacity 0.7s cubic-bezier(0.23,1,0.32,1), transform 0.7s cubic-bezier(0.23,1,0.32,1)",
-        }}>
-          <div className="bg-white rounded-[24px] shadow-2xl px-7 py-6 sm:px-9 sm:py-7 text-center">
-            <h1 className="text-[26px] sm:text-[32px] font-extrabold leading-[1.1] tracking-tight" style={{ color: "#111111" }}>
-              Ton commerce démarre avec Axso
-            </h1>
-            <p className="text-[13.5px] sm:text-[14.5px] text-gray-500 mt-3 leading-relaxed">
-              Commence gratuitement, sans carte bancaire.
-              <br className="hidden sm:block" /> WhatsApp, Orange Money, MTN et Wave intégrés dès le premier jour.
-            </p>
-          </div>
-
-          <form onSubmit={demarrer}
-            className="w-full rounded-[22px] shadow-2xl px-6 py-5 -mt-1 relative"
-            style={{ background: "#111111" }}>
-            <p className="text-white font-bold text-[15px]">Commencer gratuitement</p>
-            <p className="text-white/40 text-[11px] mt-0.5 mb-3.5">En t'inscrivant, tu acceptes de recevoir nos emails.</p>
-            <div className="flex items-center bg-white rounded-full pl-4 pr-1.5 py-1.5">
-              <input
-                type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                placeholder="Entre ton email"
-                className="flex-1 min-w-0 bg-transparent outline-none text-[13.5px] text-[#111111] placeholder:text-gray-400"
-              />
-              <button type="submit"
-                className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-transform hover:scale-105"
-                style={{ background: "#F5A623" }}>
-                <ArrowRight size={16} style={{ color: "#111111" }} />
-              </button>
+        {/* ─── Carte flottante centrale ─── */}
+        <div className="absolute inset-0 z-10 flex items-center justify-center px-4 pointer-events-none">
+          <div className="flex flex-col items-center pointer-events-auto" style={{
+            maxWidth: "480px",
+            opacity: mounted ? 1 : 0,
+            transform: mounted ? "translateY(0) scale(1)" : "translateY(18px) scale(0.97)",
+            transition: "opacity 0.7s cubic-bezier(0.23,1,0.32,1), transform 0.7s cubic-bezier(0.23,1,0.32,1)",
+          }}>
+            <div className="bg-white rounded-[24px] shadow-2xl px-7 py-6 sm:px-9 sm:py-7 text-center">
+              <h1 className="text-[26px] sm:text-[32px] font-extrabold leading-[1.1] tracking-tight" style={{ color: "#111111" }}>
+                Ton commerce démarre avec Axso
+              </h1>
+              <p className="text-[13.5px] sm:text-[14.5px] text-gray-500 mt-3 leading-relaxed">
+                Commence gratuitement, sans carte bancaire.
+                <br className="hidden sm:block" /> WhatsApp, Orange Money, MTN et Wave intégrés dès le premier jour.
+              </p>
             </div>
-          </form>
+
+            <form onSubmit={demarrer}
+              className="w-full rounded-[22px] shadow-2xl px-6 py-5 -mt-1 relative"
+              style={{ background: "#111111" }}>
+              <p className="text-white font-bold text-[15px]">Commencer gratuitement</p>
+              <p className="text-white/40 text-[11px] mt-0.5 mb-3.5">En t'inscrivant, tu acceptes de recevoir nos emails.</p>
+              <div className="flex items-center bg-white rounded-full pl-4 pr-1.5 py-1.5">
+                <input
+                  type="email" required value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder="Entre ton email"
+                  className="flex-1 min-w-0 bg-transparent outline-none text-[13.5px] text-[#111111] placeholder:text-gray-400"
+                />
+                <button type="submit"
+                  className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-transform hover:scale-105"
+                  style={{ background: "#F5A623" }}>
+                  <ArrowRight size={16} style={{ color: "#111111" }} />
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
+      </div>
       </div>
 
       <style>{`
         .ax-mosaic {
           display: grid;
-          gap: 3px;
+          gap: 10px;
           grid-template-columns: repeat(6, 1fr);
           grid-template-rows: repeat(3, 1fr);
           grid-template-areas:
@@ -171,7 +173,7 @@ export function HeroSection() {
             "market bags   bags   headphones detail detail"
             "market coffee stand  moto       moto   argan";
         }
-        .ax-tile { position: relative; overflow: hidden; background: #F5F5F5; border-radius: 10px; }
+        .ax-tile { position: relative; overflow: hidden; background: #F5F5F5; border-radius: 18px; }
         @media (max-width: 860px) {
           .ax-mosaic {
             grid-template-columns: repeat(2, 1fr);
