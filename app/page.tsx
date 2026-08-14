@@ -1,6 +1,6 @@
 import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { HeroSection } from "@/components/marketing/HeroSection";
-import { PaiementsSection } from "@/components/marketing/PaiementsSection";
+import { PartenairesSection } from "@/components/marketing/PartenairesSection";
 import { ConstructeurSection } from "@/components/marketing/ConstructeurSection";
 import { XiaSection } from "@/components/marketing/XiaSection";
 import { DouleurSection } from "@/components/marketing/DouleurSection";
@@ -16,7 +16,7 @@ export default function HomePage() {
     <main className="overflow-x-hidden bg-white text-gray-900">
       <NavbarMarketing/>
       <HeroSection/>
-      <PaiementsSection/>
+      <PartenairesSection/>
       <ConstructeurSection/>
       <XiaSection/>
       <DouleurSection/>
