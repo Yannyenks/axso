@@ -121,6 +121,15 @@ export async function PATCH(request: Request) {
     }
     if (body.domainePropre !== undefined) champs.customDomain = body.domainePropre || null;
 
+    // Le marchand ne peut basculer sa boutique qu'entre "active" et "pause" —
+    // jamais écraser un statut administratif (ex: suspendu par Axso).
+    if (body.statut === "active" || body.statut === "pause") {
+      const actuel = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { statut: true } });
+      if (actuel && (actuel.statut === "active" || actuel.statut === "pause")) {
+        champs.statut = body.statut;
+      }
+    }
+
     const tenant = await prisma.tenant.update({ where: { id: tenantId }, data: champs });
 
     // Invalider le cache de toutes les pages storefront de cette boutique
