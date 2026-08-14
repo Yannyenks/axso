@@ -131,7 +131,7 @@ export function HeroSection() {
           }}>
             <div className="bg-white rounded-[24px] shadow-2xl px-7 py-6 sm:px-9 sm:py-7 text-center">
               <h1 className="text-[26px] sm:text-[32px] font-extrabold leading-[1.1] tracking-tight" style={{ color: "#111111" }}>
-                Ton commerce démarre avec Axso
+                Ton business démarre avec Axso
               </h1>
               <p className="text-[13.5px] sm:text-[14.5px] text-gray-500 mt-3 leading-relaxed">
                 Commence gratuitement, sans carte bancaire.
