@@ -1,3 +1,5 @@
+"use client";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Camera, Globe } from "lucide-react";
 
@@ -29,8 +31,18 @@ const liens = {
 };
 
 export function FooterMarketing() {
+  const footerRef = useRef<HTMLElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } }, { threshold: 0.1 });
+    if (footerRef.current) obs.observe(footerRef.current);
+    return () => obs.disconnect();
+  }, []);
+
   return (
-    <footer className="bg-[#0D1626] pt-16 pb-8">
+    <footer ref={footerRef} className="bg-[#0D1626] pt-16 pb-8"
+      style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateY(20px)", transition: "opacity 0.8s cubic-bezier(0.23,1,0.32,1), transform 0.8s cubic-bezier(0.23,1,0.32,1)" }}>
       <div className="w-full px-6 sm:px-10 lg:px-16 xl:px-24">
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
           <div className="col-span-2 lg:col-span-1">

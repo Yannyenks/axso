@@ -3,14 +3,32 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Mic, Sparkles, Zap } from "lucide-react";
 
-const MESSAGES = [
-  { role: "user", texte: "Ajoute une promo -20% sur mes sneakers ce week-end" },
-  { role: "xia",  texte: "C'est fait ✓ La promo est active du samedi 00h00 au dimanche 23h59, et j'ai notifié tes 3 derniers clients intéressés." },
-];
+const MSG_USER = "Ajoute une promo -20% sur mes sneakers ce week-end";
+const MSG_XIA  = "C'est fait ✓ La promo est active du samedi 00h00 au dimanche 23h59, et j'ai notifié tes 3 derniers clients intéressés.";
+
+/** Fait apparaître `text` caractère par caractère, façon machine à écrire, une fois `start` vrai. */
+function useTypewriter(text: string, start: boolean, speed = 16, startDelay = 0) {
+  const [out, setOut] = useState("");
+  useEffect(() => {
+    if (!start) return;
+    let i = 0;
+    const startTimer = setTimeout(() => {
+      const iv = setInterval(() => {
+        i++;
+        setOut(text.slice(0, i));
+        if (i >= text.length) clearInterval(iv);
+      }, speed);
+    }, startDelay);
+    return () => clearTimeout(startTimer);
+  }, [text, start, speed, startDelay]);
+  return out;
+}
 
 export function XiaSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
+  const xiaTyped = useTypewriter(MSG_XIA, visible, 15, 950);
+  const xiaDone = xiaTyped.length >= MSG_XIA.length;
 
   useEffect(() => {
     const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } }, { threshold: 0.15 });
@@ -36,15 +54,20 @@ export function XiaSection() {
                 <Mic size={16} className="ml-auto text-gray-300" />
               </div>
               <div className="space-y-3">
-                {MESSAGES.map((m, i) => (
-                  <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-                    style={{ opacity: visible ? 1 : 0, animation: visible ? `slideRevealLeft 0.5s ${300 + i * 250}ms cubic-bezier(0.23,1,0.32,1) both` : "none" }}>
-                    <div className={`rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed max-w-[85%] ${m.role === "user" ? "text-white" : "bg-gray-50 text-gray-700 border border-gray-100"}`}
-                      style={m.role === "user" ? { background: "#F5A623" } : undefined}>
-                      {m.texte}
+                <div className="flex justify-end"
+                  style={{ opacity: visible ? 1 : 0, animation: visible ? "slideRevealLeft 0.5s 300ms cubic-bezier(0.23,1,0.32,1) both" : "none" }}>
+                  <div className="rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed max-w-[85%] text-white" style={{ background: "#F5A623" }}>
+                    {MSG_USER}
+                  </div>
+                </div>
+                {visible && (
+                  <div className="flex justify-start" style={{ animation: "slideRevealLeft 0.4s 750ms cubic-bezier(0.23,1,0.32,1) both" }}>
+                    <div className="rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed max-w-[85%] bg-gray-50 text-gray-700 border border-gray-100 min-h-[2.5em]">
+                      {xiaTyped}
+                      {!xiaDone && <span className="inline-block w-[2px] h-[13px] ml-0.5 align-middle animate-pulse" style={{ background: "#F5A623" }} />}
                     </div>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>

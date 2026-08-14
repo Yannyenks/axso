@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useRef, useState } from "react";
 
 // En attendant les vrais logos partenaires (Orange Money, MTN, Wave, Visa, Mastercard…),
 // chaque entrée affiche son nom en attendant `logoUrl`. Il suffira de renseigner
@@ -17,8 +18,18 @@ const PARTENAIRES: { nom: string; logoUrl?: string }[] = [
 const TRACK = [...PARTENAIRES, ...PARTENAIRES];
 
 export function PartenairesSection() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } }, { threshold: 0.2 });
+    if (sectionRef.current) obs.observe(sectionRef.current);
+    return () => obs.disconnect();
+  }, []);
+
   return (
-    <section className="py-14 bg-white border-y border-gray-100 overflow-hidden">
+    <section ref={sectionRef} className="py-14 bg-white border-y border-gray-100 overflow-hidden"
+      style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateY(16px)", transition: "opacity 0.7s cubic-bezier(0.23,1,0.32,1), transform 0.7s cubic-bezier(0.23,1,0.32,1)" }}>
       <p className="text-center text-[12px] font-bold uppercase tracking-widest text-gray-400 mb-8">
         Ils font confiance à nos partenaires de paiement
       </p>
