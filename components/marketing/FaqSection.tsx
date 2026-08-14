@@ -7,7 +7,7 @@ const faqs = [
   { q: "Comment mes clients paient-ils ?", r: "Tous les modes de paiement africains sont intégrés : MTN Mobile Money, Orange Money, Wave, Visa/Mastercard, et plus encore selon votre pays. La configuration prend 2 minutes." },
   { q: "Puis-je utiliser mon propre nom de domaine ?", r: "Oui ! Vous obtenez d'abord une URL gratuite (votre-boutique.axso.com), puis vous pouvez connecter votre propre domaine depuis les paramètres." },
   { q: "L'assistant IA parle-t-il français ?", r: "Absolument. L'IA d'Axso est configurée pour comprendre et répondre en français (et en anglais). Elle connaît les marchés africains et peut vous aider à rédiger vos fiches produits." },
-  { q: "Comment fonctionne le système d'escrow ?", r: "Quand un client paye, les fonds sont sécurisés chez Axso pendant 48h. Une fois que le client confirme la réception, l'argent est libéré vers votre compte." },
+  { q: "Ai-je besoin de compétences techniques ?", r: "Aucune. Le constructeur Axso fonctionne par glisser-déposer, sans code. Décrivez votre boutique à Xia et elle configure l'essentiel à votre place en quelques minutes." },
   { q: "Puis-je importer mes produits depuis un fichier Excel ?", r: "Oui, Axso accepte l'import CSV avec un template téléchargeable. Importez des centaines de produits en quelques secondes." },
   { q: "Comment gérer plusieurs vendeurs sur ma boutique ?", r: "Depuis la section Équipe du dashboard, vous pouvez inviter des collaborateurs avec des rôles différents : Admin, Éditeur ou Livreur." },
   { q: "Les notifications WhatsApp sont-elles automatiques ?", r: "Oui ! Chaque nouvelle commande vous est notifiée sur WhatsApp. Vos clients reçoivent automatiquement la confirmation et le numéro de suivi." },
@@ -33,7 +33,7 @@ export function FaqSection() {
     <section ref={sectionRef} className="py-24 bg-gray-50/50 relative overflow-hidden" id="faq">
       {/* Subtle background glow */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[400px] bg-[#1B4FD8]/4 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[400px] bg-[#1B2A4A]/4 rounded-full blur-3xl" />
       </div>
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 relative">
@@ -44,7 +44,7 @@ export function FaqSection() {
             animation: visible ? "flip3dIn 0.7s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          <span className="text-[#1B4FD8] text-sm font-semibold uppercase tracking-widest mb-4 block">FAQ</span>
+          <span className="text-[#1B2A4A] text-sm font-semibold uppercase tracking-widest mb-4 block">FAQ</span>
           <h2 className="text-4xl sm:text-5xl font-bold font-playfair text-gray-900">Questions fréquentes</h2>
         </div>
 
@@ -53,7 +53,7 @@ export function FaqSection() {
             <div
               key={i}
               className={`rounded-2xl border-2 transition-all duration-300 hover:scale-[1.005] ${
-                ouvert === i ? "bg-white shadow-md shadow-[#1B4FD8]/5" : "bg-white hover:border-gray-200"
+                ouvert === i ? "bg-white shadow-md shadow-[#1B2A4A]/5" : "bg-white hover:border-gray-200"
               }`}
               style={{
                 opacity: visible ? 1 : 0,
@@ -66,12 +66,12 @@ export function FaqSection() {
                 onClick={() => setOuvert(ouvert === i ? null : i)}
                 className="w-full flex items-center justify-between p-6 text-left"
               >
-                <span className={`font-semibold transition-colors duration-200 ${ouvert === i ? "text-[#1B4FD8]" : "text-gray-800"}`}>
+                <span className={`font-semibold transition-colors duration-200 ${ouvert === i ? "text-[#1B2A4A]" : "text-gray-800"}`}>
                   {faq.q}
                 </span>
                 <div
                   className={`flex-shrink-0 ml-4 w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
-                    ouvert === i ? "bg-[#1B4FD8] border-[#1B4FD8] scale-110 shadow-md shadow-[#1B4FD8]/30" : "border-gray-200 hover:border-[#1B4FD8]/40"
+                    ouvert === i ? "bg-[#1B2A4A] border-[#1B2A4A] scale-110 shadow-md shadow-[#1B2A4A]/30" : "border-gray-200 hover:border-[#1B2A4A]/40"
                   }`}
                   style={{
                     transform: ouvert === i ? "rotate(0deg) scale(1.1)" : "rotate(0deg) scale(1)",
