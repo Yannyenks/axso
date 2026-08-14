@@ -13,7 +13,7 @@ const PLANS = [
     id: "palier0",
     nom: "Essentiel",
     palier: "Palier 0",
-    prixXAF: 1200,
+    prixXAF: 0,
     description: "Démarrez votre activité en ligne",
     couleur: "#6b7280",
     bg: "rgba(107,114,128,0.08)",
@@ -35,7 +35,7 @@ const PLANS = [
     id: "palier1",
     nom: "Pro",
     palier: "Palier 1",
-    prixXAF: 5000,
+    prixXAF: 6000,
     description: "Scalez sans contrainte",
     couleur: "#F5A623",
     bg: "rgba(245,166,35,0.08)",
@@ -193,17 +193,23 @@ export default async function AbonnementPage() {
 
                 {/* Prix */}
                 <div className="mb-5">
-                  <div className="flex items-baseline gap-1">
-                    <p className="text-4xl font-black" style={{ color: plan.couleur }}>
-                      {afficherXAF
-                        ? plan.prixXAF.toLocaleString("fr-FR")
-                        : prixLocal.toLocaleString("fr-FR")}
-                    </p>
-                    <span className="text-gray-400 text-sm font-semibold">
-                      {afficherXAF ? "FCFA" : devise}/mois
-                    </span>
-                  </div>
-                  {!afficherXAF && (
+                  {plan.prixXAF === 0 ? (
+                    <div className="flex items-baseline gap-1">
+                      <p className="text-4xl font-black" style={{ color: plan.couleur }}>Gratuit</p>
+                    </div>
+                  ) : (
+                    <div className="flex items-baseline gap-1">
+                      <p className="text-4xl font-black" style={{ color: plan.couleur }}>
+                        {afficherXAF
+                          ? plan.prixXAF.toLocaleString("fr-FR")
+                          : prixLocal.toLocaleString("fr-FR")}
+                      </p>
+                      <span className="text-gray-400 text-sm font-semibold">
+                        {afficherXAF ? "FCFA" : devise}/mois
+                      </span>
+                    </div>
+                  )}
+                  {plan.prixXAF !== 0 && !afficherXAF && (
                     <p className="text-[10px] text-gray-400 mt-0.5">
                       ≈ {plan.prixXAF.toLocaleString("fr-FR")} FCFA/mois
                     </p>

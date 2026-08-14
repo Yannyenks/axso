@@ -6,7 +6,7 @@ import Link from "next/link";
 const PLANS = [
   {
     id: "gratuit",
-    nom: "Gratuit",
+    nom: "Essentiel",
     prix: 0,
     couleur: "#6b7280",
     gradFrom: "#6b7280",
@@ -30,14 +30,14 @@ const PLANS = [
   {
     id: "pro",
     nom: "Pro",
-    prix: 4900,
+    prix: 6000,
     couleur: "#F5A623",
     gradFrom: "#F5A623",
     gradTo: "#FFD280",
     bg: "#fffbeb",
     borderColor: "rgba(245,166,35,0.35)",
     shadowColor: "rgba(245,166,35,0.25)",
-    desc: "Pour vendre sérieusement. Commandes illimitées, IA pour tes visuels pub, analytics pour voir ce qui marche — et zéro commission sur tes ventes. À 4 900 FCFA, c'est moins cher qu'un bon repas au restaurant. Et ça rapporte bien plus.",
+    desc: "Pour vendre sérieusement. Commandes illimitées, IA pour tes visuels pub, analytics pour voir ce qui marche — et zéro commission sur tes ventes. À 6 000 FCFA, c'est moins cher qu'un bon repas au restaurant. Et ça rapporte bien plus.",
     features: [
       "Commandes illimitées",
       "Social Media intégré",
@@ -53,8 +53,8 @@ const PLANS = [
   },
   {
     id: "business",
-    nom: "Business",
-    prix: 12900,
+    nom: "Illimité",
+    prix: 20000,
     couleur: "#7c3aed",
     gradFrom: "#7c3aed",
     gradTo: "#a78bfa",
