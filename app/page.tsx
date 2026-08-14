@@ -3,7 +3,6 @@ import { HeroSection } from "@/components/marketing/HeroSection";
 import { PartenairesSection } from "@/components/marketing/PartenairesSection";
 import { ConstructeurSection } from "@/components/marketing/ConstructeurSection";
 import { XiaSection } from "@/components/marketing/XiaSection";
-import { DouleurSection } from "@/components/marketing/DouleurSection";
 import { VideoSection } from "@/components/marketing/VideoSection";
 import { TarifsSection } from "@/components/marketing/TarifsSection";
 import { TemoignagesSection } from "@/components/marketing/TemoignagesSection";
@@ -19,7 +18,6 @@ export default function HomePage() {
       <PartenairesSection/>
       <ConstructeurSection/>
       <XiaSection/>
-      <DouleurSection/>
       <VideoSection/>
       <TarifsSection/>
       <TemoignagesSection/>
