@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Package, ShoppingCart,
   X, BarChart3, TrendingUp, Megaphone, Truck, Star,
-  Settings, Bike, Palette, Globe2, Film, Calendar,
+  Settings, Bike, Palette, Globe2, Calendar,
   Search, MessageSquare, Store, Paintbrush, CreditCard,
-  Wallet, Package2, Bot, Zap,
+  Package2, Bot, Zap,
 } from "lucide-react";
 import {
   IconAccueil, IconProduits, IconXia, IconCommandes,
@@ -18,7 +18,6 @@ const GROUPS = [
     label: "Intelligence IA", color: "#1B2A4A",
     items: [
       { href: "/dashboard/xia",       label: "Xia — Assistante IA", icon: Zap },
-      { href: "/dashboard/studio",    label: "Studio Contenu",   icon: Film },
       { href: "/dashboard/scheduler", label: "Planificateur",    icon: Calendar },
     ],
   },
@@ -43,7 +42,6 @@ const GROUPS = [
   {
     label: "Finance", color: "#34d399",
     items: [
-      { href: "/dashboard/wallet",     label: "Wallet Axso",      icon: Wallet },
       { href: "/dashboard/paiements",  label: "Paiements",        icon: CreditCard },
       { href: "/dashboard/revenus",    label: "Revenus",          icon: TrendingUp },
     ],

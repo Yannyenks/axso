@@ -1,13 +1,13 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronLeft, ChevronRight, Zap } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   IconAccueil, IconBoutique, IconBuilder, IconProduits,
-  IconCommandes, IconClients, IconWallet, IconRevenus,
-  IconMarketing, IconMessages, IconContenus, IconLivraisons,
+  IconCommandes, IconClients, IconRevenus,
+  IconMarketing, IconMessages, IconLivraisons,
   IconAnalytics, IconConnecteurs, IconAbonnement, IconParametres, IconIA,
   IconWhatsApp, IconAvis, IconPaiements, IconSourcing, IconThemes,
 } from "./AppIcons";
@@ -28,7 +28,6 @@ const NAV_GROUPS = [
   {
     label: "Finance",
     items: [
-      { href: "/dashboard/wallet",    label: "Wallet",       Icone: IconWallet,     highlight: true },
       { href: "/dashboard/revenus",   label: "Revenus",      Icone: IconRevenus },
     ],
   },
@@ -37,7 +36,6 @@ const NAV_GROUPS = [
     items: [
       { href: "/dashboard/marketing", label: "Marketing",    Icone: IconMarketing },
       { href: "/dashboard/messages",  label: "Axsocial",     Icone: IconMessages,   badge: true },
-      { href: "/dashboard/studio",    label: "Contenus",     Icone: IconContenus },
     ],
   },
   {
@@ -89,7 +87,6 @@ export function Sidebar() {
               {group.items.map((item) => {
                 const { Icone } = item;
                 const actif    = isActive(item.href, (item as any).exact);
-                const isWallet = item.href === "/dashboard/wallet";
 
                 return (
                   <Link
@@ -121,9 +118,6 @@ export function Sidebar() {
 
                     {!collapsed && (item as any).badge && (
                       <span className="ml-auto w-2 h-2 rounded-full bg-[#F5A623] flex-shrink-0" />
-                    )}
-                    {!collapsed && isWallet && !actif && (
-                      <Zap size={10} className="text-[#F5A623] ml-auto flex-shrink-0" />
                     )}
                   </Link>
                 );
