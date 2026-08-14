@@ -1,280 +1,160 @@
 "use client";
-// v4 — lucide icons only, no emoji
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { Bot, Rocket, TrendingUp, CheckCircle, Plus } from "lucide-react";
-import { CartParallax } from "./CartParallax";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { ArrowRight, Heart, ShoppingBag, FileText, Ruler, Layers, Truck as TruckIcon } from "lucide-react";
 
-const FLAGS = ["SN", "CM", "CI", "GH", "NG", "KE", "MA"];
-const BADGES = [
-  "✓ Gratuit pour toujours",
-  "🟠 Orange Money · 📱 MTN · 💙 Wave",
-  "🤖 IA intégrée",
-  "🌍 Déjà 1 247 boutiques actives en Afrique",
-];
-
-const HERO_CARTS = [
-  { size: 700, top: "6%",  duration: 18, delay: 0,   opacity: 0.07, direction: "rtl" as const },
-  { size: 440, top: "58%", duration: 25, delay: 6,   opacity: 0.055, direction: "ltr" as const },
-  { size: 900, top: "73%", duration: 14, delay: 3,   opacity: 0.035, direction: "rtl" as const },
-  { size: 340, top: "32%", duration: 30, delay: 12,  opacity: 0.06,  direction: "ltr" as const },
+const PRODUIT_DETAILS = [
+  { label: "Description produit", Icon: FileText },
+  { label: "Dimensions", Icon: Ruler },
+  { label: "Matières", Icon: Layers },
+  { label: "Livraison & Retours", Icon: TruckIcon },
 ];
 
 export function HeroSection() {
-  const [mouse, setMouse] = useState({ x: 0, y: 0 });
-  const [scrollY, setScrollY] = useState(0);
-  const [visible, setVisible] = useState(false);
+  const router = useRouter();
+  const [email, setEmail] = useState("");
 
-  useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 80);
-    return () => clearTimeout(t);
-  }, []);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setMouse({
-      x: (e.clientX - rect.left) / rect.width - 0.5,
-      y: (e.clientY - rect.top) / rect.height - 0.5,
-    });
-  };
-
-  const mockupTransform = `perspective(1400px) rotateY(${-12 + mouse.x * 10}deg) rotateX(${6 + mouse.y * -7}deg) translateZ(${mouse.x !== 0 ? 30 : 0}px)`;
+  function demarrer(e: React.FormEvent) {
+    e.preventDefault();
+    router.push(email ? `/inscription?email=${encodeURIComponent(email)}` : "/inscription");
+  }
 
   return (
-    <section
-      className="relative min-h-screen w-full flex items-center pt-28 overflow-hidden bg-black"
-      onMouseMove={handleMouseMove}
-      onMouseLeave={() => setMouse({ x: 0, y: 0 })}
-    >
-      {/* Background photo */}
-      <div className="absolute inset-0 z-0">
-        <img
-          src="/hero-bg.jpg"
-          alt=""
-          className="w-full h-full object-cover"
-          style={{ transform: `translateY(${scrollY * 0.08}px) scale(1.06)` }}
-        />
-        {/* Scrim — fort côté texte, plus léger côté mockup, + vignette haut/bas */}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(8,8,8,.94) 0%, rgba(8,8,8,.86) 32%, rgba(8,8,8,.62) 58%, rgba(8,8,8,.38) 100%)" }} />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,.55) 0%, transparent 22%, transparent 72%, rgba(0,0,0,.65) 100%)" }} />
-      </div>
+    <section className="relative w-full pt-24 pb-10 sm:pt-28 sm:pb-14 bg-white overflow-hidden">
+      <div className="px-3 sm:px-6 lg:px-8 max-w-[1500px] mx-auto">
 
-      <CartParallax carts={HERO_CARTS} color="#F5A623" />
-
-      {/* Ambient glows */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-[1]">
-        <div className="absolute top-1/4 left-1/3 w-[900px] h-[700px] rounded-full"
-          style={{ background: "radial-gradient(ellipse, rgba(245,166,35,0.18) 0%, transparent 70%)", transform: `translateY(${-scrollY * 0.1}px)` }}/>
-        <div className="absolute bottom-1/3 right-1/4 w-[700px] h-[550px] rounded-full"
-          style={{ background: "radial-gradient(ellipse, rgba(245,166,35,0.10) 0%, transparent 70%)", transform: `translateY(${scrollY * 0.06}px)` }}/>
-      </div>
-
-      <div className="w-full px-6 sm:px-10 lg:px-16 xl:px-24 py-20 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-12 xl:gap-20 items-center max-w-[1700px] mx-auto">
-
-          {/* ─── GAUCHE ─── */}
-          <div style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateX(-30px)", transition: "all 0.9s cubic-bezier(0.23,1,0.32,1)" }}>
-
-            {/* Headline */}
-            <h1 className="font-bold leading-[1.06] mb-6">
-              <span className="block text-4xl lg:text-5xl xl:text-[4.2rem] 2xl:text-[4.8rem] text-white tracking-tight">
-                Tu vends sur WhatsApp.
-              </span>
-              <span
-                className="block text-4xl lg:text-5xl xl:text-[4.2rem] 2xl:text-[4.8rem] tracking-tight"
-                style={{
-                  background: "linear-gradient(135deg, #F5A623 0%, #e8950f 50%, #FFD280 100%)",
-                  backgroundSize: "200% auto",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                  animation: "heroWordIn 0.5s cubic-bezier(0.23,1,0.32,1) both, shimmer 3s linear infinite",
-                }}
-              >
-                Il est temps de vendre partout.
-              </span>
-            </h1>
-
-            <p
-              style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.25s" }}
-              className="text-lg lg:text-xl xl:text-2xl text-white/75 leading-relaxed mb-6 max-w-xl"
-            >
-              AXSO te donne une boutique en ligne professionnelle en 3 minutes — avec Orange Money, MTN et Wave intégrés dès le départ.
-              <br />
-              <span className="text-base text-white/50 mt-1 block">
-                Pas besoin de développeur. Pas besoin de budget.
-              </span>
-            </p>
-
-            {/* Trust badges */}
-            <div
-              className="flex flex-wrap gap-x-5 gap-y-2 mb-10"
-              style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.32s" }}
-            >
-              {BADGES.map((b) => (
-                <span key={b} className="text-sm text-white/60 whitespace-nowrap">{b}</span>
-              ))}
-            </div>
-
-            {/* CTAs */}
-            <div
-              className="flex flex-col sm:flex-row gap-5 mb-4"
-              style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.4s" }}
-            >
-              <Link
-                href="/inscription"
-                className="group relative px-10 py-4 rounded-2xl font-bold text-lg text-white text-center overflow-hidden"
-                style={{ background: "linear-gradient(135deg, #F5A623, #e8950f)", boxShadow: "0 0 50px rgba(245,166,35,0.35), 0 10px 40px rgba(245,166,35,0.25)" }}
-              >
-                <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  style={{ background: "linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.25) 50%, transparent 80%)", backgroundSize: "200% 100%", animation: "shimmer 1.5s linear infinite" }}/>
-                <span className="relative z-10 inline-flex items-center gap-2"><Rocket size={18} /> Créer ma boutique gratuite →</span>
-              </Link>
-              <Link
-                href="#video-demo"
-                className="px-10 py-4 rounded-2xl font-semibold text-lg text-white text-center border border-white/25 bg-white/10 backdrop-blur-sm hover:border-[#F5A623]/50 hover:bg-white/15 transition-all hover:scale-[1.02]"
-              >
-                ▶ Voir comment ça marche (60 sec)
-              </Link>
-            </div>
-
-            <p className="text-sm text-white/40 mb-10" style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.5s" }}>
-              Aucune carte bancaire · Boutique live en 3 minutes · 0% de frais sur le plan gratuit
-            </p>
-
-            {/* Social proof */}
-            <div className="flex items-center gap-6" style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.6s" }}>
-              <div className="flex -space-x-3">
-                {FLAGS.map((f, i) => (
-                  <div key={i} className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-200 to-[#F5A623] border-2 border-black/40 flex items-center justify-center shadow-sm hover:scale-125 hover:z-10 transition-transform">
-                    <span className="text-[9px] font-black text-white/90 tracking-tight">{f}</span>
-                  </div>
-                ))}
-              </div>
+        {/* ─── Collage photo — mosaïque façon Shopify ─── */}
+        <div className="ax-mosaic relative h-[560px] sm:h-[640px] lg:h-[720px] rounded-[28px] overflow-hidden">
+          <div className="ax-tile ax-tile-desktop" style={{ gridArea: "chart" }}>
+            <div className="w-full h-full bg-white flex flex-col justify-between p-4 sm:p-5">
               <div>
-                <p className="text-base font-bold text-white">1 247 boutiques actives · 10 pays</p>
-                <p className="text-sm text-white/50">3 min pour lancer</p>
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Revenus</p>
+                <p className="text-2xl sm:text-3xl font-extrabold mt-1" style={{ color: "#1B2A4A" }}>+24%</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">vs le mois dernier</p>
+              </div>
+              <div className="flex items-end gap-1 h-14">
+                {[35, 55, 42, 78, 60, 90, 100].map((h, i) => (
+                  <div key={i} className="flex-1 rounded-md" style={{ height: `${h}%`, background: i === 6 ? "#F5A623" : "#F5A62330" }} />
+                ))}
               </div>
             </div>
           </div>
 
-          {/* ─── DROITE — 3D Mockup ─── */}
-          <div
-            className="relative hidden lg:flex items-center justify-center"
-            style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateX(30px)", transition: "all 0.9s 0.15s cubic-bezier(0.23,1,0.32,1)" }}
-          >
-            <div
-              className="relative w-full"
-              style={{
-                maxWidth: "620px",
-                transform: mockupTransform,
-                transformStyle: "preserve-3d",
-                transition: mouse.x === 0 ? "transform 0.7s cubic-bezier(0.23,1,0.32,1)" : "transform 0.06s linear",
-                willChange: "transform",
-              }}
-            >
-              {/* Glow */}
-              <div className="absolute inset-0 rounded-3xl"
-                style={{ transform: "translateZ(-60px) translateY(40px) scale(0.92)", background: "radial-gradient(ellipse, rgba(245,166,35,0.40) 0%, transparent 70%)", filter: "blur(50px)" }}/>
+          <div className="ax-tile" style={{ gridArea: "bags" }}>
+            <img src="/hero-bags.jpg" alt="Maroquinerie artisanale vendue sur Axso" className="w-full h-full object-cover" />
+          </div>
 
-              {/* Card */}
-              <div className="relative bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-2xl shadow-gray-200/60">
-                {/* Browser chrome */}
-                <div className="bg-gray-50 px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-                  <div className="flex gap-2">
-                    <div className="w-3.5 h-3.5 rounded-full bg-red-400"/>
-                    <div className="w-3.5 h-3.5 rounded-full bg-yellow-400"/>
-                    <div className="w-3.5 h-3.5 rounded-full bg-green-400"/>
-                  </div>
-                  <div className="flex-1 bg-white rounded-xl px-4 py-1.5 text-sm text-gray-400 text-center border border-gray-100">
-                    app.axso.africa/dashboard
-                  </div>
-                  <span className="text-xs px-3 py-1 rounded-full font-bold bg-[#F5A623]/10 text-[#F5A623]">● LIVE</span>
-                </div>
+          <div className="ax-tile" style={{ gridArea: "kente" }}>
+            <img src="/hero-kente.jpg" alt="Textile Kente et cosmétiques vendus sur Axso" className="w-full h-full object-cover" />
+          </div>
 
-                {/* Dashboard */}
-                <div className="p-7 space-y-5">
-                  <div className="flex items-center justify-between">
-                    <p className="text-base font-bold text-gray-900 flex items-center gap-2"><Bot size={16} /> Empire en cours de construction</p>
-                    <span className="text-sm text-gray-400">il y a 2 sec</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { label: "Revenus", val: "485 000", unit: "XOF", color: "#F5A623", bg: "#fffbeb", delta: <span className="inline-flex items-center gap-1">+24% <TrendingUp size={10} /></span> },
-                      { label: "Commandes", val: "48", unit: "", color: "#34d399", bg: "#f0fdf4", delta: <span className="inline-flex items-center gap-1">+8 <CheckCircle size={10} /></span> },
-                      { label: "Clients", val: "234", unit: "", color: "#818cf8", bg: "#f5f3ff", delta: <span className="inline-flex items-center gap-1">+12 <Plus size={10} /></span> },
-                    ].map((m) => (
-                      <div key={m.label} className="rounded-2xl p-4" style={{ backgroundColor: m.bg }}>
-                        <p className="text-xs text-gray-400 mb-1.5">{m.label}</p>
-                        <p className="text-lg font-extrabold" style={{ color: m.color }}>
-                          {m.val}<span className="text-xs ml-1 font-normal opacity-60">{m.unit}</span>
-                        </p>
-                        <p className="text-xs mt-1 font-semibold" style={{ color: m.color }}>{m.delta}</p>
-                      </div>
-                    ))}
-                  </div>
-                  {/* Agent activity */}
-                  <div className="space-y-2">
-                    {[
-                      { agent: "NOVA", action: "Post Instagram généré", color: "#f472b6" },
-                      { agent: "REX", action: "Prix optimisé +15%", color: "#34d399" },
-                      { agent: "FID", action: "Email VIP envoyé × 34", color: "#22d3ee" },
-                    ].map((a) => (
-                      <div key={a.agent} className="flex items-center gap-3 rounded-2xl px-4 py-3 bg-gray-50 border border-gray-100">
-                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 animate-pulse" style={{ background: a.color }}/>
-                        <span className="text-sm font-bold" style={{ color: a.color }}>{a.agent}</span>
-                        <span className="text-sm text-gray-500 flex-1">{a.action}</span>
-                      </div>
-                    ))}
-                  </div>
+          <div className="ax-tile ax-tile-desktop" style={{ gridArea: "headphones" }}>
+            <img src="/hero-headphones.jpg" alt="Accessoires audio artisanaux vendus sur Axso" className="w-full h-full object-cover" />
+          </div>
 
-                  {/* Mini revenue chart */}
-                  <div className="pt-2">
-                    <p className="text-xs font-bold text-gray-400 mb-3">REVENUS · 7 DERNIERS JOURS</p>
-                    <div className="flex items-end gap-1.5 h-16">
-                      {[35, 55, 42, 78, 60, 90, 100].map((h, i) => (
-                        <div key={i} className="flex-1 rounded-lg transition-all"
-                          style={{
-                            height: `${h}%`,
-                            background: i === 6 ? "linear-gradient(180deg, #F5A623, #e8950f)" : "rgba(245,166,35,0.18)",
-                            animation: `barIn 0.6s ${i * 0.08}s both`,
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
+          <div className="ax-tile ax-tile-desktop" style={{ gridArea: "argan" }}>
+            <img src="/hero-argan.jpg" alt="Huile d'argan cosmétique vendue sur Axso" className="w-full h-full object-cover" />
+          </div>
+
+          <div className="ax-tile" style={{ gridArea: "market" }}>
+            <img src="/hero-market.jpg" alt="Paiement mobile accepté sur un marché africain" className="w-full h-full object-cover" />
+          </div>
+
+          <div className="ax-tile" style={{ gridArea: "stand" }}>
+            <img src="/hero-stand.jpg" alt="Accessoires tech vendus sur Axso" className="w-full h-full object-cover" />
+          </div>
+
+          <div className="ax-tile ax-tile-desktop" style={{ gridArea: "detail" }}>
+            <div className="w-full h-full bg-white flex flex-col justify-between p-4 sm:p-5">
+              <div>
+                <p className="text-base sm:text-lg font-extrabold" style={{ color: "#1B2A4A" }}>XOF 24 900</p>
+                <div className="mt-3 h-9 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-bold text-white" style={{ background: "#1B2A4A" }}>
+                  <ShoppingBag size={12} /> Ajouter au panier
                 </div>
               </div>
+              <div className="space-y-2 mt-3">
+                {PRODUIT_DETAILS.map(d => (
+                  <div key={d.label} className="flex items-center gap-1.5 text-[10.5px] text-gray-500 border-t border-gray-100 pt-2 first:border-0 first:pt-0">
+                    <d.Icon size={10} style={{ color: "#F5A623" }} /> {d.label}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
-              {/* Floating badges */}
-              <div className="absolute -top-6 -right-6 rounded-2xl px-5 py-3 text-base font-bold shadow-2xl"
-                style={{ background: "linear-gradient(135deg, #F5A623, #e8950f)", color: "white", transform: "translateZ(60px)", animation: "daFloat 4s ease-in-out infinite" }}>
-                <span className="inline-flex items-center gap-1.5">+24% CA <Rocket size={14} /></span>
+          <div className="ax-tile ax-tile-desktop" style={{ gridArea: "coffee" }}>
+            <img src="/hero-coffee.jpg" alt="Épicerie fine vendue sur Axso" className="w-full h-full object-cover" />
+          </div>
+
+          <div className="ax-tile" style={{ gridArea: "moto" }}>
+            <img src="/hero-moto.jpg" alt="Livraison rapide en ville avec Axso" className="w-full h-full object-cover" />
+          </div>
+
+          {/* Badge décoratif flottant */}
+          <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center z-20">
+            <Heart size={16} style={{ color: "#F5A623" }} fill="#F5A623" />
+          </div>
+
+          {/* ─── Carte flottante centrale ─── */}
+          <div className="absolute inset-0 z-10 flex items-center justify-center px-4">
+            <div className="flex flex-col items-center" style={{ maxWidth: "480px" }}>
+              <div className="bg-white rounded-[24px] shadow-2xl px-7 py-6 sm:px-9 sm:py-7 text-center">
+                <h1 className="text-[26px] sm:text-[32px] font-extrabold leading-[1.1] tracking-tight" style={{ color: "#111111" }}>
+                  Ton commerce démarre avec Axso
+                </h1>
+                <p className="text-[13.5px] sm:text-[14.5px] text-gray-500 mt-3 leading-relaxed">
+                  Commence gratuitement, sans carte bancaire.
+                  <br className="hidden sm:block" /> WhatsApp, Orange Money, MTN et Wave intégrés dès le premier jour.
+                </p>
               </div>
-              <div className="absolute -bottom-5 -left-6 rounded-2xl px-4 py-3 text-sm font-semibold border shadow-xl"
-                style={{ background: "white", borderColor: "#7c3aed30", color: "#7c3aed", transform: "translateZ(40px)", animation: "daFloat 5s 1s ease-in-out infinite" }}>
-                <span className="inline-flex items-center gap-1.5"><Bot size={14} /> 11 agents actifs</span>
-              </div>
-              <div className="absolute top-1/2 -left-8 rounded-2xl px-3 py-2.5 text-xs font-bold shadow-lg"
-                style={{ background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0", transform: "translateZ(50px)", animation: "daFloat 4.5s 2s ease-in-out infinite" }}>
-                <span className="inline-flex items-center gap-1.5"><CheckCircle size={12} /> Empire en ligne</span>
-              </div>
+
+              <form onSubmit={demarrer}
+                className="w-full rounded-[22px] shadow-2xl px-6 py-5 -mt-1 relative"
+                style={{ background: "#111111" }}>
+                <p className="text-white font-bold text-[15px]">Commencer gratuitement</p>
+                <p className="text-white/40 text-[11px] mt-0.5 mb-3.5">En t'inscrivant, tu acceptes de recevoir nos emails.</p>
+                <div className="flex items-center bg-white rounded-full pl-4 pr-1.5 py-1.5">
+                  <input
+                    type="email" required value={email} onChange={e => setEmail(e.target.value)}
+                    placeholder="Entre ton email"
+                    className="flex-1 min-w-0 bg-transparent outline-none text-[13.5px] text-[#111111] placeholder:text-gray-400"
+                  />
+                  <button type="submit"
+                    className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-transform hover:scale-105"
+                    style={{ background: "#F5A623" }}>
+                    <ArrowRight size={16} style={{ color: "#111111" }} />
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
       </div>
 
       <style>{`
-        @keyframes heroWordIn { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes daFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-        @keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
-        @keyframes barIn { from{opacity:0;transform:scaleY(0);transform-origin:bottom} to{opacity:1;transform:scaleY(1);transform-origin:bottom} }
+        .ax-mosaic {
+          display: grid;
+          gap: 10px;
+          grid-template-columns: repeat(6, 1fr);
+          grid-template-rows: repeat(3, 1fr);
+          grid-template-areas:
+            "chart  bags   bags   headphones kente  kente"
+            "market bags   bags   headphones detail detail"
+            "market coffee stand  moto       moto   argan";
+        }
+        .ax-tile { position: relative; border-radius: 18px; overflow: hidden; background: #F5F5F5; }
+        @media (max-width: 860px) {
+          .ax-mosaic {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            grid-template-areas:
+              "market bags"
+              "market bags"
+              "kente  stand"
+              "moto   moto";
+          }
+          .ax-tile-desktop { display: none; }
+        }
       `}</style>
     </section>
   );
