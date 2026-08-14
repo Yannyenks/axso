@@ -18,7 +18,7 @@ const SECTIONS = [
   },
   {
     titre: "3. Finalités du traitement",
-    contenu: `Vos données sont utilisées pour : la fourniture et l'amélioration de nos services, la gestion de votre compte et de votre boutique, l'envoi de communications transactionnelles (confirmations, factures), l'envoi de communications marketing (avec consentement), la prévention de la fraude et la sécurité de la plateforme, l'amélioration de notre IA AXIA.`,
+    contenu: `Vos données sont utilisées pour : la fourniture et l'amélioration de nos services, la gestion de votre compte et de votre boutique, l'envoi de communications transactionnelles (confirmations, factures), l'envoi de communications marketing (avec consentement), la prévention de la fraude et la sécurité de la plateforme, l'amélioration de notre IA Xia.`,
   },
   {
     titre: "4. Base légale du traitement",
@@ -44,7 +44,7 @@ const SECTIONS = [
 
 export default function PrivacyPage() {
   return (
-    <main className="bg-[#080808] text-white min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       <section className="pt-36 pb-24 px-6 sm:px-10 lg:px-16 xl:px-24">
@@ -53,20 +53,20 @@ export default function PrivacyPage() {
             <Lock size={14} className="inline-block mr-1.5" />Légal
           </span>
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">Politique de Confidentialité</h1>
-          <p className="text-white/35 text-sm mb-14">Dernière mise à jour : 1er juillet 2026</p>
+          <p className="text-[#8C8C8C] text-sm mb-14">Dernière mise à jour : 1er juillet 2026</p>
 
           <div className="space-y-10">
             {SECTIONS.map(s => (
-              <div key={s.titre} className="pb-10 border-b" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+              <div key={s.titre} className="pb-10 border-b" style={{ borderColor: "rgba(0,0,0,0.07)" }}>
                 <h2 className="text-lg font-bold mb-4" style={{ color: "#F5A623" }}>{s.titre}</h2>
-                <p className="text-white/55 leading-relaxed text-sm">{s.contenu}</p>
+                <p className="text-[#595959] leading-relaxed text-sm">{s.contenu}</p>
               </div>
             ))}
           </div>
 
           <div className="mt-14 rounded-2xl p-6 border"
             style={{ background: "rgba(245,166,35,0.04)", borderColor: "rgba(245,166,35,0.15)" }}>
-            <p className="text-white/50 text-sm">Pour toute question relative à vos données personnelles :{" "}
+            <p className="text-[#666666] text-sm">Pour toute question relative à vos données personnelles :{" "}
               <a href="mailto:privacy@axso.app" className="font-bold hover:opacity-80" style={{ color: "#F5A623" }}>privacy@axso.app</a>
             </p>
           </div>

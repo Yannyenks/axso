@@ -26,7 +26,7 @@ const ARTICLES = [
   },
   {
     tag: "IA", tagColor: "#7c3aed",
-    titre: "AXIA IA : comment l'intelligence artificielle booste vos ventes",
+    titre: "Xia IA : comment l'intelligence artificielle booste vos ventes",
     extrait: "Descriptions auto-générées, réponses clients, suggestions de prix — voici comment l'IA travaille pour vous 24h/24.",
     date: "5 juil. 2026", lecture: "5 min",
     Icon: Cpu, featured: false,
@@ -58,7 +58,7 @@ export default function BlogPage() {
   const [featured, ...rest] = ARTICLES;
   const FeaturedIcon = featured.Icon;
   return (
-    <main className="bg-[#080808] text-white min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       <section className="pt-36 pb-16 px-6 sm:px-10 lg:px-16 xl:px-24 relative overflow-hidden">
@@ -75,7 +75,7 @@ export default function BlogPage() {
               les bâtisseurs d'empire
             </span>
           </h1>
-          <p className="text-white/45 text-xl mb-16 max-w-2xl">Stratégie, mobile money, IA, livraison — tout ce qu'il faut pour vendre en ligne en Afrique.</p>
+          <p className="text-[#737373] text-xl mb-16 max-w-2xl">Stratégie, mobile money, IA, livraison — tout ce qu'il faut pour vendre en ligne en Afrique.</p>
 
           {/* Article featured */}
           <div className="rounded-3xl border p-8 mb-10 relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
@@ -88,9 +88,9 @@ export default function BlogPage() {
               style={{ background: `${featured.tagColor}15`, color: featured.tagColor, border: `1px solid ${featured.tagColor}30` }}>
               ⭐ À la une · {featured.tag}
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3 max-w-2xl leading-snug">{featured.titre}</h2>
-            <p className="text-white/50 leading-relaxed mb-5 max-w-xl">{featured.extrait}</p>
-            <div className="flex items-center gap-4 text-sm text-white/35">
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#111111] mb-3 max-w-2xl leading-snug">{featured.titre}</h2>
+            <p className="text-[#666666] leading-relaxed mb-5 max-w-xl">{featured.extrait}</p>
+            <div className="flex items-center gap-4 text-sm text-[#8C8C8C]">
               <span>{featured.date}</span>
               <span>·</span>
               <span>{featured.lecture} de lecture</span>
@@ -104,7 +104,7 @@ export default function BlogPage() {
               return (
               <div key={a.titre}
                 className="rounded-2xl border p-6 cursor-pointer hover:-translate-y-0.5 transition-all duration-300 group"
-                style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.07)" }}>
+                style={{ background: "rgba(0,0,0,0.02)", borderColor: "rgba(0,0,0,0.07)" }}>
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
                   style={{ background: `${a.tagColor}12`, border: `1px solid ${a.tagColor}20` }}>
                   <ArticleIcon size={18} style={{ color: a.tagColor }} />
@@ -113,9 +113,9 @@ export default function BlogPage() {
                   style={{ background: `${a.tagColor}12`, color: a.tagColor, border: `1px solid ${a.tagColor}25` }}>
                   {a.tag}
                 </span>
-                <h3 className="font-bold text-white mb-2 leading-snug group-hover:text-[#F5A623] transition-colors">{a.titre}</h3>
-                <p className="text-white/40 text-sm leading-relaxed mb-4">{a.extrait}</p>
-                <div className="flex items-center gap-3 text-xs text-white/30">
+                <h3 className="font-bold text-[#111111] mb-2 leading-snug group-hover:text-[#F5A623] transition-colors">{a.titre}</h3>
+                <p className="text-[#808080] text-sm leading-relaxed mb-4">{a.extrait}</p>
+                <div className="flex items-center gap-3 text-xs text-[#999999]">
                   <Clock size={10} />
                   <span>{a.date}</span><span>·</span><span>{a.lecture}</span>
                 </div>

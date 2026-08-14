@@ -24,8 +24,8 @@ const schemaCompte = z.object({
 type CompteData = z.infer<typeof schemaCompte>;
 
 const inputCls =
-  "w-full bg-[#0d0d0d] border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm " +
-  "placeholder:text-white/30 focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/15 focus:outline-none transition-all";
+  "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#111111] text-sm " +
+  "placeholder:text-[#999999] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/15 focus:outline-none transition-all";
 
 const THEMES: Record<string, { nom: string; couleur: string }> = {
   "noir-obsidien":    { nom: "Noir Obsidien",    couleur: "#F5A623" },
@@ -53,39 +53,39 @@ function PlanPreviewCard({ plan, messageIA, onConfirmer, onModifier, loading }: 
         </div>
         <div className="flex-1 rounded-2xl px-4 py-3"
           style={{ background: "rgba(245,166,35,0.07)", border: "1px solid rgba(245,166,35,0.15)" }}>
-          <p className="text-sm text-white/75 leading-relaxed">{messageIA}</p>
+          <p className="text-sm text-[#3D3D3D] leading-relaxed">{messageIA}</p>
         </div>
       </div>
 
-      <div className="rounded-2xl overflow-hidden border" style={{ background: "#0d0d0d", borderColor: "rgba(255,255,255,0.08)" }}>
-        <div className="p-4 border-b" style={{ borderColor: "rgba(255,255,255,0.06)", background: `linear-gradient(135deg, ${theme.couleur}12, ${theme.couleur}06)` }}>
+      <div className="rounded-2xl overflow-hidden border" style={{ background: "#ffffff", borderColor: "rgba(0,0,0,0.08)", boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04)" }}>
+        <div className="p-4 border-b" style={{ borderColor: "rgba(0,0,0,0.06)", background: `linear-gradient(135deg, ${theme.couleur}12, ${theme.couleur}06)` }}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center"
               style={{ background: `${theme.couleur}20`, border: `2px solid ${theme.couleur}40` }}>
               <div style={{ width: 16, height: 16, borderRadius: "50%", background: theme.couleur }} />
             </div>
             <div>
-              <p className="font-bold text-white">{plan.nomBoutique}</p>
-              <p className="text-xs text-white/40">{plan.categorie} · {plan.pays} · {plan.devise}</p>
+              <p className="font-bold text-[#111111]">{plan.nomBoutique}</p>
+              <p className="text-xs text-[#808080]">{plan.categorie} · {plan.pays} · {plan.devise}</p>
             </div>
             <div className="ml-auto text-xs px-2 py-1 rounded-lg border font-medium"
               style={{ color: theme.couleur, borderColor: `${theme.couleur}30`, background: `${theme.couleur}10` }}>
               {theme.nom}
             </div>
           </div>
-          {plan.description && <p className="text-xs text-white/40 mt-2">{plan.description}</p>}
+          {plan.description && <p className="text-xs text-[#808080] mt-2">{plan.description}</p>}
         </div>
 
-        <div className="p-4 border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+        <div className="p-4 border-b" style={{ borderColor: "rgba(0,0,0,0.06)" }}>
           <div className="flex items-center gap-2 mb-3">
-            <Package size={13} className="text-white/30" />
-            <p className="text-xs font-semibold text-white/30 uppercase tracking-wider">{plan.produits.length} produits</p>
+            <Package size={13} className="text-[#999999]" />
+            <p className="text-xs font-semibold text-[#999999] uppercase tracking-wider">{plan.produits.length} produits</p>
           </div>
           <div className="space-y-2">
             {plan.produits.map((p, i) => (
               <div key={i} className="flex items-center justify-between text-sm">
-                <span className="text-white/60">{p.nom}</span>
-                <span className="font-semibold text-white/80">{p.prix.toLocaleString()} {plan.devise}</span>
+                <span className="text-[#595959]">{p.nom}</span>
+                <span className="font-semibold text-[#333333]">{p.prix.toLocaleString()} {plan.devise}</span>
               </div>
             ))}
           </div>
@@ -94,10 +94,10 @@ function PlanPreviewCard({ plan, messageIA, onConfirmer, onModifier, loading }: 
         {plan.livraison && (
           <div className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Truck size={13} className="text-white/30" />
-              <p className="text-xs font-semibold text-white/30 uppercase tracking-wider">Livraison configurée</p>
+              <Truck size={13} className="text-[#999999]" />
+              <p className="text-xs font-semibold text-[#999999] uppercase tracking-wider">Livraison configurée</p>
             </div>
-            <div className="flex gap-4 text-xs text-white/50">
+            <div className="flex gap-4 text-xs text-[#666666]">
               <span>Locale : {plan.livraison.locale.toLocaleString()} {plan.devise}</span>
               <span>Nationale : {plan.livraison.nationale.toLocaleString()} {plan.devise}</span>
             </div>
@@ -111,7 +111,7 @@ function PlanPreviewCard({ plan, messageIA, onConfirmer, onModifier, loading }: 
       <div className="flex gap-3">
         <button onClick={onModifier} disabled={loading}
           className="flex-1 py-3 rounded-xl text-sm font-medium transition-all disabled:opacity-40"
-          style={{ border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.55)", background: "transparent" }}>
+          style={{ border: "1px solid rgba(0,0,0,0.12)", color: "rgba(0,0,0,0.55)", background: "transparent" }}>
           Modifier
         </button>
         <button onClick={onConfirmer} disabled={loading}
@@ -172,8 +172,8 @@ function EtapeIA({ onBack, compte }: { onBack: () => void; compte: CompteData })
         style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)" }}>
         <CheckCircle2 size={32} className="text-green-400" />
       </div>
-      <h3 className="text-xl font-bold text-white">Boutique créée !</h3>
-      <p className="text-white/40 text-sm">Redirection vers votre dashboard...</p>
+      <h3 className="text-xl font-bold text-[#111111]">Boutique créée !</h3>
+      <p className="text-[#808080] text-sm">Redirection vers votre dashboard...</p>
       <div className="flex justify-center"><Loader2 size={20} className="animate-spin" style={{ color: ACCENT }} /></div>
     </div>
   );
@@ -182,19 +182,19 @@ function EtapeIA({ onBack, compte }: { onBack: () => void; compte: CompteData })
     <div className="py-6 space-y-4">
       <div className="text-center mb-4">
         <Sparkles size={24} className="mx-auto mb-2" style={{ color: ACCENT }} />
-        <p className="font-semibold text-white">L'IA construit votre boutique...</p>
+        <p className="font-semibold text-[#111111]">L'IA construit votre boutique...</p>
       </div>
       <div className="space-y-2">
         {progress.map((step, i) => (
           <div key={i} className="flex items-center gap-3 text-sm">
             <CheckCircle2 size={16} className="text-green-400 flex-shrink-0" />
-            <span className="text-white/65">{step}</span>
+            <span className="text-[#4D4D4D]">{step}</span>
           </div>
         ))}
         {progress.length < 5 && (
           <div className="flex items-center gap-3 text-sm">
             <Loader2 size={16} className="animate-spin flex-shrink-0" style={{ color: ACCENT }} />
-            <span className="text-white/35">En cours...</span>
+            <span className="text-[#8C8C8C]">En cours...</span>
           </div>
         )}
       </div>
@@ -204,8 +204,8 @@ function EtapeIA({ onBack, compte }: { onBack: () => void; compte: CompteData })
   return (
     <div className="space-y-4">
       <div className="mb-2">
-        <h2 className="text-xl font-bold text-white">L'IA crée votre boutique</h2>
-        <p className="text-white/40 text-sm mt-0.5">Décrivez votre business en quelques mots</p>
+        <h2 className="text-xl font-bold text-[#111111]">L'IA crée votre boutique</h2>
+        <p className="text-[#808080] text-sm mt-0.5">Décrivez votre business en quelques mots</p>
       </div>
 
       {phase === "saisie" && (
@@ -216,7 +216,7 @@ function EtapeIA({ onBack, compte }: { onBack: () => void; compte: CompteData })
           </div>
           <div className="flex-1 rounded-2xl px-4 py-3"
             style={{ background: "rgba(245,166,35,0.06)", border: "1px solid rgba(245,166,35,0.15)" }}>
-            <p className="text-sm text-white/70">
+            <p className="text-sm text-[#444444]">
               Bonjour {compte.name.split(" ")[0]} ! Décrivez votre business et je crée tout automatiquement —
               nom, thème, produits, livraison. Ex : <em style={{ color: ACCENT }}>"Je vends des vêtements mode à Dakar"</em> ou{" "}
               <em style={{ color: ACCENT }}>"Bijoux artisanaux au Maroc"</em>
@@ -243,7 +243,7 @@ function EtapeIA({ onBack, compte }: { onBack: () => void; compte: CompteData })
             {["Mode africaine au Cameroun", "Cosmétiques naturels au Sénégal", "Artisanat et bijoux au Maroc"].map(ex => (
               <button key={ex} onClick={() => setDescription(ex)}
                 className="text-xs px-3 py-1.5 rounded-lg transition-all"
-                style={{ background: "rgba(245,166,35,0.07)", border: "1px solid rgba(245,166,35,0.18)", color: "rgba(255,255,255,0.5)" }}>
+                style={{ background: "rgba(245,166,35,0.07)", border: "1px solid rgba(245,166,35,0.18)", color: "rgba(0,0,0,0.5)" }}>
                 {ex}
               </button>
             ))}
@@ -261,7 +261,7 @@ function EtapeIA({ onBack, compte }: { onBack: () => void; compte: CompteData })
           </div>
           <button type="button" onClick={onBack}
             className="w-full py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all"
-            style={{ border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.45)" }}>
+            style={{ border: "1px solid rgba(0,0,0,0.1)", color: "rgba(0,0,0,0.45)" }}>
             <ArrowLeft size={15} /> Retour
           </button>
         </>
@@ -279,7 +279,7 @@ export default function InscriptionPage() {
   const onSubmitCompte = (data: CompteData) => { setCompte(data); setEtape(1); };
 
   return (
-    <div className="min-h-screen flex overflow-hidden" style={{ background: "#080808", fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <div className="min-h-screen flex overflow-hidden" style={{ background: "#ffffff", fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       {/* Ambient */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 right-1/3 w-[500px] h-[500px] rounded-full"
@@ -293,7 +293,7 @@ export default function InscriptionPage() {
       {/* ── Left panel ── */}
       <div className="hidden lg:flex flex-col justify-between w-[44%] px-14 py-12 relative">
         <Link href="/">
-          <img src="/logo-dark.png" alt="axso"
+          <img src="/logo.png" alt="axso"
             style={{ height: "34px", width: "auto", objectFit: "contain" }} />
         </Link>
 
@@ -302,13 +302,13 @@ export default function InscriptionPage() {
             style={{ background: "rgba(245,166,35,0.1)", border: "1px solid rgba(245,166,35,0.25)", color: ACCENT }}>
             <Sparkles size={11} /> Inscription gratuite · Propulsée par l'IA
           </div>
-          <h1 className="text-3xl font-bold text-white leading-tight mb-4">
+          <h1 className="text-3xl font-bold text-[#111111] leading-tight mb-4">
             Décrivez votre business,<br />
             <span style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
               l'IA crée tout
             </span>
           </h1>
-          <p className="text-white/45 text-sm leading-relaxed mb-8">
+          <p className="text-[#737373] text-sm leading-relaxed mb-8">
             En 2 étapes, votre boutique est en ligne — nom, thème, produits, livraison. Tout configuré automatiquement.
           </p>
 
@@ -325,12 +325,12 @@ export default function InscriptionPage() {
                   opacity: i > etape ? 0.4 : 1,
                 }}>
                 <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: i <= etape ? `linear-gradient(135deg,${ACCENT},${ACCENT_DARK})` : "rgba(255,255,255,0.06)", color: i <= etape ? "#080808" : "rgba(255,255,255,0.4)" }}>
+                  style={{ background: i <= etape ? `linear-gradient(135deg,${ACCENT},${ACCENT_DARK})` : "rgba(0,0,0,0.06)", color: i <= etape ? "#080808" : "rgba(0,0,0,0.4)" }}>
                   {s.done ? <Check size={14} /> : <s.icon size={14} />}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold" style={{ color: i === etape ? "#fff" : "rgba(255,255,255,0.45)" }}>{s.label}</p>
-                  <p className="text-xs text-white/30">{s.desc}</p>
+                  <p className="text-sm font-semibold" style={{ color: i === etape ? "#111111" : "rgba(0,0,0,0.45)" }}>{s.label}</p>
+                  <p className="text-xs text-[#999999]">{s.desc}</p>
                 </div>
                 {i === etape && <div className="ml-auto w-2 h-2 rounded-full animate-pulse" style={{ background: ACCENT }} />}
               </div>
@@ -338,14 +338,14 @@ export default function InscriptionPage() {
           </div>
         </div>
 
-        <p className="text-white/20 text-xs">© 2026 Axso · Made for Africa</p>
+        <p className="text-[#B3B3B3] text-xs">© 2026 Axso · Made for Africa</p>
       </div>
 
       {/* ── Right panel ── */}
       <div className="flex-1 flex items-center justify-center px-6 py-12 relative">
         <div className="absolute top-8 left-6 lg:hidden">
           <Link href="/">
-            <img src="/logo-dark.png" alt="axso"
+            <img src="/logo.png" alt="axso"
               style={{ height: "30px", width: "auto", objectFit: "contain" }} />
           </Link>
         </div>
@@ -356,24 +356,24 @@ export default function InscriptionPage() {
             {["Compte", "Boutique IA"].map((label, i) => (
               <div key={i} className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-                  style={{ background: i <= etape ? `linear-gradient(135deg,${ACCENT},${ACCENT_DARK})` : "rgba(255,255,255,0.08)", color: i <= etape ? "#080808" : "rgba(255,255,255,0.4)" }}>
+                  style={{ background: i <= etape ? `linear-gradient(135deg,${ACCENT},${ACCENT_DARK})` : "rgba(0,0,0,0.08)", color: i <= etape ? "#080808" : "rgba(0,0,0,0.4)" }}>
                   {i < etape ? <Check size={12} /> : i + 1}
                 </div>
-                <span className="text-xs text-white/35 hidden sm:block">{label}</span>
-                {i < 1 && <div className="w-6 h-0.5" style={{ background: i < etape ? ACCENT : "rgba(255,255,255,0.1)" }} />}
+                <span className="text-xs text-[#8C8C8C] hidden sm:block">{label}</span>
+                {i < 1 && <div className="w-6 h-0.5" style={{ background: i < etape ? ACCENT : "rgba(0,0,0,0.1)" }} />}
               </div>
             ))}
           </div>
 
           <div className="rounded-3xl p-8 border"
-            style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(245,166,35,0.2)", backdropFilter: "blur(20px)", boxShadow: "0 32px 64px -12px rgba(0,0,0,0.4), 0 0 0 1px rgba(245,166,35,0.08)" }}>
+            style={{ background: "#ffffff", borderColor: "rgba(245,166,35,0.2)", boxShadow: "0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(245,166,35,0.06)" }}>
 
             {/* ÉTAPE 0 — Compte */}
             {etape === 0 && (
               <form onSubmit={formCompte.handleSubmit(onSubmitCompte)} className="space-y-4">
                 <div className="mb-6">
-                  <h2 className="text-xl font-bold text-white">Créez votre compte</h2>
-                  <p className="text-white/40 text-sm mt-0.5">Gratuit · Pas de carte requise</p>
+                  <h2 className="text-xl font-bold text-[#111111]">Créez votre compte</h2>
+                  <p className="text-[#808080] text-sm mt-0.5">Gratuit · Pas de carte requise</p>
                 </div>
 
                 {[
@@ -383,7 +383,7 @@ export default function InscriptionPage() {
                   { field: "whatsapp", label: "WhatsApp",       type: "tel",      ph: "+221 77 123 45 67" },
                 ].map(({ field, label, type, ph }) => (
                   <div key={field}>
-                    <label className="block text-white/55 text-sm font-medium mb-1.5">{label}</label>
+                    <label className="block text-[#595959] text-sm font-medium mb-1.5">{label}</label>
                     <input {...formCompte.register(field as keyof CompteData)} type={type} placeholder={ph} className={inputCls} />
                     {formCompte.formState.errors[field as keyof CompteData] && (
                       <p className="text-red-400 text-xs mt-1">{formCompte.formState.errors[field as keyof CompteData]?.message}</p>
@@ -403,15 +403,15 @@ export default function InscriptionPage() {
             {etape === 1 && compte && <EtapeIA compte={compte} onBack={() => setEtape(0)} />}
           </div>
 
-          <p className="text-center text-white/30 text-sm mt-5">
+          <p className="text-center text-[#999999] text-sm mt-5">
             Déjà un compte ?{" "}
             <Link href="/connexion" className="font-semibold hover:opacity-80 transition-opacity" style={{ color: ACCENT }}>
               Se connecter
             </Link>
           </p>
-          <p className="text-center text-white/25 text-xs mt-2">
+          <p className="text-center text-[#A6A6A6] text-xs mt-2">
             Vous êtes livreur ?{" "}
-            <Link href="/inscription/livreur" className="underline underline-offset-2 hover:opacity-80 transition-opacity" style={{ color: "rgba(255,255,255,0.4)" }}>
+            <Link href="/inscription/livreur" className="underline underline-offset-2 hover:opacity-80 transition-opacity" style={{ color: "rgba(0,0,0,0.4)" }}>
               Rejoindre la plateforme →
             </Link>
           </p>

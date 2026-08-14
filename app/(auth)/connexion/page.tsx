@@ -47,21 +47,20 @@ function ConnexionForm() {
   };
 
   const inputCls =
-    "w-full bg-[#0d0d0d] border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm " +
-    "placeholder:text-white/30 focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/15 focus:outline-none transition-all";
+    "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#111111] text-sm " +
+    "placeholder:text-[#999999] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/15 focus:outline-none transition-all";
 
   return (
     <div
       className="rounded-3xl p-8 border"
       style={{
-        background: "rgba(255,255,255,0.03)",
+        background: "#ffffff",
         borderColor: "rgba(245,166,35,0.2)",
-        backdropFilter: "blur(20px)",
-        boxShadow: "0 32px 64px -12px rgba(0,0,0,0.4), 0 0 0 1px rgba(245,166,35,0.08)",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(245,166,35,0.06)",
       }}
     >
-      <h2 className="text-2xl font-bold text-white mb-1">Bon retour</h2>
-      <p className="text-white/40 text-sm mb-7">Connectez-vous à votre espace marchand</p>
+      <h2 className="text-2xl font-bold text-[#111111] mb-1">Bon retour</h2>
+      <p className="text-[#808080] text-sm mb-7">Connectez-vous à votre espace marchand</p>
 
       {inscriptionReussie && (
         <div className="rounded-xl p-3 text-sm text-center mb-5 flex items-center justify-center gap-2"
@@ -79,18 +78,18 @@ function ConnexionForm() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="block text-white/60 text-sm font-medium mb-1.5">Email</label>
+          <label className="block text-[#595959] text-sm font-medium mb-1.5">Email</label>
           <input type="email" {...register("email")} placeholder="aminata@example.com" className={inputCls} />
           {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
         </div>
 
         <div>
-          <label className="block text-white/60 text-sm font-medium mb-1.5">Mot de passe</label>
+          <label className="block text-[#595959] text-sm font-medium mb-1.5">Mot de passe</label>
           <div className="relative">
             <input type={showPass ? "text" : "password"} {...register("password")}
               placeholder="••••••••" className={inputCls + " pr-10"} />
             <button type="button" onClick={() => setShowPass(!showPass)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors">
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#999999] hover:text-[#444444] transition-colors">
               {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
@@ -120,11 +119,11 @@ function ConnexionForm() {
       <div className="mt-5 p-4 rounded-xl border"
         style={{ background: "rgba(245,166,35,0.06)", borderColor: "rgba(245,166,35,0.15)" }}>
         <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: ACCENT }}>Comptes de démo</p>
-        <p className="text-white/50 text-xs font-mono">aminata@modeaminata.sn / axso2024</p>
-        <p className="text-white/50 text-xs font-mono">grace@beautegrace.ci / axso2024</p>
+        <p className="text-[#666666] text-xs font-mono">aminata@modeaminata.sn / axso2024</p>
+        <p className="text-[#666666] text-xs font-mono">grace@beautegrace.ci / axso2024</p>
       </div>
 
-      <p className="text-center text-white/40 text-sm mt-6">
+      <p className="text-center text-[#808080] text-sm mt-6">
         Pas encore de boutique ?{" "}
         <Link href="/inscription" className="font-semibold hover:opacity-80 transition-opacity" style={{ color: ACCENT }}>
           Créer gratuitement
@@ -136,7 +135,7 @@ function ConnexionForm() {
 
 export default function ConnexionPage() {
   return (
-    <div className="min-h-screen flex overflow-hidden" style={{ background: "#080808", fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <div className="min-h-screen flex overflow-hidden" style={{ background: "#ffffff", fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       {/* Ambient gradients */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 left-1/3 w-[600px] h-[600px] rounded-full"
@@ -150,7 +149,7 @@ export default function ConnexionPage() {
       {/* ── Left panel — branding ── */}
       <div className="hidden lg:flex flex-col justify-between w-[52%] px-16 py-12 relative">
         <Link href="/">
-          <img src="/logo-dark.png" alt="axso"
+          <img src="/logo.png" alt="axso"
             style={{ height: "34px", width: "auto", objectFit: "contain" }} />
         </Link>
 
@@ -161,7 +160,7 @@ export default function ConnexionPage() {
             +1 247 boutiques actives en Afrique
           </div>
 
-          <h1 className="text-4xl font-bold text-white leading-tight mb-4">
+          <h1 className="text-4xl font-bold text-[#111111] leading-tight mb-4">
             Gérez votre boutique<br />
             <span style={{
               background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`,
@@ -171,7 +170,7 @@ export default function ConnexionPage() {
             </span>
           </h1>
 
-          <p className="text-white/50 text-base leading-relaxed mb-8">
+          <p className="text-[#666666] text-base leading-relaxed mb-8">
             La plateforme e-commerce pensée pour les entrepreneurs africains. Simple, puissante, et adaptée à vos besoins.
           </p>
 
@@ -182,47 +181,47 @@ export default function ConnexionPage() {
                   style={{ background: "rgba(245,166,35,0.12)", border: "1px solid rgba(245,166,35,0.2)" }}>
                   <Icon size={15} style={{ color: ACCENT }} />
                 </div>
-                <span className="text-white/65 text-sm">{text}</span>
+                <span className="text-[#4D4D4D] text-sm">{text}</span>
               </div>
             ))}
           </div>
 
           {/* Testimonial */}
           <div className="rounded-2xl p-5 border"
-            style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(245,166,35,0.15)", backdropFilter: "blur(10px)" }}>
+            style={{ background: "#FFFBF2", borderColor: "rgba(245,166,35,0.15)" }}>
             <div className="flex gap-0.5 mb-3">
               {[1,2,3,4,5].map(i => <Star key={i} size={13} fill={ACCENT} style={{ color: ACCENT }} />)}
             </div>
-            <p className="text-white/65 text-sm leading-relaxed mb-3">
+            <p className="text-[#4D4D4D] text-sm leading-relaxed mb-3">
               "Axso a transformé mon activité. Je gère ma boutique depuis mon téléphone et les paiements arrivent directement."
             </p>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
                 style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, color: "#080808" }}>A</div>
               <div>
-                <p className="text-white/80 text-xs font-semibold">Aminata Kouyaté</p>
-                <p className="text-white/35 text-xs">Mode Aminata, Dakar</p>
+                <p className="text-[#333333] text-xs font-semibold">Aminata Kouyaté</p>
+                <p className="text-[#8C8C8C] text-xs">Mode Aminata, Dakar</p>
               </div>
             </div>
           </div>
         </div>
 
-        <p className="text-white/20 text-xs">© 2026 Axso · Made for Africa</p>
+        <p className="text-[#B3B3B3] text-xs">© 2026 Axso · Made for Africa</p>
       </div>
 
       {/* ── Right panel — form ── */}
       <div className="flex-1 flex items-center justify-center px-6 py-12 relative">
         <div className="absolute top-8 left-1/2 -translate-x-1/2 lg:hidden">
           <Link href="/">
-            <img src="/logo-dark.png" alt="axso"
+            <img src="/logo.png" alt="axso"
               style={{ height: "30px", width: "auto", objectFit: "contain" }} />
           </Link>
         </div>
 
         <div className="w-full max-w-md pt-16 lg:pt-0">
           <Suspense fallback={
-            <div className="rounded-3xl p-8 text-center text-white/30 text-sm"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(245,166,35,0.15)" }}>
+            <div className="rounded-3xl p-8 text-center text-[#999999] text-sm"
+              style={{ background: "#ffffff", border: "1px solid rgba(245,166,35,0.15)", boxShadow: "0 20px 60px rgba(0,0,0,0.08)" }}>
               Chargement...
             </div>
           }>

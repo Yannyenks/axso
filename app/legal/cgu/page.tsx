@@ -17,7 +17,7 @@ const SECTIONS = [
   },
   {
     titre: "3. Services proposés",
-    contenu: `AXSO propose une plateforme SaaS permettant la création et la gestion de boutiques en ligne, incluant : la gestion de catalogue produits, le traitement des paiements via Mobile Money et cartes bancaires, la gestion logistique et de livraison, des outils de marketing et d'analyse, une assistance par intelligence artificielle (AXIA).`,
+    contenu: `AXSO propose une plateforme SaaS permettant la création et la gestion de boutiques en ligne, incluant : la gestion de catalogue produits, le traitement des paiements via Mobile Money et cartes bancaires, la gestion logistique et de livraison, des outils de marketing et d'analyse, une assistance par intelligence artificielle (Xia).`,
   },
   {
     titre: "4. Obligations de l'utilisateur",
@@ -43,7 +43,7 @@ const SECTIONS = [
 
 export default function CguPage() {
   return (
-    <main className="bg-[#080808] text-white min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       <section className="pt-36 pb-24 px-6 sm:px-10 lg:px-16 xl:px-24">
@@ -52,20 +52,20 @@ export default function CguPage() {
             ⚖️ Légal
           </span>
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">Conditions Générales d'Utilisation</h1>
-          <p className="text-white/35 text-sm mb-14">Dernière mise à jour : 1er juillet 2026</p>
+          <p className="text-[#8C8C8C] text-sm mb-14">Dernière mise à jour : 1er juillet 2026</p>
 
           <div className="space-y-10">
             {SECTIONS.map(s => (
-              <div key={s.titre} className="pb-10 border-b" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+              <div key={s.titre} className="pb-10 border-b" style={{ borderColor: "rgba(0,0,0,0.07)" }}>
                 <h2 className="text-lg font-bold mb-4" style={{ color: "#F5A623" }}>{s.titre}</h2>
-                <p className="text-white/55 leading-relaxed text-sm">{s.contenu}</p>
+                <p className="text-[#595959] leading-relaxed text-sm">{s.contenu}</p>
               </div>
             ))}
           </div>
 
           <div className="mt-14 rounded-2xl p-6 border"
             style={{ background: "rgba(245,166,35,0.04)", borderColor: "rgba(245,166,35,0.15)" }}>
-            <p className="text-white/50 text-sm">Des questions sur ces conditions ? Contactez-nous à{" "}
+            <p className="text-[#666666] text-sm">Des questions sur ces conditions ? Contactez-nous à{" "}
               <a href="mailto:legal@axso.app" className="font-bold hover:opacity-80" style={{ color: "#F5A623" }}>legal@axso.app</a>
             </p>
           </div>

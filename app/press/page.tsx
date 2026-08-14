@@ -31,7 +31,7 @@ const KIT_ITEMS: { Icon: LucideIcon; titre: string; desc: string; taille: string
 
 export default function PressPage() {
   return (
-    <main className="bg-[#080808] text-white min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       <section className="pt-36 pb-24 px-6 sm:px-10 lg:px-16 xl:px-24 relative overflow-hidden">
@@ -48,7 +48,7 @@ export default function PressPage() {
                 les médias
               </span>
             </h1>
-            <p className="text-white/45 text-xl max-w-2xl mx-auto">Logos, visuels, chiffres clés et contact presse. Tout ce dont vous avez besoin pour parler d'AXSO.</p>
+            <p className="text-[#737373] text-xl max-w-2xl mx-auto">Logos, visuels, chiffres clés et contact presse. Tout ce dont vous avez besoin pour parler d'AXSO.</p>
           </div>
 
           {/* Chiffres */}
@@ -57,7 +57,7 @@ export default function PressPage() {
               <div key={c.n} className="text-center rounded-2xl p-5 border"
                 style={{ background: "rgba(245,166,35,0.04)", borderColor: "rgba(245,166,35,0.15)" }}>
                 <p className="text-2xl font-black mb-1" style={{ color: "#F5A623" }}>{c.n}</p>
-                <p className="text-white/45 text-xs">{c.label}</p>
+                <p className="text-[#737373] text-xs">{c.label}</p>
               </div>
             ))}
           </div>
@@ -66,12 +66,12 @@ export default function PressPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-20">
             {KIT_ITEMS.map(kit => (
               <div key={kit.titre} className="rounded-2xl border p-6 flex flex-col"
-                style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.07)" }}>
+                style={{ background: "rgba(0,0,0,0.02)", borderColor: "rgba(0,0,0,0.07)" }}>
                 <kit.Icon size={30} className="mb-4" style={{ color: "#F5A623" }} />
-                <h3 className="font-bold text-white mb-1">{kit.titre}</h3>
-                <p className="text-white/40 text-sm flex-1 mb-4">{kit.desc}</p>
+                <h3 className="font-bold text-[#111111] mb-1">{kit.titre}</h3>
+                <p className="text-[#808080] text-sm flex-1 mb-4">{kit.desc}</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-white/30">{kit.taille}</span>
+                  <span className="text-xs text-[#999999]">{kit.taille}</span>
                   <button className="text-xs font-bold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
                     style={{ background: "rgba(245,166,35,0.12)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.2)" }}>
                     Télécharger ↓
@@ -86,15 +86,15 @@ export default function PressPage() {
           <div className="space-y-3 mb-16">
             {MENTIONS.map(m => (
               <div key={m.titre} className="rounded-xl border px-6 py-4 flex items-center justify-between"
-                style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.07)" }}>
+                style={{ background: "rgba(0,0,0,0.02)", borderColor: "rgba(0,0,0,0.07)" }}>
                 <div>
-                  <span className="inline-flex items-center gap-1 text-xs font-bold mr-2 text-white/50">
+                  <span className="inline-flex items-center gap-1 text-xs font-bold mr-2 text-[#666666]">
                     <Globe size={12} />{m.pays}
                   </span>
                   <span className="font-bold text-sm" style={{ color: "#F5A623" }}>{m.media}</span>
-                  <p className="text-white/55 text-sm mt-0.5">{m.titre}</p>
+                  <p className="text-[#595959] text-sm mt-0.5">{m.titre}</p>
                 </div>
-                <span className="text-xs text-white/30 flex-shrink-0 ml-4">{m.date}</span>
+                <span className="text-xs text-[#999999] flex-shrink-0 ml-4">{m.date}</span>
               </div>
             ))}
           </div>
@@ -102,8 +102,8 @@ export default function PressPage() {
           {/* Contact presse */}
           <div className="rounded-3xl border p-8 text-center"
             style={{ background: "linear-gradient(135deg, rgba(245,166,35,0.06), rgba(245,166,35,0.02))", borderColor: "rgba(245,166,35,0.2)" }}>
-            <h3 className="text-xl font-bold text-white mb-2">Contact presse</h3>
-            <p className="text-white/45 mb-5">Demandes d'interviews, citations officielles et informations complémentaires.</p>
+            <h3 className="text-xl font-bold text-[#111111] mb-2">Contact presse</h3>
+            <p className="text-[#737373] mb-5">Demandes d'interviews, citations officielles et informations complémentaires.</p>
             <a href="mailto:presse@axso.app"
               className="inline-block font-bold px-8 py-3.5 rounded-xl transition-all hover:scale-105"
               style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#080808", boxShadow: "0 8px 25px rgba(245,166,35,0.3)" }}>

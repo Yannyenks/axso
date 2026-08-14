@@ -50,7 +50,7 @@ const THEMES = [
 
 export default function ThemesPage() {
   return (
-    <main className="bg-[#080808] text-white min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       <section className="pt-36 pb-24 px-6 sm:px-10 lg:px-16 xl:px-24 relative overflow-hidden">
@@ -67,7 +67,7 @@ export default function ThemesPage() {
                 votre identité
               </span>
             </h1>
-            <p className="text-white/45 text-xl max-w-2xl mx-auto">
+            <p className="text-[#737373] text-xl max-w-2xl mx-auto">
               {THEMES.length} thèmes conçus pour les marchés africains — tous inclus dans votre abonnement.
             </p>
           </div>
@@ -76,7 +76,7 @@ export default function ThemesPage() {
             {THEMES.map(theme => (
               <div key={theme.id}
                 className="rounded-3xl overflow-hidden border group hover:-translate-y-1 transition-all duration-300 cursor-pointer"
-                style={{ borderColor: "rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)" }}>
+                style={{ borderColor: "rgba(0,0,0,0.08)", background: "rgba(0,0,0,0.02)" }}>
 
                 {/* Aperçu simulé */}
                 <div className="aspect-[4/3] relative overflow-hidden" style={{ background: theme.bg }}>
@@ -104,7 +104,7 @@ export default function ThemesPage() {
                           <ShoppingBag size={18} style={{ color: theme.accent, opacity: 0.6 }} />
                         </div>
                         <div className="p-2">
-                          <div className="h-1.5 rounded mb-1" style={{ background: "rgba(255,255,255,0.1)", width: "70%" }} />
+                          <div className="h-1.5 rounded mb-1" style={{ background: "rgba(0,0,0,0.1)", width: "70%" }} />
                           <div className="h-1.5 rounded" style={{ background: theme.accent, width: "45%", opacity: 0.6 }} />
                         </div>
                       </div>
@@ -133,10 +133,10 @@ export default function ThemesPage() {
                 {/* Info */}
                 <div className="p-5">
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-bold text-white">{theme.nom}</h3>
+                    <h3 className="font-bold text-[#111111]">{theme.nom}</h3>
                     <div style={{ width: 14, height: 14, borderRadius: "50%", background: theme.accent, marginTop: 2 }} />
                   </div>
-                  <p className="text-white/45 text-sm mb-3">{theme.desc}</p>
+                  <p className="text-[#737373] text-sm mb-3">{theme.desc}</p>
                   <div className="flex flex-wrap gap-1.5">
                     {theme.tags.map(tag => (
                       <span key={tag} className="text-xs px-2 py-0.5 rounded-full"
@@ -151,7 +151,7 @@ export default function ThemesPage() {
           </div>
 
           <div className="mt-14 text-center">
-            <p className="text-white/40 text-sm mb-5">Tous les thèmes sont inclus dans tous les plans. Changez à tout moment.</p>
+            <p className="text-[#808080] text-sm mb-5">Tous les thèmes sont inclus dans tous les plans. Changez à tout moment.</p>
             <Link href="/inscription"
               className="inline-block font-bold px-10 py-4 rounded-2xl transition-all hover:scale-105"
               style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#080808", boxShadow: "0 8px 30px rgba(245,166,35,0.35)" }}>

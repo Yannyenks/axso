@@ -9,9 +9,9 @@ export const metadata: Metadata = {
 };
 
 const PLANS = [
-  { nom: "Essentiel", prix: "Gratuit", engagement: "Sans engagement", inclus: ["30 commandes/mois", "1 boutique", "AXIA essentielle", "Support communauté"], accent: "#6b7280" },
-  { nom: "Pro", prix: "5 000 XOF/mois", engagement: "Mensuel, résiliable à tout moment", inclus: ["Commandes illimitées", "AXIA avancée", "Analytics", "Support prioritaire"], accent: "#F5A623", popular: true },
-  { nom: "Illimité", prix: "20 000 XOF/mois", engagement: "Mensuel, résiliable à tout moment", inclus: ["Tout inclus sans limite", "AXIA complète", "Boutiques illimitées", "Support 24/7"], accent: "#7c3aed" },
+  { nom: "Essentiel", prix: "Gratuit", engagement: "Sans engagement", inclus: ["30 commandes/mois", "1 boutique", "Xia essentielle", "Support communauté"], accent: "#6b7280" },
+  { nom: "Pro", prix: "5 000 XOF/mois", engagement: "Mensuel, résiliable à tout moment", inclus: ["Commandes illimitées", "Xia avancée", "Analytics", "Support prioritaire"], accent: "#F5A623", popular: true },
+  { nom: "Illimité", prix: "20 000 XOF/mois", engagement: "Mensuel, résiliable à tout moment", inclus: ["Tout inclus sans limite", "Xia complète", "Boutiques illimitées", "Support 24/7"], accent: "#7c3aed" },
 ];
 
 const SECTIONS = [
@@ -43,7 +43,7 @@ const SECTIONS = [
 
 export default function AbonnementsPage() {
   return (
-    <main className="bg-[#080808] text-white min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       <section className="pt-36 pb-24 px-6 sm:px-10 lg:px-16 xl:px-24">
@@ -52,23 +52,23 @@ export default function AbonnementsPage() {
             <CreditCard size={14} className="inline-block mr-1.5" />Légal
           </span>
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">Conditions d'abonnement</h1>
-          <p className="text-white/35 text-sm mb-14">Dernière mise à jour : 1er juillet 2026</p>
+          <p className="text-[#8C8C8C] text-sm mb-14">Dernière mise à jour : 1er juillet 2026</p>
 
           {/* Plans recap */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-16">
             {PLANS.map(p => (
               <div key={p.nom} className="rounded-2xl border p-5"
-                style={{ background: p.popular ? `${p.accent}08` : "rgba(255,255,255,0.02)", borderColor: p.popular ? `${p.accent}25` : "rgba(255,255,255,0.07)" }}>
+                style={{ background: p.popular ? `${p.accent}08` : "rgba(0,0,0,0.02)", borderColor: p.popular ? `${p.accent}25` : "rgba(0,0,0,0.07)" }}>
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-xs font-bold px-2 py-0.5 rounded-full"
                     style={{ background: `${p.accent}15`, color: p.accent, border: `1px solid ${p.accent}25` }}>{p.nom}</span>
-                  {p.popular && <span className="text-xs text-white/30">⭐ Populaire</span>}
+                  {p.popular && <span className="text-xs text-[#999999]">⭐ Populaire</span>}
                 </div>
                 <p className="text-xl font-black mb-1" style={{ color: p.accent }}>{p.prix}</p>
-                <p className="text-white/35 text-xs mb-4">{p.engagement}</p>
+                <p className="text-[#8C8C8C] text-xs mb-4">{p.engagement}</p>
                 <ul className="space-y-1.5">
                   {p.inclus.map(i => (
-                    <li key={i} className="text-xs text-white/50 flex items-center gap-2">
+                    <li key={i} className="text-xs text-[#666666] flex items-center gap-2">
                       <span style={{ color: p.accent }}>✓</span> {i}
                     </li>
                   ))}
@@ -80,9 +80,9 @@ export default function AbonnementsPage() {
           {/* Sections légales */}
           <div className="space-y-10">
             {SECTIONS.map(s => (
-              <div key={s.titre} className="pb-10 border-b" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+              <div key={s.titre} className="pb-10 border-b" style={{ borderColor: "rgba(0,0,0,0.07)" }}>
                 <h2 className="text-lg font-bold mb-4" style={{ color: "#F5A623" }}>{s.titre}</h2>
-                <p className="text-white/55 leading-relaxed text-sm">{s.contenu}</p>
+                <p className="text-[#595959] leading-relaxed text-sm">{s.contenu}</p>
               </div>
             ))}
           </div>
@@ -90,7 +90,7 @@ export default function AbonnementsPage() {
           <div className="mt-14 flex flex-col sm:flex-row gap-4">
             <div className="flex-1 rounded-2xl p-6 border"
               style={{ background: "rgba(245,166,35,0.04)", borderColor: "rgba(245,166,35,0.15)" }}>
-              <p className="text-white/50 text-sm">Questions sur votre abonnement ? <a href="mailto:facturation@axso.app" className="font-bold" style={{ color: "#F5A623" }}>facturation@axso.app</a></p>
+              <p className="text-[#666666] text-sm">Questions sur votre abonnement ? <a href="mailto:facturation@axso.app" className="font-bold" style={{ color: "#F5A623" }}>facturation@axso.app</a></p>
             </div>
             <Link href="/#tarifs"
               className="flex-1 rounded-2xl p-6 flex items-center justify-center font-bold text-center transition-all hover:scale-[1.02]"
