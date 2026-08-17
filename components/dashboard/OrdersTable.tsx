@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { formatMontant, dateRelative } from "@/lib/utils";
-import { ArrowUpRight, ChevronRight } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Package } from "lucide-react";
 import type { CommandeAvecLignes } from "@/types";
 
 interface OrdersTableProps { commandes: CommandeAvecLignes[] }
