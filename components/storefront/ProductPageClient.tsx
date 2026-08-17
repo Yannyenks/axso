@@ -32,7 +32,7 @@ const DEFAULT_SECTIONS: ProdSection[] = [
 ];
 
 const RIGHT_COL = new Set(["info", "variants", "quantity", "trust"]);
-const BELOW_TYPES = new Set(["description","reviews","similar","richtext","banner","video","faq","specs","countdown","social"]);
+const BELOW_TYPES = new Set(["description","reviews","similar","richtext","features","howto","banner","video","faq","specs","ingredients","testimonials","sizeguide","guarantee","bundle","comparison","countdown","social"]);
 
 export interface ProductPageClientProps {
   produit: {
@@ -364,6 +364,216 @@ function RichtextSection({ config, accent, radius, slug }: { config: Record<stri
         <Link href={`/${slug}/produits`} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
           style={{ background: accent, color: "#fff" }}>{config.ctaTexte}</Link>
       )}
+    </div>
+  );
+}
+
+// ─── Features Section ─────────────────────────────────────────────────────────
+function FeaturesSection({ config, accent, surface, radius }: { config: Record<string, any>; accent: string; surface: string; radius: string }) {
+  const items: { icone: string; titre: string; texte: string }[] = config.items || [];
+  return (
+    <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
+      {config.titre && <h3 className="text-2xl font-bold mb-8">{config.titre}</h3>}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {items.map((item, i) => (
+          <div key={i} className="flex gap-4 p-5 rounded-2xl" style={{ background: surface }}>
+            <div className="text-2xl flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl" style={{ background: `${accent}15` }}>{item.icone}</div>
+            <div>
+              <p className="font-bold text-sm mb-1">{item.titre}</p>
+              <p className="text-sm opacity-60 leading-relaxed">{item.texte}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Howto Section ────────────────────────────────────────────────────────────
+function HowtoSection({ config, accent, surface }: { config: Record<string, any>; accent: string; surface: string }) {
+  const steps: { num: string; titre: string; texte: string }[] = config.steps || [];
+  return (
+    <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
+      {config.titre && <h3 className="text-2xl font-bold mb-8">{config.titre}</h3>}
+      <div className="space-y-4 max-w-2xl">
+        {steps.map((step, i) => (
+          <div key={i} className="flex gap-5 items-start">
+            <div className="w-12 h-12 rounded-2xl font-black text-sm flex items-center justify-center flex-shrink-0" style={{ background: `${accent}15`, color: accent }}>{step.num}</div>
+            <div className="pt-1">
+              <p className="font-bold mb-1">{step.titre}</p>
+              <p className="text-sm opacity-60 leading-relaxed">{step.texte}</p>
+            </div>
+            {i < steps.length - 1 && <div className="absolute left-[23px] mt-12 w-px h-4 bg-current opacity-10" />}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Testimonials Section ─────────────────────────────────────────────────────
+function TestimonialsSection({ config, accent, surface }: { config: Record<string, any>; accent: string; surface: string }) {
+  const items: { nom: string; note: number; texte: string; avatar?: string }[] = config.items || [];
+  return (
+    <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
+      {config.titre && <h3 className="text-2xl font-bold mb-8">{config.titre}</h3>}
+      <div className="grid sm:grid-cols-2 gap-4 max-w-3xl">
+        {items.map((item, i) => (
+          <div key={i} className="p-6 rounded-2xl" style={{ background: surface }}>
+            <div className="flex mb-3">
+              {[1,2,3,4,5].map(s => (
+                <span key={s} style={{ color: s <= item.note ? accent : "currentColor", opacity: s <= item.note ? 1 : 0.15, fontSize: 13 }}>★</span>
+              ))}
+            </div>
+            <p className="text-sm leading-relaxed opacity-70 mb-4 italic">"{item.texte}"</p>
+            <div className="flex items-center gap-2">
+              {item.avatar ? (
+                <img src={item.avatar} alt={item.nom} className="w-8 h-8 rounded-full object-cover" />
+              ) : (
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: `${accent}25`, color: accent }}>{item.nom[0]}</div>
+              )}
+              <p className="text-sm font-semibold">{item.nom}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Ingredients Section ──────────────────────────────────────────────────────
+function IngredientsSection({ config, accent, surface }: { config: Record<string, any>; accent: string; surface: string }) {
+  const items: { nom: string; desc: string }[] = config.items || [];
+  return (
+    <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
+      {config.titre && <h3 className="text-2xl font-bold mb-4">{config.titre}</h3>}
+      {config.texte && <p className="text-sm opacity-60 mb-8 max-w-2xl leading-relaxed">{config.texte}</p>}
+      <div className="grid sm:grid-cols-2 gap-3 max-w-3xl">
+        {items.map((item, i) => (
+          <div key={i} className="flex items-start gap-3 p-4 rounded-xl" style={{ background: surface }}>
+            <div className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0" style={{ background: accent }} />
+            <div>
+              <p className="text-sm font-semibold">{item.nom}</p>
+              {item.desc && <p className="text-xs opacity-50 mt-0.5 leading-relaxed">{item.desc}</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Size Guide Section ───────────────────────────────────────────────────────
+function SizeGuideSection({ config, accent, surface }: { config: Record<string, any>; accent: string; surface: string }) {
+  const headers: string[] = config.headers || [];
+  const rows: { cells: string[] }[] = config.rows || [];
+  return (
+    <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
+      {config.titre && <h3 className="text-2xl font-bold mb-8">{config.titre}</h3>}
+      <div className="overflow-x-auto max-w-3xl">
+        <table className="w-full text-sm min-w-[400px]">
+          <thead>
+            <tr style={{ background: accent }}>
+              {headers.map((h, i) => (
+                <th key={i} className="py-3 px-4 text-left font-bold text-white text-xs">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={i} style={{ background: i % 2 === 0 ? surface : "transparent" }}>
+                {row.cells.map((cell, j) => (
+                  <td key={j} className="py-3 px-4" style={{ fontWeight: j === 0 ? 700 : 400, color: j === 0 ? accent : "inherit", opacity: j === 0 ? 1 : 0.7 }}>{cell}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ─── Guarantee Section ────────────────────────────────────────────────────────
+function GuaranteeSection({ config, accent, surface }: { config: Record<string, any>; accent: string; surface: string }) {
+  const items: { icone: string; titre: string; texte: string }[] = config.items || [];
+  return (
+    <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
+      {config.titre && <h3 className="text-2xl font-bold mb-8">{config.titre}</h3>}
+      <div className="grid sm:grid-cols-3 gap-4 max-w-3xl">
+        {items.map((item, i) => (
+          <div key={i} className="text-center p-6 rounded-2xl" style={{ background: surface }}>
+            <div className="text-3xl mb-3">{item.icone}</div>
+            <p className="font-bold text-sm mb-2">{item.titre}</p>
+            <p className="text-xs opacity-55 leading-relaxed">{item.texte}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Bundle Section ───────────────────────────────────────────────────────────
+function BundleSection({ config, accent, surface, radius, slug }: { config: Record<string, any>; accent: string; surface: string; radius: string; slug: string }) {
+  const items: { nom: string; imageUrl: string; prix: string }[] = config.items || [];
+  return (
+    <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
+      {config.titre && <h3 className="text-2xl font-bold mb-6">{config.titre}</h3>}
+      <div className="flex flex-wrap gap-4 items-center mb-6">
+        {items.map((item, i) => (
+          <React.Fragment key={i}>
+            {i > 0 && <span className="text-2xl opacity-30 font-bold">+</span>}
+            <div className="flex items-center gap-3 p-3 rounded-2xl" style={{ background: surface }}>
+              {item.imageUrl
+                ? <img src={item.imageUrl} alt={item.nom} className="w-12 h-12 rounded-xl object-cover" />
+                : <div className="w-12 h-12 rounded-xl" style={{ background: `${accent}15` }} />}
+              <div>
+                <p className="text-sm font-semibold">{item.nom}</p>
+                {item.prix && <p className="text-xs font-bold" style={{ color: accent }}>{item.prix}</p>}
+              </div>
+            </div>
+          </React.Fragment>
+        ))}
+      </div>
+      {config.ctaTexte && (
+        <Link href={`/${slug}/checkout`} className="inline-flex items-center gap-2 px-8 py-3 rounded-2xl font-bold text-sm"
+          style={{ background: accent, color: "#fff" }}>{config.ctaTexte}</Link>
+      )}
+    </div>
+  );
+}
+
+// ─── Comparison Section ───────────────────────────────────────────────────────
+function ComparisonSection({ config, accent, surface }: { config: Record<string, any>; accent: string; surface: string }) {
+  const headers: string[] = config.headers || [];
+  const rows: { cells: string[] }[] = config.rows || [];
+  return (
+    <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
+      {config.titre && <h3 className="text-2xl font-bold mb-8">{config.titre}</h3>}
+      <div className="overflow-x-auto max-w-3xl">
+        <table className="w-full text-sm min-w-[360px]">
+          <thead>
+            <tr>
+              {headers.map((h, i) => (
+                <th key={i} className="py-3 px-4 text-left text-xs font-bold"
+                  style={{ background: i === 1 ? accent : surface, color: i === 1 ? "#fff" : "inherit", opacity: i === 0 ? 0.5 : 1, borderRadius: i === 0 ? "12px 0 0 0" : i === headers.length - 1 ? "0 12px 0 0" : undefined }}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={i} style={{ background: i % 2 === 0 ? `${surface}80` : "transparent" }}>
+                {row.cells.map((cell, j) => (
+                  <td key={j} className="py-3 px-4 text-sm"
+                    style={{ fontWeight: j === 1 ? 700 : 400, color: j === 1 ? accent : "inherit", opacity: j === 0 ? 0.6 : 1 }}>{cell}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -705,13 +915,21 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
               </div>
             )}
 
-            {sec.type === "richtext" && <RichtextSection config={sec.config} accent={accent} radius={radius} slug={slug} />}
-            {sec.type === "banner"   && <BannerSection   config={sec.config} accent={accent} radius={radius} slug={slug} />}
-            {sec.type === "video"    && <VideoSection    config={sec.config} accent={accent} radius={radius} />}
-            {sec.type === "faq"      && <FaqSection      config={sec.config} accent={accent} surface={surface} />}
-            {sec.type === "specs"    && <SpecsSection    config={sec.config} accent={accent} surface={surface} />}
-            {sec.type === "countdown"&& <CountdownSection config={sec.config} accent={accent} surface={surface} slug={slug} />}
-            {sec.type === "social"   && <SocialSection   accent={accent} nom={produit.nom} />}
+            {sec.type === "richtext"     && <RichtextSection    config={sec.config} accent={accent} radius={radius} slug={slug} />}
+            {sec.type === "features"     && <FeaturesSection    config={sec.config} accent={accent} surface={surface} radius={radius} />}
+            {sec.type === "howto"        && <HowtoSection       config={sec.config} accent={accent} surface={surface} />}
+            {sec.type === "banner"       && <BannerSection      config={sec.config} accent={accent} radius={radius} slug={slug} />}
+            {sec.type === "video"        && <VideoSection       config={sec.config} accent={accent} radius={radius} />}
+            {sec.type === "faq"          && <FaqSection         config={sec.config} accent={accent} surface={surface} />}
+            {sec.type === "specs"        && <SpecsSection       config={sec.config} accent={accent} surface={surface} />}
+            {sec.type === "ingredients"  && <IngredientsSection config={sec.config} accent={accent} surface={surface} />}
+            {sec.type === "testimonials" && <TestimonialsSection config={sec.config} accent={accent} surface={surface} />}
+            {sec.type === "sizeguide"    && <SizeGuideSection   config={sec.config} accent={accent} surface={surface} />}
+            {sec.type === "guarantee"    && <GuaranteeSection   config={sec.config} accent={accent} surface={surface} />}
+            {sec.type === "bundle"       && <BundleSection      config={sec.config} accent={accent} surface={surface} radius={radius} slug={slug} />}
+            {sec.type === "comparison"   && <ComparisonSection  config={sec.config} accent={accent} surface={surface} />}
+            {sec.type === "countdown"    && <CountdownSection   config={sec.config} accent={accent} surface={surface} slug={slug} />}
+            {sec.type === "social"       && <SocialSection      accent={accent} nom={produit.nom} />}
 
           </React.Fragment>
         ))}

@@ -163,11 +163,6 @@ export default function BuilderPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const iframeRef   = useRef<HTMLIFrameElement>(null);
 
-  useEffect(() => {
-    const handler = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener("fullscreenchange", handler);
-    return () => document.removeEventListener("fullscreenchange", handler);
-  }, []);
   const debounce    = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -296,7 +291,7 @@ export default function BuilderPage() {
   const sectionOrder = config.sectionOrder || DEFAULT_SECTION_ORDER;
 
   return (
-    <div className="h-screen flex flex-col bg-[#050508] text-white overflow-hidden" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <div className={`flex flex-col bg-[#050508] text-white overflow-hidden ${isFullscreen ? "fixed inset-0 z-[9999]" : "h-screen"}`} style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
 
       {/* HEADER */}
       <header className="h-11 flex items-center justify-between px-4 bg-[#08080f] border-b border-white/5 flex-shrink-0 gap-4">
@@ -323,7 +318,7 @@ export default function BuilderPage() {
             ))}
           </div>
           <button
-            onClick={() => { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(() => {}); } else { document.exitFullscreen(); } }}
+            onClick={() => setIsFullscreen(v => !v)}
             title={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
             className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all ${isFullscreen ? "border-[#F5A623]/50 bg-[#F5A623]/15 text-[#F5A623]" : "border-white/10 text-gray-500 hover:text-white hover:border-white/20"}`}>
             {isFullscreen ? <Minimize2 size={11} /> : <Maximize2 size={11} />}
@@ -1325,31 +1320,47 @@ function PanelAvance({ config, set, tenant, onReset }: any) {
 const BUILTIN_TYPES = new Set(["gallery","info","variants","quantity","trust","description","reviews","similar"]);
 
 const PRODUIT_SECTION_META: Record<string, { label: string; Icon: any }> = {
-  gallery:     { label: "Galerie photos",      Icon: ImageIcon },
-  info:        { label: "Infos produit",       Icon: FileText },
-  variants:    { label: "Variantes",           Icon: Layers },
-  quantity:    { label: "Quantité & panier",   Icon: ShoppingCart },
-  trust:       { label: "Badges confiance",    Icon: Shield },
-  description: { label: "Description",         Icon: BookOpen },
-  reviews:     { label: "Avis clients",        Icon: Star },
-  similar:     { label: "Produits similaires", Icon: LayoutGrid },
-  richtext:    { label: "Texte libre",         Icon: FileText },
-  banner:      { label: "Bannière image",      Icon: ImageIcon },
-  video:       { label: "Vidéo",               Icon: Video },
-  faq:         { label: "FAQ produit",         Icon: HelpCircle },
-  specs:       { label: "Caractéristiques",    Icon: BarChart3 },
-  countdown:   { label: "Compte à rebours",    Icon: Timer },
-  social:      { label: "Partage social",      Icon: Share2 },
+  gallery:      { label: "Galerie photos",           Icon: ImageIcon },
+  info:         { label: "Infos produit",            Icon: FileText },
+  variants:     { label: "Variantes",                Icon: Layers },
+  quantity:     { label: "Quantité & panier",        Icon: ShoppingCart },
+  trust:        { label: "Badges confiance",         Icon: Shield },
+  description:  { label: "Description",              Icon: BookOpen },
+  reviews:      { label: "Avis clients",             Icon: Star },
+  similar:      { label: "Produits similaires",      Icon: LayoutGrid },
+  richtext:     { label: "Texte libre",              Icon: FileText },
+  features:     { label: "Points forts",             Icon: Zap },
+  howto:        { label: "Mode d'emploi",            Icon: BookOpen },
+  banner:       { label: "Bannière image",           Icon: ImageIcon },
+  video:        { label: "Vidéo",                    Icon: Video },
+  faq:          { label: "FAQ produit",              Icon: HelpCircle },
+  specs:        { label: "Caractéristiques",         Icon: BarChart3 },
+  ingredients:  { label: "Ingrédients / Matières",  Icon: FileText },
+  testimonials: { label: "Témoignages",              Icon: MessageCircle },
+  sizeguide:    { label: "Guide des tailles",        Icon: ArrowUpDown },
+  guarantee:    { label: "Garantie & SAV",           Icon: Shield },
+  bundle:       { label: "Pack / Bundle",            Icon: Layers },
+  comparison:   { label: "Tableau comparatif",       Icon: LayoutGrid },
+  countdown:    { label: "Compte à rebours",         Icon: Timer },
+  social:       { label: "Partage social",           Icon: Share2 },
 };
 
 const PRODUIT_LIBRARY = [
-  { type: "richtext",  label: "Texte libre",         Icon: FileText,   desc: "Bloc de texte avec titre et bouton CTA" },
-  { type: "banner",    label: "Bannière image",       Icon: ImageIcon,  desc: "Image pleine largeur avec texte overlay" },
-  { type: "video",     label: "Vidéo",               Icon: Video,      desc: "YouTube, Vimeo ou fichier mp4" },
-  { type: "faq",       label: "FAQ produit",          Icon: HelpCircle, desc: "Questions fréquentes sur le produit" },
-  { type: "specs",     label: "Caractéristiques",     Icon: BarChart3,  desc: "Tableau des spécifications techniques" },
-  { type: "countdown", label: "Compte à rebours",     Icon: Timer,      desc: "Urgence pour une offre limitée" },
-  { type: "social",    label: "Partage social",        Icon: Share2,     desc: "Boutons Facebook, WhatsApp, lien copie" },
+  { type: "richtext",      label: "Texte libre",           Icon: FileText,      desc: "Bloc de texte avec titre et bouton CTA" },
+  { type: "features",      label: "Points forts",          Icon: Zap,           desc: "Grille d'avantages avec icône et description" },
+  { type: "howto",         label: "Mode d'emploi",         Icon: BookOpen,      desc: "Étapes numérotées pour utiliser le produit" },
+  { type: "banner",        label: "Bannière image",        Icon: ImageIcon,     desc: "Image pleine largeur avec texte overlay" },
+  { type: "video",         label: "Vidéo",                 Icon: Video,         desc: "YouTube, Vimeo ou fichier mp4" },
+  { type: "faq",           label: "FAQ produit",           Icon: HelpCircle,    desc: "Questions fréquentes sur le produit" },
+  { type: "specs",         label: "Caractéristiques",      Icon: BarChart3,     desc: "Tableau des spécifications techniques" },
+  { type: "ingredients",   label: "Ingrédients / Matières",Icon: FileText,      desc: "Liste détaillée de composition" },
+  { type: "testimonials",  label: "Témoignages",           Icon: MessageCircle, desc: "Citations et avis clients mis en avant" },
+  { type: "sizeguide",     label: "Guide des tailles",     Icon: ArrowUpDown,   desc: "Tableau de correspondance des tailles" },
+  { type: "guarantee",     label: "Garantie & SAV",        Icon: Shield,        desc: "Informations garantie et service client" },
+  { type: "bundle",        label: "Pack / Bundle",         Icon: Layers,        desc: "Produits fréquemment achetés ensemble" },
+  { type: "comparison",    label: "Tableau comparatif",    Icon: LayoutGrid,    desc: "Comparez avec d'autres versions ou concurrents" },
+  { type: "countdown",     label: "Compte à rebours",      Icon: Timer,         desc: "Urgence pour une offre limitée" },
+  { type: "social",        label: "Partage social",        Icon: Share2,        desc: "Boutons Facebook, WhatsApp, lien copie" },
 ];
 
 const LAYOUT_OPTIONS = [
@@ -1533,13 +1544,21 @@ function PanelProduit({ config, setProductPage }: any) {
 
   const addSection = (type: string) => {
     const defaults: Record<string, any> = {
-      richtext:  { titre: "Notre engagement", texte: "Votre texte ici.", ctaTexte: "" },
-      banner:    { titre: "Offre spéciale", texte: "", imageUrl: "", ctaTexte: "Profiter maintenant" },
-      video:     { titre: "", videoUrl: "", autoplay: false },
-      faq:       { titre: "Questions fréquentes", items: [{ question: "Comment utiliser ce produit ?", reponse: "Répondez ici." }] },
-      specs:     { titre: "Caractéristiques", rows: [{ cle: "Matière", valeur: "" }, { cle: "Dimensions", valeur: "" }] },
-      countdown: { titre: "Offre limitée", texte: "Ne manquez pas cette opportunité !", dateFin: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 16), ctaTexte: "Profiter maintenant" },
-      social:    {},
+      richtext:     { titre: "Notre engagement", texte: "Votre texte ici.", ctaTexte: "" },
+      features:     { titre: "Pourquoi choisir ce produit ?", items: [{ icone: "✓", titre: "Qualité premium", texte: "Matériaux soigneusement sélectionnés." }, { icone: "⚡", titre: "Livraison rapide", texte: "Expédié en 24-48h." }, { icone: "♻️", titre: "Éco-responsable", texte: "Fabriqué de façon durable." }] },
+      howto:        { titre: "Comment l'utiliser ?", steps: [{ num: "01", titre: "Étape 1", texte: "Description de l'étape ici." }, { num: "02", titre: "Étape 2", texte: "Description de l'étape ici." }, { num: "03", titre: "Étape 3", texte: "Description de l'étape ici." }] },
+      banner:       { titre: "Offre spéciale", texte: "", imageUrl: "", ctaTexte: "Profiter maintenant" },
+      video:        { titre: "", videoUrl: "", autoplay: false },
+      faq:          { titre: "Questions fréquentes", items: [{ question: "Comment utiliser ce produit ?", reponse: "Répondez ici." }] },
+      specs:        { titre: "Caractéristiques techniques", rows: [{ cle: "Matière", valeur: "" }, { cle: "Dimensions", valeur: "" }, { cle: "Poids", valeur: "" }] },
+      ingredients:  { titre: "Composition", texte: "", items: [{ nom: "Ingrédient 1", desc: "" }, { nom: "Ingrédient 2", desc: "" }] },
+      testimonials: { titre: "Ils en parlent", items: [{ nom: "Marie D.", note: 5, texte: "Excellent produit, je recommande !", avatar: "" }, { nom: "Jean K.", note: 5, texte: "Très satisfait de mon achat.", avatar: "" }] },
+      sizeguide:    { titre: "Guide des tailles", headers: ["Taille", "Tour de poitrine", "Tour de taille", "Tour de hanches"], rows: [{ cells: ["XS", "80-84 cm", "60-64 cm", "86-90 cm"] }, { cells: ["S", "84-88 cm", "64-68 cm", "90-94 cm"] }, { cells: ["M", "88-92 cm", "68-72 cm", "94-98 cm"] }] },
+      guarantee:    { titre: "Notre garantie", items: [{ icone: "🛡️", titre: "Garantie 2 ans", texte: "Pièces et main-d'œuvre couvertes." }, { icone: "🔄", titre: "Retour 30 jours", texte: "Remboursement intégral si insatisfait." }, { icone: "📞", titre: "Support 7j/7", texte: "Notre équipe est là pour vous." }] },
+      bundle:       { titre: "Souvent achetés ensemble", items: [{ nom: "Produit complémentaire 1", imageUrl: "", prix: "" }, { nom: "Produit complémentaire 2", imageUrl: "", prix: "" }], ctaTexte: "Tout ajouter au panier" },
+      comparison:   { titre: "Comparaison", headers: ["Caractéristique", "Ce produit", "Standard"], rows: [{ cells: ["Qualité", "✓ Premium", "Basique"] }, { cells: ["Garantie", "✓ 2 ans", "6 mois"] }, { cells: ["Support", "✓ Prioritaire", "Email"] }] },
+      countdown:    { titre: "Offre limitée", texte: "Ne manquez pas cette opportunité !", dateFin: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 16), ctaTexte: "Profiter maintenant" },
+      social:       {},
     };
     const id = `custom_${Date.now()}`;
     const newSec: ProductPageSection = { id, type: type as any, actif: true, config: defaults[type] || {} };
