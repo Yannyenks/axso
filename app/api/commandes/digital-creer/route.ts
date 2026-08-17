@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
         clientId: clientRecord.id,
         clientNom: client.nom,
         clientEmail: client.email,
-        clientTelephone: client.telephone || null,
+        clientTelephone: client.telephone || "",
         adresseLivraison: "Digital",
         ville: "Digital",
         pays: client.pays || "—",
