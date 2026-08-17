@@ -137,6 +137,13 @@ model Produit {
   telechargements Telechargement[]
   affiliationLiens AffiliationLien[]
   stocksEntrepot  StockEntrepot[]
+  // Produits digitaux avancés
+  variantesPrix   VariantePrix[]
+  produitFichier  ProduitFichier?
+  formation       Formation?
+  licenceProduit  LicenceProduit?
+  bundleProduit   BundleProduit?
+  inclusEnBundle  ElementBundle[]  @relation("InclusDansBundle")
 
   @@unique([tenantId, slug])
 }
@@ -1451,4 +1458,196 @@ model CommissionAffilie {
 
   @@index([tenantId])
   @@index([affilieId])
+}
+
+// ============================================================
+// PRODUITS DIGITAUX AVANCÉS — Phase 0
+// ============================================================
+
+// =====================
+// VARIANTE DE PRIX (transversal — tous types digitaux)
+// =====================
+model VariantePrix {
+  id              String    @id @default(cuid())
+  produitId       String
+  tenantId        String
+  nom             String                    // "Standard" | "Pro" | "Lifetime"
+  slug            String                    // slug unique pour lien checkout
+  prix            Float
+  prixPromo       Float?
+  periodeValidite String?                   // "30j" | "1an" | "illimite"
+  renouvAuto      Boolean   @default(false) // abonnement reconductible
+  autorisePromo   Boolean   @default(true)
+  actif           Boolean   @default(true)
+  dateDebut       DateTime?
+  dateFin         DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  produit Produit @relation(fields: [produitId], references: [id], onDelete: Cascade)
+
+  @@unique([produitId, slug])
+  @@index([tenantId])
+}
+
+// =====================
+// PRODUIT FICHIER (type = "fichier")
+// =====================
+model ProduitFichier {
+  id               String    @id @default(cuid())
+  produitId        String    @unique
+  limitAchats      Int?                      // null = illimité
+  motDePasse       String?                   // hashé bcrypt
+  filigrane        Boolean   @default(false) // injecter nom/email acheteur dans PDF livré
+  instructionsAchat String?  @db.Text
+  createdAt        DateTime  @default(now())
+
+  produit  Produit            @relation(fields: [produitId], references: [id], onDelete: Cascade)
+  fichiers FichierNumerique[]
+}
+
+// Fichiers individuels d'un produit digital (multi-fichiers avec ordre)
+model FichierNumerique {
+  id               String   @id @default(cuid())
+  produitFichierId String
+  nom              String
+  url              String                   // Vercel Blob — jamais exposée directement côté client
+  taille           Int?                     // octets
+  mimeType         String?
+  ordre            Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  produitFichier ProduitFichier @relation(fields: [produitFichierId], references: [id], onDelete: Cascade)
+}
+
+// =====================
+// FORMATION (type = "formation")
+// =====================
+model Formation {
+  id        String   @id @default(cuid())
+  produitId String   @unique
+  niveau    String?  // "debutant" | "intermediaire" | "avance"
+  langue    String   @default("fr")
+  dureeMin  Int?     // durée totale estimée en minutes
+  certif    Boolean  @default(false) // certificat de complétion généré
+  createdAt DateTime @default(now())
+
+  produit   Produit    @relation(fields: [produitId], references: [id], onDelete: Cascade)
+  chapitres Chapitre[]
+}
+
+model Chapitre {
+  id          String   @id @default(cuid())
+  formationId String
+  titre       String
+  ordre       Int      @default(0)
+  actif       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  formation Formation @relation(fields: [formationId], references: [id], onDelete: Cascade)
+  lecons    Lecon[]
+}
+
+model Lecon {
+  id         String   @id @default(cuid())
+  chapitreId String
+  titre      String
+  type       String   @default("texte") // "texte" | "video" | "audio"
+  contenu    String?  @db.Text          // HTML pour type texte
+  videoType  String?                    // "upload" | "youtube" | "vimeo" | "iframe"
+  videoUrl   String?
+  audioUrl   String?
+  duree      Int?                       // secondes
+  ordre      Int      @default(0)
+  gratuite   Boolean  @default(false)  // aperçu libre sans achat
+  actif      Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  chapitre     Chapitre           @relation(fields: [chapitreId], references: [id], onDelete: Cascade)
+  progressions ProgressionLecon[]
+}
+
+model ProgressionLecon {
+  id          String    @id @default(cuid())
+  leconId     String
+  commandeId  String                    // commande qui a donné l'accès
+  clientEmail String
+  complete    Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  lecon Lecon @relation(fields: [leconId], references: [id], onDelete: Cascade)
+
+  @@unique([leconId, clientEmail])
+  @@index([commandeId])
+}
+
+// =====================
+// LICENCE (type = "licence")
+// =====================
+model LicenceProduit {
+  id             String   @id @default(cuid())
+  produitId      String   @unique
+  modeDistrib    String   @default("auto")  // "auto" | "stock"
+  formatAuto     String   @default("uuid")  // "uuid" | "alpha"
+  prefixe        String?                    // ex: "AXSO-"
+  longueur       Int      @default(16)      // pour mode "alpha" (8–32)
+  maxActivations Int      @default(1)
+  dureeJours     Int?                       // null = illimité
+  createdAt      DateTime @default(now())
+
+  produit Produit      @relation(fields: [produitId], references: [id], onDelete: Cascade)
+  cles    CleLicence[]
+}
+
+model CleLicence {
+  id               String    @id @default(cuid())
+  licenceProduitId String
+  cle              String    @unique
+  statut           String    @default("disponible") // disponible | vendue | expiree | revoquee
+  commandeId       String?                          // commande qui a attribué la clé
+  acheteurEmail    String?
+  expireAt         DateTime?
+  createdAt        DateTime  @default(now())
+
+  licenceProduit LicenceProduit      @relation(fields: [licenceProduitId], references: [id], onDelete: Cascade)
+  activations    ActivationLicence[]
+
+  @@index([licenceProduitId, statut])
+}
+
+model ActivationLicence {
+  id          String   @id @default(cuid())
+  cleId       String
+  appareil    String?                    // identifiant appareil ou user-agent
+  ipAdresse   String?
+  activatedAt DateTime @default(now())
+
+  cle CleLicence @relation(fields: [cleId], references: [id], onDelete: Cascade)
+
+  @@index([cleId])
+}
+
+// =====================
+// BUNDLE (type = "bundle")
+// =====================
+model BundleProduit {
+  id        String   @id @default(cuid())
+  produitId String   @unique
+  createdAt DateTime @default(now())
+
+  produit  Produit         @relation(fields: [produitId], references: [id], onDelete: Cascade)
+  elements ElementBundle[]
+}
+
+model ElementBundle {
+  id              String @id @default(cuid())
+  bundleId        String
+  produitInclusId String
+  ordre           Int    @default(0)
+
+  bundle        BundleProduit @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  produitInclus Produit       @relation("InclusDansBundle", fields: [produitInclusId], references: [id])
+
+  @@unique([bundleId, produitInclusId])
 }
