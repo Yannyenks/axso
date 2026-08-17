@@ -118,6 +118,7 @@ export default async function ProduitPage({ params }: Props) {
   };
 
   const tenantProps = {
+    id: tenant.id,
     slug,
     nomBoutique: tenant.nomBoutique,
     devise: tenant.devise,

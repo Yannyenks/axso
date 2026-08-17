@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { PCOnlyGate } from "@/components/dashboard/PCOnlyGate";
 import { Plus, Palette, Check, Trash2, Edit2, ExternalLink, Sparkles } from "lucide-react";
 
 export default function ThemesPage() {
@@ -67,6 +68,7 @@ export default function ThemesPage() {
 
   return (
     <div className="max-w-6xl space-y-8">
+      <PCOnlyGate label="Theme Studio" />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
+import { PCOnlyGate } from "@/components/dashboard/PCOnlyGate";
 import {
   Save, Monitor, Tablet, Smartphone, ExternalLink, ArrowLeft,
   LayoutGrid, Palette, Type, LayoutTemplate, MousePointer2, Code2,
@@ -292,6 +293,7 @@ export default function BuilderPage() {
 
   return (
     <div className={`flex flex-col bg-[#050508] text-white overflow-hidden ${isFullscreen ? "fixed inset-0 z-[9999]" : "h-screen"}`} style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+      <PCOnlyGate label="Le Constructeur de boutique" />
 
       {/* HEADER */}
       <header className="h-11 flex items-center justify-between px-4 bg-[#08080f] border-b border-white/5 flex-shrink-0 gap-4">

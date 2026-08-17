@@ -44,7 +44,7 @@ export interface ProductPageClientProps {
     collections: { nom: string; slug: string }[]; noteMoyenne: number;
   };
   tenant: {
-    slug: string; nomBoutique: string; devise: string; certifie: boolean;
+    id: string; slug: string; nomBoutique: string; devise: string; certifie: boolean;
     accent: string; fond: string; texte: string; surface: string; radius: string;
     whatsapp: string | null; whatsappNumero: string | null;
     productPage?: { layout?: string; sections?: ProdSection[] } | null;
@@ -61,6 +61,95 @@ function Stars({ note, size = 14, accent }: { note: number; size?: number; accen
           fill={i <= Math.floor(note) ? accent : "none"} opacity={i <= Math.ceil(note) ? 1 : 0.2} />
       ))}
     </div>
+  );
+}
+
+// ─── AvisForm ─────────────────────────────────────────────────────────────────
+function AvisForm({ tenantId, produitId, accent, surface, radius }: {
+  tenantId: string; produitId: string; accent: string; surface: string; radius: string;
+}) {
+  const [note, setNote]         = useState(0);
+  const [hover, setHover]       = useState(0);
+  const [nom, setNom]           = useState("");
+  const [email, setEmail]       = useState("");
+  const [titre, setTitre]       = useState("");
+  const [commentaire, setComment] = useState("");
+  const [loading, setLoading]   = useState(false);
+  const [done, setDone]         = useState(false);
+  const [err, setErr]           = useState("");
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!note) { setErr("Veuillez sélectionner une note."); return; }
+    if (!nom.trim() || !email.trim()) { setErr("Nom et email requis."); return; }
+    setLoading(true); setErr("");
+    try {
+      const res = await fetch("/api/avis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantId, produitId, clientNom: nom, clientEmail: email, note, titre, commentaire }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setErr(data.error || "Erreur lors de l'envoi."); }
+      else { setDone(true); }
+    } catch { setErr("Erreur réseau. Réessayez."); }
+    finally { setLoading(false); }
+  }
+
+  const rad = radius === "none" ? "0" : radius === "sm" ? "8px" : radius === "full" ? "20px" : "14px";
+
+  if (done) return (
+    <div className="text-center py-8 rounded-2xl" style={{ background: surface, border: `1px solid ${accent}15` }}>
+      <div className="text-3xl mb-3">⭐</div>
+      <p className="font-semibold text-sm mb-1">Merci pour votre avis !</p>
+      <p className="text-xs opacity-40">Il sera visible après modération.</p>
+    </div>
+  );
+
+  return (
+    <form onSubmit={submit} className="rounded-2xl p-6 space-y-4" style={{ background: surface, border: `1px solid ${accent}15` }}>
+      <h3 className="font-bold text-sm">Laisser un avis</h3>
+
+      {/* Star picker */}
+      <div className="flex items-center gap-1">
+        {[1,2,3,4,5].map(i => (
+          <button key={i} type="button"
+            onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(0)}
+            onClick={() => setNote(i)}
+            style={{ background: "none", border: "none", padding: 2, cursor: "pointer" }}>
+            <Star size={26} strokeWidth={1.5} style={{ color: accent }}
+              fill={(hover || note) >= i ? accent : "none"}
+              opacity={(hover || note) >= i ? 1 : 0.2} />
+          </button>
+        ))}
+        {note > 0 && <span className="text-xs ml-2 opacity-40">{["","Décevant","Moyen","Bien","Très bien","Excellent"][note]}</span>}
+      </div>
+
+      {/* Fields */}
+      <div className="grid sm:grid-cols-2 gap-3">
+        <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Votre nom *"
+          className="w-full px-3 py-2.5 text-sm outline-none transition-all"
+          style={{ borderRadius: rad, border: `1px solid ${accent}20`, background: "transparent" }} />
+        <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Votre email *"
+          className="w-full px-3 py-2.5 text-sm outline-none transition-all"
+          style={{ borderRadius: rad, border: `1px solid ${accent}20`, background: "transparent" }} />
+      </div>
+      <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Titre (optionnel)"
+        className="w-full px-3 py-2.5 text-sm outline-none"
+        style={{ borderRadius: rad, border: `1px solid ${accent}20`, background: "transparent" }} />
+      <textarea value={commentaire} onChange={e => setComment(e.target.value)} placeholder="Votre commentaire…" rows={3}
+        className="w-full px-3 py-2.5 text-sm outline-none resize-none"
+        style={{ borderRadius: rad, border: `1px solid ${accent}20`, background: "transparent" }} />
+
+      {err && <p className="text-xs text-red-500">{err}</p>}
+
+      <button type="submit" disabled={loading}
+        className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold transition-all disabled:opacity-50"
+        style={{ background: accent, color: "white", borderRadius: rad, border: "none", cursor: loading ? "default" : "pointer" }}>
+        {loading ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" /> : <Star size={14} fill="white" stroke="none" />}
+        {loading ? "Envoi…" : "Soumettre l'avis"}
+      </button>
+    </form>
   );
 }
 
@@ -842,30 +931,39 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
                     </div>
                   )}
                   {tab === "avis" && isOn("reviews") && (
-                    produit.avis.length > 0 ? (
-                      <div className="space-y-8">
-                        <RatingBreakdown avis={produit.avis} accent={accent} moyenne={produit.noteMoyenne} />
-                        <div className="h-px" style={{ background: `${accent}12` }} />
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          {produit.avis.map(avis => (
-                            <div key={avis.id} className="p-5 rounded-2xl" style={{ background: surface, border: `1px solid ${accent}10` }}>
-                              <div className="flex items-center justify-between mb-2">
-                                <Stars note={avis.note} size={13} accent={accent} />
-                                {avis.verifie && <span className="text-[10px] text-emerald-500 font-bold flex items-center gap-0.5"><Check size={10} /> Achat vérifié</span>}
+                    <div className="space-y-8">
+                      {produit.avis.length > 0 ? (
+                        <>
+                          <RatingBreakdown avis={produit.avis} accent={accent} moyenne={produit.noteMoyenne} />
+                          <div className="h-px" style={{ background: `${accent}12` }} />
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            {produit.avis.map(avis => (
+                              <div key={avis.id} className="p-5 rounded-2xl" style={{ background: surface, border: `1px solid ${accent}10` }}>
+                                <div className="flex items-center justify-between mb-2">
+                                  <Stars note={avis.note} size={13} accent={accent} />
+                                  {avis.verifie && <span className="text-[10px] text-emerald-500 font-bold flex items-center gap-0.5"><Check size={10} /> Achat vérifié</span>}
+                                </div>
+                                {avis.titre && <p className="font-semibold text-sm mb-1">{avis.titre}</p>}
+                                {avis.commentaire && <p className="text-sm leading-relaxed" style={{ opacity: 0.6 }}>{avis.commentaire}</p>}
+                                <p className="text-xs mt-3 font-semibold" style={{ opacity: 0.3 }}>— {avis.client?.nom || "Client"}</p>
                               </div>
-                              {avis.titre && <p className="font-semibold text-sm mb-1">{avis.titre}</p>}
-                              {avis.commentaire && <p className="text-sm leading-relaxed" style={{ opacity: 0.6 }}>{avis.commentaire}</p>}
-                              <p className="text-xs mt-3 font-semibold" style={{ opacity: 0.3 }}>— {avis.client?.nom || "Client"}</p>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-center py-10">
+                          <Star size={32} className="mx-auto mb-3" style={{ opacity: 0.12, color: accent }} />
+                          <p className="font-medium text-sm" style={{ opacity: 0.35 }}>Soyez le premier à laisser un avis.</p>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-16">
-                        <Star size={36} className="mx-auto mb-3" style={{ opacity: 0.15, color: accent }} />
-                        <p className="font-medium text-sm" style={{ opacity: 0.4 }}>Aucun avis pour ce produit.</p>
-                      </div>
-                    )
+                      )}
+                      <AvisForm
+                        tenantId={tenant.id}
+                        produitId={produit.id}
+                        accent={accent}
+                        surface={surface}
+                        radius={radius}
+                      />
+                    </div>
                   )}
                 </div>
               </>

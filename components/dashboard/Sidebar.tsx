@@ -10,39 +10,46 @@ import {
   IconMarketing, IconMessages, IconLivraisons,
   IconAnalytics, IconAbonnement, IconParametres, IconIA,
   IconWhatsApp, IconAvis, IconPaiements, IconSourcing, IconThemes, IconWallet,
+  IconConnecteurs, IconContenus,
 } from "./AppIcons";
 
 const NAV_GROUPS = [
   {
     label: "Boutique",
     items: [
-      { href: "/dashboard",           label: "Accueil",      Icone: IconAccueil,    exact: true },
-      { href: "/dashboard/boutique",  label: "Ma boutique",  Icone: IconBoutique },
-      { href: "/dashboard/builder",   label: "Constructeur", Icone: IconBuilder },
-      { href: "/dashboard/produits",  label: "Produits",     Icone: IconProduits },
-      { href: "/dashboard/commandes", label: "Commandes",    Icone: IconCommandes,  badge: true },
-      { href: "/dashboard/clients",   label: "Clients",      Icone: IconClients },
-      { href: "/dashboard/whatsapp",  label: "WhatsApp",     Icone: IconWhatsApp,   badge: true },
+      { href: "/dashboard",           label: "Accueil",         Icone: IconAccueil,    exact: true },
+      { href: "/dashboard/boutique",  label: "Ma boutique",     Icone: IconBoutique },
+      { href: "/dashboard/builder",   label: "Constructeur",    Icone: IconBuilder },
+      { href: "/dashboard/produits",  label: "Produits",        Icone: IconProduits },
+      { href: "/dashboard/commandes", label: "Commandes",       Icone: IconCommandes,  badge: true },
+      { href: "/dashboard/clients",   label: "Clients",         Icone: IconClients },
+      { href: "/dashboard/whatsapp",  label: "WhatsApp",        Icone: IconWhatsApp,   badge: true },
+      { href: "/dashboard/avis",      label: "Avis clients",    Icone: IconAvis },
     ],
   },
   {
     label: "Finance",
     items: [
-      { href: "/dashboard/revenus",   label: "Revenus",      Icone: IconRevenus },
-      { href: "/dashboard/wallet",    label: "Wallet",       Icone: IconWallet },
+      { href: "/dashboard/revenus",   label: "Revenus",         Icone: IconRevenus },
+      { href: "/dashboard/paiements", label: "Paiements",       Icone: IconPaiements },
+      { href: "/dashboard/wallet",    label: "Wallet",          Icone: IconWallet },
     ],
   },
   {
     label: "Croissance",
     items: [
-      { href: "/dashboard/marketing", label: "Marketing",    Icone: IconMarketing },
-      { href: "/dashboard/messages",  label: "Axsocial",     Icone: IconMessages,   badge: true },
+      { href: "/dashboard/marketing",  label: "Marketing",      Icone: IconMarketing },
+      { href: "/dashboard/publicite",  label: "Publicités Ads", Icone: IconMarketing },
+      { href: "/dashboard/messages",   label: "Axsocial",       Icone: IconMessages,   badge: true },
+      { href: "/dashboard/veille",     label: "Veille concurr.",Icone: IconAnalytics },
+      { href: "/dashboard/scheduler",  label: "Planificateur",  Icone: IconContenus },
     ],
   },
   {
     label: "Opérations",
     items: [
       { href: "/dashboard/logistique",    label: "Logistique",   Icone: IconLivraisons },
+      { href: "/dashboard/feeds",         label: "Flux produits",Icone: IconConnecteurs },
       { href: "/dashboard/dropshipping",  label: "Dropshipping", Icone: IconSourcing },
       { href: "/dashboard/affiliation",   label: "Affiliation",  Icone: IconRevenus },
       { href: "/dashboard/campagnes",     label: "Campagnes",    Icone: IconThemes },

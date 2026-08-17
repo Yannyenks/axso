@@ -62,7 +62,6 @@ const GROUPS = [
     label: "Opérations", color: "#fb923c",
     items: [
       { href: "/dashboard/logistique",   label: "Logistique",     icon: Truck },
-      { href: "/dashboard/dropshipping", label: "Dropshipping",   icon: Package2 },
       { href: "/dashboard/affiliation",  label: "Affiliation",    icon: TrendingUp },
       { href: "/dashboard/campagnes",    label: "Campagnes",      icon: Megaphone },
     ],
