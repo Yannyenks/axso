@@ -31,6 +31,12 @@ export interface ProductPageClientProps {
     slug: string; nomBoutique: string; devise: string; certifie: boolean;
     accent: string; fond: string; texte: string; surface: string; radius: string;
     whatsapp: string | null; whatsappNumero: string | null;
+    productPage?: {
+      layout?: string; galleryStyle?: string; zoomOnHover?: boolean; stickyPanel?: boolean;
+      showBreadcrumbs?: boolean; showBadges?: boolean; showStockIndicator?: boolean;
+      showQuantitySelector?: boolean; showReviews?: boolean; showSimilarProducts?: boolean;
+      showDescriptionTabs?: boolean; showAiDescription?: boolean; imageRatio?: string;
+    } | null;
   };
   produitsSimilaires: { id: string; nom: string; images: string[]; prixAffiche: number }[];
 }
@@ -84,8 +90,8 @@ function RatingBreakdown({ avis, accent, moyenne }: { avis: Avis[]; accent: stri
 }
 
 // ─── Image Gallery with hover zoom ───────────────────────────────────────────
-function ImageGallery({ images, nom, accent, radius }: {
-  images: string[]; nom: string; accent: string; radius: string;
+function ImageGallery({ images, nom, accent, radius, zoomEnabled = true }: {
+  images: string[]; nom: string; accent: string; radius: string; zoomEnabled?: boolean;
 }) {
   const [selected, setSelected] = useState(0);
   const [zoomData, setZoomData] = useState<{
@@ -94,6 +100,7 @@ function ImageGallery({ images, nom, accent, radius }: {
   const current = images[selected] ?? null;
 
   function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    if (!zoomEnabled) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
     const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
@@ -255,6 +262,17 @@ function VariantSelector({ variantes, accent, radius, selected, onSelect }: {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function ProductPageClient({ produit, tenant, produitsSimilaires }: ProductPageClientProps) {
   const { slug, devise, accent, fond, texte, surface, radius, whatsapp, whatsappNumero, nomBoutique, certifie } = tenant;
+  const pp = tenant.productPage;
+  const zoomEnabled      = pp?.zoomOnHover      !== false;
+  const stickyGallery    = pp?.stickyPanel       !== false;
+  const showBreadcrumbs  = pp?.showBreadcrumbs   !== false;
+  const showStockInd     = pp?.showStockIndicator !== false;
+  const showQtySelector  = pp?.showQuantitySelector !== false;
+  const showReviews      = pp?.showReviews       !== false;
+  const showSimilar      = pp?.showSimilarProducts !== false;
+  const showDescTabs     = pp?.showDescriptionTabs !== false;
+  const showAiDesc       = pp?.showAiDescription  !== false;
+  const showBadges       = pp?.showBadges        !== false;
 
   const [selectedVariante, setSelectedVariante] = useState<Variante | null>(null);
   const [quantite, setQuantite] = useState(1);
@@ -297,7 +315,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
     <div style={{ backgroundColor: fond, color: texte, minHeight: "100vh" }}>
 
       {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      {showBreadcrumbs && <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex items-center gap-1 text-xs flex-wrap" style={{ opacity: 0.45 }}>
           <Link href={`/${slug}`} className="hover:opacity-100 transition-opacity">Accueil</Link>
           <ChevronRight size={10} />
@@ -306,15 +324,15 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
           <ChevronRight size={10} />
           <span className="truncate max-w-[200px]" style={{ opacity: 1, color: texte }}>{produit.nom}</span>
         </div>
-      </div>
+      </div>}
 
       {/* ── Main grid ──────────────────────────────────────────────────────── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <div className="grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1.8fr)] gap-10 lg:gap-16 items-start">
 
           {/* Left — gallery */}
-          <div className="lg:sticky lg:top-6">
-            <ImageGallery images={produit.images} nom={produit.nom} accent={accent} radius={radius} />
+          <div className={stickyGallery ? "lg:sticky lg:top-6" : ""}>
+            <ImageGallery images={produit.images} nom={produit.nom} accent={accent} radius={radius} zoomEnabled={zoomEnabled} />
           </div>
 
           {/* Right — product info */}
@@ -386,7 +404,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
             </div>
 
             {/* Stock */}
-            <div className="flex items-center gap-2 text-sm">
+            {showStockInd && <div className="flex items-center gap-2 text-sm">
               {enRupture ? (
                 <><div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
                   <span className="text-red-500 font-semibold">Rupture de stock</span></>
@@ -400,7 +418,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
                 <><div className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
                   <span className="text-emerald-600 font-semibold">En stock · Expédition sous 24-48h</span></>
               )}
-            </div>
+            </div>}
 
             {/* Short description */}
             {produit.description && (
@@ -427,7 +445,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
             )}
 
             {/* Quantity selector */}
-            <div className="flex items-center gap-4">
+            {showQtySelector && <div className="flex items-center gap-4">
               <span className="text-sm font-medium opacity-55">Quantité</span>
               <div className="flex items-center border rounded-xl overflow-hidden"
                 style={{ borderColor: `${accent}25` }}>
@@ -448,7 +466,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
                   <Plus size={14} />
                 </button>
               </div>
-            </div>
+            </div>}
 
             {/* CTA Buttons */}
             <div className="space-y-2.5">
@@ -493,7 +511,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
             </div>
 
             {/* Trust badges */}
-            <div className="grid grid-cols-3 gap-2 pt-1">
+            {showBadges && <div className="grid grid-cols-3 gap-2 pt-1">
               {[
                 { icon: <Lock size={15} style={{ color: accent }} />, label: "Paiement sécurisé" },
                 { icon: <Truck size={15} style={{ color: accent }} />, label: "Livraison rapide" },
@@ -505,7 +523,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
                   <p className="text-[10px] font-semibold leading-tight" style={{ opacity: 0.55 }}>{b.label}</p>
                 </div>
               ))}
-            </div>
+            </div>}
 
             {/* Sold by */}
             <div className="rounded-xl p-4" style={{ background: surface }}>
@@ -518,12 +536,12 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
         </div>
 
         {/* ── Tabs ─────────────────────────────────────────────────────────── */}
-        <div className="mt-16 border-b" style={{ borderColor: `${accent}15` }}>
+        {showDescTabs && <div className="mt-16 border-b" style={{ borderColor: `${accent}15` }}>
           <div className="flex gap-1 overflow-x-auto">
             {([
               { key: "description", label: "Description" },
               { key: "livraison", label: "Livraison & retours" },
-              { key: "avis", label: `Avis (${produit.avis.length})` },
+              ...(showReviews ? [{ key: "avis", label: `Avis (${produit.avis.length})` }] : []),
             ] as { key: "description" | "livraison" | "avis"; label: string }[]).map(t => (
               <button
                 key={t.key}
@@ -539,16 +557,16 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
               </button>
             ))}
           </div>
-        </div>
+        </div>}
 
-        <div className="py-10 max-w-3xl">
+        {showDescTabs && <div className="py-10 max-w-3xl">
           {/* Description tab */}
           {tab === "description" && (
             <div className="space-y-5">
               {produit.description && (
                 <p className="text-base leading-relaxed" style={{ opacity: 0.7 }}>{produit.description}</p>
               )}
-              {produit.descriptionIA && (
+              {showAiDesc && produit.descriptionIA && (
                 <div className="p-5 rounded-2xl" style={{ background: surface }}>
                   <p className="text-xs font-black uppercase tracking-widest mb-3" style={{ color: accent }}>
                     Description enrichie par IA
@@ -632,10 +650,10 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
               )}
             </div>
           )}
-        </div>
+        </div>}
 
         {/* ── Similar products ──────────────────────────────────────────────── */}
-        {produitsSimilaires.length > 0 && (
+        {showSimilar && produitsSimilaires.length > 0 && (
           <div className="mt-8 border-t pt-12" style={{ borderColor: `${accent}10` }}>
             <h2 className="text-xl font-bold mb-6">Vous aimerez aussi</h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

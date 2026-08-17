@@ -10,12 +10,13 @@ import {
   Image as ImageIcon, X, GripVertical, Zap, Copy,
   BarChart3, Timer, Building2, Video, Star, Target, FileText,
   ArrowUpDown, Megaphone, Shield, FolderOpen, BookOpen, HelpCircle,
-  MessageCircle, Mail, Wrench, Award, LucideIcon
+  MessageCircle, Mail, Wrench, Award, LucideIcon,
+  ShoppingBag, Maximize2, Minimize2, ZoomIn, Package,
 } from "lucide-react";
 import { THEME_DEFAULTS, resolveThemeConfig, type ThemeConfig, type CustomSection } from "@/lib/theme-config";
 
 type Device = "desktop" | "tablet" | "mobile";
-type Panel = "sections" | "couleurs" | "typo" | "layout" | "medias" | "animations" | "boutons" | "avance";
+type Panel = "sections" | "couleurs" | "typo" | "layout" | "medias" | "animations" | "boutons" | "avance" | "produit";
 type SectionId = "annonce" | "hero" | "confiance" | "vedettes" | "collections" | "about" | "promo" | "faq" | "avis" | "newsletter";
 
 // ─── Google Fonts ─────────────────────────────────────────────────────────────
@@ -96,6 +97,7 @@ const NAV_TABS: Array<{ id: Panel; icon: React.ReactNode; tooltip: string }> = [
   { id: "medias",     icon: <ImageIcon size={17} />,     tooltip: "Médias" },
   { id: "animations", icon: <Sparkles size={17} />,      tooltip: "Animations" },
   { id: "boutons",    icon: <MousePointer2 size={17} />, tooltip: "Boutons & Nav" },
+  { id: "produit",    icon: <ShoppingBag size={17} />,   tooltip: "Fiche produit" },
   { id: "avance",     icon: <Code2 size={17} />,         tooltip: "Avancé" },
 ];
 
@@ -127,6 +129,23 @@ function generateAnimationCss(anim: ThemeConfig["animations"]): string {
   return `${kf}${staggerCss}section{animation:${name} ${dur} ${easing} both;}${paralaxCss}${scrollCss}`;
 }
 
+// ─── Product page defaults ────────────────────────────────────────────────────
+const DEFAULT_PRODUCT_PAGE = {
+  layout: "amazon",
+  galleryStyle: "vertical-thumbs",
+  zoomOnHover: true,
+  stickyPanel: true,
+  showBreadcrumbs: true,
+  showBadges: true,
+  showStockIndicator: true,
+  showQuantitySelector: true,
+  showReviews: true,
+  showSimilarProducts: true,
+  showDescriptionTabs: true,
+  showAiDescription: true,
+  imageRatio: "auto",
+} as const;
+
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function BuilderPage() {
   const [device, setDevice]           = useState<Device>("desktop");
@@ -139,6 +158,7 @@ export default function BuilderPage() {
   const [saving, setSaving]           = useState(false);
   const [saved, setSaved]             = useState(false);
   const [iframeKey, setIframeKey]     = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const iframeRef   = useRef<HTMLIFrameElement>(null);
   const debounce    = useRef<NodeJS.Timeout | null>(null);
 
@@ -177,6 +197,7 @@ export default function BuilderPage() {
   const setBoutons  = useCallback((patch: any) => set(p => ({ ...p, boutons: { ...p.boutons, ...patch } })), [set]);
   const setNavStyle = useCallback((patch: any) => set(p => ({ ...p, navigationStyle: { ...p.navigationStyle, ...patch } })), [set]);
   const setAnim     = useCallback((patch: any) => set(p => ({ ...p, animations: { ...p.animations, ...patch } as any })), [set]);
+  const setProductPage = useCallback((patch: any) => set(p => ({ ...p, productPage: { ...(p.productPage || DEFAULT_PRODUCT_PAGE), ...patch } })), [set]);
 
   const addCustomSection = useCallback((type: CustomSection["type"]) => {
     const id = `custom_${Date.now()}`;
@@ -293,6 +314,9 @@ export default function BuilderPage() {
               </button>
             ))}
           </div>
+          <button onClick={() => setIsFullscreen(v => !v)} title={isFullscreen ? "Quitter le plein écran" : "Plein écran"} className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all ${isFullscreen ? "border-[#F5A623]/50 bg-[#F5A623]/15 text-[#F5A623]" : "border-white/10 text-gray-500 hover:text-white hover:border-white/20"}`}>
+            {isFullscreen ? <Minimize2 size={11} /> : <Maximize2 size={11} />}
+          </button>
           <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-gray-500 hover:text-white border border-white/10 hover:border-white/20 transition-all">
             <ExternalLink size={10} /> Voir
           </a>
@@ -305,40 +329,45 @@ export default function BuilderPage() {
 
       {/* MAIN */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Icon sidebar */}
-            <div className="w-11 flex-shrink-0 bg-[#08080f] border-r border-white/5 flex flex-col items-center py-3 gap-1">
-              {NAV_TABS.map(t => (
-                <button key={t.id} onClick={() => setPanel(t.id)} title={t.tooltip}
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${panel===t.id?"bg-[#F5A623]/20 text-[#F5A623]":"text-gray-600 hover:text-gray-400 hover:bg-white/5"}`}>
-                  {t.icon}
-                </button>
-              ))}
-            </div>
+        {/* Icon sidebar — hidden in fullscreen */}
+        {!isFullscreen && (
+          <div className="w-11 flex-shrink-0 bg-[#08080f] border-r border-white/5 flex flex-col items-center py-3 gap-1">
+            {NAV_TABS.map(t => (
+              <button key={t.id} onClick={() => setPanel(t.id)} title={t.tooltip}
+                className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${panel===t.id?"bg-[#F5A623]/20 text-[#F5A623]":"text-gray-600 hover:text-gray-400 hover:bg-white/5"}`}>
+                {t.icon}
+              </button>
+            ))}
+          </div>
+        )}
 
-            {/* Panel */}
-            <div className="w-[300px] flex-shrink-0 bg-[#08080f] border-r border-white/5 flex flex-col overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-white/5 flex items-center justify-between flex-shrink-0">
-                <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.18em]">{NAV_TABS.find(t=>t.id===panel)?.tooltip}</p>
-                {panel === "sections" && (
-                  <button onClick={() => setShowLibrary(v => !v)} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all" style={{ backgroundColor: "#F5A623", color: "#050508" }}>
-                    <Plus size={10} /> Ajouter
-                  </button>
-                )}
-              </div>
-              <div className="flex-1 overflow-y-auto scrollbar-thin">
-                {showLibrary && panel === "sections" && (
-                  <SectionLibrary onAdd={addCustomSection} onClose={() => setShowLibrary(false)} />
-                )}
-                {!showLibrary && panel === "sections"   && <PanelSections config={config} set={set} activeSection={activeSection} setActiveSection={setActiveSection} setSection={setSection} sectionOrder={sectionOrder as SectionId[]} moveSection={moveSection} updateCustomSection={updateCustomSection} removeCustomSection={removeCustomSection} />}
-                {panel === "couleurs"   && <PanelCouleurs  config={config} setColors={setColors} />}
-                {panel === "typo"       && <PanelTypo      config={config} setFonts={setFonts} />}
-                {panel === "layout"     && <PanelLayout    config={config} setLayout={setLayout} set={set} />}
-                {panel === "medias"     && <PanelMedias    config={config} setSection={setSection} updateCustomSection={updateCustomSection} />}
-                {panel === "animations" && <PanelAnimations config={config} setAnim={setAnim} />}
-                {panel === "boutons"    && <PanelBoutons   config={config} setBoutons={setBoutons} setNavStyle={setNavStyle} />}
-                {panel === "avance"     && <PanelAvance    config={config} set={set} tenant={tenant} onReset={() => { const d = THEME_DEFAULTS[tenant.themeId] || THEME_DEFAULTS["terre-et-or"]; setConfig({ ...d }); }} />}
-              </div>
+        {/* Panel — hidden in fullscreen */}
+        {!isFullscreen && (
+          <div className="w-[300px] flex-shrink-0 bg-[#08080f] border-r border-white/5 flex flex-col overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-white/5 flex items-center justify-between flex-shrink-0">
+              <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.18em]">{NAV_TABS.find(t=>t.id===panel)?.tooltip}</p>
+              {panel === "sections" && (
+                <button onClick={() => setShowLibrary(v => !v)} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all" style={{ backgroundColor: "#F5A623", color: "#050508" }}>
+                  <Plus size={10} /> Ajouter
+                </button>
+              )}
             </div>
+            <div className="flex-1 overflow-y-auto scrollbar-thin">
+              {showLibrary && panel === "sections" && (
+                <SectionLibrary onAdd={addCustomSection} onClose={() => setShowLibrary(false)} />
+              )}
+              {!showLibrary && panel === "sections"   && <PanelSections config={config} set={set} activeSection={activeSection} setActiveSection={setActiveSection} setSection={setSection} sectionOrder={sectionOrder as SectionId[]} moveSection={moveSection} updateCustomSection={updateCustomSection} removeCustomSection={removeCustomSection} />}
+              {panel === "couleurs"   && <PanelCouleurs  config={config} setColors={setColors} />}
+              {panel === "typo"       && <PanelTypo      config={config} setFonts={setFonts} />}
+              {panel === "layout"     && <PanelLayout    config={config} setLayout={setLayout} set={set} />}
+              {panel === "medias"     && <PanelMedias    config={config} setSection={setSection} updateCustomSection={updateCustomSection} />}
+              {panel === "animations" && <PanelAnimations config={config} setAnim={setAnim} />}
+              {panel === "boutons"    && <PanelBoutons   config={config} setBoutons={setBoutons} setNavStyle={setNavStyle} />}
+              {panel === "produit"    && <PanelProduit   config={config} setProductPage={setProductPage} />}
+              {panel === "avance"     && <PanelAvance    config={config} set={set} tenant={tenant} onReset={() => { const d = THEME_DEFAULTS[tenant.themeId] || THEME_DEFAULTS["terre-et-or"]; setConfig({ ...d }); }} />}
+            </div>
+          </div>
+        )}
 
             {/* Preview */}
             <div className="flex-1 bg-[#030305] flex flex-col overflow-hidden">
@@ -1280,6 +1309,122 @@ function PanelAvance({ config, set, tenant, onReset }: any) {
         <button onClick={onReset} className="w-full px-3 py-2.5 rounded-xl border border-red-500/20 hover:border-red-400/40 text-xs text-red-500/60 hover:text-red-400 transition-all">
           Réinitialiser toutes les personnalisations
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Panel Fiche Produit ──────────────────────────────────────────────────────
+function PanelProduit({ config, setProductPage }: any) {
+  const pp = { ...DEFAULT_PRODUCT_PAGE, ...(config.productPage || {}) };
+
+  const LAYOUTS = [
+    { v: "amazon",    l: "Amazon",    desc: "Galerie gauche · info droite · sticky · zoom hover" },
+    { v: "classic",   l: "Classique", desc: "Image en haut · infos en dessous · simple et efficace" },
+    { v: "minimal",   l: "Minimal",   desc: "Épuré, sans sidebar — idéal pour les services" },
+    { v: "fullwidth", l: "Pleine largeur", desc: "Image en plein écran avec overlay d'infos" },
+  ];
+
+  const GALLERY_STYLES = [
+    { v: "vertical-thumbs",   l: "Miniatures verticales", desc: "Bande à gauche — style Amazon" },
+    { v: "horizontal-thumbs", l: "Miniatures horizontales", desc: "Bande en bas — style Shopify" },
+    { v: "dots",              l: "Points",                 desc: "Indicateurs minimalistes" },
+  ];
+
+  const IMAGE_RATIOS = [
+    { v: "auto",     l: "Auto (natif)" },
+    { v: "square",   l: "Carré 1:1" },
+    { v: "portrait", l: "Portrait 4:5" },
+  ];
+
+  const VISIBILITY_ITEMS = [
+    { key: "zoomOnHover",          label: "Zoom au survol de l'image",       icon: <ZoomIn size={12} /> },
+    { key: "stickyPanel",          label: "Panneau prix fixe au scroll",     icon: <Package size={12} /> },
+    { key: "showBreadcrumbs",      label: "Fil d'Ariane (chemin catégorie)", icon: <ChevronRight size={12} /> },
+    { key: "showBadges",           label: "Badges promo (–30%, Nouveau…)",  icon: <Star size={12} /> },
+    { key: "showStockIndicator",   label: "Indicateur de stock restant",     icon: <BarChart3 size={12} /> },
+    { key: "showQuantitySelector", label: "Sélecteur de quantité",           icon: <Plus size={12} /> },
+    { key: "showDescriptionTabs",  label: "Onglets description / specs",     icon: <FileText size={12} /> },
+    { key: "showAiDescription",    label: "Description générée par IA",      icon: <Sparkles size={12} /> },
+    { key: "showReviews",          label: "Section avis clients",            icon: <MessageCircle size={12} /> },
+    { key: "showSimilarProducts",  label: "Produits similaires",             icon: <LayoutGrid size={12} /> },
+  ];
+
+  return (
+    <div className="p-4 space-y-5">
+
+      {/* Layout */}
+      <div>
+        <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.18em] mb-3">Modèle de mise en page</p>
+        <div className="space-y-1.5">
+          {LAYOUTS.map(lay => (
+            <button key={lay.v} onClick={() => setProductPage({ layout: lay.v })}
+              className={`w-full text-left p-3 rounded-xl border transition-all ${pp.layout === lay.v ? "border-[#F5A623]/50 bg-[#F5A623]/10" : "border-white/10 hover:border-white/20"}`}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-white">{lay.l}</span>
+                {pp.layout === lay.v && <Check size={11} className="text-[#F5A623] flex-shrink-0" />}
+              </div>
+              <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">{lay.desc}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Gallery style */}
+      <div className="border-t border-white/5 pt-4">
+        <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.18em] mb-3">Style de galerie</p>
+        <div className="space-y-1.5">
+          {GALLERY_STYLES.map(gs => (
+            <button key={gs.v} onClick={() => setProductPage({ galleryStyle: gs.v })}
+              className={`w-full text-left p-2.5 rounded-xl border transition-all ${pp.galleryStyle === gs.v ? "border-[#F5A623]/50 bg-[#F5A623]/10" : "border-white/10 hover:border-white/20"}`}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-white">{gs.l}</span>
+                {pp.galleryStyle === gs.v && <Check size={11} className="text-[#F5A623] flex-shrink-0" />}
+              </div>
+              <p className="text-[10px] text-gray-500 mt-0.5">{gs.desc}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Image ratio */}
+      <div className="border-t border-white/5 pt-4">
+        <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.18em] mb-2">Format d'image</p>
+        <div className="grid grid-cols-3 gap-1.5">
+          {IMAGE_RATIOS.map(r => (
+            <button key={r.v} onClick={() => setProductPage({ imageRatio: r.v })}
+              className={`py-2 rounded-xl text-[10px] font-semibold border text-center transition-all ${pp.imageRatio === r.v ? "border-[#F5A623]/50 bg-[#F5A623]/10 text-[#F5A623]" : "border-white/10 text-gray-500 hover:border-white/20"}`}>
+              {r.l}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Visibility toggles */}
+      <div className="border-t border-white/5 pt-4">
+        <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.18em] mb-3">Éléments affichés</p>
+        <div className="space-y-0.5">
+          {VISIBILITY_ITEMS.map(item => (
+            <div key={item.key} className="flex items-center justify-between py-2 px-1 rounded-lg hover:bg-white/[0.02] transition-colors">
+              <span className="text-xs text-gray-400 flex items-center gap-2">
+                <span className="text-gray-600">{item.icon}</span>
+                {item.label}
+              </span>
+              <button onClick={() => setProductPage({ [item.key]: !(pp as any)[item.key] })} className="flex-shrink-0">
+                {(pp as any)[item.key]
+                  ? <ToggleRight size={18} style={{ color: "#F5A623" }} />
+                  : <ToggleLeft size={18} className="text-gray-700" />}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="border-t border-white/5 pt-3">
+        <p className="text-[9px] text-gray-600 leading-relaxed">
+          Ces réglages s'appliquent à toutes les fiches produits de votre boutique. Sauvegardez pour voir les changements.
+        </p>
       </div>
     </div>
   );

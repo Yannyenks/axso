@@ -129,6 +129,7 @@ export default async function ProduitPage({ params }: Props) {
     radius,
     whatsapp: tenant.whatsapp ?? null,
     whatsappNumero: tenant.whatsappNumero ?? null,
+    productPage: cfg.productPage ?? null,
   };
 
   return (

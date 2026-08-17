@@ -189,6 +189,23 @@ export interface ThemeSections {
   faq?: ThemeSectionFaq;
 }
 
+// ─── Page produit ────────────────────────────────────────────────────────────
+export interface ThemeProductPageConfig {
+  layout: "amazon" | "classic" | "minimal" | "fullwidth";
+  galleryStyle: "vertical-thumbs" | "horizontal-thumbs" | "dots";
+  zoomOnHover: boolean;
+  stickyPanel: boolean;
+  showBreadcrumbs: boolean;
+  showBadges: boolean;
+  showStockIndicator: boolean;
+  showQuantitySelector: boolean;
+  showReviews: boolean;
+  showSimilarProducts: boolean;
+  showDescriptionTabs: boolean;
+  showAiDescription: boolean;
+  imageRatio: "square" | "portrait" | "auto";
+}
+
 // ─── Config principale ───────────────────────────────────────────────────────
 export interface ThemeConfig {
   colors: ThemeColors;
@@ -205,6 +222,7 @@ export interface ThemeConfig {
   sectionSousBlocs?: Record<string, SousBloc[]>;
   customCss?: string;
   sections: ThemeSections;
+  productPage?: ThemeProductPageConfig;
   builderHtml?: string;
   builderCss?: string;
 }
