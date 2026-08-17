@@ -17,7 +17,7 @@ const OWASP_HEADERS = [
       "media-src 'self' blob: https:",
       "connect-src 'self' https:",
       "font-src 'self' data:",
-      "frame-src https://www.openstreetmap.org",
+      "frame-src 'self' https://www.openstreetmap.org",
       "frame-ancestors 'self'",
     ].join("; "),
   },
