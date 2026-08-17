@@ -83,7 +83,7 @@ export async function GET(req: Request) {
           telephone: b.telephone,
           adresse: b.adresse,
           themeId: b.themeId,
-          commissionRate: 0.03,
+          commissionRate: 0.06,
           statut: "active",
           planType: b.planType,
         },

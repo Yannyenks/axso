@@ -109,7 +109,7 @@ export async function POST(request: Request) {
             themeId: plan.themeId,
             description: plan.description || "",
             parametresLivraison,
-            commissionRate: 0.03,
+            commissionRate: 0.06,
             statut: "active",
             planType: "gratuit",
             themeConfig: customSections.length > 0

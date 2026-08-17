@@ -25,12 +25,6 @@ services:
         sync: false
       - key: NEXT_PUBLIC_AXSO_COMMISSION
         value: "0.03"
-      - key: FLUTTERWAVE_PUBLIC_KEY
-        sync: false
-      - key: FLUTTERWAVE_SECRET_KEY
-        sync: false
-      - key: FLUTTERWAVE_ENCRYPTION_KEY
-        sync: false
       - key: GEMINI_API_KEY
         sync: false
       - key: RESEND_API_KEY
@@ -41,11 +35,9 @@ services:
         sync: false
       - key: BLOB_READ_WRITE_TOKEN
         sync: false
-      - key: CINETPAY_API_KEY
+      - key: NOTCHPAY_PUBLIC_KEY
         sync: false
-      - key: CINETPAY_SITE_ID
+      - key: NOTCHPAY_PRIVATE_KEY
         sync: false
-      - key: NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY
-        sync: false
-      - key: FLUTTERWAVE_WEBHOOK_SECRET
+      - key: NOTCHPAY_WEBHOOK_SECRET
         sync: false

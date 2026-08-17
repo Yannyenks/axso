@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Users,
   Zap,
+  Target,
 } from "lucide-react";
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 
@@ -33,6 +34,7 @@ export default async function MarketingPage() {
   ]);
 
   const codesActifs = codesPromo.filter((c) => c.actif).length;
+  const pixelsActifs = [tenant.metaPixelId, tenant.tiktokPixelId, tenant.snapPixelId, tenant.gtmId].filter(Boolean).length;
 
   const tools = [
     {
@@ -70,6 +72,15 @@ export default async function MarketingPage() {
       accent: "#D97706",
       stat: "Optimisez vos fiches",
       statClass: "bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]",
+    },
+    {
+      icone: Target,
+      titre: "Tracking & Pixels",
+      description: "Meta, TikTok, Snapchat, Google Tag Manager et vos scripts de suivi personnalisés.",
+      href: "/dashboard/marketing/tracking",
+      accent: "#1877F2",
+      stat: pixelsActifs > 0 ? `${pixelsActifs} pixel${pixelsActifs > 1 ? "s" : ""} actif${pixelsActifs > 1 ? "s" : ""}` : "Aucun pixel actif",
+      statClass: pixelsActifs > 0 ? "bg-[#EFF6FF] text-[#1877F2] border border-[#BFDBFE]" : "bg-[#F4F4F4] text-[#717171] border border-[#E8E8E8]",
     },
   ];
 

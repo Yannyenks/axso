@@ -16,6 +16,10 @@ import {
   Package,
 } from "lucide-react";
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
+import { UpgradeGate } from "@/components/dashboard/UpgradeGate";
+import { LiveRefreshBadge } from "@/components/dashboard/LiveRefreshBadge";
+import { planActif } from "@/lib/abonnement";
+import { aAcces } from "@/lib/plans";
 
 export default async function AnalyticsPage() {
   const session = await auth();
@@ -24,9 +28,15 @@ export default async function AnalyticsPage() {
   const tenantId = (session.user as any)?.tenantId;
   if (!tenantId) redirect("/dashboard");
 
+  const { plan } = await planActif(tenantId);
+  const avance = aAcces(plan, "analytics_avance");
+  const tempsReel = aAcces(plan, "analytics_temps_reel");
+
   const now = new Date();
-  const il30Jours = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const il60Jours = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+  // Palier 0 : résumé 7 jours uniquement. Palier 1+ : historique complet 30j.
+  const fenetre = avance ? 30 : 7;
+  const il30Jours = new Date(now.getTime() - fenetre * 24 * 60 * 60 * 1000);
+  const il60Jours = new Date(now.getTime() - fenetre * 2 * 24 * 60 * 60 * 1000);
 
   const [
     commandesPeriode,
@@ -84,7 +94,7 @@ export default async function AnalyticsPage() {
 
   // Graphique jour par jour
   const donneesMap: Record<string, { montant: number; commandes: number }> = {};
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < fenetre; i++) {
     const d = new Date(il30Jours.getTime() + i * 24 * 60 * 60 * 1000);
     const key = d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
     donneesMap[key] = { montant: 0, commandes: 0 };
@@ -170,12 +180,15 @@ export default async function AnalyticsPage() {
           <h1 className="text-2xl font-bold text-[#111111] font-poppins inline-flex items-center gap-2">Analytics <AgentActiveIndicator label="Agent Analytics actif" /></h1>
           <p className="text-[#717171] text-sm mt-1">Activité réelle de votre boutique</p>
         </div>
-        <div className="flex items-center gap-2 bg-white border border-[#E8E8E8] rounded-xl px-4 py-2">
-          <Calendar size={14} className="text-[#717171]" />
-          <span className="text-[#111111] text-sm font-medium">30 derniers jours</span>
-          <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]">
-            vs J-30
-          </span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 bg-white border border-[#E8E8E8] rounded-xl px-4 py-2">
+            <Calendar size={14} className="text-[#717171]" />
+            <span className="text-[#111111] text-sm font-medium">{fenetre} derniers jours</span>
+            <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]">
+              vs J-{fenetre}
+            </span>
+          </div>
+          {tempsReel && <LiveRefreshBadge intervalMs={30000} />}
         </div>
       </div>
 
@@ -204,17 +217,19 @@ export default async function AnalyticsPage() {
               <p className="text-2xl font-bold text-[#111111] font-poppins leading-tight">{k.valeur}</p>
               <p className="text-[#717171] text-xs mt-1">{k.label}</p>
               {d !== null && (
-                <p className="text-[#717171] text-[10px] mt-2 border-t border-[#F3F3F3] pt-2">vs. 30 jours précédents</p>
+                <p className="text-[#717171] text-[10px] mt-2 border-t border-[#F3F3F3] pt-2">vs. {fenetre} jours précédents</p>
               )}
             </div>
           );
         })}
       </div>
 
+      {avance ? (
+      <>
       {/* Graphique des ventes */}
       <div className="bg-white border border-[#E8E8E8] rounded-2xl p-6">
         <h2 className="text-sm font-semibold text-[#111111] mb-1">Évolution du chiffre d'affaires</h2>
-        <p className="text-[#717171] text-xs mb-5">Revenus journaliers des 30 derniers jours (commandes complétées)</p>
+        <p className="text-[#717171] text-xs mb-5">Revenus journaliers des {fenetre} derniers jours (commandes complétées)</p>
         <SalesChart donnees={donnees30Jours} devise={tenant?.devise || "XOF"} />
       </div>
 
@@ -423,6 +438,14 @@ export default async function AnalyticsPage() {
             ))}
           </div>
         </div>
+      )}
+      </>
+      ) : (
+        <UpgradeGate
+          titre="Analytics avancés — Palier 1"
+          description="Historique complet, entonnoir de conversion, top produits et avis clients sont réservés aux paliers Pro et Illimité. Le Palier 0 affiche un résumé 7 jours."
+          palierRequis="palier1"
+        />
       )}
     </div>
   );

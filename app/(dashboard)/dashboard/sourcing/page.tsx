@@ -1,10 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Search, Globe, ShoppingBag, Package, ExternalLink,
   Star, MapPin, TrendingUp, Clock, ChevronRight,
-  ShoppingCart, Factory, Link2, Moon, Zap,
+  ShoppingCart, Factory, Link2, Moon, Zap, Lock, Sparkles,
 } from "lucide-react";
+import { aAcces, type Palier } from "@/lib/plans";
 
 const FOURNISSEURS = [
   {
@@ -140,6 +142,14 @@ function StarRating({ note }: { note: number }) {
 export default function SourcingPage() {
   const [search, setSearch]       = useState("");
   const [categorie, setCategorie] = useState("Toutes");
+  const [plan, setPlan] = useState<Palier>("palier2"); // optimiste — évite de flasher un verrou avant le chargement
+  useEffect(() => {
+    fetch("/api/tenants/moi").then(r => r.json()).then(d => {
+      const p = d.tenant?.planType as Palier | undefined;
+      if (p === "palier0" || p === "palier1" || p === "palier2") setPlan(p);
+    }).catch(() => {});
+  }, []);
+  const sourcingMondialOk = aAcces(plan, "sourcing_mondial");
   const filtres = FOURNISSEURS.filter(f => {
     const q = search.toLowerCase();
     const ok = !q || f.nom.toLowerCase().includes(q) || f.description.toLowerCase().includes(q)
@@ -239,11 +249,14 @@ export default function SourcingPage() {
 
           {/* Grille fournisseurs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            {filtres.map(f => (
+            {filtres.map(f => {
+              const verrouille = f.regions.includes("Monde") && !sourcingMondialOk;
+              return (
               <div key={f.id}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 group cursor-default transition-all duration-200"
+                className="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-5 group cursor-default transition-all duration-200 overflow-hidden"
                 style={{ ["--hover-border" as any]: "#FDBA74" }}
                 onMouseEnter={e => {
+                  if (verrouille) return;
                   (e.currentTarget as HTMLElement).style.borderColor = "#FDBA74";
                   (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 20px rgba(249,115,22,0.08)";
                   (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
@@ -254,6 +267,7 @@ export default function SourcingPage() {
                   (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
                 }}>
 
+                <div className={verrouille ? "pointer-events-none select-none opacity-50" : ""} style={verrouille ? { filter: "blur(2px)" } : undefined}>
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3.5">
                   <div className="flex items-center gap-3">
@@ -305,8 +319,24 @@ export default function SourcingPage() {
                     Visiter <ExternalLink size={10} />
                   </a>
                 </div>
+                </div>
+
+                {verrouille && (
+                  <div className="absolute inset-0 flex items-center justify-center p-4" style={{ background: "rgba(255,255,255,0.5)" }}>
+                    <Link href="/dashboard/abonnement"
+                      className="flex flex-col items-center gap-2 text-center px-4 py-3 rounded-xl transition-all hover:opacity-90"
+                      style={{ background: "white", border: "1px solid #FDBA74", boxShadow: "0 4px 16px rgba(249,115,22,0.15)" }}>
+                      <Lock size={16} className="text-[#F97316]" />
+                      <span className="text-xs font-bold text-gray-800">Sourcing mondial — Palier 2</span>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-white px-3 py-1.5 rounded-full" style={{ background: "#F97316" }}>
+                        <Sparkles size={10} /> Débloquer
+                      </span>
+                    </Link>
+                  </div>
+                )}
               </div>
-            ))}
+              );
+            })}
 
             {filtres.length === 0 && (
               <div className="col-span-2 bg-white border border-dashed border-gray-200 rounded-2xl p-12 text-center">

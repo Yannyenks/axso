@@ -17,9 +17,17 @@ export function NavbarMarketing() {
   const collapseRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isExpanded    = !scrolled || hovered;
 
-  /* ── scroll listener ── */
+  /* ── scroll listener (throttlé via rAF, cf. VideoSection.tsx) ── */
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 56);
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        setScrolled(window.scrollY > 56);
+        ticking = false;
+      });
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);

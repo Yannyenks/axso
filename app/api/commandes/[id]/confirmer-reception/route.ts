@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { crediterWallet } from "@/lib/affiliation";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -8,7 +7,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const commande = await prisma.commande.findUnique({
     where: { id },
-    include: { tenant: { select: { id: true, slug: true } } },
+    include: { tenant: { select: { id: true, slug: true, commissionRate: true } } },
   });
 
   if (!commande) return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
@@ -43,21 +42,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     });
   });
 
-  // Créditer le wallet uniquement pour les commandes COD
-  // (paiement en ligne : wallet déjà crédité dans le webhook)
-  if (!dejaVente) {
-    const COMMISSION = 0.03;
-    const net = Math.round(commande.montantTotal * (1 - COMMISSION) * 100) / 100;
-    await crediterWallet(
-      commande.tenantId,
-      net,
-      commande.devise,
-      `Vente confirmée #${commande.numero}`,
-      id,
-      undefined,
-      "CREDIT"
-    ).catch(() => {});
-  }
+  // Pas de crédit wallet pour les commandes COD : le client paie le marchand
+  // directement, Axso ne reçoit jamais cet argent via NotchPay — le solde
+  // retirable ne doit refléter QUE l'argent réellement encaissé par Axso.
 
   return NextResponse.json({ ok: true });
 }

@@ -332,7 +332,7 @@ export default function ParametresPage() {
           </div>
           <div className="space-y-2.5">
             {[
-              { label: "Commission Axso", value: `${((tenant.commissionRate || 0.03) * 100).toFixed(0)}% par vente` },
+              { label: "Commission Axso", value: `${((tenant.commissionRate || 0.06) * 100).toFixed(0)}% ajouté au prix client` },
               { label: "Actif depuis",   value: new Date(tenant.createdAt).toLocaleDateString("fr-FR") },
             ].map(row => (
               <div key={row.label} className="flex justify-between text-[12.5px]">

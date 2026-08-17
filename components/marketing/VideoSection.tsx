@@ -1,6 +1,6 @@
 "use client";
 // v4 — lucide icons only, no emoji
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Lock, Rocket, Zap, Bot, Globe } from "lucide-react";
 import { CartParallax } from "./CartParallax";
 
@@ -15,9 +15,9 @@ const VIDEO_CARTS = [
 
 export function VideoSection() {
   const [visible, setVisible] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const playerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -35,11 +35,32 @@ export function VideoSection() {
     return () => obs.disconnect();
   }, []);
 
-  useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
+  // Effet parallax lié au scroll écrit directement dans le DOM (via rAF) au lieu
+  // de passer par le state React — évite un re-render de toute la section à
+  // chaque event de scroll (c'était la cause du blocage/saccades au défilement).
+  // useLayoutEffect + appel immédiat pour appliquer la bonne position dès que
+  // la section devient visible, sans attendre le prochain scroll (pas de flash).
+  useLayoutEffect(() => {
+    if (!visible) return;
+    let ticking = false;
+    const appliquer = () => {
+      const y = window.scrollY;
+      if (playerRef.current) {
+        playerRef.current.style.transform =
+          `translateY(${-y * 0.04}px) perspective(1200px) rotateX(${Math.min(y * 0.005, 4)}deg)`;
+      }
+      ticking = false;
+    };
+    appliquer();
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(appliquer);
+        ticking = true;
+      }
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [visible]);
 
   const hasVideo = !!HIGHFIELD_VIDEO_URL;
   const hasIframe = !!HIGHFIELD_IFRAME_URL;
@@ -99,11 +120,10 @@ export function VideoSection() {
 
         {/* Player vidéo */}
         <div
+          ref={playerRef}
           style={{
             opacity: visible ? 1 : 0,
-            transform: visible
-              ? `translateY(${-scrollY * 0.04}px) perspective(1200px) rotateX(${Math.min(scrollY * 0.005, 4)}deg)`
-              : "translateY(60px) perspective(1200px) rotateX(8deg)",
+            transform: visible ? undefined : "translateY(60px) perspective(1200px) rotateX(8deg)",
             transition: visible ? "opacity 0.9s 0.2s, transform 0.9s 0.2s cubic-bezier(0.23,1,0.32,1)" : "none",
             willChange: "transform",
           }}

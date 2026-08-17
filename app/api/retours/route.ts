@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { quotaCommandesAtteint } from "@/lib/abonnement";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -38,6 +39,10 @@ export async function POST(req: Request) {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
 
+  if (await quotaCommandesAtteint(tenantId)) {
+    return NextResponse.json({ error: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour continuer à gérer vos commandes.", code: "quota_atteint" }, { status: 403 });
+  }
+
   const body = await req.json();
   const { commandeId, clientNom, clientEmail, raison, description, type, montant, preuveUrls } = body;
 
@@ -71,6 +76,10 @@ export async function PATCH(req: Request) {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
 
+  if (await quotaCommandesAtteint(tenantId)) {
+    return NextResponse.json({ error: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour continuer à gérer vos commandes.", code: "quota_atteint" }, { status: 403 });
+  }
+
   const body = await req.json();
   const { id, statut, notes, montant } = body;
   if (!id) return NextResponse.json({ error: "ID requis" }, { status: 400 });
@@ -96,10 +105,13 @@ export async function PATCH(req: Request) {
         data: { stock: { increment: ligne.quantite } },
       }).catch(() => null);
     }
-    // Update order status
+    // Marquer la commande en retour (Commande.statut garde sa valeur légitime
+    // — livrée/expédiée — le "remboursee" n'existe dans aucune des transitions
+    // valides de statut/route.ts et cassait le state machine ; on utilise
+    // livraisonStatut, prévu pour ce cas)
     await prisma.commande.update({
       where: { id: existing.commandeId },
-      data: { statut: "remboursee" },
+      data: { livraisonStatut: "retour" },
     }).catch(() => null);
   }
 

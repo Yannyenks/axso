@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/cartStore";
-import { ShoppingBag, Check, Download, MessageCircle, Zap, Package } from "lucide-react";
+import { ShoppingBag, Check, ArrowRight, MessageCircle, Zap, Package, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
@@ -15,14 +16,16 @@ interface Props {
 }
 
 export function AddToCartButton({ produit, theme, tenantSlug, whatsappNumero }: Props) {
+  const router = useRouter();
   const { ajouterItem, setTenant } = useCartStore();
   const [ajoute, setAjoute] = useState(false);
+  const [commandeEnCours, setCommandeEnCours] = useState(false);
   const [quantite, setQuantite] = useState(1);
   const isDigital = produit.type === "digital";
   const isPhysique = !isDigital;
+  const rupture = produit.stock === 0 && isPhysique;
 
-  function ajouterAuPanier() {
-    if (produit.stock === 0 && isPhysique) return;
+  function ajouterItemAuStore() {
     setTenant(tenantSlug);
     ajouterItem({
       produitId: produit.id,
@@ -35,9 +38,21 @@ export function AddToCartButton({ produit, theme, tenantSlug, whatsappNumero }: 
       fichierUrl: produit.fichierUrl || undefined,
       fichierNom: produit.fichierNom || undefined,
     });
+  }
+
+  function ajouterAuPanier() {
+    if (rupture) return;
+    ajouterItemAuStore();
     setAjoute(true);
     toast.success(`${produit.nom} ajouté au panier`);
     setTimeout(() => setAjoute(false), 2000);
+  }
+
+  function commanderMaintenant() {
+    if (rupture) return;
+    setCommandeEnCours(true);
+    ajouterItemAuStore();
+    router.push(`/${tenantSlug}/checkout`);
   }
 
   return (
@@ -69,30 +84,37 @@ export function AddToCartButton({ produit, theme, tenantSlug, whatsappNumero }: 
         </div>
       )}
 
-      {/* Bouton principal */}
+      {/* Option 1 — Commander maintenant (achat direct) */}
       <button
-        onClick={ajouterAuPanier}
-        disabled={produit.stock === 0 && isPhysique}
+        onClick={commanderMaintenant}
+        disabled={rupture || commandeEnCours}
         className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-semibold text-base transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
         style={{ backgroundColor: theme.accent, color: theme.fond, boxShadow: `0 4px 20px ${theme.accent}40` }}>
-        {ajoute
-          ? <><Check size={20} />Ajouté !</>
-          : isDigital
-            ? <><Download size={20} />Acheter et télécharger</>
-            : produit.stock === 0
-              ? "Rupture de stock"
-              : <><ShoppingBag size={20} />Ajouter au panier</>
+        {rupture
+          ? "Rupture de stock"
+          : commandeEnCours
+            ? <><Loader2 size={20} className="animate-spin" /> Redirection...</>
+            : <><ArrowRight size={20} />Commander maintenant</>
         }
       </button>
 
-      {/* WhatsApp rapide pour produits physiques */}
-      {isPhysique && whatsappNumero && (
+      {/* Option 2 — Ajouter au panier */}
+      <button
+        onClick={ajouterAuPanier}
+        disabled={rupture}
+        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold text-sm border-2 transition-all hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
+        style={{ borderColor: `${theme.accent}40`, color: theme.texte }}>
+        {ajoute ? <><Check size={16} /> Ajouté !</> : <><ShoppingBag size={16} /> Ajouter au panier</>}
+      </button>
+
+      {/* Option 3 — Contacter via WhatsApp (optionnel) */}
+      {whatsappNumero && (
         <a
           href={`https://wa.me/${whatsappNumero.replace(/\D/g, "")}?text=${encodeURIComponent(`Bonjour, je suis intéressé par *${produit.nom}* à ${produit.prix} FCFA. Pouvez-vous confirmer la disponibilité ?`)}`}
           target="_blank" rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 w-full py-3.5 text-sm font-semibold border-2 rounded-2xl transition-all hover:opacity-80"
-          style={{ borderColor: `${theme.accent}40`, color: theme.texte }}>
-          <MessageCircle size={16} /> Commander via WhatsApp
+          className="flex items-center justify-center gap-2 w-full py-3 text-sm font-medium rounded-2xl transition-all hover:opacity-80"
+          style={{ color: theme.texte, opacity: 0.7 }}>
+          <MessageCircle size={15} /> Contacter via WhatsApp
         </a>
       )}
     </div>

@@ -40,8 +40,9 @@ export async function POST(req: NextRequest) {
   }
 
   const commande = escrow.commande;
-  const montantCommission = commande.commission?.montantCommission
-    ?? commande.montantTotal * 0.03;
+  const tauxCommission = commande.montantTotal > 0
+    ? (commande.commission?.montantCommission ?? commande.montantTotal * 0.03) / commande.montantTotal
+    : 0;
 
   await prisma.$transaction(async (tx) => {
     // 1. Libérer l'escrow
@@ -49,30 +50,23 @@ export async function POST(req: NextRequest) {
       where: { commandeId },
       data: { statut: "released", releasedAt: now },
     });
+  });
 
-    // 2. Capturer la commission
-    if (commande.commission) {
-      await tx.commission.update({
-        where: { commandeId },
-        data: { statut: "captured", capturedAt: now },
-      });
-    }
-
-    // 3. Créditer le wallet marchand (montant net après commission)
-    await crediterWallet(tx, {
-      tenantId,
-      montantTotal: commande.montantTotal,
-      montantCommission,
-      devise: commande.devise,
-      commandeId,
-      reference: commande.numero,
-    });
+  // 2. Créditer le wallet marchand (calcule + capture la commission)
+  const { montantNet } = await crediterWallet({
+    tenantId,
+    montantBrut: commande.montantTotal,
+    tauxCommission,
+    devise: commande.devise,
+    description: `Fonds libérés #${commande.numero}`,
+    commandeId,
+    reference: commande.numero,
   });
 
   return NextResponse.json({
     success: true,
     montant: escrow.montant,
-    montantNet: escrow.montant - montantCommission,
+    montantNet,
     message: "Fonds libérés et crédités sur votre wallet Axso.",
   });
 }

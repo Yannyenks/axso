@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   const tenantId = (session.user as any)?.tenantId;
 
   const body = await req.json();
-  const { nom, zone, poidsMin, poidsMax, montantMin, montantMax, frais, fraisKg, delai, transporteur, gratuit } = body;
+  const { nom, zone, poidsMin, poidsMax, montantMin, montantMax, frais, fraisKg, delai, transporteur, gratuit, modeLivraison } = body;
 
   if (!nom || !zone || frais === undefined) {
     return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 });
@@ -40,6 +40,7 @@ export async function POST(req: Request) {
       delai: delai ?? "3-5 jours",
       transporteur: transporteur ?? null,
       gratuit: gratuit ?? false,
+      modeLivraison: modeLivraison ?? "livreur_local",
     },
   });
 

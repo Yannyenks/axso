@@ -7,7 +7,7 @@ import {
   X, BarChart3, TrendingUp, Megaphone, Truck, Star,
   Settings, Bike, Palette, Globe2, Calendar,
   Search, MessageSquare, Store, Paintbrush, CreditCard,
-  Package2, Bot, Zap,
+  Package2, Bot, Zap, Wallet,
 } from "lucide-react";
 import {
   IconAccueil, IconProduits, IconAxia, IconCommandes,
@@ -44,6 +44,7 @@ const GROUPS = [
     items: [
       { href: "/dashboard/paiements",  label: "Paiements",        icon: CreditCard },
       { href: "/dashboard/revenus",    label: "Revenus",          icon: TrendingUp },
+      { href: "/dashboard/wallet",     label: "Wallet",           icon: Wallet },
     ],
   },
   {

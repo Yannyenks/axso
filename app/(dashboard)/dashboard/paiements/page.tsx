@@ -19,6 +19,10 @@ const METHODE_LABEL: Record<string, string> = {
   card: "Carte",
   mobilemoney: "Mobile Money",
   banktransfer: "Virement",
+  notchpay: "NotchPay",
+  whatsapp_cod: "Paiement à la livraison (WhatsApp)",
+  direct_cod: "Paiement à la livraison",
+  en_attente: "En attente de paiement",
 };
 
 function methodeLabel(m: string | null) {
@@ -207,7 +211,7 @@ export default async function PaiementsPage() {
         {/* Commissions */}
         <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
           <div className="p-5 border-b border-gray-100">
-            <h2 className="font-bold text-gray-900">Commissions Axso (3%)</h2>
+            <h2 className="font-bold text-gray-900">Commissions Axso (6%)</h2>
           </div>
           <div className="divide-y divide-gray-50">
             {commissions.length === 0 ? (

@@ -6,6 +6,7 @@ import { PlanBadge } from "@/components/dashboard/PlanBadge";
 import AbonnementActions from "./AbonnementActions";
 import { PAYS_DEVISES } from "@/lib/ai-agent";
 import { convertirDepuisXAF } from "@/lib/paiement-securite";
+import { planActif } from "@/lib/abonnement";
 
 // ─── Plans Axso ──────────────────────────────────────────────────────────────
 const PLANS = [
@@ -22,13 +23,14 @@ const PLANS = [
     recommande: false,
     features: [
       { label: "Commandes limitées (30/mois)", ok: true },
-      { label: "AXIA IA — version essentielle", ok: true },
+      { label: "WhatsApp Business intégré", ok: true },
+      { label: "AXIA IA — outils essentiels", ok: true },
       { label: "Social Media intégré", ok: true },
       { label: "1 boutique en ligne", ok: true },
       { label: "Commandes illimitées", ok: false },
-      { label: "Navigateur intégré AXIA", ok: false },
+      { label: "IA avancée (agents, automatisations)", ok: false },
       { label: "Sourcing dropshipping mondial", ok: false },
-      { label: "Aucune limite", ok: false },
+      { label: "Analytics avancés", ok: false },
     ],
   },
   {
@@ -44,13 +46,13 @@ const PLANS = [
     recommande: true,
     features: [
       { label: "Commandes illimitées", ok: true },
-      { label: "Social Media intégré", ok: true },
-      { label: "AXIA IA — version avancée", ok: true },
-      { label: "Navigateur intégré AXIA", ok: true },
-      { label: "Analytics avancés", ok: true },
-      { label: "Marketing & automatisations", ok: true },
+      { label: "WhatsApp Business intégré", ok: true },
+      { label: "AXIA IA — outils avancés (agents, automatisations)", ok: true },
+      { label: "Marketing & campagnes (email, SMS, réseaux sociaux)", ok: true },
+      { label: "Analytics avancés — historique complet", ok: true },
       { label: "Sourcing dropshipping mondial", ok: false },
-      { label: "Support prioritaire 24/7", ok: false },
+      { label: "Analytics temps réel", ok: false },
+      { label: "Multi-boutique", ok: false },
     ],
   },
   {
@@ -66,12 +68,10 @@ const PLANS = [
     recommande: false,
     features: [
       { label: "AUCUNE LIMITE — tout inclus", ok: true },
-      { label: "AXIA IA — version complète", ok: true },
-      { label: "Navigateur AXIA + contrôle total", ok: true },
+      { label: "AXIA IA — tous les outils (médias, ads, entrepôts…)", ok: true },
       { label: "Sourcing dropshipping mondial", ok: true },
-      { label: "Boutiques illimitées", ok: true },
-      { label: "API & Webhooks", ok: true },
       { label: "Analytics temps réel", ok: true },
+      { label: "Multi-boutique", ok: true },
       { label: "Support prioritaire 24/7", ok: true },
     ],
   },
@@ -86,11 +86,11 @@ const FAQ = [
   },
   {
     q: "Comment fonctionne la limite de commandes au Palier 0 ?",
-    r: "Au Palier 0 vous pouvez recevoir jusqu'à 30 commandes par mois. Au-delà, les nouvelles commandes sont mises en file d'attente jusqu'au prochain mois ou jusqu'à mise à niveau.",
+    r: "Au Palier 0 vous pouvez recevoir jusqu'à 30 commandes par mois. Au-delà, vos commandes continuent d'arriver normalement, mais vous ne pouvez plus les gérer (statuts, livreurs, retours, factures) ni utiliser WhatsApp tant que vous n'upgradez pas ou que le mois ne change pas.",
   },
   {
     q: "Le Palier 2 inclut vraiment tout sans supplément ?",
-    r: "Oui. Le Palier 2 'Illimité' supprime toutes les limites : commandes, produits, boutiques, fonctionnalités IA, navigateur, sourcing. Aucun frais caché.",
+    r: "Oui. Le Palier 2 'Illimité' supprime toutes les limites : commandes, IA, sourcing mondial, analytics et boutiques. Aucun frais caché.",
   },
   {
     q: "Les prix sont-ils affichés en ma devise locale ?",
@@ -111,7 +111,10 @@ export default async function AbonnementPage() {
     select: { planType: true, nomBoutique: true, pays: true, devise: true },
   });
 
-  const planActuel = (tenant?.planType ?? "palier0").toLowerCase() as PlanId;
+  // planActif() normalise les valeurs héritées ("gratuit", "premium"...) en
+  // palier0 — évite d'afficher aucune carte comme "actuelle" pour les
+  // boutiques créées avant l'introduction des paliers.
+  const { plan: planActuel } = await planActif(tenantId);
   const nomPlan = PLANS.find(p => p.id === planActuel)?.nom ?? "Essentiel";
   const pays    = tenant?.pays ?? "CM";
   const devise  = tenant?.devise ?? PAYS_DEVISES[pays] ?? "XAF";

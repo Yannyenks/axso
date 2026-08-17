@@ -1,23 +1,27 @@
 "use client";
 export const dynamic = "force-dynamic";
 import { useEffect, useState, useRef } from "react";
+import { useParams } from "next/navigation";
 import { MapPin, Package, Phone, RefreshCw, CheckCircle2, Truck, ClipboardList, Check, Map, Bike } from "lucide-react";
 
 const STATUT_STEP_ICONS: Record<string, React.ReactNode> = {
   en_attente:     <ClipboardList size={16} />,
+  confirmee:      <Check size={16} />,
   en_preparation: <Package size={16} />,
-  expedie:        <Truck size={16} />,
+  expediee:       <Truck size={16} />,
   livree:         <CheckCircle2 size={16} />,
 };
 
 const STATUT_STEPS = [
   { key: "en_attente",    label: "Commande reçue"      },
+  { key: "confirmee",     label: "Confirmée"           },
   { key: "en_preparation", label: "En préparation"     },
-  { key: "expedie",       label: "Partie en livraison" },
+  { key: "expediee",      label: "Partie en livraison" },
   { key: "livree",        label: "Livrée"               },
 ];
 
-export default function TrackingPage({ params }: { params: { token: string } }) {
+export default function TrackingPage() {
+  const params = useParams<{ token: string }>();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -33,7 +37,8 @@ export default function TrackingPage({ params }: { params: { token: string } }) 
     load();
     intervalRef.current = setInterval(load, 15000); // poll toutes les 15s
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.token]);
 
   if (loading) return (
     <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#0F0F0F", fontFamily:"system-ui,sans-serif" }}>
@@ -83,7 +88,7 @@ export default function TrackingPage({ params }: { params: { token: string } }) 
         </div>
       </div>
 
-      <div style={{ maxWidth:500, margin:"0 auto", padding:"20px 16px", space:"20px" }}>
+      <div style={{ maxWidth:500, margin:"0 auto", padding:"20px 16px" }}>
 
         {/* Étapes */}
         <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:20, padding:20, marginBottom:16 }}>

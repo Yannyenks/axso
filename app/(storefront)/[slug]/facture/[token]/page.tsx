@@ -6,11 +6,11 @@ import { Check, Package, Printer } from "lucide-react";
 export default async function FacturePage({ params }: { params: Promise<{ slug: string; token: string }> }) {
   const { token } = await params;
 
-  const commande = await (prisma as any).commande.findFirst({
+  const commande = await prisma.commande.findFirst({
     where: { trackingToken: token },
     include: {
       lignes: true,
-      tenant: { select: { nomBoutique: true, logoUrl: true, slug: true, email: true, telephone: true, adresse: true, ville: true, pays: true, devise: true } },
+      tenant: { select: { nomBoutique: true, logoUrl: true, slug: true, email: true, telephone: true, adresse: true, pays: true, devise: true } },
     },
   });
   if (!commande) notFound();
@@ -57,7 +57,7 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
               )}
               <div style={{ color:"rgba(255,255,255,0.45)", fontSize:12, lineHeight:1.8 }}>
                 {tenant.adresse && <div>{tenant.adresse}</div>}
-                {tenant.ville && <div>{tenant.ville}{tenant.pays ? `, ${tenant.pays}` : ""}</div>}
+                {tenant.pays && <div>{tenant.pays}</div>}
                 {tenant.telephone && <div>{tenant.telephone}</div>}
                 {tenant.email && <div>{tenant.email}</div>}
               </div>
@@ -68,7 +68,7 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
               <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, marginTop:8 }}>{date}</div>
               <div style={{ marginTop:16, display:"inline-block", background:"rgba(245,166,35,0.15)", border:"1px solid rgba(245,166,35,0.3)", borderRadius:100, padding:"6px 16px" }}>
                 <span style={{ color:"#F5A623", fontSize:11, fontWeight:600, display:"inline-flex", alignItems:"center", gap:4 }}>
-                  {(commande.statut === "livree" || commande.paiementStatut === "paid") ? <><Check size={10} /> Payée</> : "En attente"}
+                  {commande.paiementStatut === "completed" ? <><Check size={10} /> Payée</> : "En attente"}
                 </span>
               </div>
             </div>
@@ -94,7 +94,7 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
             <div style={{ fontSize:10, fontWeight:700, color:"#999", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:12 }}>Détails</div>
             <div style={{ fontSize:13, color:"#666", marginBottom:4 }}>Date : <strong style={{ color:"#1A1A1A" }}>{date}</strong></div>
             <div style={{ fontSize:13, color:"#666", marginBottom:4 }}>Commande : <strong style={{ color:"#1A1A1A" }}>#{commande.numero}</strong></div>
-            <div style={{ fontSize:13, color:"#666" }}>Paiement : <strong style={{ color:"#1A1A1A" }}>À la livraison</strong></div>
+            <div style={{ fontSize:13, color:"#666" }}>Paiement : <strong style={{ color:"#1A1A1A" }}>{commande.methodePaiement === "notchpay" ? "En ligne (NotchPay)" : "À la livraison"}</strong></div>
           </div>
         </div>
 
@@ -176,16 +176,17 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
         </div>
       </div>
 
-      {/* Print button */}
+      {/* Print button — Server Component : pas de onClick React, on attache
+          l'écouteur en JS pur via ce script (évite l'erreur "Event handlers
+          cannot be passed to Client Component props"). */}
       <div className="no-print" style={{ textAlign:"center", padding:"24px", position:"sticky", bottom:0, background:"rgba(248,247,244,0.9)", backdropFilter:"blur(8px)" }}>
-        <button onClick={() => { if (typeof window !== "undefined") window.print(); }}
+        <button id="ax-btn-print"
           style={{ background:"linear-gradient(135deg,#1A1A1A,#333)", color:"white", border:"none", padding:"14px 36px", borderRadius:100, fontSize:14, fontWeight:600, cursor:"pointer", display:"inline-flex", alignItems:"center", gap:8, boxShadow:"0 4px 20px rgba(0,0,0,0.2)" }}>
           <Printer size={16} /> Télécharger / Imprimer la facture
         </button>
       </div>
       <script dangerouslySetInnerHTML={{ __html: `
-        document.querySelector('button[onclick]') && document.querySelector('button[onclick]').removeAttribute('onclick');
-        document.querySelectorAll('button').forEach(b => { b.addEventListener('click', () => window.print()); });
+        document.getElementById('ax-btn-print')?.addEventListener('click', () => window.print());
       `}} />
     </>
   );

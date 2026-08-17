@@ -2,11 +2,16 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { quotaCommandesAtteint } from "@/lib/abonnement";
 
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user?.tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = session.user.tenantId;
+
+  if (await quotaCommandesAtteint(tenantId)) {
+    return NextResponse.json({ error: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour continuer à vendre en boutique.", code: "quota_atteint" }, { status: 403 });
+  }
 
   const body = await req.json();
   const { clientNom, clientTelephone, items, methode, montantTotal, montantReduction = 0 } = body;

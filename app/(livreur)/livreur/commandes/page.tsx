@@ -43,15 +43,15 @@ export default async function HistoriquePage() {
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white border border-gray-100 rounded-xl p-3 text-center">
+        <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-xl p-3 text-center">
           <p className="text-lg font-bold text-white">{stats.total}</p>
           <p className="text-gray-500 text-xs">Total</p>
         </div>
-        <div className="bg-white border border-gray-100 rounded-xl p-3 text-center">
+        <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-xl p-3 text-center">
           <p className="text-lg font-bold text-[#3b82f6]">{stats.enCours}</p>
           <p className="text-gray-500 text-xs">En cours</p>
         </div>
-        <div className="bg-white border border-gray-100 rounded-xl p-3 text-center">
+        <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-xl p-3 text-center">
           <p className="text-lg font-bold text-green-400">{stats.livrees}</p>
           <p className="text-gray-500 text-xs">Livrées</p>
         </div>
@@ -66,14 +66,14 @@ export default async function HistoriquePage() {
             <Link
               key={cmd.id}
               href={`/livreur/commande/${cmd.id}`}
-              className="flex items-center gap-4 bg-white border border-gray-100 rounded-2xl p-4 hover:border-[#1B4FD8]/20 transition-all"
+              className="flex items-center gap-4 bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-2xl p-4 hover:border-[#1B4FD8]/20 transition-all"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ color: st.color, backgroundColor: st.bg }}>
                     {st.label}
                   </span>
-                  <span className="text-gray-600 text-xs font-mono">{cmd.numero}</span>
+                  <span className="text-gray-500 text-xs font-mono">{cmd.numero}</span>
                 </div>
                 <p className="text-white text-sm font-medium">{cmd.clientNom}</p>
                 <p className="text-gray-500 text-xs flex items-center gap-1 mt-0.5">
@@ -83,9 +83,9 @@ export default async function HistoriquePage() {
               </div>
               <div className="flex flex-col items-end gap-1 flex-shrink-0">
                 <p className="text-[#1B4FD8] text-sm font-bold">{formatMontant(cmd.montantTotal, cmd.devise)}</p>
-                <p className="text-gray-600 text-xs">{formatDate(cmd.updatedAt)}</p>
+                <p className="text-gray-500 text-xs">{formatDate(cmd.updatedAt)}</p>
               </div>
-              <ChevronRight size={14} className="text-gray-600 flex-shrink-0" />
+              <ChevronRight size={14} className="text-gray-500 flex-shrink-0" />
             </Link>
           );
         })}

@@ -24,8 +24,9 @@ export async function POST(req: NextRequest) {
 
     const now = new Date();
     const commande = escrow.commande;
-    const montantCommission = commande.commission?.montantCommission
-      ?? commande.montantTotal * 0.03;
+    const tauxCommission = commande.montantTotal > 0
+      ? (commande.commission?.montantCommission ?? commande.montantTotal * 0.03) / commande.montantTotal
+      : 0;
 
     await prisma.$transaction(async (tx) => {
       // 1. Libérer l'escrow
@@ -34,29 +35,22 @@ export async function POST(req: NextRequest) {
         data: { statut: "released", releasedAt: now },
       });
 
-      // 2. Capturer la commission
-      if (commande.commission) {
-        await tx.commission.update({
-          where: { commandeId },
-          data: { statut: "captured", capturedAt: now },
-        });
-      }
-
-      // 3. Marquer la commande finalisée
+      // 2. Marquer la commande finalisée
       await tx.commande.update({
         where: { id: commandeId },
         data: { statut: "livree" },
       });
+    });
 
-      // 4. Créditer le wallet marchand
-      await crediterWallet(tx, {
-        tenantId: commande.tenantId,
-        montantTotal: commande.montantTotal,
-        montantCommission,
-        devise: commande.devise,
-        commandeId,
-        reference: commande.numero,
-      });
+    // 3. Créditer le wallet marchand (calcule + capture la commission)
+    await crediterWallet({
+      tenantId: commande.tenantId,
+      montantBrut: commande.montantTotal,
+      tauxCommission,
+      devise: commande.devise,
+      description: `Vente confirmée #${commande.numero}`,
+      commandeId,
+      reference: commande.numero,
     });
 
     return NextResponse.json({

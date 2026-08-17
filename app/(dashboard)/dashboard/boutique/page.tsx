@@ -8,9 +8,12 @@ import {
   ExternalLink, Copy, Check, Camera, Users, Music, MessageCircle,
   Mail, Phone, MapPin, CheckCircle2, Plus, X, Sparkles,
   Sliders, Power, Pause, ArrowUpRight, Package, ShoppingBag, Calendar, Share2,
+  Layers, Lock,
 } from "lucide-react";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { PlanBadge } from "@/components/dashboard/PlanBadge";
+import { NouvelleBoutiqueModal } from "@/components/dashboard/NouvelleBoutiqueModal";
+import { aAcces, NOMS_PALIERS, type Palier } from "@/lib/plans";
 
 const THEMES = [
   { id: "noir-obsidien",      nom: "Noir Obsidien",       desc: "Luxe & Mode",               fond: "#0a0a0a", accent: "#1B4FD8", texte: "#F5F5F0", badge: "✦ Premium" },
@@ -30,7 +33,7 @@ const PAYS = [
 const inputCls = "w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] leading-normal outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]";
 const labelCls = "flex items-center gap-1.5 mb-1.5 ax-label leading-none";
 
-type Section = "infos" | "apparence" | "seo" | "reseaux" | "livraison" | "avance";
+type Section = "infos" | "apparence" | "seo" | "reseaux" | "livraison" | "boutiques" | "avance";
 
 const SECTIONS: { id: Section; label: string; desc: string; Icon: any }[] = [
   { id: "infos",     label: "Informations",  desc: "Identité & contact",    Icon: Store   },
@@ -38,8 +41,23 @@ const SECTIONS: { id: Section; label: string; desc: string; Icon: any }[] = [
   { id: "seo",       label: "Référencement", desc: "Visibilité Google",     Icon: Globe   },
   { id: "reseaux",   label: "Réseaux",       desc: "Réseaux sociaux",       Icon: Link2   },
   { id: "livraison", label: "Livraison",     desc: "Frais & zones",         Icon: Truck   },
+  { id: "boutiques", label: "Mes boutiques", desc: "Multi-boutique",        Icon: Layers  },
   { id: "avance",    label: "Avancé",        desc: "Statut & domaine",      Icon: Sliders },
 ];
+
+interface AutreBoutique {
+  id: string;
+  slug: string;
+  nomBoutique: string;
+  logoUrl: string | null;
+  planType: string;
+  active: boolean;
+  _count: { produits: number; commandes: number };
+}
+
+function palierDe(planType: string): Palier {
+  return (["palier0", "palier1", "palier2"].includes(planType) ? planType : "palier0") as Palier;
+}
 
 const CHAMPS_INFOS = [
   { key: "nomBoutique", label: "Nom de la boutique *", placeholder: "Mode Aminata",           Icon: Store },
@@ -64,6 +82,10 @@ export default function BoutiquePage() {
   const [tenant, setTenant] = useState<any>(null);
   const [statutLocal, setStatutLocal] = useState<string>("active");
   const [savingStatut, setSavingStatut] = useState(false);
+  const [autresBoutiques, setAutresBoutiques] = useState<AutreBoutique[]>([]);
+  const [loadingBoutiques, setLoadingBoutiques] = useState(true);
+  const [switchingId, setSwitchingId] = useState<string | null>(null);
+  const [modalNouvelleBoutique, setModalNouvelleBoutique] = useState(false);
   const [form, setForm] = useState({
     nomBoutique: "", description: "", pays: "", whatsapp: "", email: "", telephone: "", adresse: "",
     logoUrl: "", bannerUrl: "", themeId: "terre-et-or",
@@ -97,7 +119,33 @@ export default function BoutiquePage() {
         setSavedForm(loaded);
       }
     });
+    chargerBoutiques();
   }, []);
+
+  function chargerBoutiques() {
+    setLoadingBoutiques(true);
+    fetch("/api/boutiques").then(r => r.json()).then(d => {
+      setAutresBoutiques(d.boutiques ?? []);
+      setLoadingBoutiques(false);
+    }).catch(() => setLoadingBoutiques(false));
+  }
+
+  async function switchBoutique(id: string) {
+    // b peut être introuvable juste après une création (état local pas
+    // encore rafraîchi) — on tente quand même le switch dans ce cas.
+    if (switchingId || autresBoutiques.find(x => x.id === id)?.active) return;
+    setSwitchingId(id);
+    try {
+      const res = await fetch("/api/boutiques/switch", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tenantId: id }),
+      });
+      if (!res.ok) throw new Error();
+      window.location.assign("/dashboard/boutique");
+    } catch {
+      toast.error("Impossible de changer de boutique — réessayez");
+      setSwitchingId(null);
+    }
+  }
 
   function set(field: string, value: any) { setForm(f => ({ ...f, [field]: value })); }
 
@@ -181,8 +229,11 @@ export default function BoutiquePage() {
     seo: !!form.metaTitle && !!form.metaDescription,
     reseaux: !!(form.facebook || form.instagram || form.tiktok || form.twitter),
     livraison: !!form.zonesLivraison,
+    boutiques: autresBoutiques.length > 1,
     avance: true,
   };
+
+  const peutCreerBoutique = autresBoutiques.some(b => aAcces(palierDe(b.planType), "multi_boutique"));
 
   return (
     <div className="space-y-5 pb-24" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
@@ -488,6 +539,82 @@ export default function BoutiquePage() {
             </div>
           )}
 
+          {section === "boutiques" && (
+            <div className="ax-card p-6 space-y-4">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <h2 className="text-[14px] font-bold text-[#111111] leading-tight">Mes boutiques</h2>
+                  <p className="text-[11.5px] text-[#AAAAAA] mt-0.5 leading-tight">Gérez toutes vos boutiques Axso et basculez entre elles</p>
+                </div>
+                {peutCreerBoutique && (
+                  <button onClick={() => setModalNouvelleBoutique(true)}
+                    className="flex items-center gap-1.5 text-[12px] font-bold text-white px-3.5 py-2 rounded-full hover:opacity-90 transition-all flex-shrink-0"
+                    style={{ background: "#1B2A4A" }}>
+                    <Plus size={13} /> Nouvelle boutique
+                  </button>
+                )}
+              </div>
+
+              {loadingBoutiques ? (
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {[0, 1].map(i => <div key={i} className="h-[104px] rounded-2xl bg-[#FAFAFA] border border-[#F0F0F0] animate-pulse" />)}
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {autresBoutiques.map(b => {
+                    const busy = switchingId === b.id;
+                    return (
+                      <button key={b.id} onClick={() => switchBoutique(b.id)} disabled={busy}
+                        className="relative flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all"
+                        style={{
+                          borderColor: b.active ? "#F5A62360" : "#F0F0F0",
+                          background: b.active ? "#FFFBF3" : "#FAFAFA",
+                          cursor: b.active ? "default" : "pointer",
+                        }}>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden text-[13px] font-black text-white"
+                          style={{ background: b.logoUrl ? "#F4F4F4" : "linear-gradient(135deg,#1B2A4A,#334874)" }}>
+                          {b.logoUrl ? <img src={b.logoUrl} alt="" className="w-full h-full object-cover" /> : b.nomBoutique.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] font-semibold text-[#111111] leading-tight truncate">{b.nomBoutique}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full leading-none" style={{ background: "#1B2A4A12", color: "#1B2A4A" }}>
+                              {NOMS_PALIERS[palierDe(b.planType)]}
+                            </span>
+                            <span className="text-[10.5px] text-[#AAAAAA] leading-none">{b._count.produits} produits</span>
+                          </div>
+                        </div>
+                        {busy ? (
+                          <Loader2 size={14} className="animate-spin text-[#F5A623] flex-shrink-0" />
+                        ) : b.active ? (
+                          <span className="text-[9px] font-bold px-2 py-1 rounded-full flex-shrink-0" style={{ background: "#F5A623", color: "#fff" }}>Active</span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+
+                  {peutCreerBoutique ? (
+                    <button onClick={() => setModalNouvelleBoutique(true)}
+                      className="flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-3.5 min-h-[76px] transition-all"
+                      style={{ borderColor: "#E8E8E8" }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = "#F5A623"; e.currentTarget.style.background = "rgba(245,166,35,.03)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = "#E8E8E8"; e.currentTarget.style.background = "transparent"; }}>
+                      <Plus size={15} className="text-[#F5A623]" />
+                      <span className="text-[12.5px] font-bold text-[#666666]">Nouvelle boutique</span>
+                    </button>
+                  ) : (
+                    <Link href="/dashboard/abonnement"
+                      className="flex items-center justify-center gap-2 rounded-2xl border p-3.5 min-h-[76px] text-center transition-all hover:opacity-90"
+                      style={{ borderColor: "#F0F0F0", background: "#FAFAFA" }}>
+                      <Lock size={14} className="text-[#1B2A4A]" />
+                      <span className="text-[12px] font-bold text-[#666666]">Multi-boutique — Palier 2</span>
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {section === "avance" && (
             <div className="space-y-4">
               <div className="ax-card p-6 space-y-4">
@@ -578,6 +705,13 @@ export default function BoutiquePage() {
             {saving ? "Sauvegarde…" : "Enregistrer"}
           </button>
         </div>
+      )}
+
+      {modalNouvelleBoutique && (
+        <NouvelleBoutiqueModal
+          onClose={() => setModalNouvelleBoutique(false)}
+          onCree={(tenantId) => { setModalNouvelleBoutique(false); switchBoutique(tenantId); }}
+        />
       )}
     </div>
   );

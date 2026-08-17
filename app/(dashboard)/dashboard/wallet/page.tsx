@@ -226,7 +226,7 @@ export default function WalletPage() {
             <p className="text-[12.5px] text-[#92400E] leading-relaxed">
               <strong>Comment fonctionne le Wallet Axso ?</strong><br />
               Chaque paiement client est placé en <strong>séquestre 48h</strong> (protection acheteur).
-              Après confirmation de livraison ou expiration du délai, les fonds sont crédités — déduit de la commission Axso (3%).
+              Après confirmation de livraison ou expiration du délai, les fonds sont crédités — vous recevez l'intégralité de votre prix, la commission Axso (6%) est ajoutée au prix payé par le client.
             </p>
           </div>
 

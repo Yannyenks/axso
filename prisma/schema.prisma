@@ -27,9 +27,11 @@ model Tenant {
   bannerUrl           String?
   themeId             String   @default("terre-et-or")
   themeConfig         Json     @default("{}")
-  commissionRate      Float    @default(0.03)
+  commissionRate      Float    @default(0.06)
   statut              String   @default("active")
   planType            String   @default("gratuit")
+  planExpiresAt       DateTime?
+  planPendingRef      String?
   metaTitle           String?
   metaDescription     String?
   socialLinks         Json     @default("{}")
@@ -39,10 +41,15 @@ model Tenant {
   juridiction         String   @default("CM") // code pays ISO pour TVA
   kycStatut           String   @default("non_soumis") // non_soumis | en_cours | valide | rejete
   kycDocUrl           String?
+  certifie            Boolean  @default(false)
   snapActif             Boolean  @default(false)
   parametresAffiliation Json?    @default("{}")
   parametresCommande    Json     @default("{}") // formulaire "Commander maintenant" : champs actifs/personnalisés
   metaPixelId           String? // Meta Pixel ID du marchand, injecté sur la vitrine
+  tiktokPixelId         String? // TikTok Pixel ID, injecté sur la vitrine
+  snapPixelId           String? // Snapchat Pixel ID, injecté sur la vitrine
+  gtmId                 String? // Google Tag Manager container ID (GTM-XXXXXXX), injecté sur la vitrine
+  trackingScripts       String?  @db.Text // Scripts de suivi personnalisés du marchand, injectés tels quels sur sa propre vitrine
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
@@ -54,6 +61,7 @@ model Tenant {
   codesPromo             CodePromo[]
   avis                   Avis[]
   membres                MembreEquipe[]
+  proprietaires          ProprietaireBoutique[]
   analytics              Analytics[]
   livreurs               Livreur[]
   themes                 Theme[]
@@ -234,6 +242,8 @@ model Commande {
   flutterwaveRef   String?
   stripePaymentIntentId String?
   stripeChargeId   String?
+  paiementProvider   String?
+  paiementReference  String?
   codeAffiliation  String?  // code du lien d'affiliation utilisé
   affilieurId      String?  // tenantId de l'affilieur
   codePromoId      String?
@@ -252,6 +262,13 @@ model Commande {
   livreurPosition  Json?
   livreurNom       String?
   livreurTelephone String?
+  // Échec de livraison / replanification
+  echecRaison      String?
+  echecCount       Int      @default(0)
+  // Réconciliation cash COD
+  codRemis         Boolean  @default(false)
+  codRemisAt       DateTime?
+  codRemisParId    String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -535,6 +552,25 @@ model User {
   accounts Account[]
   sessions Session[]
   livreur  Livreur?
+  boutiques ProprietaireBoutique[]
+}
+
+// Boutiques possédées par un compte utilisateur — permet le multi-boutique
+// (Palier 2). User.tenantId reste la "boutique active" de la session (lue
+// partout ailleurs dans le code) ; cette table liste TOUTES les boutiques
+// auxquelles l'utilisateur a accès, indépendamment de laquelle est active.
+model ProprietaireBoutique {
+  id        String   @id @default(cuid())
+  userId    String
+  tenantId  String
+  role      String   @default("owner")
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId])
+  @@index([tenantId])
 }
 
 model Account {
@@ -571,6 +607,18 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// Code de double authentification par email (login en 2 étapes).
+model CodeVerification {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expireAt  DateTime
+  utilise   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email, code])
 }
 
 // =====================
@@ -1015,9 +1063,10 @@ model ReglePort {
   montantMin   Float?                 // montant commande min pour activer
   montantMax   Float?
   frais        Float                  // frais fixes
-  fraisKg      Float    @default(0)  // par kg supplémentaire
+  fraisKg      Float    @default(0)  // par kg supplémentaire (hors périmètre actuel, inerte)
   delai        String   @default("3-5 jours")
-  transporteur String?  // Campost | DHL | MTN Delivery | Sendbox | ...
+  transporteur String?  // Campost | DHL | MTN Delivery | Sendbox | nom d'agence de voyage | ...
+  modeLivraison String  @default("livreur_local") // livreur_local | agence_voyage | transporteur_intl
   gratuit      Boolean  @default(false)
   actif        Boolean  @default(true)
   createdAt    DateTime @default(now())
@@ -1312,6 +1361,7 @@ model PaiementCommission {
   reference   String?
   statut      String   @default("en_attente") // en_attente | traite | echec
   notes       String?
+  commissionIds String[] @default([]) // CommissionAffilie.id inclus dans ce paiement
   createdAt   DateTime @default(now())
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
@@ -1344,6 +1394,7 @@ model ProgrammeAffiliation {
   tier3Commission  Float    @default(12)
   multiNiveauActif Boolean  @default(false)
   tauxSousAffilies Float    @default(2)
+  autoApprobation  Boolean  @default(true)
   actif            Boolean  @default(true)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -1363,6 +1414,7 @@ model Affilie {
   telephone         String?
   programmeId       String?
   codeParrainage    String   @unique
+  portalToken       String   @unique @default(cuid()) // accès portail self-service sans compte/login
   notes             String?
   statut            String   @default("en_attente") // en_attente | actif | suspendu
   clics             Int      @default(0)

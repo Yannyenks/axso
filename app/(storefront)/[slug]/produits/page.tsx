@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { formatMontant } from "@/lib/utils";
+import { prixClient } from "@/lib/pricing";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import Link from "next/link";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
@@ -28,14 +29,18 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
   const cfg = await resolveThemeConfigAsync(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
   const { colors: c, radius } = cfg;
 
+  const taux = tenant.commissionRate ?? 0.06;
+
   const where: any = { tenantId: tenant.id, actif: true };
   if (q) where.OR = [
     { nom: { contains: q, mode: "insensitive" } },
     { description: { contains: q, mode: "insensitive" } },
     { categorie: { contains: q, mode: "insensitive" } },
   ];
-  if (min) where.prix = { ...where.prix, gte: Number(min) };
-  if (max) where.prix = { ...where.prix, lte: Number(max) };
+  // min/max sont saisis par le client en prix affiché (majoré) — on reconvertit
+  // en prix vendeur (stocké en base) avant de filtrer.
+  if (min) where.prix = { ...where.prix, gte: Number(min) / (1 + taux) };
+  if (max) where.prix = { ...where.prix, lte: Number(max) / (1 + taux) };
   if (collection) {
     const col = await prisma.collection.findFirst({ where: { tenantId: tenant.id, slug: collection } });
     if (col) where.collections = { some: { id: col.id } };
@@ -65,6 +70,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
         texte={c.texte}
         radius={radius}
         collections={tenant.collections}
+        certifie={tenant.certifie}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -205,8 +211,10 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
                 {produits.map((p) => {
-                  const remise = p.prixCompare && p.prixCompare > p.prix
-                    ? Math.round(((p.prixCompare - p.prix) / p.prixCompare) * 100)
+                  const prixAffiche = prixClient(p.prix, taux);
+                  const prixCompareAffiche = p.prixCompare ? prixClient(p.prixCompare, taux) : null;
+                  const remise = prixCompareAffiche && prixCompareAffiche > prixAffiche
+                    ? Math.round(((prixCompareAffiche - prixAffiche) / prixCompareAffiche) * 100)
                     : 0;
                   return (
                     <Link key={p.id} href={`/${slug}/produits/${p.id}`} className="group">
@@ -257,11 +265,11 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
                           )}
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-sm" style={{ color: c.accent }}>
-                              {formatMontant(p.prix, tenant.devise)}
+                              {formatMontant(prixAffiche, tenant.devise)}
                             </span>
                             {remise > 0 && (
                               <span className="text-xs line-through" style={{ opacity: 0.35 }}>
-                                {formatMontant(p.prixCompare!, tenant.devise)}
+                                {formatMontant(prixCompareAffiche!, tenant.devise)}
                               </span>
                             )}
                           </div>

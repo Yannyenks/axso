@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { quotaCommandesAtteint } from "@/lib/abonnement";
 
 // GET  /api/messages/whatsapp                    → liste des conversations
 // GET  /api/messages/whatsapp?contact=+221...    → thread d'un contact
@@ -72,7 +73,8 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ conversations: Array.from(map.values()) });
+  const locked = await quotaCommandesAtteint(tenantId);
+  return NextResponse.json({ conversations: Array.from(map.values()), locked });
 }
 
 // PATCH /api/messages/whatsapp → marquer tout comme lu pour un contact

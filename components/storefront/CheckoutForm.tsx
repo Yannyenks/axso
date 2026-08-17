@@ -10,8 +10,10 @@ import {
   Package, Zap, Phone, MapPin, User, Mail, ArrowLeft,
   Receipt, Save, ClipboardList, Check
 } from "lucide-react";
-import { StripeCheckout } from "./StripeCheckout";
+import { NotchPayCheckout } from "./NotchPayCheckout";
 import { trackPixelEvent } from "./MetaPixel";
+import { trackTikTokEvent } from "./TikTokPixel";
+import { trackSnapchatEvent } from "./SnapchatPixel";
 
 interface ParametresCommande {
   demanderEmail?: boolean;
@@ -55,7 +57,7 @@ function GpsStep({ label, steps }: { label: string; steps: string[] }) {
 }
 
 // ─── Récapitulatif commande ───────────────────────────────────────────────────
-function Recap({ theme, devise, items, total, codePromo, label }: any) {
+function Recap({ theme, devise, items, total, codePromo, label, fraisLivraison }: any) {
   return (
     <div className="rounded-2xl border p-5 space-y-4" style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}20` }}>
       <h2 className="font-bold font-playfair text-base flex items-center gap-2"><Receipt size={16} /> {label || "Récapitulatif"}</h2>
@@ -77,9 +79,15 @@ function Recap({ theme, devise, items, total, codePromo, label }: any) {
       </div>
       <div className="border-t pt-3 text-sm" style={{ borderColor: `${theme.accent}18` }}>
         {codePromo && <div className="flex justify-between text-green-500 mb-1"><span>Code : {codePromo}</span><Check size={14} /></div>}
+        {fraisLivraison !== null && fraisLivraison !== undefined && (
+          <div className="flex justify-between mb-1 opacity-70">
+            <span>Livraison</span>
+            <span>{fraisLivraison > 0 ? formatMontant(fraisLivraison, devise) : "Gratuite"}</span>
+          </div>
+        )}
         <div className="flex justify-between font-bold text-base">
           <span>Total</span>
-          <span style={{ color: theme.accent }}>{formatMontant(total, devise)}</span>
+          <span style={{ color: theme.accent }}>{formatMontant(total + (fraisLivraison || 0), devise)}</span>
         </div>
       </div>
     </div>
@@ -101,6 +109,7 @@ function Field({ label, required, children }: { label: string; required?: boolea
 // ═══════════════════════════════════════════════════════════════════════════════
 function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePromo, viderPanier, parametresCommande }: any) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const cfg: ParametresCommande = parametresCommande || {};
   const demanderEmail = cfg.demanderEmail ?? true;
   const demanderGps = cfg.demanderGps ?? true;
@@ -114,7 +123,46 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsBloque, setGpsBloque] = useState(false);
   const [adresseExacte, setAdresseExacte] = useState("");
+  const [zones, setZones] = useState<string[]>([]);
+  const [zone, setZone] = useState("");
+  const [fraisLivraison, setFraisLivraison] = useState<number | null>(null);
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  // Code d'affiliation depuis l'URL (?ref=CODE) ou localStorage — même
+  // mécanisme que CheckoutDigital, manquait ici (COD/WhatsApp n'attribuait
+  // jamais de vente à un affilié).
+  const codeRef = useMemo(() => {
+    const fromUrl = searchParams?.get("ref") ?? null;
+    if (fromUrl) {
+      try { localStorage.setItem("axso_ref", fromUrl); } catch {}
+      return fromUrl;
+    }
+    try { return localStorage.getItem("axso_ref"); } catch { return null; }
+  }, [searchParams]);
+
+  // Zones configurées par le marchand (dashboard/parametres/zones)
+  useEffect(() => {
+    fetch(`/api/boutique/${slug}/zones`)
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d.zones) && d.zones.length > 0) setZones(d.zones); })
+      .catch(() => {});
+  }, [slug]);
+
+  // Frais de livraison en direct dès qu'une zone est choisie (estimation
+  // affichée seulement — le montant réellement facturé est recalculé côté
+  // serveur dans whatsapp-creer/route.ts).
+  useEffect(() => {
+    if (!zone) { setFraisLivraison(null); return; }
+    let annule = false;
+    fetch("/api/livraison/calculer", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tenantId, zone, montantCommande: total }),
+    })
+      .then(r => r.json())
+      .then(d => { if (!annule && d.options?.[0]) setFraisLivraison(d.options[0].frais); })
+      .catch(() => {});
+    return () => { annule = true; };
+  }, [zone, tenantId, total]);
 
   const inp = "w-full px-4 py-3 rounded-xl border text-sm transition-all focus:ring-2 focus:outline-none";
   const inpStyle = { backgroundColor: theme.surface, borderColor: `${theme.accent}30`, color: theme.texte, ["--tw-ring-color" as any]: `${theme.accent}40` };
@@ -206,6 +254,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
 
   async function commander(canal: "whatsapp" | "direct") {
     if (!form.nom.trim() || !form.telephone.trim()) { toast.error("Nom et téléphone obligatoires"); return; }
+    if (zones.length > 0 && !zone) { toast.error("Sélectionnez votre zone de livraison"); return; }
     setLoadingCanal(canal);
     try {
       const res = await fetch("/api/commandes/whatsapp-creer", {
@@ -215,7 +264,8 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
           tenantId, slug, canal,
           client: form,
           items: items.map((i: any) => ({ produitId: i.produitId, nom: i.nom, prix: i.prix, quantite: i.quantite, variante: i.variante, imageUrl: i.imageUrl })),
-          total, devise, codePromo,
+          total, devise, codePromo, zone: zone || undefined,
+          codeAffiliation: codeRef || undefined,
           localisation: gps ? { lat: gps.lat, lng: gps.lng, adresseExacte: adresseExacte || form.adresse } : null,
           champPersonnalise: champPerso && champPersoValeur.trim() ? { label: champPerso, valeur: champPersoValeur.trim() } : undefined,
         }),
@@ -229,6 +279,10 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
         currency: devise,
         num_items: items.length,
       });
+      trackTikTokEvent("CompletePayment", { value: total, currency: devise, content_type: "product", contents: items.map((i: any) => ({ content_id: i.produitId, quantity: i.quantite })) });
+      trackSnapchatEvent("PURCHASE", { price: total, currency: devise });
+      if (typeof window !== "undefined") (window as any).dataLayer?.push({ event: "purchase", value: total, currency: devise, num_items: items.length });
+      try { localStorage.removeItem("axso_ref"); } catch {}
       viderPanier();
       setDone(data);
       if (canal === "whatsapp" && data.whatsappUrl) {
@@ -572,6 +626,22 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
             </div>
             )}
 
+            {zones.length > 0 && (
+              <div className="sm:col-span-2">
+                <Field label="Zone de livraison" required>
+                  <select value={zone} onChange={e => setZone(e.target.value)} className={inp} style={inpStyle}>
+                    <option value="" style={{ backgroundColor: theme.surface }}>Sélectionnez votre zone…</option>
+                    {zones.map(z => <option key={z} value={z} style={{ backgroundColor: theme.surface }}>{z}</option>)}
+                  </select>
+                </Field>
+                {zone && fraisLivraison !== null && (
+                  <p className="text-xs mt-1.5 flex items-center gap-1.5" style={{ color: theme.accent }}>
+                    <Package size={11} />
+                    {fraisLivraison > 0 ? `Frais de livraison : ${formatMontant(fraisLivraison, devise)}` : "Livraison gratuite pour cette zone"}
+                  </p>
+                )}
+              </div>
+            )}
             <Field label="Ville">
               <input value={form.ville} onChange={e => set("ville", e.target.value)} placeholder="Dakar" className={inp} style={inpStyle} />
             </Field>
@@ -587,7 +657,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
       {/* Récap + CTA */}
       <div className="lg:col-span-2">
         <div className="lg:sticky lg:top-24 space-y-4">
-          <Recap theme={theme} devise={devise} items={items} total={total} codePromo={codePromo} label="Votre commande" />
+          <Recap theme={theme} devise={devise} items={items} total={total} codePromo={codePromo} label="Votre commande" fraisLivraison={zones.length > 0 ? fraisLivraison : null} />
 
           <button onClick={() => commander("whatsapp")} disabled={loading}
             className="w-full py-4 rounded-2xl font-bold text-base transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-3 shadow-lg"
@@ -613,7 +683,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CHECKOUT DIGITAL — Paiement Stripe · Wallet Axso · Livraison instantanée
+// CHECKOUT DIGITAL — Paiement NotchPay · Wallet Axso · Livraison instantanée
 // ═══════════════════════════════════════════════════════════════════════════════
 function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codePromo, viderPanier }: any) {
   const router = useRouter();
@@ -676,13 +746,16 @@ function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codeProm
       currency: devise,
       num_items: items.length,
     });
+    trackTikTokEvent("CompletePayment", { value: total, currency: devise, content_type: "product", contents: items.map((i: any) => ({ content_id: i.produitId, quantity: i.quantite })) });
+    trackSnapchatEvent("PURCHASE", { price: total, currency: devise });
+    if (typeof window !== "undefined") (window as any).dataLayer?.push({ event: "purchase", value: total, currency: devise, num_items: items.length });
     viderPanier();
     router.push(`/${slug}/confirmation/${commandeId}`);
   }
 
   const inp2 = inp; // alias pour lisibilité dans le bloc paiement
 
-  // ── Phase 2 : paiement Stripe ──────────────────────────────────────────────
+  // ── Phase 2 : paiement NotchPay ──────────────────────────────────────────────
   if (phase === "paiement" && commandeId) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
@@ -703,17 +776,16 @@ function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codeProm
             </div>
           </div>
 
-          {/* Stripe checkout */}
+          {/* NotchPay checkout */}
           <div className="rounded-2xl border p-5" style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}20` }}>
             <h2 className="font-bold font-playfair text-base mb-4 flex items-center gap-2"><CreditCard size={16} /> Paiement sécurisé</h2>
-            <StripeCheckout
+            <NotchPayCheckout
               commandeId={commandeId}
               montant={total}
               devise={devise}
               clientEmail={form.email}
               clientNom={form.nom}
-              codeAffiliation={codeRef ?? undefined}
-              onSuccess={onPaiementSucces}
+              clientTelephone={form.telephone}
               onError={(msg) => toast.error(msg)}
             />
           </div>
@@ -787,7 +859,7 @@ function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codeProm
         <div className="flex items-center gap-3 p-4 rounded-2xl border" style={{ borderColor: `${theme.accent}15`, background: `${theme.accent}05` }}>
           <CreditCard size={16} style={{ color: theme.accent }} className="flex-shrink-0" />
           <p className="text-xs opacity-60 leading-relaxed">
-            Paiement sécurisé par <span className="font-bold" style={{ color: "#635BFF" }}>Stripe</span> · Visa, Mastercard, American Express · Chiffrement SSL 256-bit
+            Paiement sécurisé par <span className="font-bold" style={{ color: "#1B2A4A" }}>NotchPay</span> · Orange Money, MTN MoMo, carte bancaire · Chiffrement SSL 256-bit
           </p>
         </div>
       </div>
@@ -894,6 +966,9 @@ export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoU
       currency: devise,
       num_items: items.length,
     });
+    trackTikTokEvent("InitiateCheckout", { value: total, currency: devise });
+    trackSnapchatEvent("START_CHECKOUT", { price: total, currency: devise });
+    if (typeof window !== "undefined") (window as any).dataLayer?.push({ event: "initiate_checkout", value: total, currency: devise, num_items: items.length });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

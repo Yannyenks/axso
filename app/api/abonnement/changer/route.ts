@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const PLANS_VALIDES = ["gratuit", "starter", "pro", "business"] as const;
-type Plan = (typeof PLANS_VALIDES)[number];
-
+// Cette route ne gère que le downgrade gratuit (aucun paiement requis).
+// Les upgrades payants passent par /api/abonnement/paiement (NotchPay).
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) {
@@ -23,18 +22,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Corps JSON invalide" }, { status: 400 });
   }
 
-  const plan = body.plan?.toLowerCase() as Plan;
-  if (!plan || !PLANS_VALIDES.includes(plan)) {
+  const plan = body.plan?.toLowerCase();
+  if (plan !== "palier0") {
     return NextResponse.json(
-      { error: `Plan invalide. Valeurs acceptées : ${PLANS_VALIDES.join(", ")}` },
+      { error: "Les upgrades payants passent par le paiement NotchPay" },
       { status: 400 }
     );
   }
 
   await prisma.tenant.update({
     where: { id: tenantId },
-    data: { planType: plan },
+    data: { planType: "palier0", planExpiresAt: null, planPendingRef: null },
   });
 
-  return NextResponse.json({ succes: true, plan });
+  return NextResponse.json({ succes: true, plan: "palier0" });
 }

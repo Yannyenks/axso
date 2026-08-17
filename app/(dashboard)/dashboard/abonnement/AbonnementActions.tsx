@@ -11,6 +11,12 @@ interface AbonnementActionsProps {
   couleur: string;
 }
 
+const ORDRE: Record<string, number> = {
+  palier0: 0,
+  palier1: 1,
+  palier2: 2,
+};
+
 export default function AbonnementActions({
   planId,
   planActuel,
@@ -20,29 +26,32 @@ export default function AbonnementActions({
   const [loading, setLoading] = useState(false);
 
   const estActuel = planId === planActuel;
-
-  const ORDRE: Record<string, number> = {
-    gratuit: 0,
-    starter: 1,
-    pro: 2,
-    business: 3,
-  };
-
   const estSuperieur = ORDRE[planId] > ORDRE[planActuel];
 
   async function choisirPlan() {
     if (estActuel) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/abonnement/changer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planId }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Erreur inconnue");
-      toast.success(`Plan ${data.plan} activé avec succès !`);
-      router.refresh();
+      if (planId === "palier0") {
+        const res = await fetch("/api/abonnement/changer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan: planId }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? "Erreur inconnue");
+        toast.success("Plan Essentiel activé");
+        router.refresh();
+      } else {
+        const res = await fetch("/api/abonnement/paiement", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan: planId }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? "Erreur inconnue");
+        window.location.href = data.authorizationUrl;
+      }
     } catch (err: any) {
       toast.error(err.message ?? "Erreur lors du changement de plan");
     } finally {

@@ -5,10 +5,13 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import { compare } from "bcryptjs";
 import { z } from "zod";
+import { verifierCode } from "@/lib/two-factor";
+import { hasResend } from "@/lib/email";
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
+  code: z.string().optional(),
 });
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -24,6 +27,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Mot de passe", type: "password" },
+        code: { label: "Code", type: "text" },
       },
       async authorize(credentials) {
         const parsed = loginSchema.safeParse(credentials);
@@ -37,6 +41,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const passwordOk = await compare(parsed.data.password, user.password);
         if (!passwordOk) return null;
+
+        // 2FA active uniquement si Resend est configuré (sinon le code n'a
+        // jamais pu être envoyé — voir /api/auth/2fa/demander).
+        if (hasResend()) {
+          if (!parsed.data.code) return null;
+          const codeOk = await verifierCode(user.email!, parsed.data.code);
+          if (!codeOk) return null;
+        }
 
         return {
           id: user.id,
@@ -55,6 +67,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.tenantId = (user as any).tenantId;
         token.role = (user as any).role;
       }
+      // Changement de boutique active (multi-boutique Palier 2) : le cookie
+      // de session est réécrit directement par /api/boutiques/switch (même
+      // encode/decode qu'ici), pas via ce callback — voir ce fichier pour le
+      // détail et la vérification de propriété.
       return token;
     },
     async session({ session, token }) {

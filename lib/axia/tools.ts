@@ -8,11 +8,19 @@ import { executerOutilMcp } from "@/lib/mcp/executor";
 import { generateProductImage, buildProductImagePrompt } from "@/lib/image-gen";
 import { generateSpeechGemini, startVideoGemini, GEMINI_TTS_VOICES } from "@/lib/llm-client";
 import { slugify } from "@/lib/utils";
+import { filtrerOutilsParPalier, type Palier } from "@/lib/plans";
+import { planActif } from "@/lib/abonnement";
 
-export const AXIA_TOOLS: AgentTool[] = [
+// tier absent = disponible dès le Palier 0. "palier1"/"palier2" = outil
+// réservé, filtré par lib/plans.ts::filtrerOutilsParPalier avant chaque appel
+// IA (voir app/api/ai/axia, /universal, /orchestrator).
+export type AxiaToolDef = AgentTool & { tier?: Palier };
+
+export const AXIA_TOOLS: AxiaToolDef[] = [
   // ─── IMAGES ───────────────────────────────────────────────────────────────
   {
     name: "generer_image",
+    tier: "palier2",
     description: "Génère une image produit ultra HD via Gemini (modèle image natif). TOUJOURS appeler avant ajouter_produit.",
     parameters: {
       type: "object" as const,
@@ -27,6 +35,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   // ─── VIDÉO ────────────────────────────────────────────────────────────────
   {
     name: "generer_video",
+    tier: "palier2",
     description: "Lance une génération vidéo IA (Gemini Veo) depuis un prompt. La génération prend plusieurs minutes : l'outil démarre le rendu et le marchand retrouve la vidéo prête dans Contenus dès qu'elle est prête.",
     parameters: {
       type: "object" as const,
@@ -41,6 +50,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   // ─── AUDIO / TTS ──────────────────────────────────────────────────────────
   {
     name: "generer_voiceover",
+    tier: "palier2",
     description: "Génère un audio voix off professionnel via le TTS natif Gemini. Retourne l'audio au format WAV.",
     parameters: {
       type: "object" as const,
@@ -54,6 +64,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   // ─── PRODUITS ─────────────────────────────────────────────────────────────
   {
     name: "ajouter_produit",
+    tier: "palier1",
     description: "Ajoute un nouveau produit à la boutique (passe imageUrl si tu as généré une image avant)",
     parameters: {
       type: "object" as const,
@@ -83,6 +94,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   },
   {
     name: "enrichir_produit",
+    tier: "palier1",
     description: "Met à jour description, SEO et tags d'un produit",
     parameters: {
       type: "object" as const,
@@ -99,6 +111,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   },
   {
     name: "mettre_a_jour_prix",
+    tier: "palier1",
     description: "Change le prix d'un produit avec option prix barré",
     parameters: {
       type: "object" as const,
@@ -118,6 +131,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   },
   {
     name: "modifier_boutique",
+    tier: "palier1",
     description: "Modifie le thème, la description ou les paramètres de la boutique",
     parameters: {
       type: "object" as const,
@@ -133,6 +147,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   // ─── MARKETING ────────────────────────────────────────────────────────────
   {
     name: "creer_code_promo",
+    tier: "palier1",
     description: "Crée un code promotionnel actif",
     parameters: {
       type: "object" as const,
@@ -147,6 +162,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   },
   {
     name: "envoyer_campagne_email",
+    tier: "palier1",
     description: "Envoie une campagne email HTML à tous les clients",
     parameters: {
       type: "object" as const,
@@ -160,6 +176,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   },
   {
     name: "generer_post_social",
+    tier: "palier1",
     description: "Génère un post prêt à publier pour les réseaux sociaux",
     parameters: {
       type: "object" as const,
@@ -183,11 +200,13 @@ export const AXIA_TOOLS: AgentTool[] = [
   },
   {
     name: "rapport_complet",
+    tier: "palier1",
     description: "Rapport business complet 30j : tous les KPIs, top produits, clients",
     parameters: { type: "object" as const, properties: {}, required: [] },
   },
   {
     name: "produits_performance",
+    tier: "palier1",
     description: "Classement produits par ventes ou revenus",
     parameters: {
       type: "object" as const,
@@ -243,16 +262,19 @@ export const AXIA_TOOLS: AgentTool[] = [
   // ─── CONNECTEURS MCP ──────────────────────────────────────────────────────
   {
     name: "meta_poster_facebook",
+    tier: "palier1",
     description: "Publie MAINTENANT sur Facebook (message + image optionnelle)",
     parameters: { type: "object" as const, properties: { message: { type: "string" }, imageUrl: { type: "string" }, lienUrl: { type: "string" } }, required: ["message"] },
   },
   {
     name: "meta_poster_instagram",
+    tier: "palier1",
     description: "Publie MAINTENANT sur Instagram (image obligatoire)",
     parameters: { type: "object" as const, properties: { caption: { type: "string" }, imageUrl: { type: "string" } }, required: ["caption", "imageUrl"] },
   },
   {
     name: "meta_planifier_post",
+    tier: "palier1",
     description: "Programme un post Facebook ou Instagram pour une date future",
     parameters: {
       type: "object" as const,
@@ -267,6 +289,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   },
   {
     name: "meta_creer_campagne_ads",
+    tier: "palier2",
     description: "Crée une campagne publicitaire Meta Ads",
     parameters: {
       type: "object" as const,
@@ -287,6 +310,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   },
   {
     name: "whatsapp_diffusion",
+    tier: "palier1",
     description: "Diffuse un message WhatsApp à tous les clients ou un segment (tous/vip/inactifs/nouveaux)",
     parameters: {
       type: "object" as const,
@@ -300,17 +324,20 @@ export const AXIA_TOOLS: AgentTool[] = [
   },
   {
     name: "gmail_envoyer",
+    tier: "palier1",
     description: "Envoie un email depuis Gmail (nécessite Gmail connecté)",
     parameters: { type: "object" as const, properties: { destinataire: { type: "string" }, sujet: { type: "string" }, corps_html: { type: "string" } }, required: ["destinataire", "sujet", "corps_html"] },
   },
   {
     name: "sms_campagne",
+    tier: "palier1",
     description: "Envoie un SMS en masse via Africa's Talking",
     parameters: { type: "object" as const, properties: { message: { type: "string" }, segment: { type: "string", enum: ["tous", "vip", "inactifs"] } }, required: ["message", "segment"] },
   },
   // ─── HIGGSFIELD AI ────────────────────────────────────────────────────────
   {
     name: "higgsfield_generer_video",
+    tier: "palier2",
     description: "Génère une vidéo ultra HD avec Higgsfield (Kling 3.0, Veo 3.1, Sora 2, Cinema 3.5). Pour publicités, produits, contenus sociaux.",
     parameters: {
       type: "object" as const,
@@ -326,6 +353,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   },
   {
     name: "higgsfield_generer_image",
+    tier: "palier2",
     description: "Génère une image ultra HD (Recraft 4.1, GPT Image, Seedream 4.0). Pour visuels produits, bannières, posts.",
     parameters: {
       type: "object" as const,
@@ -339,6 +367,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   },
   {
     name: "higgsfield_video_produit",
+    tier: "palier2",
     description: "Génère automatiquement une vidéo produit professionnelle depuis un produit de la boutique",
     parameters: {
       type: "object" as const,
@@ -352,11 +381,13 @@ export const AXIA_TOOLS: AgentTool[] = [
   },
   {
     name: "higgsfield_lister_outils",
+    tier: "palier2",
     description: "Liste tous les outils disponibles sur le serveur MCP Higgsfield de l'utilisateur",
     parameters: { type: "object" as const, properties: {}, required: [] },
   },
   {
     name: "higgsfield_appeler_outil",
+    tier: "palier2",
     description: "Appelle directement n'importe quel outil Higgsfield MCP (accès aux 40+ outils)",
     parameters: {
       type: "object" as const,
@@ -507,6 +538,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   },
   {
     name: "ajouter_fournisseur",
+    tier: "palier1",
     description: "Ajoute un nouveau fournisseur dropshipping",
     parameters: {
       type: "object" as const,
@@ -524,6 +556,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   // ─── POPUPS & BANDEAUX ────────────────────────────────────────────────────
   {
     name: "creer_popup",
+    tier: "palier1",
     description: "Crée un popup ou bandeau promotionnel sur la boutique",
     parameters: {
       type: "object" as const,
@@ -544,6 +577,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   // ─── AUTOMATION ───────────────────────────────────────────────────────────
   {
     name: "creer_automation",
+    tier: "palier1",
     description: "Crée une séquence marketing automatique (panier abandonné, bienvenue, etc.)",
     parameters: {
       type: "object" as const,
@@ -567,17 +601,20 @@ export const AXIA_TOOLS: AgentTool[] = [
   // ─── ANALYSE AVIS ─────────────────────────────────────────────────────────
   {
     name: "analyser_avis",
+    tier: "palier1",
     description: "Analyse les avis clients et génère des insights et recommandations",
     parameters: { type: "object" as const, properties: { produitId: { type: "string", description: "Filtrer par produit (optionnel)" } }, required: [] },
   },
   // ─── MULTI-ENTREPÔTS ─────────────────────────────────────────────────────
   {
     name: "lister_entrepots",
+    tier: "palier2",
     description: "Liste les entrepôts configurés avec leur stock",
     parameters: { type: "object" as const, properties: {}, required: [] },
   },
   {
     name: "creer_entrepot",
+    tier: "palier2",
     description: "Crée un nouvel entrepôt pour la gestion multi-site du stock",
     parameters: {
       type: "object" as const,
@@ -594,6 +631,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   // ─── DROPSHIPPING AUTO-ROUTING ───────────────────────────────────────────
   {
     name: "router_commande_fournisseur",
+    tier: "palier2",
     description: "Route automatiquement une commande vers le fournisseur dropshipping approprié",
     parameters: { type: "object" as const, properties: { commandeId: { type: "string", description: "ID ou numéro de la commande" } }, required: ["commandeId"] },
   },
@@ -609,6 +647,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   // ─── AFFILIATION ENTRANTE & PAIEMENTS ────────────────────────────────────
   {
     name: "ajouter_programme_affiliation_entrante",
+    tier: "palier2",
     description: "Ajoute un programme d'affiliation externe où le marchand est affilié (ex: Jumia, Amazon, partenaire local)",
     parameters: {
       type: "object" as const,
@@ -624,6 +663,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   },
   {
     name: "payer_commission_affilie",
+    tier: "palier2",
     description: "Enregistre un paiement de commission vers un affilié via mobile money ou virement",
     parameters: {
       type: "object" as const,
@@ -640,6 +680,7 @@ export const AXIA_TOOLS: AgentTool[] = [
   // ─── POS & TVA ────────────────────────────────────────────────────────────
   {
     name: "calculer_tva",
+    tier: "palier1",
     description: "Calcule la TVA applicable selon la juridiction de la boutique ou d'un pays donné",
     parameters: {
       type: "object" as const,
@@ -652,17 +693,20 @@ export const AXIA_TOOLS: AgentTool[] = [
   },
   {
     name: "sync_fournisseurs",
+    tier: "palier2",
     description: "Lance la synchronisation des prix et stocks des produits dropshipping depuis les fournisseurs, et détecte les retards de livraison",
     parameters: { type: "object" as const, properties: {}, required: [] },
   },
   {
     name: "verifier_retards_fournisseurs",
+    tier: "palier2",
     description: "Vérifie les commandes fournisseurs en retard et liste les clients à prévenir",
     parameters: { type: "object" as const, properties: {}, required: [] },
   },
   // ─── AGENTS SPÉCIALISÉS ───────────────────────────────────────────────────
   {
     name: "deleguer_vers_agent",
+    tier: "palier1",
     description: "Délègue une tâche complexe à l'agent spécialisé du module concerné. Chaque agent a une expertise profonde dans son domaine et exécute les actions nécessaires de façon autonome. Utilise cet outil dès qu'une tâche dépasse une simple requête et nécessite de l'expertise : audit catalogue, campagne marketing complète, analyse financière approfondie, optimisation boutique, gestion logistique, etc.",
     parameters: {
       type: "object" as const,
@@ -1274,7 +1318,10 @@ export const executeAxiaTool: ToolExecutor = async (nom, args, tenantId) => {
           tenantCtx?.categorie ? `Catégorie : ${tenantCtx.categorie}` : "",
         ].filter(Boolean).join("\n");
 
-        const agentTools = AXIA_TOOLS.filter(t => agentDef.tools.includes(t.name));
+        // Re-filtrer par palier — la délégation ne doit pas donner accès à un
+        // outil palier2 à un tenant palier0/1.
+        const { plan: planDelegation } = await planActif(tenantId);
+        const agentTools = filtrerOutilsParPalier(AXIA_TOOLS.filter(t => agentDef.tools.includes(t.name)), planDelegation);
         const tacheComplete = args.contexte_supplementaire ? `${args.tache}\n\nContexte supplémentaire : ${args.contexte_supplementaire}` : args.tache;
 
         try {

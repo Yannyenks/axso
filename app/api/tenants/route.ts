@@ -54,7 +54,7 @@ export async function POST(request: Request) {
           whatsapp: data.whatsapp,
           email: data.email,
           themeId: data.themeId,
-          commissionRate: 0.03,
+          commissionRate: 0.06,
           statut: "active",
           planType: "gratuit",
         },
@@ -114,7 +114,7 @@ export async function PATCH(request: Request) {
       "themeId", "logoUrl", "bannerUrl", "description", "metaTitle", "metaDescription",
       "whatsapp", "nomBoutique", "telephone", "adresse", "email", "categorie", "pays", "devise",
       "socialLinks", "parametresLivraison", "parametresPaiement", "themeConfig",
-      "parametresCommande", "metaPixelId",
+      "parametresCommande", "metaPixelId", "tiktokPixelId", "snapPixelId", "gtmId", "trackingScripts",
     ];
     for (const key of autorises) {
       if (body[key] !== undefined) champs[key] = body[key];

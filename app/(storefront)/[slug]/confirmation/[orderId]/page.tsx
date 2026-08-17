@@ -4,86 +4,44 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { formatMontant, formatDate } from "@/lib/utils";
 import Link from "next/link";
-import { CheckCircle, Clock, XCircle, Shield, TrendingDown, Download, Zap, Package, MessageCircle, Check, X } from "lucide-react";
+import { CheckCircle, XCircle, Shield, TrendingDown, Download, Zap, Package, MessageCircle, Check, X } from "lucide-react";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
+import { verifierPaiementNotchPay, hasNotchPay } from "@/lib/notchpay";
+import { confirmerPaiementCommande } from "@/lib/paiement-commande";
 
 interface Props {
   params: Promise<{ slug: string; orderId: string }>;
-  searchParams: Promise<{ transaction_id?: string; status?: string; tx_ref?: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }
 
-async function verifierPaiementFlutterwave(transactionId: string, commandeId: string): Promise<boolean> {
-  const key = process.env.FLUTTERWAVE_SECRET_KEY;
-  if (!key) return false;
-
+// Filet de sécurité : si le webhook NotchPay n'est pas encore arrivé au moment
+// où le client revient de la page de paiement hébergée, on vérifie directement
+// et on confirme la commande (confirmerPaiementCommande est idempotent).
+async function verifierEtConfirmerNotchPay(commandeId: string, paiementReference: string | null) {
+  if (!hasNotchPay() || !paiementReference) return;
   try {
-    const res = await fetch(`https://api.flutterwave.com/v3/transactions/${transactionId}/verify`, {
-      headers: { Authorization: `Bearer ${key}` },
-    });
-    const data = await res.json();
-
-    if (data.status === "success" && data.data?.status === "successful" && data.data?.tx_ref === commandeId) {
-      const commande = await prisma.commande.findUnique({ where: { id: commandeId }, include: { tenant: true } });
-      if (!commande || commande.paiementStatut === "completed") return true;
-
-      const isDigital = commande.methodePaiement?.includes(":digital");
-      const releaseAt = isDigital ? new Date() : new Date(Date.now() + 48 * 3600 * 1000);
-
-      await prisma.commande.update({
-        where: { id: commandeId },
-        data: { statut: "confirmee", paiementStatut: "completed", flutterwaveRef: data.data.flw_ref },
-      });
-
-      const lignes = await prisma.ligneCommande.findMany({ where: { commandeId } });
-
-      await Promise.all([
-        prisma.escrow.create({
-          data: {
-            tenantId: commande.tenantId,
-            commandeId,
-            montant: commande.montantTotal,
-            releaseAt,
-            statut: isDigital ? "released" : "held",
-          },
-        }).catch(() => {}),
-        prisma.commission.create({
-          data: {
-            tenantId: commande.tenantId,
-            commandeId,
-            montantCommande: commande.montantTotal,
-            montantCommission: commande.montantTotal * commande.tenant.commissionRate,
-            montantMarchand: commande.montantTotal * (1 - commande.tenant.commissionRate),
-            taux: commande.tenant.commissionRate,
-            devise: commande.devise,
-            statut: "pending",
-          },
-        }).catch(() => {}),
-        ...lignes.map((l) =>
-          prisma.produit.update({
-            where: { id: l.produitId },
-            data: { stock: { decrement: l.quantite }, ventes: { increment: l.quantite } },
-          }).catch(() => {})
-        ),
-      ]);
-
-      return true;
+    // paiementReference = référence NotchPay ("trx.xxx") stockée à l'initialisation —
+    // GET /payments/{reference} n'accepte que leur propre référence, pas la nôtre.
+    const { transaction } = await verifierPaiementNotchPay(paiementReference);
+    if (transaction?.status === "complete") {
+      await confirmerPaiementCommande(commandeId, paiementReference);
     }
-    return false;
   } catch {
-    return false;
+    // Le webhook reste la source de vérité — on affiche l'état actuel de la commande
   }
 }
 
 export default async function ConfirmationPage({ params, searchParams }: Props) {
   const { slug, orderId } = await params;
-  const { transaction_id, status } = await searchParams;
+  await searchParams;
 
   const tenant = await prisma.tenant.findUnique({ where: { slug } });
   if (!tenant || tenant.statut !== "active") notFound();
 
-  if (transaction_id && status === "successful") {
-    await verifierPaiementFlutterwave(transaction_id, orderId);
+  const commandeAvant = await prisma.commande.findUnique({ where: { id: orderId }, select: { paiementStatut: true, methodePaiement: true, paiementReference: true } });
+  if (commandeAvant?.paiementStatut === "pending" && commandeAvant.methodePaiement === "notchpay") {
+    await verifierEtConfirmerNotchPay(orderId, commandeAvant.paiementReference);
   }
 
   const commande = await prisma.commande.findUnique({
@@ -103,16 +61,15 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
 
   const paye = commande.paiementStatut === "completed";
   const echoue = commande.paiementStatut === "failed";
-  const isCOD = commande.methodePaiement === "whatsapp_cod";
-  const isDigital = commande.methodePaiement?.includes(":digital") ||
-    commande.lignes.some(l => l.produit?.type === "digital");
+  const isCOD = commande.methodePaiement === "whatsapp_cod" || commande.methodePaiement === "direct_cod";
+  const isDigital = commande.lignes.some(l => l.produit?.type === "digital");
 
   const lignesDigitales = commande.lignes.filter(l => l.produit?.type === "digital" && l.produit?.fichierUrl);
-  const lignesPhysiques = commande.lignes.filter(l => !l.produit || l.produit?.type !== "digital");
 
-  const montantCommission = commande.montantTotal * (tenant.commissionRate || 0.03);
-  const montantMarchand = commande.montantTotal - montantCommission;
-  const releaseAt = isDigital ? new Date() : new Date(Date.now() + 48 * 3600 * 1000);
+  // commande.montantTotal est déjà majoré de la commission côté client (prix vendeur
+  // × (1 + taux)) — le marchand reçoit son prix intégral, extrait par division.
+  const montantMarchand = commande.montantTotal / (1 + (tenant.commissionRate || 0.06));
+  const montantCommission = commande.montantTotal - montantMarchand;
 
   return (
     <div style={{ backgroundColor: theme.fond, color: theme.texte, minHeight: "100vh" }}>
@@ -291,7 +248,7 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
               </div>
               <div className="flex justify-between text-sm">
                 <span className="opacity-60 flex items-center gap-1">
-                  <TrendingDown size={11} /> Commission Axso ({Math.round((tenant.commissionRate || 0.03) * 100)}%)
+                  <TrendingDown size={11} /> Commission Axso ({Math.round((tenant.commissionRate || 0.06) * 100)}%)
                 </span>
                 <span className="text-red-400">-{formatMontant(montantCommission, tenant.devise)}</span>
               </div>
@@ -301,35 +258,23 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
               </div>
             </div>
 
-            {isDigital ? (
-              <div className="flex items-start gap-3 rounded-xl p-3 mt-2"
-                style={{ backgroundColor: `${theme.accent}08`, border: `1px solid ${theme.accent}20` }}>
-                <Zap size={14} style={{ color: theme.accent }} className="mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold" style={{ color: theme.accent }}>Fonds libérés immédiatement</p>
-                  <p className="opacity-50 text-xs mt-0.5">
-                    Produit digital — le marchand reçoit les fonds instantanément après paiement.
-                  </p>
-                </div>
+            <div className="flex items-start gap-3 rounded-xl p-3 mt-2"
+              style={{ backgroundColor: `${theme.accent}08`, border: `1px solid ${theme.accent}20` }}>
+              <Zap size={14} style={{ color: theme.accent }} className="mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold" style={{ color: theme.accent }}>Fonds libérés immédiatement</p>
+                <p className="opacity-50 text-xs mt-0.5">
+                  Le marchand reçoit les fonds instantanément après confirmation du paiement.
+                </p>
               </div>
-            ) : (
-              <div className="flex items-start gap-3 bg-amber-400/5 border border-amber-400/20 rounded-xl p-3 mt-2">
-                <Clock size={14} className="text-amber-400 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-amber-400 text-xs font-semibold">Fonds sécurisés 48h</p>
-                  <p className="opacity-50 text-xs mt-0.5">
-                    Les fonds seront libérés après confirmation de livraison (avant le {releaseAt.toLocaleDateString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}).
-                  </p>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         )}
 
         {/* ── Actions ──────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          {!isCOD && !isDigital && (
-            <Link href={`/${slug}/suivi/${commande.id}`}
+          {!isCOD && !isDigital && commande.trackingToken && (
+            <Link href={`/${slug}/tracking/${commande.trackingToken}`}
               className="flex-1 text-center px-6 py-3 rounded-xl font-semibold text-sm transition-all border"
               style={{ borderColor: `${theme.accent}40`, color: theme.accent }}>
               Suivre ma commande

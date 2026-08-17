@@ -4,7 +4,7 @@ import { genererNumeroCommande } from "@/lib/utils";
 
 export async function POST(req: NextRequest) {
   try {
-    const { tenantId, client, items, total, devise, codeAffiliation, affilieurId } = await req.json();
+    const { tenantId, client, items, total, devise, codeAffiliation } = await req.json();
 
     if (!tenantId || !items?.length || !client?.nom || !client?.email) {
       return NextResponse.json({ error: "Nom et email obligatoires" }, { status: 400 });
@@ -47,9 +47,8 @@ export async function POST(req: NextRequest) {
         devise,
         statut: "en_attente",
         paiementStatut: "pending",
-        methodePaiement: "stripe:card",
+        methodePaiement: "en_attente",
         codeAffiliation: codeAffiliation || null,
-        affilieurId: affilieurId || null,
         lignes: {
           create: items.map((item: any) => ({
             produitId: item.produitId,
@@ -62,21 +61,6 @@ export async function POST(req: NextRequest) {
         },
       },
     });
-
-    // Enregistre le clic d'affiliation comme conversion en attente
-    if (codeAffiliation) {
-      await prisma.affiliationLien
-        .findUnique({ where: { code: codeAffiliation } })
-        .then((lien) => {
-          if (lien) {
-            return prisma.affiliationLien.update({
-              where: { id: lien.id },
-              data: { clics: { increment: 0 } }, // clics déjà comptés au tracker
-            });
-          }
-        })
-        .catch(() => {});
-    }
 
     return NextResponse.json({ commandeId: commande.id, numero: commande.numero });
   } catch (err) {

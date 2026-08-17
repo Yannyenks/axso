@@ -37,6 +37,7 @@ type FormState = {
   type: "physique" | "digital" | "dropshipping";
   fichierUrl: string; fichierNom: string; fichierTaille: number; instructionsTelechargement: string;
   prixFournisseur: string; urlFournisseur: string; nomFournisseur: string;
+  affiliationActive: boolean; tauxCommissionAff: string;
 };
 
 export default function EditProduitPage() {
@@ -69,6 +70,7 @@ export default function EditProduitPage() {
     type: "physique",
     fichierUrl: "", fichierNom: "", fichierTaille: 0, instructionsTelechargement: "",
     prixFournisseur: "", urlFournisseur: "", nomFournisseur: "",
+    affiliationActive: false, tauxCommissionAff: "",
   });
 
   useEffect(() => {
@@ -103,6 +105,8 @@ export default function EditProduitPage() {
           prixFournisseur: p.prixFournisseur?.toString() ?? "",
           urlFournisseur: p.urlFournisseur ?? "",
           nomFournisseur: p.nomFournisseur ?? "",
+          affiliationActive: p.affiliationActive ?? false,
+          tauxCommissionAff: p.tauxCommissionAff ? String(Math.round(p.tauxCommissionAff * 100)) : "",
         });
         // Load variantes
         if (p.variantes?.length) {
@@ -233,6 +237,8 @@ export default function EditProduitPage() {
         tags: form.tags, images: form.images, videos: form.videos,
         actif: form.actif, featured: form.featured, type: form.type,
         metaTitle: form.metaTitle || null, metaDesc: form.metaDesc || null,
+        affiliationActive: form.affiliationActive,
+        tauxCommissionAff: form.affiliationActive && form.tauxCommissionAff ? parseFloat(form.tauxCommissionAff) / 100 : null,
       };
       if (form.type === "physique") payload.poids = form.poids ? parseFloat(form.poids) : null;
       if (form.type === "digital") {
@@ -415,6 +421,31 @@ export default function EditProduitPage() {
             {form.type === "dropshipping" && marge !== null && (
               <div className={`rounded-xl px-4 py-2.5 text-xs flex items-center gap-2 ${marge >= 30 ? "bg-green-50 border border-green-200 text-green-700" : marge >= 10 ? "bg-yellow-50 border border-yellow-200 text-yellow-700" : "bg-red-50 border border-red-200 text-red-600"}`}>
                 <BarChart2 size={12} /> Marge : {marge}% {marge >= 30 ? "✓ Bonne marge" : marge >= 10 ? "⚠ Marge faible" : "✗ Marge insuffisante"}
+              </div>
+            )}
+          </div>
+
+          {/* Programme d'affiliation */}
+          <div className="ax-card p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap size={15} className="text-[#F5A623]" />
+                <h2 className="text-[13px] font-semibold text-[#111111]">Programme d'affiliation</h2>
+              </div>
+              <button type="button" onClick={() => set("affiliationActive", !form.affiliationActive)}
+                className="w-9 h-5 rounded-full relative transition-all flex-shrink-0"
+                style={{ background: form.affiliationActive ? "#10b981" : "#E5E5E5" }}>
+                <span className="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all" style={{ left: form.affiliationActive ? "18px" : "2px" }} />
+              </button>
+            </div>
+            <p className="text-[11.5px] text-gray-400">
+              Activer une commission spécifique pour ce produit — remplace le taux par défaut du programme d'affiliation pour vos affiliés.
+            </p>
+            {form.affiliationActive && (
+              <div>
+                <label className="ax-label block mb-1.5">Taux de commission affilié (%)</label>
+                <input type="number" value={form.tauxCommissionAff} onChange={e => set("tauxCommissionAff", e.target.value)} min="0" max="100" placeholder="20" className={inputClass} />
+                <p className="text-[10.5px] text-gray-400 mt-1.5">Ex : 20 = 20% du montant de la ligne reversés à l'affilié sur chaque vente de ce produit.</p>
               </div>
             )}
           </div>

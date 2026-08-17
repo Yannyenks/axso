@@ -31,10 +31,14 @@ export function MapLivraison({ adresse, ville, latitude, longitude, livreurLat, 
       const destLat = latitude || 14.7167;
       const destLng = longitude || -17.4677;
 
+      // Sur mobile, le drag capture le geste de scroll de la page (le doigt
+      // pose sur la carte pour scroller finit par la faire glisser à la
+      // place) — on désactive le drag tactile, le zoom +/- reste utilisable.
       const map = L.map(mapRef.current!, {
         center: [destLat, destLng],
         zoom: 14,
         zoomControl: true,
+        dragging: !L.Browser.mobile,
       });
 
       mapInstance.current = map;

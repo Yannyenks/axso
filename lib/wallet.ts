@@ -1,22 +1,25 @@
 // Wallet AXSO — logique métier
-// Chaque marchand possède un wallet unique.
-// Flux : paiement → escrow (48h) → libération → crédit wallet (montant net)
-//        commission → débit automatique au moment de la libération
-//        retrait    → débit wallet → virement Flutterwave
+// Flux : paiement confirmé (NotchPay) → crédit wallet immédiat (montant net, commission déduite)
+//        retrait    → débit wallet → virement NotchPay (Transfers)
 
 import { prisma } from "./prisma";
+import { initierTransfertNotchPay } from "./notchpay";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type TypeTransaction = "CREDIT" | "COMMISSION" | "RETRAIT" | "REMBOURSEMENT";
+export type TypeTransaction = "CREDIT" | "COMMISSION" | "RETRAIT" | "REMBOURSEMENT" | "FRAIS" | "BONUS";
 
 export interface CreditWalletParams {
   tenantId: string;
-  montantTotal: number;
-  montantCommission: number;
+  montantBrut: number;
+  tauxCommission: number;
   devise: string;
-  commandeId: string;
+  description: string;
+  commandeId?: string;
   reference?: string;
+  // Frais de traitement NotchPay réels sur cette transaction (jamais déduits du
+  // vendeur — uniquement de la commission Axso, qui est la seule chose qui les couvre).
+  fraisPasserelle?: number;
 }
 
 export interface RetraitParams {
@@ -39,86 +42,229 @@ export async function getOrCreateWallet(tenantId: string, devise = "XAF") {
   });
 }
 
-// ─── Créditer le wallet après libération d'escrow ────────────────────────────
-// Appelle en mode transaction Prisma ($transaction) depuis les routes escrow.
+// ─── Portefeuille plateforme (revenu Axso) ────────────────────────────────────
+// Aucune commission n'existait nulle part sous forme d'argent retirable — elle
+// n'était qu'une ligne d'audit négative sur le wallet du marchand. On la fait
+// atterrir ici : un tenant "système" interne qui réutilise l'infra wallet déjà
+// durcie (débit atomique, remboursement automatique) plutôt qu'un système parallèle.
 
-export async function crediterWallet(
-  tx: any,
-  params: CreditWalletParams
-) {
-  const { tenantId, montantTotal, montantCommission, devise, commandeId, reference } = params;
-  const montantMarchand = montantTotal - montantCommission;
+export const PLATFORM_TENANT_SLUG = "axso-platform-interne";
 
-  // Upsert wallet
+async function getOrCreatePlatformTenantId(tx: any): Promise<string> {
+  const tenant = await tx.tenant.upsert({
+    where: { slug: PLATFORM_TENANT_SLUG },
+    create: {
+      slug: PLATFORM_TENANT_SLUG,
+      nomBoutique: "Axso Platform",
+      categorie: "interne",
+      pays: "CM",
+      devise: "XAF",
+      whatsapp: "",
+      email: "platform@axso.internal",
+      statut: "systeme",
+      commissionRate: 0,
+    },
+    update: {},
+  });
+  return tenant.id;
+}
+
+export async function getPlatformTenantId(): Promise<string> {
+  return getOrCreatePlatformTenantId(prisma);
+}
+
+async function crediterPlateformeTx(tx: any, montant: number, devise: string, description: string, reference?: string) {
+  if (montant <= 0) return;
+  const tenantId = await getOrCreatePlatformTenantId(tx);
   const wallet = await tx.wallet.upsert({
     where: { tenantId },
-    create: {
-      tenantId,
-      devise,
-      solde: montantMarchand,
-      totalRecu: montantTotal,
-      totalCommission: montantCommission,
-    },
-    update: {
-      solde: { increment: montantMarchand },
-      totalRecu: { increment: montantTotal },
-      totalCommission: { increment: montantCommission },
-    },
+    create: { tenantId, devise, solde: montant, totalRecu: montant },
+    update: { solde: { increment: montant }, totalRecu: { increment: montant } },
   });
-
-  // Ligne CREDIT (montant marchand net)
   await tx.walletTransaction.create({
-    data: {
-      walletId: wallet.id,
-      type: "CREDIT",
-      montant: montantMarchand,
-      devise,
-      description: `Vente confirmée${reference ? ` · ${reference}` : ""}`,
-      reference,
-      commandeId,
-      statut: "completed",
-    },
+    data: { walletId: wallet.id, type: "CREDIT", montant, devise, description, reference, statut: "completed" },
   });
+}
 
-  // Ligne COMMISSION (débit Axso)
+// Crédit direct plein montant (aucun partage marchand) — utilisé pour le revenu
+// d'abonnement, qui appartient à 100% à Axso.
+export async function crediterPlateforme(montant: number, devise: string, description: string, reference?: string) {
+  await prisma.$transaction(async (tx) => {
+    await crediterPlateformeTx(tx, montant, devise, description, reference);
+  });
+}
+
+async function logFraisPasserelleTx(tx: any, frais: number, devise: string, description: string, reference?: string) {
+  if (frais <= 0) return;
+  const platformTenantId = await getOrCreatePlatformTenantId(tx);
+  const wallet = await tx.wallet.upsert({ where: { tenantId: platformTenantId }, create: { tenantId: platformTenantId, devise }, update: {} });
+  // Ligne purement informative : le wallet n'a jamais été crédité du montant brut,
+  // donc ce n'est pas un débit réel — juste la trace de ce que NotchPay a prélevé,
+  // pour que l'admin voie exactement où passe l'écart entre "commission attendue" et "solde réel".
   await tx.walletTransaction.create({
-    data: {
-      walletId: wallet.id,
-      type: "COMMISSION",
-      montant: -montantCommission,
-      devise,
-      description: `Commission Axso 3%${reference ? ` · ${reference}` : ""}`,
-      reference,
-      commandeId,
-      statut: "completed",
-    },
+    data: { walletId: wallet.id, type: "FRAIS", montant: -frais, devise, description, reference, statut: "completed" },
+  });
+}
+
+// Revenu d'abonnement net des frais NotchPay réels sur cette transaction.
+export async function crediterPlateformeAvecFrais(montantBrut: number, frais: number, devise: string, description: string, reference?: string) {
+  const net = Math.max(0, montantBrut - frais);
+  await prisma.$transaction(async (tx) => {
+    if (net > 0) await crediterPlateformeTx(tx, net, devise, description, reference);
+    await logFraisPasserelleTx(tx, frais, devise, `Frais NotchPay${reference ? ` · ${reference}` : ""}`, reference);
+  });
+}
+
+// ─── Récompenser un marchand ───────────────────────────────────────────────────
+// Bonus versé par Axso depuis son propre wallet plateforme — débite réellement
+// la plateforme (même débit atomique conditionnel que initierRetrait) pour ne
+// jamais promettre plus d'argent que ce qu'Axso a réellement en caisse.
+export async function crediterBonusWallet(tenantId: string, montant: number, devise: string, raison: string) {
+  await prisma.$transaction(async (tx) => {
+    const platformTenantId = await getOrCreatePlatformTenantId(tx);
+    const debit = await tx.wallet.updateMany({
+      where: { tenantId: platformTenantId, solde: { gte: montant } },
+      data: { solde: { decrement: montant }, totalRetire: { increment: montant } },
+    });
+    if (debit.count === 0) throw new Error("Solde plateforme insuffisant pour ce bonus");
+
+    const platformWallet = await tx.wallet.findUnique({ where: { tenantId: platformTenantId } });
+    await tx.walletTransaction.create({
+      data: { walletId: platformWallet!.id, type: "RETRAIT", montant: -montant, devise, description: `Bonus marchand · ${raison}`, statut: "completed" },
+    });
+
+    const wallet = await tx.wallet.upsert({
+      where: { tenantId },
+      create: { tenantId, devise, solde: montant, totalRecu: montant },
+      update: { solde: { increment: montant }, totalRecu: { increment: montant } },
+    });
+    await tx.walletTransaction.create({
+      data: { walletId: wallet.id, type: "BONUS", montant, devise, description: `Bonus Axso · ${raison}`, statut: "completed" },
+    });
+  });
+}
+
+// ─── Créditer le wallet après confirmation d'un paiement ─────────────────────
+// Point d'entrée unique — calcule la commission, crédite le net, log la commission.
+
+export async function crediterWallet(
+  params: CreditWalletParams
+): Promise<{ montantNet: number; montantCommission: number }> {
+  const { tenantId, montantBrut, tauxCommission, devise, description, commandeId, reference, fraisPasserelle } = params;
+
+  // montantBrut = ce que le client a payé, déjà majoré de la commission côté storefront
+  // (prix vendeur × (1 + tauxCommission)) — on extrait donc le net du vendeur par
+  // division, on ne déduit RIEN de son prix : le vendeur reçoit exactement son prix.
+  const montantNet = Math.round((montantBrut / (1 + tauxCommission)) * 100) / 100;
+  const montantCommission = Math.round((montantBrut - montantNet) * 100) / 100;
+
+  await prisma.$transaction(async (tx) => {
+    const wallet = await tx.wallet.upsert({
+      where: { tenantId },
+      create: {
+        tenantId,
+        devise,
+        solde: montantNet,
+        totalRecu: montantBrut,
+        totalCommission: montantCommission,
+      },
+      update: {
+        solde: { increment: montantNet },
+        totalRecu: { increment: montantBrut },
+        totalCommission: { increment: montantCommission },
+      },
+    });
+
+    await tx.walletTransaction.create({
+      data: {
+        walletId: wallet.id,
+        type: "CREDIT",
+        montant: montantNet,
+        devise,
+        description,
+        reference,
+        commandeId,
+        statut: "completed",
+      },
+    });
+
+    if (montantCommission > 0) {
+      await tx.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          type: "COMMISSION",
+          montant: -montantCommission,
+          devise,
+          description: `Commission Axso${reference ? ` · ${reference}` : ""}`,
+          reference,
+          commandeId,
+          statut: "completed",
+        },
+      });
+    }
+
+    if (commandeId && montantCommission > 0) {
+      await tx.commission.upsert({
+        where: { commandeId },
+        create: {
+          commandeId,
+          tenantId,
+          montantCommande: montantBrut,
+          montantCommission,
+          montantMarchand: montantNet,
+          taux: tauxCommission,
+          devise,
+          statut: "captured",
+          capturedAt: new Date(),
+        },
+        update: { statut: "captured", capturedAt: new Date() },
+      });
+    }
+
+    // La commission n'est plus qu'une ligne d'audit — elle doit aussi devenir
+    // de l'argent réel, retirable par Axso. Créditée dans la MÊME transaction
+    // pour ne jamais pouvoir diverger du crédit marchand. NotchPay prélève lui
+    // aussi son propre frais de traitement sur ce que le client a payé — ce
+    // frais ne touche JAMAIS le vendeur (déjà crédité de son plein prix
+    // ci-dessus), il est absorbé par la commission Axso, jamais en dessous de 0.
+    if (montantCommission > 0) {
+      const platformTenantId = await getOrCreatePlatformTenantId(tx);
+      if (tenantId !== platformTenantId) {
+        const frais = Math.min(Math.max(0, fraisPasserelle ?? 0), montantCommission);
+        const commissionNette = montantCommission - frais;
+        if (commissionNette > 0) {
+          await crediterPlateformeTx(tx, commissionNette, devise, `Commission sur vente${reference ? ` · ${reference}` : ""}`, reference);
+        }
+        await logFraisPasserelleTx(tx, frais, devise, `Frais NotchPay${reference ? ` · ${reference}` : ""}`, reference);
+      }
+    }
   });
 
-  return wallet;
+  return { montantNet, montantCommission };
 }
 
 // ─── Initier un retrait ───────────────────────────────────────────────────────
+// Sécurité : le débit du solde et sa vérification sont une SEULE opération atomique
+// (updateMany conditionnel) pour éliminer toute race condition entre deux retraits
+// concurrents qui passeraient tous les deux un contrôle de solde fait séparément.
 
 export async function initierRetrait(params: RetraitParams) {
   const { tenantId, montant, devise, methode, destinataire, operateur, notes } = params;
 
-  const wallet = await prisma.wallet.findUnique({ where: { tenantId } });
-  if (!wallet) throw new Error("Wallet introuvable");
-  if (wallet.solde < montant) throw new Error("Solde insuffisant");
-
-  // Montant minimum
   const MINIMUM = 1000;
   if (montant < MINIMUM) throw new Error(`Montant minimum de retrait : ${MINIMUM} ${devise}`);
 
   const retrait = await prisma.$transaction(async (tx) => {
-    // Débit immédiat du solde (fond réservé)
-    const updatedWallet = await tx.wallet.update({
-      where: { tenantId },
-      data: {
-        solde: { decrement: montant },
-        totalRetire: { increment: montant },
-      },
+    const wallet = await tx.wallet.findUnique({ where: { tenantId } });
+    if (!wallet) throw new Error("Wallet introuvable");
+
+    // Débit conditionnel atomique — échoue (count 0) si le solde a changé entre
+    // temps (retrait concurrent) et ne descend jamais sous 0.
+    const debit = await tx.wallet.updateMany({
+      where: { tenantId, solde: { gte: montant } },
+      data: { solde: { decrement: montant }, totalRetire: { increment: montant } },
     });
+    if (debit.count === 0) throw new Error("Solde insuffisant");
 
     // Ligne de transaction RETRAIT
     await tx.walletTransaction.create({
@@ -150,73 +296,92 @@ export async function initierRetrait(params: RetraitParams) {
     return r;
   });
 
-  // Appel Flutterwave Transfer si clé configurée
-  if (process.env.FLUTTERWAVE_SECRET_KEY) {
+  // Appel NotchPay Transfers si clés configurées
+  if (process.env.NOTCHPAY_PUBLIC_KEY && process.env.NOTCHPAY_PRIVATE_KEY) {
     try {
-      const transferData = buildFlutterwaveTransfer(retrait.id, montant, devise, methode, destinataire, operateur);
-      const res = await fetch("https://api.flutterwave.com/v3/transfers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`,
-        },
-        body: JSON.stringify(transferData),
+      // Le formulaire wallet ne propose aujourd'hui que MTN/Orange Cameroun (+237)
+      const channel =
+        methode === "mobile_money"
+          ? `cm.${(operateur ?? "mtn").toLowerCase()}`
+          : "cm";
+      const { transfer } = await initierTransfertNotchPay({
+        amount: montant,
+        currency: devise,
+        channel,
+        beneficiaryData:
+          methode === "mobile_money"
+            ? { name: destinataire, phone: destinataire, country: "CM" }
+            : {
+                name: destinataire.split("|")[0] ?? destinataire,
+                account_number: destinataire.split("|")[1] ?? destinataire,
+              },
+        reference: `AXSO-${retrait.id}`,
+        description: "Retrait Axso Wallet",
       });
 
-      const data = await res.json();
-      const ref = data?.data?.id?.toString() ?? undefined;
-      const statut = res.ok && data?.status === "success" ? "traitement" : "en_attente";
+      const ref = transfer?.id?.toString();
+      const echecImmediat = transfer?.status === "failed" || transfer?.status === "canceled";
 
-      await prisma.retrait.update({
-        where: { id: retrait.id },
-        data: { statut, reference: ref },
-      });
-
-      if (ref) {
-        await prisma.walletTransaction.updateMany({
-          where: { walletId: wallet.id, type: "RETRAIT", statut: "en_cours" },
-          data: { statut: "completed", reference: ref },
-        });
+      if (echecImmediat) {
+        await rembourserRetraitEchoue(retrait.id);
+      } else {
+        const statut = transfer?.status === "complete" || transfer?.status === "processing" ? "traitement" : "en_attente";
+        await prisma.retrait.update({ where: { id: retrait.id }, data: { statut, reference: ref } });
+        if (ref) {
+          await prisma.walletTransaction.updateMany({
+            where: { walletId: retrait.walletId, type: "RETRAIT", statut: "en_cours" },
+            data: { statut: "completed", reference: ref },
+          });
+        }
       }
     } catch {
-      // Flutterwave indisponible — retrait en attente traitement manuel
+      // L'appel NotchPay a échoué avant même de renvoyer un statut — le marchand
+      // ne doit jamais perdre cet argent : remboursement automatique immédiat.
+      await rembourserRetraitEchoue(retrait.id);
     }
   }
 
   return retrait;
 }
 
-function buildFlutterwaveTransfer(
-  retraitId: string,
-  montant: number,
-  devise: string,
-  methode: string,
-  destinataire: string,
-  operateur?: string
-) {
-  if (methode === "mobile_money") {
-    return {
-      account_bank: operateur?.toLowerCase() ?? "MPS",
-      account_number: destinataire,
-      amount: montant,
-      narration: "Retrait Axso Wallet",
-      currency: devise,
-      reference: `AXSO-${retraitId}`,
-      callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/wallet/retrait/callback`,
-      debit_currency: devise,
-    };
-  }
-  // Virement bancaire
-  return {
-    account_bank: destinataire.split("|")[0] ?? "UBA",
-    account_number: destinataire.split("|")[1] ?? destinataire,
-    amount: montant,
-    narration: "Retrait Axso Wallet",
-    currency: devise,
-    reference: `AXSO-${retraitId}`,
-    callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/wallet/retrait/callback`,
-    debit_currency: devise,
-  };
+// ─── Rembourser un retrait qui a échoué ───────────────────────────────────────
+// Appelé soit en synchrone (échec immédiat de l'appel NotchPay), soit depuis le
+// webhook (`transfer.failed`) si l'échec arrive plus tard. Idempotent : ne
+// rembourse jamais deux fois le même retrait.
+export async function rembourserRetraitEchoue(retraitId: string) {
+  await prisma.$transaction(async (tx) => {
+    const retrait = await tx.retrait.findUnique({ where: { id: retraitId } });
+    if (!retrait) return;
+    // Idempotence : un retrait déjà remboursé ou déjà complété ne doit plus bouger.
+    if (retrait.statut === "echoue" || retrait.statut === "complete") return;
+
+    await tx.wallet.update({
+      where: { id: retrait.walletId },
+      data: {
+        solde: { increment: retrait.montant },
+        totalRetire: { decrement: retrait.montant },
+      },
+    });
+
+    await tx.walletTransaction.create({
+      data: {
+        walletId: retrait.walletId,
+        type: "REMBOURSEMENT",
+        montant: retrait.montant,
+        devise: retrait.devise,
+        description: `Remboursement — retrait échoué (${retrait.destinataire})`,
+        commandeId: undefined,
+        statut: "completed",
+      },
+    });
+
+    await tx.walletTransaction.updateMany({
+      where: { walletId: retrait.walletId, type: "RETRAIT", statut: "en_cours" },
+      data: { statut: "echoue" },
+    });
+
+    await tx.retrait.update({ where: { id: retraitId }, data: { statut: "echoue" } });
+  });
 }
 
 // ─── Résumé wallet (pour le dashboard) ───────────────────────────────────────
@@ -238,6 +403,9 @@ export async function getWalletResume(tenantId: string) {
 
   if (!wallet) return null;
 
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { commissionRate: true } });
+  const tauxCommission = tenant?.commissionRate ?? 0.06;
+
   // Solde en séquestre (commandes confirmées mais escrow non libéré)
   const escrowsActifs = await prisma.escrow.aggregate({
     where: { tenantId, statut: "held" },
@@ -245,8 +413,7 @@ export async function getWalletResume(tenantId: string) {
   });
 
   const soldeSequestre = escrowsActifs._sum.montant ?? 0;
-  const commissionSequestre = soldeSequestre * 0.03;
-  const netSequestre = soldeSequestre - commissionSequestre;
+  const netSequestre = soldeSequestre / (1 + tauxCommission);
 
   return {
     ...wallet,

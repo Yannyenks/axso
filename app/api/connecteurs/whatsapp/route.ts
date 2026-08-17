@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { quotaCommandesAtteint } from "@/lib/abonnement";
 
 // GET — lire la config WhatsApp du tenant
 export async function GET() {
@@ -21,6 +22,10 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
+
+  if (await quotaCommandesAtteint(tenantId)) {
+    return NextResponse.json({ error: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour connecter WhatsApp.", code: "quota_atteint" }, { status: 403 });
+  }
 
   const { phone_number_id, access_token, numero_affiche } = await req.json();
   if (!phone_number_id || !access_token) {

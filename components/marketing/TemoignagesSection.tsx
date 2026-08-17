@@ -45,9 +45,10 @@ export function TemoignagesSection() {
   }, []);
 
   useEffect(() => {
+    if (!visible) return;
     const timer = setInterval(() => navigate("right"), 5000);
     return () => clearInterval(timer);
-  }, [actif]);
+  }, [actif, visible]);
 
   const navigate = (direction: "left" | "right") => {
     setDir(direction);

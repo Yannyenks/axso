@@ -1,18 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-function genererCodeParrainage(nom: string): string {
-  const base = nom
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-zA-Z0-9]/g, "")
-    .toUpperCase()
-    .slice(0, 6);
-  const year = new Date().getFullYear().toString().slice(-2);
-  const suffix = Math.random().toString(36).slice(2, 5).toUpperCase();
-  return `${base}${year}${suffix}`;
-}
+import { genererCodeParrainageUnique } from "@/lib/affiliation";
 
 // GET — liste des affiliés du tenant avec leurs stats
 export async function GET(req: NextRequest) {
@@ -87,26 +76,15 @@ export async function POST(req: NextRequest) {
   }
 
   // Générer un code de parrainage unique
-  let code = genererCodeParrainage(nom);
-  let tries = 0;
-  while (tries < 5) {
-    const exists = await prisma.affilie.findUnique({ where: { codeParrainage: code } });
-    if (!exists) break;
-    code = genererCodeParrainage(nom);
-    tries++;
-  }
+  const code = await genererCodeParrainageUnique(nom);
 
   // Vérifier les paramètres d'auto-approbation
   let statut = "en_attente";
   if (autoApprove) {
     statut = "actif";
-  } else {
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { parametresAffiliation: true },
-    });
-    const params = (tenant?.parametresAffiliation as any) ?? {};
-    if (params.autoApprobation) statut = "actif";
+  } else if (programmeId) {
+    const prog = await prisma.programmeAffiliation.findUnique({ where: { id: programmeId }, select: { autoApprobation: true } });
+    if (prog?.autoApprobation) statut = "actif";
   }
 
   const affilie = await prisma.affilie.create({
@@ -146,15 +124,7 @@ export async function PATCH(req: NextRequest) {
   if (notes !== undefined) data.notes = notes;
 
   if (resetCode) {
-    let newCode = genererCodeParrainage(affilie.nom);
-    let tries = 0;
-    while (tries < 5) {
-      const exists = await prisma.affilie.findUnique({ where: { codeParrainage: newCode } });
-      if (!exists) break;
-      newCode = genererCodeParrainage(affilie.nom);
-      tries++;
-    }
-    data.codeParrainage = newCode;
+    data.codeParrainage = await genererCodeParrainageUnique(affilie.nom);
   }
 
   const updated = await prisma.affilie.update({ where: { id }, data });

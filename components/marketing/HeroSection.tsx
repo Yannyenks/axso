@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Heart, ShoppingBag, FileText, Ruler, Layers, Truck as TruckIcon } from "lucide-react";
 
 const PRODUIT_DETAILS = [
@@ -23,12 +23,17 @@ const PHOTOS = [
 ];
 const SLOT_AREAS = ["bags", "kente", "headphones", "argan", "market", "stand", "coffee", "moto"];
 
-/** Échange périodiquement deux emplacements au hasard — les photos "changent de place" en continu, sans jamais dupliquer une image. */
-function useShuffle(count: number, intervalMs: number) {
+/** Échange périodiquement deux emplacements au hasard — les photos "changent de place" en continu, sans jamais dupliquer une image.
+ *  `actif` coupe l'intervalle quand la mosaïque n'est pas à l'écran (le hero
+ *  est monté en permanence — sans ça, ça re-render toutes les 3.2s même
+ *  quand l'utilisateur a scrollé jusqu'en bas de la page, ce qui causait du
+ *  jank pendant le scroll). */
+function useShuffle(count: number, intervalMs: number, actif: boolean) {
   const [order, setOrder] = useState(() => Array.from({ length: count }, (_, i) => i));
   const [fading, setFading] = useState<number[]>([]);
 
   useEffect(() => {
+    if (!actif) return;
     const iv = setInterval(() => {
       const a = Math.floor(Math.random() * count);
       let b = Math.floor(Math.random() * count);
@@ -44,17 +49,47 @@ function useShuffle(count: number, intervalMs: number) {
       }, 380);
     }, intervalMs);
     return () => clearInterval(iv);
-  }, [count, intervalMs]);
+  }, [count, intervalMs, actif]);
 
   return { order, fading };
+}
+
+/** true pendant un scroll actif (et ~150ms après le dernier event) — la
+ *  mosaïque fait presque toute la hauteur de l'écran mobile, donc elle reste
+ *  "visible" (IntersectionObserver) pendant tout le geste de scroll qui la
+ *  fait sortir de l'écran ; sans ce garde-fou en plus de la visibilité, un
+ *  re-render du shuffle peut encore tomber pile pendant ce geste et créer un
+ *  à-coup qui donne l'impression que le scroll "résiste". */
+function useIsScrolling() {
+  const [scrolling, setScrolling] = useState(false);
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+    const onScroll = () => {
+      setScrolling(true);
+      clearTimeout(timeout);
+      timeout = setTimeout(() => setScrolling(false), 150);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { window.removeEventListener("scroll", onScroll); clearTimeout(timeout); };
+  }, []);
+  return scrolling;
 }
 
 export function HeroSection() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const { order, fading } = useShuffle(PHOTOS.length, 3200);
+  const [mosaicVisible, setMosaicVisible] = useState(true);
+  const mosaicRef = useRef<HTMLDivElement>(null);
+  const scrolling = useIsScrolling();
+  const { order, fading } = useShuffle(PHOTOS.length, 3200, mosaicVisible && !scrolling);
   const [mounted, setMounted] = useState(false);
   useEffect(() => { const t = setTimeout(() => setMounted(true), 60); return () => clearTimeout(t); }, []);
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => setMosaicVisible(e.isIntersecting), { threshold: 0 });
+    if (mosaicRef.current) obs.observe(mosaicRef.current);
+    return () => obs.disconnect();
+  }, []);
 
   function demarrer(e: React.FormEvent) {
     e.preventDefault();
@@ -66,7 +101,7 @@ export function HeroSection() {
       <div className="px-3 sm:px-6 lg:px-8 max-w-[1700px] mx-auto">
 
       {/* ─── Collage photo — mosaïque façon Shopify ─── */}
-      <div className="ax-mosaic relative h-[640px] sm:h-[760px] lg:h-[860px] xl:h-[920px] rounded-[28px] overflow-hidden">
+      <div ref={mosaicRef} className="ax-mosaic relative h-[640px] sm:h-[760px] lg:h-[860px] xl:h-[920px] rounded-[28px] overflow-hidden">
         <div className="ax-tile ax-tile-desktop" style={{ gridArea: "chart" }}>
           <div className="w-full h-full bg-white flex flex-col justify-between p-4 sm:p-5">
             <div>

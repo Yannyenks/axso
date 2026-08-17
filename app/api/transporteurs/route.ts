@@ -21,10 +21,10 @@ export async function GET() {
 
     const tenant = await prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { metadata: true },
+      select: { parametresLivraison: true },
     });
 
-    const config: Record<string, any> = (tenant?.metadata as any)?.transporteurs ?? {};
+    const config: Record<string, any> = (tenant?.parametresLivraison as any)?.transporteurs ?? {};
 
     const transporteurs = TRANSPORTEURS_DISPO.map(t => ({
       ...t,
@@ -51,10 +51,10 @@ export async function PATCH(request: Request) {
 
     const tenant = await prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { metadata: true },
+      select: { parametresLivraison: true },
     });
 
-    const meta = (tenant?.metadata as any) ?? {};
+    const meta = (tenant?.parametresLivraison as any) ?? {};
     const transporteurs = meta.transporteurs ?? {};
     transporteurs[code] = {
       ...(transporteurs[code] ?? {}),
@@ -65,7 +65,7 @@ export async function PATCH(request: Request) {
 
     await prisma.tenant.update({
       where: { id: tenantId },
-      data: { metadata: { ...meta, transporteurs } },
+      data: { parametresLivraison: { ...meta, transporteurs } },
     });
 
     return NextResponse.json({ ok: true });

@@ -118,7 +118,7 @@ export default function CommandeLivreurPage() {
       />
 
       {/* Adresse + Contact */}
-      <div className="bg-white border border-white/5 rounded-3xl p-5 space-y-4">
+      <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-3xl p-5 space-y-4">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-xl bg-[#1B4FD8]/10 flex items-center justify-center flex-shrink-0">
             <MapPin size={16} className="text-[#1B4FD8]" />
@@ -141,7 +141,7 @@ export default function CommandeLivreurPage() {
         </div>
 
         <a href={`tel:${commande.clientTelephone}`}
-          className="flex items-center gap-3 w-full bg-gray-50 border border-white/5 text-gray-600 py-3 px-4 rounded-2xl text-sm hover:bg-[#222] transition-colors">
+          className="flex items-center gap-3 w-full bg-[#161616] border border-white/5 text-gray-300 py-3 px-4 rounded-2xl text-sm hover:bg-[#222] transition-colors">
           <Phone size={14} className="text-gray-400" />
           <span>{commande.clientTelephone}</span>
           <span className="ml-auto text-[#1B4FD8] text-xs font-medium">Appeler</span>
@@ -149,7 +149,7 @@ export default function CommandeLivreurPage() {
       </div>
 
       {/* Articles */}
-      <div className="bg-white border border-white/5 rounded-3xl p-5">
+      <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-3xl p-5">
         <h2 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
           <Package size={14} className="text-[#1B4FD8]" /> Articles
         </h2>
@@ -159,8 +159,8 @@ export default function CommandeLivreurPage() {
               {ligne.imageUrl ? (
                 <img src={ligne.imageUrl} alt={ligne.nom} className="w-11 h-11 rounded-xl object-cover" />
               ) : (
-                <div className="w-11 h-11 rounded-xl bg-gray-50 flex items-center justify-center">
-                  <Package size={14} className="text-gray-600" />
+                <div className="w-11 h-11 rounded-xl bg-[#1a1a1a] flex items-center justify-center">
+                  <Package size={14} className="text-gray-500" />
                 </div>
               )}
               <div className="flex-1">
@@ -174,21 +174,21 @@ export default function CommandeLivreurPage() {
         {commande.noteClient && (
           <div className="mt-4 pt-4 border-t border-white/5">
             <p className="text-gray-500 text-xs mb-1">Note du client</p>
-            <p className="text-gray-600 text-sm italic">"{commande.noteClient}"</p>
+            <p className="text-gray-500 text-sm italic">"{commande.noteClient}"</p>
           </div>
         )}
       </div>
 
       {/* CTA Confirmer */}
       {peutLivrer && (
-        <div className="fixed bottom-16 left-0 right-0 p-4 bg-gray-50/95 backdrop-blur-xl border-t border-white/5">
+        <div className="fixed bottom-16 left-0 right-0 p-4 bg-[#0A0A0A]/95 backdrop-blur-xl border-t border-white/5">
           <div className="max-w-2xl mx-auto">
             <button onClick={marquerLivre} disabled={isPending}
               className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-green-500 to-green-400 text-white font-bold py-4 rounded-2xl text-lg hover:from-green-400 hover:to-green-300 transition-all disabled:opacity-50 shadow-xl shadow-green-500/20">
               <CheckCircle size={22} />
               {isPending ? "Confirmation..." : "Confirmer la livraison"}
             </button>
-            <p className="text-center text-gray-600 text-xs mt-2">Les fonds seront libérés automatiquement</p>
+            <p className="text-center text-gray-500 text-xs mt-2">Les fonds seront libérés automatiquement</p>
           </div>
         </div>
       )}

@@ -6,6 +6,8 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Header } from "@/components/dashboard/Header";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { AxiaFloat } from "@/components/dashboard/AxiaFloat";
+import { QuotaBanner } from "@/components/dashboard/QuotaBanner";
+import { quotaCommandesAtteint } from "@/lib/abonnement";
 
 const FULLBLEED_ROUTES: string[] = [];
 
@@ -24,6 +26,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const pathname = (await headers()).get("x-pathname") || "";
   const fullBleed = FULLBLEED_ROUTES.some(r => pathname.startsWith(r));
+  const quotaAtteint = tenantId ? await quotaCommandesAtteint(tenantId) : false;
 
   return (
     <>
@@ -35,7 +38,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
             {fullBleed ? children : (
               <>
                 <Header session={session} boutiqueSlug={boutique?.slug} boutiqueNom={boutique?.nomBoutique}/>
-                <div className="px-6 pb-8 max-w-7xl mx-auto w-full">{children}</div>
+                <div className="px-6 pb-8 max-w-7xl mx-auto w-full">
+                  {quotaAtteint && <QuotaBanner />}
+                  {children}
+                </div>
               </>
             )}
           </main>
@@ -47,6 +53,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <MobileHeader boutiqueNom={boutique?.nomBoutique} />
         <main className="flex-1 overflow-y-auto pb-32">
           <div className="px-3 pt-3 max-w-lg mx-auto space-y-4">
+            {quotaAtteint && <QuotaBanner />}
             {children}
           </div>
         </main>

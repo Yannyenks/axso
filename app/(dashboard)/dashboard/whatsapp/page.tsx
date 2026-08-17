@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { UpgradeGate } from "@/components/dashboard/UpgradeGate";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Conversation {
@@ -27,7 +28,7 @@ interface Commande {
   createdAt: string; trackingToken?: string | null;
   lignes: { nom: string; quantite: number }[];
 }
-interface WaConfig { statut: string; config: { phone_number_id?: string; numero_affiche?: string; verified_name?: string } | null }
+interface WaConfig { statut: string; via: "meta" | "genuka"; config: { phone_number_id?: string; numero_affiche?: string; verified_name?: string } | null }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function heure(iso: string) {
@@ -89,11 +90,15 @@ function CopyBox({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ConfigPanel({ onClose, onConnecte }: { onClose: () => void; onConnecte: (cfg: WaConfig) => void }) {
+function ConfigPanel({ tenantId, onClose, onConnecte }: { tenantId: string; onClose: () => void; onConnecte: (cfg: WaConfig) => void }) {
+  const [mode, setMode] = useState<"genuka" | "meta">("genuka");
   const [etape, setEtape] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState({ phone_number_id: "", access_token: "" });
+  const [proxyToken, setProxyToken] = useState("");
+  const [webhookSecret, setWebhookSecret] = useState("");
   const [loading, setLoading] = useState(false);
   const [showToken, setShowToken] = useState(false);
+  const genukaWebhookUrl = tenantId ? `https://axso.vercel.app/api/webhooks/genuka/${tenantId}` : "";
 
   async function connecter() {
     if (!form.phone_number_id || !form.access_token) { toast.error("Remplissez tous les champs"); return; }
@@ -103,7 +108,20 @@ function ConfigPanel({ onClose, onConnecte }: { onClose: () => void; onConnecte:
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       toast.success(`✅ WhatsApp connecté — ${data.numero ?? ""} (${data.nom ?? ""})`);
-      onConnecte({ statut: "actif", config: { phone_number_id: form.phone_number_id, numero_affiche: data.numero, verified_name: data.nom } });
+      onConnecte({ statut: "actif", via: "meta", config: { phone_number_id: form.phone_number_id, numero_affiche: data.numero, verified_name: data.nom } });
+    } catch (e: any) { toast.error(e.message); }
+    finally { setLoading(false); }
+  }
+
+  async function connecterGenuka() {
+    if (!proxyToken.trim() && !webhookSecret.trim()) { toast.error("Renseignez le proxy token et/ou le secret du webhook"); return; }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/connecteurs/whatsapp-genuka", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ proxyToken: proxyToken.trim() || undefined, webhookSecret: webhookSecret.trim() || undefined }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast.success(proxyToken.trim() ? "✅ WhatsApp connecté via Genuka !" : "✅ Réception activée — ajoutez le proxy token plus tard pour activer l'envoi");
+      onConnecte({ statut: "actif", via: "genuka", config: null });
     } catch (e: any) { toast.error(e.message); }
     finally { setLoading(false); }
   }
@@ -125,14 +143,92 @@ function ConfigPanel({ onClose, onConnecte }: { onClose: () => void; onConnecte:
               <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "#25D366" }}>
                 <MessageCircle size={15} className="text-white" />
               </div>
-              <h2 className="text-white font-bold text-base">Connecter WhatsApp Business API</h2>
+              <h2 className="text-white font-bold text-base">Connecter WhatsApp Business</h2>
             </div>
-            <p className="text-gray-500 text-xs ml-10">Configuration guidée en 3 étapes · API officielle Meta</p>
+            <p className="text-gray-500 text-xs ml-10">
+              {mode === "genuka" ? "Connexion simplifiée via Genuka · recommandé" : "Configuration guidée en 3 étapes · API officielle Meta"}
+            </p>
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors text-xl leading-none mt-1">×</button>
         </div>
 
-        {/* Stepper */}
+        {/* Choix du mode */}
+        <div className="px-6 pt-4 flex gap-1 rounded-xl p-1" style={{ background: "rgba(255,255,255,0.04)", margin: "16px 24px 0" }}>
+          <button onClick={() => setMode("genuka")}
+            className="flex-1 py-2 rounded-lg text-xs font-bold transition-all"
+            style={mode === "genuka" ? { background: "#25D366", color: "white" } : { color: "#9ca3af" }}>
+            Genuka (simple)
+          </button>
+          <button onClick={() => setMode("meta")}
+            className="flex-1 py-2 rounded-lg text-xs font-bold transition-all"
+            style={mode === "meta" ? { background: "#25D366", color: "white" } : { color: "#9ca3af" }}>
+            Meta direct (avancé)
+          </button>
+        </div>
+
+        {/* ── Mode Genuka ── */}
+        {mode === "genuka" && (
+          <div className="px-6 py-5 space-y-4">
+            <div className="rounded-xl p-4 space-y-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+              <Step n="1" text="Créez un compte sur" link="https://genuka.com" linkLabel="genuka.com" text2="(gratuit)" />
+              <Step n="2" text="Dans leur dashboard, connectez votre numéro" bold="WhatsApp Business" text2="(Meta Embedded Signup — quelques clics, sans configuration technique)" />
+              <Step n="3" text="Générez un" bold="Proxy Token" text2="scopé « send_text »" />
+              <Step n="4" text="Collez ce token ci-dessous" />
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Proxy Token Genuka</label>
+              <div className="relative">
+                <input value={proxyToken} onChange={e => setProxyToken(e.target.value)}
+                  type={showToken ? "text" : "password"}
+                  placeholder="gwa_xxxxxxxxxxxxxxxxxxxx"
+                  className="w-full rounded-xl px-4 py-3 text-white text-sm font-mono focus:outline-none transition-all pr-10"
+                  style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${proxyToken ? "rgba(37,211,102,0.4)" : "rgba(255,255,255,0.1)"}` }} />
+                <button type="button" onClick={() => setShowToken(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
+                  <Lock size={14} />
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-xl p-4 space-y-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Pour recevoir les messages entrants dans Axso</p>
+              <Step n="5" text="Dans Genuka, allez dans" bold="Paramètres → Webhooks" text2="et ajoutez cette URL sur l'événement « message.received »" />
+              <CopyBox label="URL du webhook (propre à votre boutique)" value={genukaWebhookUrl || "Chargement…"} />
+              <Step n="6" text="Genuka affichera un" bold="secret de signature" text2="— collez-le ci-dessous (recommandé)" />
+              <div>
+                <input value={webhookSecret} onChange={e => setWebhookSecret(e.target.value)}
+                  type="password"
+                  placeholder="Secret de signature (optionnel)"
+                  className="w-full rounded-xl px-4 py-3 text-white text-sm font-mono focus:outline-none transition-all"
+                  style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${webhookSecret ? "rgba(37,211,102,0.4)" : "rgba(255,255,255,0.1)"}` }} />
+              </div>
+            </div>
+
+            <div className="rounded-xl p-3 flex gap-3" style={{ background: "rgba(245,166,35,0.07)", border: "1px solid rgba(245,166,35,0.15)" }}>
+              <Lightbulb size={18} className="text-[#F5A623] flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-gray-400 leading-relaxed">
+                Le proxy token (envoi) et le webhook (réception) sont indépendants — vous pouvez connecter avec un seul des deux en attendant l'autre. Sans proxy token, l'envoi automatique se rabat sur WhatsApp direct ou un lien wa.me. Sans secret de signature, les messages entrants s'affichent quand même, mais la confirmation automatique de commande par mot-clé (« OUI ») reste désactivée par sécurité.
+              </p>
+            </div>
+
+            <div className="rounded-xl p-3 flex gap-3" style={{ background: "rgba(37,211,102,0.06)", border: "1px solid rgba(37,211,102,0.15)" }}>
+              <CheckCircle2 size={18} className="text-green-400 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-gray-400 leading-relaxed">
+                Pas de vérification Meta Business Manager complète à faire vous-même — Genuka s'en charge via son propre flux de connexion.
+              </p>
+            </div>
+
+            <button onClick={connecterGenuka} disabled={loading || (!proxyToken.trim() && !webhookSecret.trim())}
+              className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50" style={{ background: "#25D366" }}>
+              {loading ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+              Connecter WhatsApp
+            </button>
+          </div>
+        )}
+
+        {/* Stepper (mode Meta) */}
+        {mode === "meta" && (
+        <>
         <div className="px-6 pt-4 pb-3 flex items-center gap-0">
           {ETAPES.map((e, i) => (
             <div key={e.n} className="flex items-center" style={{ flex: i < 2 ? 1 : "none" }}>
@@ -269,6 +365,8 @@ function ConfigPanel({ onClose, onConnecte }: { onClose: () => void; onConnecte:
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
     </div>
   );
@@ -306,6 +404,8 @@ export default function WhatsAppPage() {
   const [mobileThread, setMobileThread] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [slug, setSlug] = useState("");
+  const [tenantId, setTenantId] = useState("");
+  const [locked, setLocked] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
   const contactActifRef = useRef<string | null>(null);
@@ -317,12 +417,23 @@ export default function WhatsAppPage() {
   useEffect(() => {
     Promise.all([
       fetch("/api/connecteurs/whatsapp").then(r => r.json()),
+      fetch("/api/connecteurs/whatsapp-genuka").then(r => r.json()),
       fetch("/api/messages/whatsapp").then(r => r.json()),
       fetch("/api/tenants/moi").then(r => r.json()),
-    ]).then(([cfg, conv, tenant]) => {
-      setWaConfig(cfg.config ? { statut: cfg.config.statut ?? "inactif", config: cfg.config.config } : null);
+    ]).then(([cfgMeta, cfgGenuka, conv, tenant]) => {
+      // Genuka (simple) prioritaire à l'affichage si les deux sont actifs —
+      // c'est le chemin qu'on met en avant pour les nouvelles connexions.
+      if (cfgGenuka.config?.statut === "actif") {
+        setWaConfig({ statut: "actif", via: "genuka", config: null });
+      } else if (cfgMeta.config?.statut === "actif") {
+        setWaConfig({ statut: "actif", via: "meta", config: cfgMeta.config.config });
+      } else {
+        setWaConfig(null);
+      }
       setConversations(conv.conversations ?? []);
+      setLocked(!!conv.locked);
       setSlug(tenant.tenant?.slug ?? "");
+      setTenantId(tenant.tenant?.id ?? "");
       setLoading(false);
     });
   }, []);
@@ -332,6 +443,7 @@ export default function WhatsAppPage() {
     const interval = setInterval(() => {
       fetch("/api/messages/whatsapp").then(r => r.json()).then(d => {
         setConversations(d.conversations ?? []);
+        setLocked(!!d.locked);
       }).catch(() => {});
     }, 15000);
     return () => clearInterval(interval);
@@ -425,6 +537,16 @@ export default function WhatsAppPage() {
   );
   const convActuelle = conversations.find(c => c.de === contactActif);
 
+  if (!loading && locked) {
+    return (
+      <UpgradeGate
+        titre="WhatsApp verrouillé — quota de commandes atteint"
+        description="Vous avez atteint votre quota de 30 commandes ce mois-ci au Palier 0. Passez à un palier supérieur pour retrouver l'accès à WhatsApp — envoi et réception de messages."
+        palierRequis="palier1"
+      />
+    );
+  }
+
   return (
     <div className="flex h-[calc(100vh-4rem)] rounded-2xl overflow-hidden border border-white/5" style={{ background: "#0d1117" }}>
 
@@ -439,8 +561,11 @@ export default function WhatsAppPage() {
               </div>
               <div>
                 <div className="font-bold text-white text-sm leading-tight">WhatsApp Business</div>
-                {connecte && waConfig?.config?.numero_affiche && (
+                {connecte && waConfig?.via === "meta" && waConfig?.config?.numero_affiche && (
                   <div className="text-[10px] text-gray-500 font-mono">{waConfig.config.numero_affiche}</div>
+                )}
+                {connecte && waConfig?.via === "genuka" && (
+                  <div className="text-[10px] text-gray-500">via Genuka</div>
                 )}
               </div>
             </div>
@@ -743,7 +868,7 @@ export default function WhatsAppPage() {
       )}
 
       {showConfig && (
-        <ConfigPanel onClose={() => setShowConfig(false)} onConnecte={cfg => { setWaConfig(cfg); setShowConfig(false); }} />
+        <ConfigPanel tenantId={tenantId} onClose={() => setShowConfig(false)} onConnecte={cfg => { setWaConfig(cfg); setShowConfig(false); }} />
       )}
     </div>
   );

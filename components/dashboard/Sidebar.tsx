@@ -8,8 +8,8 @@ import {
   IconAccueil, IconBoutique, IconBuilder, IconProduits,
   IconCommandes, IconClients, IconRevenus,
   IconMarketing, IconMessages, IconLivraisons,
-  IconAnalytics, IconConnecteurs, IconAbonnement, IconParametres, IconIA,
-  IconWhatsApp, IconAvis, IconPaiements, IconSourcing, IconThemes,
+  IconAnalytics, IconAbonnement, IconParametres, IconIA,
+  IconWhatsApp, IconAvis, IconPaiements, IconSourcing, IconThemes, IconWallet,
 } from "./AppIcons";
 
 const NAV_GROUPS = [
@@ -29,6 +29,7 @@ const NAV_GROUPS = [
     label: "Finance",
     items: [
       { href: "/dashboard/revenus",   label: "Revenus",      Icone: IconRevenus },
+      { href: "/dashboard/wallet",    label: "Wallet",       Icone: IconWallet },
     ],
   },
   {
@@ -51,8 +52,6 @@ const NAV_GROUPS = [
   {
     label: "Système",
     items: [
-      { href: "/dashboard/connecteurs",   label: "Connecteurs",  Icone: IconConnecteurs },
-      { href: "/dashboard/abonnement",    label: "Abonnement",   Icone: IconAbonnement },
       { href: "/dashboard/parametres",    label: "Paramètres",   Icone: IconParametres },
     ],
   },

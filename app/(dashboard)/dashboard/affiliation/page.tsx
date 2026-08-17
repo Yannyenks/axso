@@ -1,13 +1,15 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Users, TrendingUp, DollarSign, Link2, Copy, CheckCheck, Zap,
   Share2, Eye, ShoppingBag, Plus, Globe, Settings, BarChart3,
   ChevronRight, AlertCircle, CheckCircle, XCircle, Clock,
   ArrowUpRight, Wallet, Send, Filter, Search, RefreshCw,
-  Award, Target, Percent, Edit3, Trash2, UserCheck, UserX,
+  Award, Target, Percent, Edit3, Trash2, UserCheck, UserX, ExternalLink,
 } from "lucide-react";
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
+import { toast } from "sonner";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Programme {
@@ -39,6 +41,8 @@ const TABS = [
   { id: "affilies",  label: "Affiliés",       Icon: Users     },
   { id: "paiements", label: "Paiements",      Icon: Wallet    },
   { id: "liens",     label: "Mes liens",      Icon: Link2     },
+  { id: "materiel",  label: "Matériel",       Icon: Share2    },
+  { id: "entrante",  label: "Liens sortants", Icon: Globe     },
 ];
 
 function copier(texte: string, cb: (v: boolean) => void) {
@@ -167,6 +171,10 @@ function OngletProgramme() {
     nom: "", description: "", typeCommission: "pourcentage",
     valeurCommission: 10, dureeCookie: 30, seuilPaiement: 5000,
     tousLesProduits: true, tiersActifs: false, actif: true,
+    autoApprobation: true,
+    tier1Nom: "Bronze", tier1Max: 10, tier1Commission: 5,
+    tier2Nom: "Argent", tier2Max: 50, tier2Commission: 8,
+    tier3Nom: "Or", tier3Commission: 12,
   });
 
   const charger = useCallback(() => {
@@ -175,7 +183,15 @@ function OngletProgramme() {
       .then(d => {
         const p = d.programmes?.[0] ?? null;
         setProg(p);
-        if (p) setForm({ nom: p.nom, description: p.description ?? "", typeCommission: p.typeCommission, valeurCommission: p.valeurCommission, dureeCookie: p.dureeCookie, seuilPaiement: p.seuilPaiement, tousLesProduits: p.tousLesProduits, tiersActifs: p.tiersActifs, actif: p.actif });
+        if (p) setForm({
+          nom: p.nom, description: p.description ?? "", typeCommission: p.typeCommission,
+          valeurCommission: p.valeurCommission, dureeCookie: p.dureeCookie, seuilPaiement: p.seuilPaiement,
+          tousLesProduits: p.tousLesProduits, tiersActifs: p.tiersActifs, actif: p.actif,
+          autoApprobation: p.autoApprobation ?? true,
+          tier1Nom: p.tier1Nom ?? "Bronze", tier1Max: p.tier1Max ?? 10, tier1Commission: p.tier1Commission ?? 5,
+          tier2Nom: p.tier2Nom ?? "Argent", tier2Max: p.tier2Max ?? 50, tier2Commission: p.tier2Commission ?? 8,
+          tier3Nom: p.tier3Nom ?? "Or", tier3Commission: p.tier3Commission ?? 12,
+        });
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -257,7 +273,7 @@ function OngletProgramme() {
                 className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:border-[#F5A623]/60" />
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4 flex-wrap">
             <label className="flex items-center gap-2 cursor-pointer">
               <div onClick={() => setForm(v => ({ ...v, actif: !v.actif }))}
                 className={`w-9 h-5 rounded-full transition-colors relative ${form.actif ? "bg-[#F5A623]" : "bg-gray-200"}`}>
@@ -265,7 +281,62 @@ function OngletProgramme() {
               </div>
               <span className="text-[12px] text-gray-600">Programme actif</span>
             </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <div onClick={() => setForm(v => ({ ...v, autoApprobation: !v.autoApprobation }))}
+                className={`w-9 h-5 rounded-full transition-colors relative ${form.autoApprobation ? "bg-[#F5A623]" : "bg-gray-200"}`}>
+                <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${form.autoApprobation ? "left-4" : "left-0.5"}`} />
+              </div>
+              <span className="text-[12px] text-gray-600">Approbation automatique des candidatures</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <div onClick={() => setForm(v => ({ ...v, tiersActifs: !v.tiersActifs }))}
+                className={`w-9 h-5 rounded-full transition-colors relative ${form.tiersActifs ? "bg-[#F5A623]" : "bg-gray-200"}`}>
+                <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${form.tiersActifs ? "left-4" : "left-0.5"}`} />
+              </div>
+              <span className="text-[12px] text-gray-600">Paliers de commission</span>
+            </label>
           </div>
+
+          {form.tiersActifs && (
+            <div className="border-t border-gray-100 pt-4 space-y-3">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Paliers — plus l'affilié vend, plus il gagne</p>
+              {([
+                ["tier1Nom", "tier1Max", "tier1Commission", "Palier 1"],
+                ["tier2Nom", "tier2Max", "tier2Commission", "Palier 2"],
+              ] as const).map(([nomKey, maxKey, commKey, label]) => (
+                <div key={label} className="grid grid-cols-3 gap-2 items-end">
+                  <div>
+                    <label className="text-[9.5px] text-gray-400">{label} — nom</label>
+                    <input value={form[nomKey]} onChange={e => setForm(v => ({ ...v, [nomKey]: e.target.value }))}
+                      className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-2 text-[12px] outline-none focus:border-[#F5A623]/60" />
+                  </div>
+                  <div>
+                    <label className="text-[9.5px] text-gray-400">Jusqu'à (ventes)</label>
+                    <input type="number" value={form[maxKey]} onChange={e => setForm(v => ({ ...v, [maxKey]: +e.target.value }))}
+                      className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-2 text-[12px] outline-none focus:border-[#F5A623]/60" />
+                  </div>
+                  <div>
+                    <label className="text-[9.5px] text-gray-400">Commission (%)</label>
+                    <input type="number" value={form[commKey]} onChange={e => setForm(v => ({ ...v, [commKey]: +e.target.value }))}
+                      className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-2 text-[12px] outline-none focus:border-[#F5A623]/60" />
+                  </div>
+                </div>
+              ))}
+              <div className="grid grid-cols-3 gap-2 items-end">
+                <div>
+                  <label className="text-[9.5px] text-gray-400">Palier 3 — nom</label>
+                  <input value={form.tier3Nom} onChange={e => setForm(v => ({ ...v, tier3Nom: e.target.value }))}
+                    className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-2 text-[12px] outline-none focus:border-[#F5A623]/60" />
+                </div>
+                <div className="text-[10px] text-gray-300 italic pb-2.5">Au-delà du palier 2</div>
+                <div>
+                  <label className="text-[9.5px] text-gray-400">Commission (%)</label>
+                  <input type="number" value={form.tier3Commission} onChange={e => setForm(v => ({ ...v, tier3Commission: +e.target.value }))}
+                    className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-2 text-[12px] outline-none focus:border-[#F5A623]/60" />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <button onClick={sauver} disabled={!form.nom || saving}
           className="w-full py-3 bg-[#F5A623] text-white rounded-2xl text-[13px] font-bold disabled:opacity-50 hover:bg-[#d4880d] transition-colors">
@@ -486,9 +557,6 @@ function OngletPaiements() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState<string | null>(null);
-  const [formPay, setFormPay] = useState({ affilieurId: "", montant: 0, methode: "mobile_money", telephone: "", notes: "" });
-  const [showForm, setShowForm] = useState(false);
-  const [saving, setSaving] = useState(false);
 
   const charger = useCallback(() => {
     fetch("/api/affiliation/paiements")
@@ -499,26 +567,29 @@ function OngletPaiements() {
 
   useEffect(() => { charger(); }, [charger]);
 
-  async function marquerTraite(id: string) {
-    setPaying(id);
-    await fetch("/api/affiliation/paiements", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, statut: "traite" }) });
-    setPaying(null); charger();
-  }
-
-  async function creerPaiement() {
-    setSaving(true);
-    await fetch("/api/affiliation/paiements", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(formPay) });
-    setSaving(false); setShowForm(false); charger();
+  async function payer(affilieId: string) {
+    setPaying(affilieId);
+    try {
+      const res = await fetch("/api/affiliation/paiements", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ affilieId }) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error);
+      toast.success(`Paiement de ${d.montant.toLocaleString()} XAF envoyé`);
+    } catch (e: any) {
+      toast.error(e.message || "Erreur lors du paiement");
+    } finally {
+      setPaying(null); charger();
+    }
   }
 
   if (loading) return <div className="py-12 text-center text-sm text-gray-400">Chargement…</div>;
 
   const paiements = data?.paiements ?? [];
+  const commissionsDues = data?.commissionsDues ?? [];
   const stats = data?.stats ?? { totalPaye: 0, totalDu: 0, soldeRestant: 0 };
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <div className="bg-white border border-gray-100 rounded-2xl p-4">
           <p className="text-[10px] text-gray-400">Total payé</p>
           <p className="text-[18px] font-bold text-[#10b981]">{stats.totalPaye.toLocaleString()} XAF</p>
@@ -527,72 +598,63 @@ function OngletPaiements() {
           <p className="text-[10px] text-gray-400">Dû aux affiliés</p>
           <p className="text-[18px] font-bold text-[#F5A623]">{stats.totalDu.toLocaleString()} XAF</p>
         </div>
-        <div className="bg-white border border-gray-100 rounded-2xl p-4">
-          <p className="text-[10px] text-gray-400">Solde restant</p>
-          <p className="text-[18px] font-bold text-[#111]">{Math.max(0, stats.soldeRestant).toLocaleString()} XAF</p>
-        </div>
       </div>
 
-      <button onClick={() => setShowForm(!showForm)}
-        className="w-full py-2.5 border-2 border-dashed border-[#F5A623]/40 rounded-2xl text-[12px] text-[#F5A623] font-bold hover:bg-[#FFF8EC] transition-all flex items-center justify-center gap-1">
-        <Plus size={13}/> Enregistrer un paiement
-      </button>
-
-      {showForm && (
-        <div className="bg-white border border-gray-100 rounded-2xl p-4 space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            <input placeholder="ID affilié / affilieurId" value={formPay.affilieurId}
-              onChange={e => setFormPay(v => ({ ...v, affilieurId: e.target.value }))}
-              className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-[#F5A623]/50" />
-            <input type="number" placeholder="Montant XAF" value={formPay.montant || ""}
-              onChange={e => setFormPay(v => ({ ...v, montant: +e.target.value }))}
-              className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-[#F5A623]/50" />
-            <input placeholder="Téléphone Mobile Money"
-              value={formPay.telephone} onChange={e => setFormPay(v => ({ ...v, telephone: e.target.value }))}
-              className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-[#F5A623]/50" />
-            <select value={formPay.methode} onChange={e => setFormPay(v => ({ ...v, methode: e.target.value }))}
-              className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-[#F5A623]/50 bg-white">
-              <option value="mobile_money">Mobile Money</option>
-              <option value="wave">Wave</option>
-              <option value="orange_money">Orange Money</option>
-              <option value="mtn_momo">MTN MoMo</option>
-            </select>
-          </div>
-          <button onClick={creerPaiement} disabled={!formPay.affilieurId || !formPay.montant || saving}
-            className="w-full py-2 bg-[#F5A623] text-white rounded-xl text-[12px] font-bold disabled:opacity-50">
-            {saving ? "…" : "Enregistrer"}
-          </button>
-        </div>
-      )}
-
-      {paiements.length === 0 ? (
-        <p className="text-center text-sm text-gray-400 py-6">Aucun paiement enregistré</p>
-      ) : (
-        <div className="space-y-2">
-          {paiements.map((p: any) => (
-            <div key={p.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                style={{ background: p.statut === "traite" ? "#10b98115" : "#F5A62315" }}>
-                {p.statut === "traite" ? <CheckCircle size={16} className="text-green-500"/> : <Clock size={16} className="text-[#F5A623]"/>}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold text-[#111]">{p.affilieurId.slice(-8)}</p>
-                <p className="text-[11px] text-gray-400">{p.methode} · {p.telephone ?? "—"}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[14px] font-bold text-[#F5A623]">{p.montant.toLocaleString()} XAF</p>
-                <Badge statut={p.statut === "traite" ? "payee" : "pending"} />
-              </div>
-              {p.statut === "en_attente" && (
-                <button onClick={() => marquerTraite(p.id)} disabled={paying === p.id}
-                  className="px-3 py-1.5 bg-green-500 text-white rounded-xl text-[10px] font-bold hover:bg-green-600 disabled:opacity-50">
-                  {paying === p.id ? "…" : "Marquer payé"}
+      {/* Commissions dues — paiement réel en un clic */}
+      <div>
+        <p className="text-[12px] font-bold text-[#111] mb-2">À payer</p>
+        {commissionsDues.length === 0 ? (
+          <p className="text-center text-sm text-gray-400 py-6 bg-white border border-dashed border-gray-200 rounded-2xl">Aucune commission approuvée en attente de paiement</p>
+        ) : (
+          <div className="space-y-2">
+            {commissionsDues.map((g: any) => (
+              <div key={g.affilieId} className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#F5A623]/10 flex items-center justify-center flex-shrink-0">
+                  <Clock size={16} className="text-[#F5A623]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] font-semibold text-[#111] truncate">{g.affilie?.nom ?? "Affilié"}</p>
+                  <p className="text-[11px] text-gray-400">{g.nombreCommissions} commission{g.nombreCommissions > 1 ? "s" : ""} · {g.affilie?.telephone ?? "pas de téléphone"}</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-[14px] font-bold text-[#F5A623]">{g.montant.toLocaleString()} XAF</p>
+                </div>
+                <button onClick={() => payer(g.affilieId)} disabled={paying === g.affilieId || !g.affilie?.telephone}
+                  className="px-3 py-1.5 bg-green-500 text-white rounded-xl text-[10px] font-bold hover:bg-green-600 disabled:opacity-50 flex-shrink-0">
+                  {paying === g.affilieId ? "…" : "Payer"}
                 </button>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Historique */}
+      <div>
+        <p className="text-[12px] font-bold text-[#111] mb-2">Historique</p>
+        {paiements.length === 0 ? (
+          <p className="text-center text-sm text-gray-400 py-6">Aucun paiement enregistré</p>
+        ) : (
+          <div className="space-y-2">
+            {paiements.map((p: any) => (
+              <div key={p.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                  style={{ background: p.statut === "traite" ? "#10b98115" : p.statut === "echec" ? "#ef444415" : "#F5A62315" }}>
+                  {p.statut === "traite" ? <CheckCircle size={16} className="text-green-500"/> : p.statut === "echec" ? <XCircle size={16} className="text-red-500" /> : <Clock size={16} className="text-[#F5A623]"/>}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] font-semibold text-[#111]">{p.affilie?.nom ?? p.affilieurId.slice(-8)}</p>
+                  <p className="text-[11px] text-gray-400">{p.methode} · {p.telephone ?? "—"} · {new Date(p.createdAt).toLocaleDateString("fr-FR")}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[14px] font-bold text-[#F5A623]">{p.montant.toLocaleString()} XAF</p>
+                  <Badge statut={p.statut === "traite" ? "payee" : p.statut === "echec" ? "rejetee" : "pending"} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -685,9 +747,251 @@ function OngletLiens() {
   );
 }
 
+// ─── Matériel marketing ───────────────────────────────────────────────────────
+const COULEURS_BANNIERE = ["#F5A623", "#1B2A4A", "#22c55e", "#3b82f6", "#ef4444"];
+
+function BannierePreview({ lien, couleur, texte, baseUrl }: { lien: any; couleur: string; texte: string; baseUrl: string }) {
+  const url = `${baseUrl}?ref=${lien.code}`;
+  return (
+    <div className="border border-[#E8E8E8] rounded-2xl overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-4 text-white" style={{ background: `linear-gradient(135deg, ${couleur}, ${couleur}dd)`, minHeight: 80 }}>
+        <div>
+          <p className="font-bold text-[15px]">{texte || "Découvrez nos produits"}</p>
+          <p className="text-[11px] opacity-80 mt-0.5">{lien.produit ? `${lien.produit.nom} — ${lien.produit.prix.toLocaleString()} XAF` : "Boutique complète"}</p>
+        </div>
+        <div className="bg-white/20 border border-white/30 rounded-xl px-4 py-2 text-[12px] font-bold">Voir →</div>
+      </div>
+      <div className="bg-[#FAFAFA] p-3 flex items-center justify-between">
+        <p className="text-[11px] text-[#888] font-mono truncate max-w-[60%]">{url}</p>
+        <div className="flex gap-2">
+          <button onClick={() => { navigator.clipboard.writeText(url); toast.success("Lien copié !"); }}
+            className="flex items-center gap-1 text-[11px] border border-[#E8E8E8] px-2.5 py-1 rounded-lg text-[#666]">
+            <Copy size={10} /> Copier
+          </button>
+          <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] border border-[#E8E8E8] px-2.5 py-1 rounded-lg text-[#666]">
+            <ExternalLink size={10} /> Tester
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OngletMateriel() {
+  const [liens, setLiens] = useState<any[]>([]);
+  const [lienChoisi, setLienChoisi] = useState<any>(null);
+  const [couleur, setCouleur] = useState(COULEURS_BANNIERE[0]);
+  const [texte, setTexte] = useState("");
+  const [baseUrl, setBaseUrl] = useState("");
+
+  useEffect(() => {
+    setBaseUrl(window.location.origin);
+    fetch("/api/affiliation/liens").then(r => r.json()).then(d => {
+      const l = d.liens ?? [];
+      setLiens(l);
+      if (l.length) setLienChoisi(l[0]);
+    });
+  }, []);
+
+  async function updateCookieJours(lienId: string, jours: number) {
+    await fetch("/api/affiliation/liens", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: lienId, cookieJours: jours }) }).catch(() => null);
+    const r = await fetch("/api/affiliation/liens").then(r => r.json());
+    setLiens(r.liens ?? []);
+  }
+
+  function genererHTML(lien: any) {
+    const url = `${baseUrl}?ref=${lien.code}`;
+    const html = `<a href="${url}" style="display:inline-block;background:${couleur};color:white;padding:12px 28px;border-radius:12px;font-family:sans-serif;font-weight:bold;font-size:14px;text-decoration:none;">${texte || "Découvrez notre boutique"}</a>`;
+    navigator.clipboard.writeText(html);
+    toast.success("Code HTML copié !");
+  }
+
+  const inp = "border border-[#E8E8E8] rounded-xl px-3 py-2 text-[13px] outline-none focus:border-[#F5A623]/60 bg-white";
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white border border-gray-100 rounded-2xl p-5">
+        <h2 className="text-[13px] font-bold text-[#111] mb-1">Attribution — fenêtre cookie</h2>
+        <p className="text-[11px] text-[#888] mb-3">Détermine combien de jours après le clic un affilié perçoit sa commission.</p>
+        <div className="space-y-2">
+          {liens.map(l => (
+            <div key={l.id} className="flex items-center gap-3 p-3 bg-[#FAFAFA] rounded-xl">
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-semibold text-[#111]">Code : <span className="font-mono text-[#F5A623]">{l.code}</span></p>
+                <p className="text-[10.5px] text-[#888]">{l.produit?.nom ?? "Boutique entière"} · {l.clics} clics · {l.conversions} conv.</p>
+              </div>
+              <select className={inp} value={l.cookieJours} onChange={e => updateCookieJours(l.id, parseInt(e.target.value))}>
+                {[1, 7, 14, 30, 60, 90].map(j => <option key={j} value={j}>{j} jours</option>)}
+              </select>
+            </div>
+          ))}
+          {!liens.length && <p className="text-[12px] text-[#AAA] text-center py-4">Aucun lien d'affiliation — voir l'onglet "Mes liens".</p>}
+        </div>
+      </div>
+
+      <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
+        <h2 className="text-[13px] font-bold text-[#111]">Générateur de bannières</h2>
+        <div className="grid grid-cols-2 gap-2">
+          <select className={`w-full ${inp}`} value={lienChoisi?.id ?? ""} onChange={e => setLienChoisi(liens.find(l => l.id === e.target.value) ?? null)}>
+            {liens.map(l => <option key={l.id} value={l.id}>{l.code} — {l.produit?.nom ?? "Boutique"}</option>)}
+          </select>
+          <input className={`w-full ${inp}`} placeholder="Texte du bouton" value={texte} onChange={e => setTexte(e.target.value)} />
+        </div>
+        <div className="flex gap-2">
+          {COULEURS_BANNIERE.map(c => (
+            <button key={c} onClick={() => setCouleur(c)} className="w-7 h-7 rounded-full border-2 transition-all" style={{ background: c, borderColor: couleur === c ? "#111" : "transparent" }} />
+          ))}
+        </div>
+        {lienChoisi && (
+          <div className="space-y-2">
+            <BannierePreview lien={lienChoisi} couleur={couleur} texte={texte} baseUrl={baseUrl} />
+            <div className="flex gap-2">
+              <button onClick={() => genererHTML(lienChoisi)} className="flex items-center gap-1.5 border border-[#E8E8E8] px-3 py-1.5 rounded-xl text-[11px] text-[#666]"><Copy size={11} /> Code HTML</button>
+              <button onClick={() => { navigator.clipboard.writeText(`${baseUrl}?ref=${lienChoisi.code}`); toast.success("URL copiée !"); }} className="flex items-center gap-1.5 border border-[#E8E8E8] px-3 py-1.5 rounded-xl text-[11px] text-[#666]"><Copy size={11} /> URL simple</button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {lienChoisi && (
+        <div className="bg-white border border-gray-100 rounded-2xl p-5">
+          <h2 className="text-[13px] font-bold text-[#111] mb-3">Textes clé-en-main</h2>
+          <div className="space-y-2">
+            {[
+              { label: "WhatsApp / SMS", texte: `🛍️ Je te recommande cette boutique ! Commande ici : ${baseUrl}?ref=${lienChoisi.code}` },
+              { label: "Instagram / Facebook", texte: `✨ ${texte || "Découvrez cette boutique incroyable"} ! Lien en bio → ${baseUrl}?ref=${lienChoisi.code}` },
+              { label: "Email", texte: `Bonjour,\n\nJe voulais vous partager une boutique que j'aime beaucoup :\n${baseUrl}?ref=${lienChoisi.code}\n\nBonne découverte !` },
+            ].map(t => (
+              <div key={t.label} className="bg-[#FAFAFA] rounded-xl p-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-[10.5px] font-bold text-[#666]">{t.label}</p>
+                  <button onClick={() => { navigator.clipboard.writeText(t.texte); toast.success("Copié !"); }} className="flex items-center gap-1 text-[10px] border border-[#E8E8E8] px-2 py-0.5 rounded-lg text-[#666]"><Copy size={9} /> Copier</button>
+                </div>
+                <p className="text-[11px] text-[#666] leading-relaxed whitespace-pre-line">{t.texte}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Liens sortants (affiliation entrante) ───────────────────────────────────
+const ENTRANTE_EMPTY = { nom: "", marchand: "", url: "", categorie: "", commission: "10", devise: "XAF" };
+
+function OngletEntrante() {
+  const [programmes, setProgrammes] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>({ total: 0, actifs: 0, revenuTotal: 0, clicsTotal: 0 });
+  const [form, setForm] = useState({ ...ENTRANTE_EMPTY });
+  const [loading, setLoading] = useState(false);
+
+  async function load() {
+    const r = await fetch("/api/affiliation/entrante").then(r => r.json());
+    setProgrammes(r.programmes ?? []);
+    setStats(r.stats ?? {});
+  }
+  useEffect(() => { load(); }, []);
+
+  async function save() {
+    if (!form.nom || !form.url) return;
+    setLoading(true);
+    await fetch("/api/affiliation/entrante", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, commission: parseFloat(form.commission) / 100 }) });
+    setForm({ ...ENTRANTE_EMPTY });
+    await load();
+    setLoading(false);
+  }
+
+  async function toggle(p: any) {
+    await fetch("/api/affiliation/entrante", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: p.id, actif: !p.actif }) });
+    load();
+  }
+
+  async function del(id: string) {
+    if (!confirm("Supprimer ce programme ?")) return;
+    await fetch(`/api/affiliation/entrante?id=${id}`, { method: "DELETE" });
+    load();
+  }
+
+  const inp = "w-full border border-[#E8E8E8] rounded-xl px-3 py-2 text-[13px] outline-none focus:border-[#F5A623]/60";
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-[#FFF8EC] border border-[#F5A623]/20 rounded-2xl p-4 text-[12.5px] text-[#7a5a00]">
+        <strong>Comment ça marche :</strong> Ajoutez un programme d'affiliation où <em>vous</em> êtes affilié d'un autre marchand (Jumia Affiliate, Amazon Associates, un partenaire local...). Partagez votre lien, percevez une commission sur chaque vente.
+      </div>
+
+      <div className="grid grid-cols-4 gap-2">
+        {[
+          { label: "Programmes", v: stats.total },
+          { label: "Actifs", v: stats.actifs, color: "#22c55e" },
+          { label: "Clics", v: stats.clicsTotal },
+          { label: "Revenus", v: `${(stats.revenuTotal ?? 0).toLocaleString()} XAF`, color: "#F5A623" },
+        ].map(s => (
+          <div key={s.label} className="bg-white border border-gray-100 rounded-2xl p-3 text-center">
+            <p className="text-[16px] font-bold" style={{ color: s.color ?? "#111" }}>{s.v}</p>
+            <p className="text-[10px] text-[#AAA] mt-0.5">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
+        <h2 className="text-[13px] font-bold text-[#111]">Ajouter un programme</h2>
+        <div className="grid grid-cols-2 gap-2">
+          <input className={inp} placeholder="Nom (ex: Jumia Affiliate)" value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))} />
+          <input className={inp} placeholder="Marchand / Plateforme" value={form.marchand} onChange={e => setForm(f => ({ ...f, marchand: e.target.value }))} />
+          <input className={inp} placeholder="Lien d'affiliation" value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))} />
+          <input className={inp} placeholder="Catégorie (optionnel)" value={form.categorie} onChange={e => setForm(f => ({ ...f, categorie: e.target.value }))} />
+          <div className="flex gap-2">
+            <input className={inp} placeholder="Commission %" type="number" value={form.commission} onChange={e => setForm(f => ({ ...f, commission: e.target.value }))} />
+            <select className={inp} value={form.devise} onChange={e => setForm(f => ({ ...f, devise: e.target.value }))}>
+              <option>XAF</option><option>EUR</option><option>USD</option>
+            </select>
+          </div>
+        </div>
+        <button onClick={save} disabled={!form.nom || !form.url || loading}
+          className="px-5 py-2 rounded-xl text-white text-[12px] font-semibold disabled:opacity-40" style={{ background: "#F5A623" }}>
+          {loading ? "…" : "Ajouter le programme"}
+        </button>
+      </div>
+
+      <div className="space-y-2">
+        {programmes.map(p => (
+          <div key={p.id} className="bg-white border border-gray-100 rounded-2xl p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-[13px] font-semibold text-[#111]">{p.nom}</p>
+                  {p.categorie && <span className="text-[9.5px] bg-[#F0F0F0] text-[#666] px-2 py-0.5 rounded-full">{p.categorie}</span>}
+                  {!p.actif && <span className="text-[9.5px] bg-[#F0F0F0] text-[#AAA] px-2 py-0.5 rounded-full">Inactif</span>}
+                </div>
+                <p className="text-[11px] text-[#888] mt-0.5">{p.marchand} · Commission : {Math.round(p.commission * 100)}%</p>
+                <p className="text-[10.5px] text-[#3b82f6] mt-1 truncate max-w-sm">{p.url}</p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-[12.5px] font-bold text-[#F5A623]">{p.revenus.toLocaleString()} {p.devise}</p>
+                <p className="text-[10.5px] text-[#AAA]">{p.clics} clics · {p.conversions} conv.</p>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-3">
+              <button onClick={() => { navigator.clipboard.writeText(p.url); toast.success("Lien copié !"); }} className="text-[10.5px] border border-[#E8E8E8] px-3 py-1 rounded-lg text-[#666]">Copier le lien</button>
+              <button onClick={() => toggle(p)} className="text-[10.5px] border border-[#E8E8E8] px-3 py-1 rounded-lg text-[#666]">{p.actif ? "Désactiver" : "Activer"}</button>
+              <button onClick={() => del(p.id)} className="text-[10.5px] border border-red-100 px-3 py-1 rounded-lg text-red-500">Supprimer</button>
+            </div>
+          </div>
+        ))}
+        {!programmes.length && (
+          <div className="bg-[#FAFAFA] rounded-2xl p-8 text-center text-[12px] text-[#AAA]">Aucun programme — ajoutez-en un pour générer des revenus passifs.</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Page principale ──────────────────────────────────────────────────────────
 export default function AffiliationPage() {
-  const [onglet, setOnglet] = useState("stats");
+  const searchParams = useSearchParams();
+  const [onglet, setOnglet] = useState(searchParams?.get("tab") || "stats");
 
   return (
     <div className="p-5 max-w-4xl mx-auto space-y-5" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
@@ -711,6 +1015,8 @@ export default function AffiliationPage() {
       {onglet === "affilies"  && <OngletAffilies />}
       {onglet === "paiements" && <OngletPaiements />}
       {onglet === "liens"     && <OngletLiens />}
+      {onglet === "materiel"  && <OngletMateriel />}
+      {onglet === "entrante"  && <OngletEntrante />}
     </div>
   );
 }

@@ -59,6 +59,10 @@ export function CtaFinal() {
   }, []);
 
   useEffect(() => {
+    // Ne décompte que quand la section est visible — évite un re-render de
+    // toute la section (+ des 3 FlipDigit) chaque seconde pendant que
+    // l'utilisateur scrolle ailleurs sur la page, ce qui causait du jank.
+    if (!visible) return;
     const timer = setInterval(() => {
       setTemps((prev) => {
         let { h, m, s } = prev;
@@ -69,7 +73,7 @@ export function CtaFinal() {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [visible]);
 
   const handleBtnMouseMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();

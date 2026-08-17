@@ -3,13 +3,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { genererNumeroCommande, formatMontant } from "@/lib/utils";
 import { notifierMarchand } from "@/lib/notifications-marchand";
+import { envoyerConfirmationCommande, envoyerAlerteNouvelleCommande } from "@/lib/email";
+import { fraisLivraisonServeur } from "@/lib/livraison";
+import { enregistrerConversionAffiliation } from "@/lib/affiliation";
 import { randomBytes } from "crypto";
 
 function genToken() { return randomBytes(20).toString("hex"); }
 
 export async function POST(req: NextRequest) {
   try {
-    const { tenantId, slug, client, items, total, devise, codePromo, localisation, canal, champPersonnalise } = await req.json();
+    const { tenantId, slug, client, items, total, devise, codePromo, localisation, canal, champPersonnalise, zone, codeAffiliation } = await req.json();
     const viaWhatsapp = canal !== "direct";
 
     if (!tenantId || !items?.length || !client?.nom || !client?.telephone) {
@@ -46,6 +49,12 @@ export async function POST(req: NextRequest) {
       ? `https://www.google.com/maps?q=${localisation.lat},${localisation.lng}`
       : null;
 
+    // Frais de livraison calculés côté serveur — jamais confiance en un
+    // montant envoyé par le client (le seul champ client-fourni utilisé
+    // ici est `zone`, un texte utilisé pour matcher une ReglePort active).
+    const montantLivraison = await fraisLivraisonServeur({ tenantId, zone, montantCommande: total });
+    const montantTotalAvecLivraison = total + montantLivraison;
+
     const commande = await prisma.commande.create({
       data: {
         tenantId, numero: genererNumeroCommande(),
@@ -54,14 +63,16 @@ export async function POST(req: NextRequest) {
         clientEmail: client.email || clientRecord.email,
         clientTelephone: client.telephone,
         adresseLivraison: localisation?.adresseExacte || client.adresse || "À préciser",
-        ville: client.ville || "—",
+        ville: zone || client.ville || "—",
         pays: client.pays || "—",
         montantSousTotal: total,
-        montantTotal: total,
+        montantLivraison,
+        montantTotal: montantTotalAvecLivraison,
         devise,
         statut: "en_attente",
         paiementStatut: "pending",
         methodePaiement: viaWhatsapp ? "whatsapp_cod" : "direct_cod",
+        codeAffiliation: codeAffiliation || null,
         trackingToken,
         livreurToken,
         latitudeClient: localisation?.lat ?? null,
@@ -81,6 +92,23 @@ export async function POST(req: NextRequest) {
       },
       include: { lignes: true },
     });
+
+    // Programme d'affiliation B2C — enregistrée "pending", capturée (payable)
+    // seulement à la livraison confirmée (voir statut/route.ts), puisque le
+    // COD n'est acquis qu'à ce moment-là.
+    if (codeAffiliation) {
+      await enregistrerConversionAffiliation({
+        commande: {
+          id: commande.id,
+          tenantId,
+          clientEmail: commande.clientEmail,
+          clientTelephone: commande.clientTelephone,
+          montantTotal: montantTotalAvecLivraison,
+          codeAffiliation,
+        },
+        lignes: items.map((i: any) => ({ produitId: i.produitId, prix: i.prix, quantite: i.quantite })),
+      }).catch(() => {});
+    }
 
     // Auto-routing dropshipping
     try {
@@ -120,7 +148,8 @@ export async function POST(req: NextRequest) {
       `🛒 *Articles :*`,
       lignesTexte,
       ``,
-      `💰 *Total à percevoir :* ${formatMontant(total, devise)}`,
+      montantLivraison > 0 ? `🚚 *Livraison (${zone}) :* ${formatMontant(montantLivraison, devise)}` : null,
+      `💰 *Total à percevoir :* ${formatMontant(montantTotalAvecLivraison, devise)}`,
       codePromo ? `🏷️ Code promo : ${codePromo}` : null,
       ``,
       `📄 Facture : ${factureUrl}`,
@@ -135,10 +164,35 @@ export async function POST(req: NextRequest) {
       tenantId,
       type: viaWhatsapp ? "commande_whatsapp" : "nouvelle_commande",
       titre: `Nouvelle commande #${commande.numero}`,
-      message: `${client.nom} · ${items.length} article(s) · ${formatMontant(total, devise)}${champPersonnalise?.valeur ? ` · ${champPersonnalise.label}: ${champPersonnalise.valeur}` : ""}`,
+      message: `${client.nom} · ${items.length} article(s) · ${formatMontant(montantTotalAvecLivraison, devise)}${champPersonnalise?.valeur ? ` · ${champPersonnalise.label}: ${champPersonnalise.valeur}` : ""}`,
       lien: `/dashboard/commandes/${commande.id}`,
       commandeId: commande.id,
     });
+
+    if (tenant.email) {
+      await envoyerAlerteNouvelleCommande({
+        email: tenant.email,
+        numeroCommande: commande.numero,
+        montantTotal: montantTotalAvecLivraison,
+        devise,
+        clientNom: client.nom,
+        boutique: tenant.nomBoutique,
+        lien: `${appUrl}/dashboard/commandes/${commande.id}`,
+      }).catch(() => {});
+    }
+    // client.email brut uniquement — commande.clientEmail peut être un placeholder
+    // généré (téléphone@axso.com) quand le client n'a pas fourni de vraie adresse.
+    if (client.email) {
+      await envoyerConfirmationCommande({
+        email: client.email,
+        nom: client.nom,
+        numeroCommande: commande.numero,
+        montantTotal: montantTotalAvecLivraison,
+        devise,
+        produits: items.map((i: any) => ({ nom: i.nom, quantite: i.quantite, prix: i.prix })),
+        boutique: tenant.nomBoutique,
+      }).catch(() => {});
+    }
 
     // Message WhatsApp client (confirmation automatique)
     const telClient = client.telephone.replace(/\D/g, "");
@@ -148,7 +202,8 @@ export async function POST(req: NextRequest) {
       `Bonjour ${client.nom} ! 🙏`,
       `Votre commande *#${commande.numero}* a bien été reçue.`,
       ``,
-      `📋 *${items.length} article(s)* — Total : *${formatMontant(total, devise)}*`,
+      `📋 *${items.length} article(s)* — Total : *${formatMontant(montantTotalAvecLivraison, devise)}*`,
+      montantLivraison > 0 ? `🚚 dont livraison : ${formatMontant(montantLivraison, devise)}` : null,
       `💳 Paiement à la livraison`,
       ``,
       `📄 *Votre facture :*`,
@@ -171,6 +226,8 @@ export async function POST(req: NextRequest) {
       trackingToken,
       factureUrl,
       trackingUrl,
+      montantLivraison,
+      montantTotal: montantTotalAvecLivraison,
     });
 
   } catch (err) {

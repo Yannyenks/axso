@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCartStore } from "@/store/cartStore";
-import { ShoppingBag, Menu, X, Search } from "lucide-react";
+import { ShoppingBag, Menu, X, Search, BadgeCheck } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface Props {
@@ -14,9 +14,10 @@ interface Props {
   texte: string;
   radius: string;
   collections: Array<{ slug: string; nom: string }>;
+  certifie?: boolean;
 }
 
-export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, texte, radius, collections }: Props) {
+export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, texte, radius, collections, certifie }: Props) {
   const totalItems = useCartStore((s) => s.totalItems());
   const [menuOuvert, setMenuOuvert] = useState(false);
   const [scroll, setScroll] = useState(false);
@@ -39,12 +40,17 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* Logo */}
-        <Link href={`/${slug}`} className="flex-shrink-0 min-w-0">
+        <Link href={`/${slug}`} className="flex-shrink-0 min-w-0 flex items-center gap-1.5">
           {logoUrl ? (
             <img src={logoUrl} alt={nomBoutique} className="h-9 object-contain max-w-[180px]" />
           ) : (
             <span className="text-xl font-bold font-playfair truncate" style={{ color: accent }}>
               {nomBoutique}
+            </span>
+          )}
+          {certifie && (
+            <span className="flex-shrink-0" title="Boutique certifiée Axso">
+              <BadgeCheck size={16} style={{ color: accent }} />
             </span>
           )}
         </Link>

@@ -30,6 +30,8 @@ const schemaUpdate = z.object({
   prixFournisseur: z.number().optional().nullable(),
   urlFournisseur: z.string().optional().nullable(),
   nomFournisseur: z.string().optional().nullable(),
+  affiliationActive: z.boolean().optional(),
+  tauxCommissionAff: z.number().min(0).max(1).optional().nullable(),
 });
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

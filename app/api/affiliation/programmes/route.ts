@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     dureeCookie, seuilPaiement, tousLesProduits, produitIds,
     tiersActifs, tier1Nom, tier1Max, tier1Commission,
     tier2Nom, tier2Max, tier2Commission, tier3Nom, tier3Commission,
-    multiNiveauActif, tauxSousAffilies,
+    multiNiveauActif, tauxSousAffilies, autoApprobation,
   } = body;
 
   if (!nom) return NextResponse.json({ error: "Nom requis" }, { status: 400 });
@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
       tier3Commission: Number(tier3Commission) || 12,
       multiNiveauActif: Boolean(multiNiveauActif),
       tauxSousAffilies: Number(tauxSousAffilies) || 2,
+      autoApprobation: autoApprobation === undefined ? true : Boolean(autoApprobation),
     },
   });
 
@@ -88,7 +89,7 @@ export async function PATCH(req: NextRequest) {
     "nom", "description", "typeCommission", "valeurCommission", "dureeCookie",
     "seuilPaiement", "tousLesProduits", "produitIds", "tiersActifs",
     "tier1Nom", "tier1Max", "tier1Commission", "tier2Nom", "tier2Max", "tier2Commission",
-    "tier3Nom", "tier3Commission", "multiNiveauActif", "tauxSousAffilies", "actif",
+    "tier3Nom", "tier3Commission", "multiNiveauActif", "tauxSousAffilies", "actif", "autoApprobation",
   ];
   for (const key of allowed) {
     if (updates[key] !== undefined) cleanUpdates[key] = updates[key];

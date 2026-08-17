@@ -23,7 +23,7 @@ Tu prends des actions directes sur la boutique du marchand via tes outils.
 Contexte Axso :
 - Axso est une plateforme e-commerce mondiale (Europe, Afrique, Amérique, Asie, Moyen-Orient, etc.)
 - Produits physiques, digitaux et dropshipping international supportés
-- Paiement en ligne pour les produits digitaux (commission 3%)
+- Paiement en ligne (commission 6% ajoutée au prix payé par le client, jamais déduite du vendeur)
 - Paiement à la livraison + WhatsApp pour les produits physiques/drop (abonnement SaaS)
 - Sources d'approvisionnement dropshipping : AliExpress, Amazon, fournisseurs locaux selon le pays
 

@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { schemaConnexion } from "@/lib/validations";
 import type { z } from "zod";
-import { Eye, EyeOff, Loader2, ShieldCheck, Zap, Globe, Star } from "lucide-react";
+import { Eye, EyeOff, Loader2, ShieldCheck, Zap, Globe, Star, Mail, ArrowLeft } from "lucide-react";
 
 type FormConnexion = z.infer<typeof schemaConnexion>;
 
@@ -28,27 +28,113 @@ function ConnexionForm() {
 
   const [showPass, setShowPass] = useState(false);
   const [erreur,   setErreur]   = useState("");
+  const [etape, setEtape] = useState<"identifiants" | "code">("identifiants");
+  const [identifiants, setIdentifiants] = useState<{ email: string; password: string } | null>(null);
+  const [code, setCode] = useState("");
+  const [envoiCode, setEnvoiCode] = useState(false);
+  const [verifCode, setVerifCode] = useState(false);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormConnexion>({
     resolver: zodResolver(schemaConnexion),
   });
 
-  const onSubmit = async (data: FormConnexion) => {
-    setErreur("");
-    const result = await signIn("credentials", {
-      email: data.email, password: data.password, redirect: false,
-    });
-    if (result?.error) { setErreur("Email ou mot de passe incorrect"); return; }
+  async function finaliserConnexion(email: string, password: string, code?: string) {
+    const result = await signIn("credentials", { email, password, code, redirect: false });
+    if (result?.error) { setErreur(code ? "Code invalide ou expiré" : "Email ou mot de passe incorrect"); return; }
     const sessionRes = await fetch("/api/auth/session");
     const session    = await sessionRes.json();
     if (session?.user?.role === "livreur") router.push("/livreur");
+    else if (session?.user?.role === "admin" || session?.user?.role === "admin_lecteur") router.push("/admin");
     else router.push(callbackUrl);
     router.refresh();
+  }
+
+  const onSubmit = async (data: FormConnexion) => {
+    setErreur("");
+    setEnvoiCode(true);
+    try {
+      const res = await fetch("/api/auth/2fa/demander", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: data.email, password: data.password }),
+      });
+      const result = await res.json();
+      if (!res.ok) { setErreur(result.error ?? "Email ou mot de passe incorrect"); return; }
+
+      if (result.skip2fa) {
+        await finaliserConnexion(data.email, data.password);
+      } else {
+        setIdentifiants({ email: data.email, password: data.password });
+        setEtape("code");
+      }
+    } catch {
+      setErreur("Erreur de connexion, réessaie");
+    } finally {
+      setEnvoiCode(false);
+    }
   };
+
+  async function onSubmitCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (!identifiants || code.length < 6) return;
+    setErreur("");
+    setVerifCode(true);
+    try {
+      await finaliserConnexion(identifiants.email, identifiants.password, code);
+    } finally {
+      setVerifCode(false);
+    }
+  }
 
   const inputCls =
     "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#111111] text-sm " +
     "placeholder:text-[#999999] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/15 focus:outline-none transition-all";
+
+  if (etape === "code" && identifiants) {
+    return (
+      <div
+        className="rounded-3xl p-8 border"
+        style={{
+          background: "#ffffff",
+          borderColor: "rgba(245,166,35,0.2)",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(245,166,35,0.06)",
+        }}
+      >
+        <button onClick={() => { setEtape("identifiants"); setErreur(""); setCode(""); }}
+          className="flex items-center gap-1.5 text-xs mb-4 hover:opacity-80 transition-opacity" style={{ color: "#808080" }}>
+          <ArrowLeft size={13} /> Retour
+        </button>
+
+        <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4"
+          style={{ background: "rgba(245,166,35,0.12)", border: "1px solid rgba(245,166,35,0.25)" }}>
+          <Mail size={18} style={{ color: ACCENT }} />
+        </div>
+        <h2 className="text-2xl font-bold text-[#111111] mb-1">Vérifie ton email</h2>
+        <p className="text-[#808080] text-sm mb-7">Code envoyé à <strong>{identifiants.email}</strong> — valable 10 minutes.</p>
+
+        {erreur && (
+          <div className="rounded-xl p-3 text-sm text-center mb-5"
+            style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
+            {erreur}
+          </div>
+        )}
+
+        <form onSubmit={onSubmitCode} className="space-y-4">
+          <input
+            type="text" inputMode="numeric" maxLength={6} autoFocus
+            value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ""))}
+            placeholder="000000"
+            className={inputCls + " text-center text-2xl tracking-[0.5em] font-bold"}
+          />
+          <button type="submit" disabled={verifCode || code.length < 6}
+            className="w-full font-bold py-4 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95"
+            style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, color: "#080808", boxShadow: `0 8px 30px rgba(245,166,35,0.35)` }}>
+            {verifCode ? <><Loader2 size={16} className="animate-spin" /> Vérification...</> : "Confirmer →"}
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div

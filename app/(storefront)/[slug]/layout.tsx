@@ -3,6 +3,10 @@ import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { AxiaStorefront } from "@/components/storefront/AxiaStorefront";
 import { StorefrontPopups } from "@/components/storefront/StorefrontPopups";
 import { MetaPixel } from "@/components/storefront/MetaPixel";
+import { TikTokPixel } from "@/components/storefront/TikTokPixel";
+import { SnapchatPixel } from "@/components/storefront/SnapchatPixel";
+import { GoogleTagManager } from "@/components/storefront/GoogleTagManager";
+import { CustomTrackingScripts } from "@/components/storefront/CustomTrackingScripts";
 
 interface Props {
   children: React.ReactNode;
@@ -14,7 +18,10 @@ export default async function StorefrontLayout({ children, params }: Props) {
 
   const tenant = await prisma.tenant.findUnique({
     where: { slug },
-    select: { id: true, nomBoutique: true, themeId: true, themeConfig: true, metaPixelId: true },
+    select: {
+      id: true, nomBoutique: true, themeId: true, themeConfig: true,
+      metaPixelId: true, tiktokPixelId: true, snapPixelId: true, gtmId: true, trackingScripts: true,
+    },
   });
 
   if (!tenant) return <>{children}</>;
@@ -28,6 +35,10 @@ export default async function StorefrontLayout({ children, params }: Props) {
       <AxiaStorefront slug={slug} nomBoutique={tenant.nomBoutique} accentColor={accent} />
       <StorefrontPopups slug={slug} accentColor={accent} />
       {tenant.metaPixelId && <MetaPixel pixelId={tenant.metaPixelId} />}
+      {tenant.tiktokPixelId && <TikTokPixel pixelId={tenant.tiktokPixelId} />}
+      {tenant.snapPixelId && <SnapchatPixel pixelId={tenant.snapPixelId} />}
+      {tenant.gtmId && <GoogleTagManager containerId={tenant.gtmId} />}
+      {tenant.trackingScripts && <CustomTrackingScripts html={tenant.trackingScripts} />}
     </>
   );
 }

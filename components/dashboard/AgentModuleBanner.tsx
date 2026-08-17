@@ -59,7 +59,7 @@ const MODULE_MAP: Record<string, ModuleConfig> = {
     greeting: "Bonjour ! Je suis **ATLAS**, votre agent logistique.\n\nJe vois toutes vos commandes en cours. Voulez-vous que j'assigne les livreurs, mette à jour des statuts ou envoie des notifications clients ?",
     suggestions: ["Combien de commandes sont en attente d'expédition ?", "Assigne les livreurs disponibles aux commandes", "Notifie les clients dont la commande est livrée"],
   },
-  "/dashboard/livraison": {
+  "/dashboard/logistique": {
     agentId: "atlas",
     endpoint: "/api/ai/agent-livraison",
     greeting: "Bonjour ! Je suis **ATLAS**, votre agent livraison.\n\nJe gère votre logistique de A à Z — attribution des livreurs, suivi en temps réel, notifications clients. Que voulez-vous faire ?",

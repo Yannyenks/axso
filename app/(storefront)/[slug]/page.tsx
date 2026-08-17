@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { formatMontant } from "@/lib/utils";
+import { prixClient } from "@/lib/pricing";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import Link from "next/link";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
@@ -99,6 +100,7 @@ export default async function StorefrontPage({ params }: Props) {
         texte={c.texte}
         radius={radius}
         collections={tenant.collections}
+        certifie={tenant.certifie}
       />
 
       {/* ─── HERO ─── */}
@@ -274,8 +276,10 @@ export default async function StorefrontPage({ params }: Props) {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {vedettes.map((p) => {
-              const remise = p.prixCompare && p.prixCompare > p.prix
-                ? Math.round(((p.prixCompare - p.prix) / p.prixCompare) * 100)
+              const prixAffiche = prixClient(p.prix, tenant.commissionRate ?? 0.06);
+              const prixCompareAffiche = p.prixCompare ? prixClient(p.prixCompare, tenant.commissionRate ?? 0.06) : null;
+              const remise = prixCompareAffiche && prixCompareAffiche > prixAffiche
+                ? Math.round(((prixCompareAffiche - prixAffiche) / prixCompareAffiche) * 100)
                 : 0;
               return (
                 <Link key={p.id} href={`/${slug}/produits/${p.id}`} className="group">
@@ -322,11 +326,11 @@ export default async function StorefrontPage({ params }: Props) {
                       <h3 className="font-medium text-sm mb-2 line-clamp-2 leading-snug">{p.nom}</h3>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-sm" style={{ color: c.accent }}>
-                          {formatMontant(p.prix, tenant.devise)}
+                          {formatMontant(prixAffiche, tenant.devise)}
                         </span>
                         {remise > 0 && (
                           <span className="text-xs opacity-40 line-through">
-                            {formatMontant(p.prixCompare!, tenant.devise)}
+                            {formatMontant(prixCompareAffiche!, tenant.devise)}
                           </span>
                         )}
                       </div>

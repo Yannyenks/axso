@@ -54,7 +54,7 @@ export default async function CheckoutPage({ params }: Props) {
       </div>
 
       <footer className="border-t py-8 text-center text-sm opacity-50" style={{ borderColor: `${theme.accent}20` }}>
-        <p>Paiement sécurisé via Flutterwave · SSL 256-bit</p>
+        <p>Paiement sécurisé via NotchPay · SSL 256-bit</p>
       </footer>
     </div>
   );

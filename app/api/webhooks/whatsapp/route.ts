@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createHmac } from "crypto";
+import { quotaCommandesAtteint } from "@/lib/abonnement";
 
 const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN ?? "axso_meta_2026";
 const APP_SECRET   = process.env.META_APP_SECRET ?? "";
@@ -62,6 +63,9 @@ async function traiterEvenements(body: any) {
           })
         : null;
       const tenantId = config?.tenantId;
+      // Quota Palier 0 atteint : WhatsApp est verrouillé, on n'enregistre ni ne
+      // traite plus les messages entrants pour ce tenant tant qu'il n'upgrade pas.
+      const locked = tenantId ? await quotaCommandesAtteint(tenantId) : false;
 
       // ── Messages entrants ──────────────────────────────────────────────────
       for (const msg of (val.messages ?? [])) {
@@ -71,7 +75,7 @@ async function traiterEvenements(body: any) {
 
         const nom = val.contacts?.find((c: any) => c.wa_id === de)?.profile?.name ?? undefined;
 
-        if (tenantId) {
+        if (tenantId && !locked) {
           const existant = msg.id
             ? await prisma.messageRecu.findFirst({ where: { waMessageId: msg.id } })
             : null;
@@ -81,7 +85,7 @@ async function traiterEvenements(body: any) {
             const commandeLiee = await prisma.commande.findFirst({
               where: { tenantId, clientTelephone: { contains: telephone } },
               orderBy: { createdAt: "desc" },
-              select: { id: true, numero: true, statut: true },
+              select: { id: true, numero: true, statut: true, trackingToken: true },
             }).catch(() => null);
 
             await prisma.messageRecu.create({
@@ -139,7 +143,7 @@ async function detecterEtConfirmerCommande(
   tenantId: string,
   de: string,
   message: string,
-  commande: { id: string; numero: string; statut: string } | null,
+  commande: { id: string; numero: string; statut: string; trackingToken: string | null } | null,
   phoneId: string
 ) {
   if (!commande || commande.statut !== "en_attente") return;
@@ -159,7 +163,8 @@ async function detecterEtConfirmerCommande(
     const numero = toE164(de);
     await notifierClientWhatsApp({
       telephone: numero, statut: "confirmee", numero: commande.numero,
-      boutique: tenant.nomBoutique, slug: tenant.slug, commandeId: commande.id,
+      boutique: tenant.nomBoutique, slug: tenant.slug, trackingToken: commande.trackingToken,
+      tenantId,
     });
   }
 }

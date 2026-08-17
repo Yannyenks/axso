@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
+import { useParams } from "next/navigation";
 import { Bike, MapPin, Navigation, Radio, Square, XCircle, CheckCircle } from "lucide-react";
 
-export default function LivreurPage({ params }: { params: { token: string } }) {
+export default function LivreurPage() {
+  const params = useParams<{ token: string }>();
   const [commande, setCommande] = useState<any>(null);
   const [status, setStatus] = useState<"idle"|"tracking"|"error"|"done">("idle");
   const [nom, setNom] = useState("");
@@ -20,7 +22,8 @@ export default function LivreurPage({ params }: { params: { token: string } }) {
       if (watchRef.current !== null) navigator.geolocation?.clearWatch(watchRef.current);
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.token]);
 
   async function sendPos(lat: number, lng: number) {
     await fetch(`/api/tracking/${params.token}`, {

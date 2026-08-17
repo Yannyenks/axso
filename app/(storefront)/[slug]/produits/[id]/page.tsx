@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { formatMontant, pourcentageRemise } from "@/lib/utils";
+import { prixClient } from "@/lib/pricing";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import Link from "next/link";
 import { AddToCartButton } from "@/components/storefront/AddToCartButton";
@@ -50,8 +51,11 @@ export default async function ProduitPage({ params }: Props) {
   const cfg = await resolveThemeConfigAsync(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
   const { colors: c, radius } = cfg;
 
-  const remise = produit.prixCompare && produit.prixCompare > produit.prix
-    ? pourcentageRemise(produit.prix, produit.prixCompare)
+  const taux = tenant.commissionRate ?? 0.06;
+  const prixAffiche = prixClient(produit.prix, taux);
+  const prixCompareAffiche = produit.prixCompare ? prixClient(produit.prixCompare, taux) : null;
+  const remise = prixCompareAffiche && prixCompareAffiche > prixAffiche
+    ? pourcentageRemise(prixAffiche, prixCompareAffiche)
     : 0;
   const noteMoyenne = produit.avis.length > 0
     ? produit.avis.reduce((s, a) => s + a.note, 0) / produit.avis.length
@@ -71,7 +75,7 @@ export default async function ProduitPage({ params }: Props) {
   return (
     <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
       <ThemeEffect themeId={tenant.themeId} />
-      <ViewContentTracker produitId={produit.id} nom={produit.nom} prix={produit.prix} devise={tenant.devise} />
+      <ViewContentTracker produitId={produit.id} nom={produit.nom} prix={prixAffiche} devise={tenant.devise} />
       <StorefrontNavbar
         slug={slug}
         nomBoutique={tenant.nomBoutique}
@@ -81,6 +85,7 @@ export default async function ProduitPage({ params }: Props) {
         texte={c.texte}
         radius={radius}
         collections={tenant.collections}
+        certifie={tenant.certifie}
       />
 
       {/* Breadcrumb */}
@@ -174,12 +179,12 @@ export default async function ProduitPage({ params }: Props) {
             {/* Price */}
             <div className="flex items-baseline gap-4">
               <span className="text-4xl font-bold" style={{ color: c.accent }}>
-                {formatMontant(produit.prix, tenant.devise)}
+                {formatMontant(prixAffiche, tenant.devise)}
               </span>
               {remise > 0 && (
                 <>
                   <span className="text-xl" style={{ opacity: 0.35, textDecoration: "line-through" }}>
-                    {formatMontant(produit.prixCompare!, tenant.devise)}
+                    {formatMontant(prixCompareAffiche!, tenant.devise)}
                   </span>
                   <span className="text-sm font-bold px-2 py-0.5 rounded-lg bg-red-500/15 text-red-400">
                     -{remise}%
@@ -225,7 +230,7 @@ export default async function ProduitPage({ params }: Props) {
                       {v.nom}: {v.valeur}
                       {v.prix && v.prix !== produit.prix && (
                         <span className="ml-1 font-semibold" style={{ color: c.accent }}>
-                          +{formatMontant(Math.abs(v.prix - produit.prix), tenant.devise)}
+                          +{formatMontant(Math.abs(prixClient(v.prix, taux) - prixAffiche), tenant.devise)}
                         </span>
                       )}
                     </button>
@@ -236,7 +241,7 @@ export default async function ProduitPage({ params }: Props) {
 
             {/* Add to cart */}
             <AddToCartButton
-              produit={{ id: produit.id, nom: produit.nom, prix: produit.prix, images: produit.images, stock: produit.stock, type: produit.type, fichierUrl: produit.fichierUrl, fichierNom: produit.fichierNom }}
+              produit={{ id: produit.id, nom: produit.nom, prix: prixAffiche, images: produit.images, stock: produit.stock, type: produit.type, fichierUrl: produit.fichierUrl, fichierNom: produit.fichierNom }}
               theme={c}
               tenantSlug={slug}
               whatsappNumero={tenant.whatsappNumero || tenant.whatsapp}
@@ -350,7 +355,7 @@ export default async function ProduitPage({ params }: Props) {
                     </div>
                     <div className="p-3">
                       <p className="font-medium text-xs line-clamp-2 mb-1">{p.nom}</p>
-                      <p className="font-bold text-sm" style={{ color: c.accent }}>{formatMontant(p.prix, tenant.devise)}</p>
+                      <p className="font-bold text-sm" style={{ color: c.accent }}>{formatMontant(prixClient(p.prix, taux), tenant.devise)}</p>
                     </div>
                   </div>
                 </Link>

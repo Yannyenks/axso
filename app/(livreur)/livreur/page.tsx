@@ -127,7 +127,7 @@ export default async function LivreurDashboard() {
 
           {/* Détails commande */}
           <Link href={`/livreur/commande/${commandePrioritaire.id}`}>
-            <div className="bg-white border border-gray-100 hover:border-[#1B4FD8]/30 rounded-2xl p-4 transition-all">
+            <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 hover:border-[#1B4FD8]/30 rounded-2xl p-4 transition-all">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
                   <p className="text-white font-bold">{commandePrioritaire.clientNom}</p>
@@ -146,7 +146,7 @@ export default async function LivreurDashboard() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+              <div className="flex items-center gap-2 pt-3 border-t border-white/5">
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${commandePrioritaire.adresseLivraison}, ${commandePrioritaire.ville}`)}`}
                   target="_blank"
@@ -181,7 +181,7 @@ export default async function LivreurDashboard() {
               const st = STATUT[cmd.statut] || STATUT.confirmee;
               return (
                 <Link key={cmd.id} href={`/livreur/commande/${cmd.id}`}>
-                  <div className="flex items-center gap-3 bg-white border border-gray-100 rounded-2xl p-3.5 hover:border-[#1B4FD8]/20 transition-all">
+                  <div className="flex items-center gap-3 bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-2xl p-3.5 hover:border-[#1B4FD8]/20 transition-all">
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: st.bg }}>
                       <Package size={16} style={{ color: st.color }} />
                     </div>
@@ -195,7 +195,7 @@ export default async function LivreurDashboard() {
                       <p className="text-[#1B4FD8] text-sm font-bold">{formatMontant(cmd.montantTotal, cmd.devise)}</p>
                       <span className="text-[10px] mt-0.5" style={{ color: st.color }}>{st.label}</span>
                     </div>
-                    <ChevronRight size={14} className="text-gray-600" />
+                    <ChevronRight size={14} className="text-gray-500" />
                   </div>
                 </Link>
               );
@@ -206,7 +206,7 @@ export default async function LivreurDashboard() {
 
       {/* Aucune commande */}
       {commandesActives.length === 0 && (
-        <div className="bg-white border border-gray-100 rounded-3xl p-10 text-center">
+        <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-3xl p-10 text-center">
           <div className="w-16 h-16 rounded-2xl bg-[#1B4FD8]/10 flex items-center justify-center mx-auto mb-4">
             <Package size={28} className="text-[#1B4FD8]" />
           </div>
@@ -222,7 +222,7 @@ export default async function LivreurDashboard() {
       )}
 
       {/* Lien vers historique */}
-      <Link href="/livreur/commandes" className="flex items-center justify-center gap-2 w-full text-gray-500 hover:text-gray-600 text-sm py-3 transition-colors">
+      <Link href="/livreur/commandes" className="flex items-center justify-center gap-2 w-full text-gray-500 hover:text-gray-300 text-sm py-3 transition-colors">
         <TrendingUp size={14} />
         Voir tout l'historique ({livraisonsSemaine} cette semaine)
       </Link>

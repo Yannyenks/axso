@@ -1,8 +1,8 @@
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { formatDate } from "@/lib/utils";
 import { Truck, MapPin, CheckCircle, XCircle, Bike, Car, Package } from "lucide-react";
+import { getAdminSession } from "@/lib/admin-auth";
 
 const VEHICULES: Record<string, { label: string; icon: any }> = {
   moto: { label: "Moto", icon: Bike },
@@ -12,8 +12,8 @@ const VEHICULES: Record<string, { label: string; icon: any }> = {
 };
 
 export default async function AdminLivreursPage() {
-  const session = await auth();
-  if (!session || (session.user as any)?.role !== "admin") redirect("/dashboard");
+  const session = await getAdminSession();
+  if (!session) redirect("/dashboard");
 
   const livreurs = await prisma.livreur.findMany({
     orderBy: { createdAt: "desc" },

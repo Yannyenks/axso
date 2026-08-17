@@ -20,6 +20,7 @@ interface Commande {
   montantTotal: number;
   devise: string;
   createdAt: string;
+  trackingToken: string | null;
   lignes: Array<{
     id: string;
     nom: string;
@@ -261,9 +262,11 @@ export default function MonComptePage() {
                     {c.facture && (
                       <span className="text-[11px] text-[#888]">Facture {c.facture.numero}</span>
                     )}
-                    <Link href={`/${slug}/suivi/${c.id}`} className="flex items-center gap-1.5 text-[11px] text-[#F5A623] font-semibold ml-auto">
-                      <Eye size={11} /> Suivre
-                    </Link>
+                    {c.trackingToken && (
+                      <Link href={`/${slug}/tracking/${c.trackingToken}`} className="flex items-center gap-1.5 text-[11px] text-[#F5A623] font-semibold ml-auto">
+                        <Eye size={11} /> Suivre
+                      </Link>
+                    )}
                   </div>
                 </div>
               );

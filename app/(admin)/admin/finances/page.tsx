@@ -1,14 +1,19 @@
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { formatMontant, formatDate } from "@/lib/utils";
-import { DollarSign, Lock, Unlock, TrendingUp, AlertCircle } from "lucide-react";
+import { DollarSign, Lock, Unlock, TrendingUp, AlertCircle, Receipt } from "lucide-react";
+import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
+import { AdminWalletPanel } from "@/components/admin/AdminWalletPanel";
+import { getPlatformTenantId } from "@/lib/wallet";
 
 export default async function AdminFinancesPage() {
-  const session = await auth();
-  if (!session || (session.user as any)?.role !== "admin") redirect("/dashboard");
+  const session = await getAdminSession();
+  if (!session) redirect("/dashboard");
 
-  const [commissionsCapturees, commissionsPending, escrowsHeld, escrowsReleased, topBoutiques] = await Promise.all([
+  const platformTenantId = await getPlatformTenantId();
+  const platformWallet = await prisma.wallet.findUnique({ where: { tenantId: platformTenantId } });
+
+  const [commissionsCapturees, commissionsPending, escrowsHeld, escrowsReleased, topBoutiques, fraisNotchPay] = await Promise.all([
     prisma.commission.aggregate({ _sum: { montantCommission: true }, where: { statut: "captured" } }),
     prisma.commission.aggregate({ _sum: { montantCommission: true }, where: { statut: "pending" } }),
     prisma.escrow.aggregate({ _sum: { montant: true }, where: { statut: "held" } }),
@@ -19,6 +24,10 @@ export default async function AdminFinancesPage() {
       where: { statut: "captured" },
       orderBy: { _sum: { montantCommission: "desc" } },
       take: 10,
+    }),
+    prisma.walletTransaction.aggregate({
+      _sum: { montant: true },
+      where: { walletId: platformWallet?.id, type: "FRAIS" },
     }),
   ]);
 
@@ -39,12 +48,43 @@ export default async function AdminFinancesPage() {
   const revenuPending = commissionsPending._sum.montantCommission || 0;
   const escrowHeld = escrowsHeld._sum.montant || 0;
   const escrowReleased = escrowsReleased._sum.montant || 0;
+  const fraisTotal = Math.abs(fraisNotchPay._sum.montant || 0);
+  const revenuNetReel = Math.max(0, revenuCapture - fraisTotal);
+
+  const kpiCard = "rounded-2xl p-5 border";
+  const kpiStyle = { background: "#0E1220", borderColor: "rgba(255,255,255,0.06)" };
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-white font-playfair">Finances Axso</h1>
-        <p className="text-gray-400 text-sm mt-1">Revenus de commission (3%) et flux escrow</p>
+        <h1 className="text-2xl font-bold font-playfair" style={{ color: "#ffffff" }}>Finances Axso</h1>
+        <p className="text-sm mt-1" style={{ color: "#8A93A8" }}>Revenus de commission (6%), abonnements et flux escrow</p>
+      </div>
+
+      {/* Wallet plateforme + retrait */}
+      <AdminWalletPanel peutRetirer={estAdminComplet(session)} />
+
+      {/* Commission brute vs frais NotchPay vs net réel */}
+      <div className="rounded-2xl p-6 border" style={{ background: "#0E1220", borderColor: "rgba(255,255,255,0.06)" }}>
+        <h2 className="font-semibold mb-1 flex items-center gap-2" style={{ color: "#ffffff" }}>
+          <Receipt size={15} style={{ color: "#F5A623" }} />
+          Ce qu'Axso garde réellement
+        </h2>
+        <p className="text-xs mb-5" style={{ color: "#8A93A8" }}>NotchPay prélève son propre frais de traitement sur chaque paiement — jamais sur le vendeur, toujours sur la commission Axso.</p>
+        <div className="grid sm:grid-cols-3 gap-4">
+          <div>
+            <p className="text-lg font-bold" style={{ color: "#ffffff" }}>{formatMontant(revenuCapture, "XOF")}</p>
+            <p className="text-xs mt-1" style={{ color: "#8A93A8" }}>Commission brute (6%)</p>
+          </div>
+          <div>
+            <p className="text-lg font-bold" style={{ color: "#f87171" }}>−{formatMontant(fraisTotal, "XOF")}</p>
+            <p className="text-xs mt-1" style={{ color: "#8A93A8" }}>Frais NotchPay prélevés</p>
+          </div>
+          <div>
+            <p className="text-lg font-bold" style={{ color: "#34d399" }}>{formatMontant(revenuNetReel, "XOF")}</p>
+            <p className="text-xs mt-1" style={{ color: "#8A93A8" }}>Commission nette réelle (dans le wallet)</p>
+          </div>
+        </div>
       </div>
 
       {/* KPIs financiers */}
@@ -57,24 +97,24 @@ export default async function AdminFinancesPage() {
         ].map((k, i) => {
           const Icon = k.icon;
           return (
-            <div key={i} className="bg-white border border-white/5 rounded-2xl p-5">
+            <div key={i} className={kpiCard} style={kpiStyle}>
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${k.color}15`, border: `1px solid ${k.color}25` }}>
                   <Icon size={16} style={{ color: k.color }} />
                 </div>
-                <span className="text-gray-500 text-xs">{k.label}</span>
+                <span className="text-xs" style={{ color: "#8A93A8" }}>{k.label}</span>
               </div>
-              <p className="text-xl font-bold text-white">{k.value}</p>
-              <p className="text-gray-600 text-xs mt-1">{k.desc}</p>
+              <p className="text-xl font-bold" style={{ color: "#ffffff" }}>{k.value}</p>
+              <p className="text-xs mt-1" style={{ color: "#4A5268" }}>{k.desc}</p>
             </div>
           );
         })}
       </div>
 
       {/* Top boutiques par commission */}
-      <div className="bg-white border border-white/5 rounded-2xl p-6">
-        <h2 className="text-white font-semibold mb-4 flex items-center gap-2">
-          <DollarSign size={15} className="text-[#1B4FD8]" />
+      <div className="rounded-2xl p-6 border" style={{ background: "#0E1220", borderColor: "rgba(255,255,255,0.06)" }}>
+        <h2 className="font-semibold mb-4 flex items-center gap-2" style={{ color: "#ffffff" }}>
+          <DollarSign size={15} style={{ color: "#F5A623" }} />
           Top boutiques par revenus générés
         </h2>
         <div className="space-y-3">
@@ -85,16 +125,16 @@ export default async function AdminFinancesPage() {
             const maxComm = topBoutiques[0]._sum.montantCommission || 1;
             return (
               <div key={t.tenantId} className="flex items-center gap-4">
-                <span className="text-gray-600 text-sm w-5 text-right">{i + 1}</span>
+                <span className="text-sm w-5 text-right" style={{ color: "#4A5268" }}>{i + 1}</span>
                 <div className="flex-1">
                   <div className="flex justify-between mb-1">
-                    <span className="text-white text-sm">{tenant?.nomBoutique || t.tenantId}</span>
-                    <span className="text-green-400 text-sm font-bold">{formatMontant(comm, tenant?.devise || "XOF")}</span>
+                    <span className="text-sm" style={{ color: "#ffffff" }}>{tenant?.nomBoutique || t.tenantId}</span>
+                    <span className="text-sm font-bold" style={{ color: "#34d399" }}>{formatMontant(comm, tenant?.devise || "XOF")}</span>
                   </div>
-                  <div className="w-full bg-[#1a1a2e] rounded-full h-1.5">
-                    <div className="h-full bg-gradient-to-r from-[#1B4FD8] to-[#7B9EFF] rounded-full" style={{ width: `${(comm / maxComm) * 100}%` }} />
+                  <div className="w-full rounded-full h-1.5" style={{ background: "rgba(255,255,255,0.06)" }}>
+                    <div className="h-full rounded-full" style={{ width: `${(comm / maxComm) * 100}%`, background: "linear-gradient(90deg,#F5A623,#d4880d)" }} />
                   </div>
-                  <p className="text-gray-500 text-[10px] mt-0.5">Versé au marchand : {formatMontant(marchand, tenant?.devise || "XOF")}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: "#4A5268" }}>Versé au marchand : {formatMontant(marchand, tenant?.devise || "XOF")}</p>
                 </div>
               </div>
             );
@@ -103,34 +143,35 @@ export default async function AdminFinancesPage() {
       </div>
 
       {/* Historique commissions */}
-      <div className="bg-white border border-white/5 rounded-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-white/5">
-          <h2 className="text-white font-semibold">Historique des commissions</h2>
+      <div className="rounded-2xl overflow-hidden border" style={{ background: "#0E1220", borderColor: "rgba(255,255,255,0.06)" }}>
+        <div className="px-6 py-4 border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+          <h2 className="font-semibold" style={{ color: "#ffffff" }}>Historique des commissions</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-white/5">
-                {["Commande", "Boutique", "Client", "Montant commande", "Commission (3%)", "Marchand", "Statut", "Date"].map(h => (
-                  <th key={h} className="px-5 py-3 text-left text-gray-500 text-xs font-medium">{h}</th>
+              <tr className="border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+                {["Commande", "Boutique", "Client", "Montant commande", "Commission", "Marchand", "Statut", "Date"].map(h => (
+                  <th key={h} className="px-5 py-3 text-left text-xs font-medium" style={{ color: "#8A93A8" }}>{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
               {dernieresCommissions.map(c => (
-                <tr key={c.id} className="hover:bg-white/[0.02] transition-colors">
-                  <td className="px-5 py-3 text-[#1B4FD8] font-mono text-xs">{c.commande.numero}</td>
-                  <td className="px-5 py-3 text-white text-xs">{c.tenant.nomBoutique}</td>
-                  <td className="px-5 py-3 text-gray-400 text-xs">{c.commande.clientNom}</td>
-                  <td className="px-5 py-3 text-white">{formatMontant(c.montantCommande, c.devise)}</td>
-                  <td className="px-5 py-3 text-green-400 font-medium">+{formatMontant(c.montantCommission, c.devise)}</td>
-                  <td className="px-5 py-3 text-gray-400">{formatMontant(c.montantMarchand, c.devise)}</td>
+                <tr key={c.id} className="transition-colors hover:bg-white/[0.02]">
+                  <td className="px-5 py-3 font-mono text-xs" style={{ color: "#F5A623" }}>{c.commande.numero}</td>
+                  <td className="px-5 py-3 text-xs" style={{ color: "#ffffff" }}>{c.tenant.nomBoutique}</td>
+                  <td className="px-5 py-3 text-xs" style={{ color: "#8A93A8" }}>{c.commande.clientNom}</td>
+                  <td className="px-5 py-3" style={{ color: "#ffffff" }}>{formatMontant(c.montantCommande, c.devise)}</td>
+                  <td className="px-5 py-3 font-medium" style={{ color: "#34d399" }}>+{formatMontant(c.montantCommission, c.devise)}</td>
+                  <td className="px-5 py-3" style={{ color: "#8A93A8" }}>{formatMontant(c.montantMarchand, c.devise)}</td>
                   <td className="px-5 py-3">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${c.statut === "captured" ? "bg-green-500/15 text-green-400" : "bg-yellow-500/15 text-yellow-400"}`}>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full"
+                      style={c.statut === "captured" ? { background: "rgba(52,211,153,0.15)", color: "#34d399" } : { background: "rgba(245,166,35,0.15)", color: "#F5A623" }}>
                       {c.statut === "captured" ? "Capturée" : "En attente"}
                     </span>
                   </td>
-                  <td className="px-5 py-3 text-gray-500 text-xs">{formatDate(c.createdAt)}</td>
+                  <td className="px-5 py-3 text-xs" style={{ color: "#4A5268" }}>{formatDate(c.createdAt)}</td>
                 </tr>
               ))}
             </tbody>

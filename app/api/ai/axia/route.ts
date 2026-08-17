@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { aiLimiter, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 import { runAxia, runAxiaStream } from "@/lib/axia/engine";
 import { AXIA_TOOLS, executeAxiaTool } from "@/lib/axia/tools";
+import { planActif } from "@/lib/abonnement";
+import { filtrerOutilsParPalier } from "@/lib/plans";
 import { z } from "zod";
 
 const schema = z.object({
@@ -119,6 +121,9 @@ export async function POST(request: Request) {
       where: { id: tenantId },
       select: { nomBoutique: true, pays: true, devise: true, categorie: true },
     }).catch(() => null);
+
+    const { plan } = await planActif(tenantId);
+    const outils = filtrerOutilsParPalier(AXIA_TOOLS, plan);
     const SYSTEM_PROMPT = buildSystemPrompt({
       boutique: tenant?.nomBoutique,
       pays: tenant?.pays ?? undefined,
@@ -139,13 +144,13 @@ export async function POST(request: Request) {
       : { maxIterations: 6, toolDeadlineMs: 65_000, synthesisDeadlineMs: 25_000 };
 
     if (stream) {
-      const sseStream = runAxiaStream(SYSTEM_PROMPT, enrichedMessages, AXIA_TOOLS, tenantId, executeAxiaTool, engineOpts);
+      const sseStream = runAxiaStream(SYSTEM_PROMPT, enrichedMessages, outils, tenantId, executeAxiaTool, engineOpts);
       return new Response(sseStream, {
         headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no" },
       });
     }
 
-    const result = await runAxia(SYSTEM_PROMPT, enrichedMessages, AXIA_TOOLS, tenantId, executeAxiaTool, engineOpts);
+    const result = await runAxia(SYSTEM_PROMPT, enrichedMessages, outils, tenantId, executeAxiaTool, engineOpts);
     return NextResponse.json(result);
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ message: "Format invalide" }, { status: 400 });

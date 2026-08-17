@@ -190,7 +190,7 @@ export default async function RevenusPage() {
               description: "Total des commandes complétées",
             },
             {
-              label: "Commission Axso (3%)",
+              label: "Commission Axso (6%)",
               montant: totalCommissions,
               sign: "−",
               signClass: "bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]",
