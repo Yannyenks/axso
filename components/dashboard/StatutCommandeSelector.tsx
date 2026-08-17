@@ -1,25 +1,41 @@
 "use client";
 import { useState } from "react";
-import { ChevronDown, Loader2, MessageCircle, CheckCircle2, Check } from "lucide-react";
+import { Loader2, MessageCircle, CheckCircle2, Truck, Check, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-const STATUTS = [
-  { value: "en_attente",     label: "En attente",      color: "#f59e0b" },
-  { value: "confirmee",      label: "Confirmée",       color: "#60a5fa" },
-  { value: "en_preparation", label: "En préparation",  color: "#FFD280" },
-  { value: "expediee",       label: "Expédiée",        color: "#38bdf8" },
-  { value: "livree",         label: "Livrée",          color: "#34d399" },
-  { value: "annulee",        label: "Annulée",         color: "#f87171" },
-];
+// ── Pipeline linéaire simplifié ──────────────────────────────────────────────
+// en_attente → confirmee → expediee → livree  (avec annulee comme sortie à tout moment)
+// En interne on mappe "en_preparation" sur "expediee" pour ne pas casser les données.
 
-const LABELS_NOTIF: Record<string, string> = {
-  confirmee:      "Commande confirmée",
+const STATUT_LABEL: Record<string, string> = {
+  en_attente:     "En attente",
+  confirmee:      "Confirmée",
   en_preparation: "En préparation",
-  expediee:       "Expédiée",
+  expediee:       "En livraison",
   livree:         "Livrée",
   annulee:        "Annulée",
 };
+
+const STATUT_COLOR: Record<string, { dot: string; text: string; bg: string }> = {
+  en_attente:     { dot: "#f59e0b", text: "#92400e", bg: "rgba(245,158,11,0.1)" },
+  confirmee:      { dot: "#60a5fa", text: "#1e3a5f", bg: "rgba(96,165,250,0.1)" },
+  en_preparation: { dot: "#a78bfa", text: "#4c1d95", bg: "rgba(167,139,250,0.1)" },
+  expediee:       { dot: "#38bdf8", text: "#0c4a6e", bg: "rgba(56,189,248,0.1)" },
+  livree:         { dot: "#34d399", text: "#064e3b", bg: "rgba(52,211,153,0.1)" },
+  annulee:        { dot: "#f87171", text: "#7f1d1d", bg: "rgba(248,113,113,0.1)" },
+};
+
+// Prochaine action principale pour chaque statut
+const NEXT_ACTION: Record<string, { label: string; nextStatut: string; icon: any }> = {
+  en_attente:     { label: "Confirmer",      nextStatut: "confirmee", icon: Check },
+  confirmee:      { label: "En livraison",   nextStatut: "expediee",  icon: Truck },
+  en_preparation: { label: "En livraison",   nextStatut: "expediee",  icon: Truck },
+  expediee:       { label: "Marquer livré",  nextStatut: "livree",    icon: CheckCircle2 },
+};
+
+const TERMINAL = new Set(["livree", "annulee"]);
+const ANNULABLE = new Set(["en_attente", "confirmee", "en_preparation", "expediee"]);
 
 interface Props {
   commandeId: string;
@@ -28,18 +44,17 @@ interface Props {
 
 export function StatutCommandeSelector({ commandeId, statutActuel }: Props) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [statut, setStatut] = useState(statutActuel);
   const [loading, setLoading] = useState(false);
   const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null);
   const [notifEnvoyee, setNotifEnvoyee] = useState(false);
 
-  const current = STATUTS.find(s => s.value === statut) || STATUTS[0];
+  const colors = STATUT_COLOR[statut] ?? STATUT_COLOR.en_attente;
+  const nextAction = NEXT_ACTION[statut];
 
   async function changerStatut(nouveau: string) {
-    if (nouveau === statut) { setOpen(false); return; }
+    if (nouveau === statut) return;
     setLoading(true);
-    setOpen(false);
     setWhatsappUrl(null);
     setNotifEnvoyee(false);
     try {
@@ -51,15 +66,14 @@ export function StatutCommandeSelector({ commandeId, statutActuel }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur");
       setStatut(nouveau);
-
       if (data.envoyeAuto) {
         setNotifEnvoyee(true);
-        toast.success(`Statut → ${LABELS_NOTIF[nouveau] ?? nouveau} · Client notifié sur WhatsApp ✅`);
+        toast.success(`${STATUT_LABEL[nouveau]} · Client notifié WhatsApp ✅`);
       } else if (data.whatsappUrl) {
         setWhatsappUrl(data.whatsappUrl);
-        toast.success(`Statut mis à jour → ${LABELS_NOTIF[nouveau] ?? nouveau}`);
+        toast.success(`Statut → ${STATUT_LABEL[nouveau]}`);
       } else {
-        toast.success(`Statut mis à jour → ${LABELS_NOTIF[nouveau] ?? nouveau}`);
+        toast.success(`Statut → ${STATUT_LABEL[nouveau]}`);
       }
       router.refresh();
     } catch (err: any) {
@@ -71,52 +85,46 @@ export function StatutCommandeSelector({ commandeId, statutActuel }: Props) {
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      {/* Selector statut */}
-      <div className="relative">
-        <button
-          onClick={() => setOpen(!open)}
-          disabled={loading || statut === "livree" || statut === "annulee"}
-          className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-xl text-sm hover:border-[#F5A623]/30 transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
-        >
-          {loading ? (
-            <Loader2 size={13} className="animate-spin text-[#F5A623]" />
-          ) : (
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: current.color }} />
-          )}
-          <span className="text-gray-800 font-medium">{current.label}</span>
-          {!loading && statut !== "livree" && statut !== "annulee" && (
-            <ChevronDown size={13} className="text-gray-500" />
-          )}
-        </button>
-
-        {open && (
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-            <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden">
-              {STATUTS.map(s => (
-                <button
-                  key={s.value}
-                  onClick={() => changerStatut(s.value)}
-                  className={`w-full flex items-center gap-2.5 px-4 py-3 text-sm text-left hover:bg-gray-50 transition-colors ${s.value === statut ? "bg-amber-50" : ""}`}
-                >
-                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
-                  <span className={s.value === statut ? "text-gray-900 font-medium" : "text-gray-600"}>{s.label}</span>
-                  {s.value === statut && <Check size={12} className="ml-auto text-[#F5A623]" />}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
+      {/* Badge statut actuel */}
+      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+        style={{ color: colors.text, backgroundColor: colors.bg, border: `1px solid ${colors.dot}30` }}>
+        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: colors.dot }} />
+        {STATUT_LABEL[statut] ?? statut}
       </div>
 
-      {/* Notification auto envoyée */}
+      {/* Bouton action principale (prochaine étape) */}
+      {!TERMINAL.has(statut) && nextAction && (
+        <button
+          onClick={() => changerStatut(nextAction.nextStatut)}
+          disabled={loading}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-[1.02] disabled:opacity-50 shadow-sm"
+          style={{ background: "linear-gradient(135deg, #F5A623, #d4880d)", color: "#080808" }}
+        >
+          {loading
+            ? <Loader2 size={13} className="animate-spin" />
+            : <nextAction.icon size={13} />}
+          {nextAction.label}
+        </button>
+      )}
+
+      {/* Bouton annuler */}
+      {ANNULABLE.has(statut) && (
+        <button
+          onClick={() => changerStatut("annulee")}
+          disabled={loading}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:bg-red-50 disabled:opacity-40"
+          style={{ border: "1px solid rgba(248,113,113,0.35)", color: "#f87171" }}
+        >
+          <XCircle size={12} /> Annuler
+        </button>
+      )}
+
+      {/* Notification WhatsApp fallback */}
       {notifEnvoyee && (
         <div className="flex items-center gap-1.5 text-xs text-green-600 bg-green-50 border border-green-200 px-3 py-2 rounded-xl">
           <CheckCircle2 size={13} /> Client notifié WhatsApp
         </div>
       )}
-
-      {/* Bouton WhatsApp fallback (quand pas d'API automatique) */}
       {whatsappUrl && !notifEnvoyee && (
         <a
           href={whatsappUrl}

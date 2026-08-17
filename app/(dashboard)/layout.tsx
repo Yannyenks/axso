@@ -7,6 +7,7 @@ import { Header } from "@/components/dashboard/Header";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { AxiaFloat } from "@/components/dashboard/AxiaFloat";
 import { QuotaBanner } from "@/components/dashboard/QuotaBanner";
+import { NotificationSound } from "@/components/ui/NotificationSound";
 import { quotaCommandesAtteint } from "@/lib/abonnement";
 
 const FULLBLEED_ROUTES: string[] = [];
@@ -66,6 +67,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <div className="hidden md:block">
         <AxiaFloat />
       </div>
+
+      {/* Son audio sur chaque notification toast */}
+      <NotificationSound />
     </>
   );
 }

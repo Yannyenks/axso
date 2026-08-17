@@ -467,6 +467,7 @@ export function resolveThemeConfig(themeId: string, savedConfig: Record<string, 
       about: savedConfig.sections?.about ?? base.sections.about ?? DEFAULT_ABOUT,
       faq: savedConfig.sections?.faq ?? base.sections.faq ?? DEFAULT_FAQ,
     },
+    productPage: savedConfig.productPage ?? base.productPage,
     builderHtml: savedConfig.builderHtml,
     builderCss: savedConfig.builderCss,
   };

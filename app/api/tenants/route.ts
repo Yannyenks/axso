@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
 import { z } from "zod";
+import { generateStoreConfig } from "@/lib/generate-store-config";
 
 const schemaCreation = z.object({
   name: z.string().min(2),
@@ -42,6 +43,14 @@ export async function POST(request: Request) {
       );
     }
 
+    // Générer la config complète en fonction de la catégorie du business
+    const { themeId: themeGenere, themeConfig } = generateStoreConfig({
+      categorie: data.categorie,
+      nomBoutique: data.nomBoutique,
+      pays: data.pays,
+      devise: data.devise,
+    });
+
     // Créer le tenant et l'utilisateur en transaction
     const { tenant, user } = await prisma.$transaction(async (tx) => {
       const tenant = await tx.tenant.create({
@@ -53,7 +62,8 @@ export async function POST(request: Request) {
           devise: data.devise,
           whatsapp: data.whatsapp,
           email: data.email,
-          themeId: data.themeId,
+          themeId: data.themeId !== "terre-et-or" ? data.themeId : themeGenere,
+          themeConfig: themeConfig as any,
           commissionRate: 0.06,
           statut: "active",
           planType: "gratuit",

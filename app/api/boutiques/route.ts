@@ -7,6 +7,7 @@ import { planActif } from "@/lib/abonnement";
 import { aAcces } from "@/lib/plans";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
+import { generateStoreConfig } from "@/lib/generate-store-config";
 
 const schemaCreation = z.object({
   nomBoutique: z.string().min(2),
@@ -93,6 +94,13 @@ export async function POST(req: Request) {
   // même email chez la plupart des fournisseurs).
   const emailBoutique = userEmail.includes("@") ? userEmail.replace("@", `+${data.slug}@`) : userEmail;
 
+  const { themeId: themeGenere, themeConfig } = generateStoreConfig({
+    categorie: data.categorie,
+    nomBoutique: data.nomBoutique,
+    pays: data.pays,
+    devise: data.devise,
+  });
+
   const tenant = await prisma.$transaction(async (tx) => {
     const t = await tx.tenant.create({
       data: {
@@ -103,7 +111,8 @@ export async function POST(req: Request) {
         pays: data.pays,
         devise: data.devise,
         whatsapp: data.whatsapp,
-        themeId: data.themeId,
+        themeId: data.themeId !== "terre-et-or" ? data.themeId : themeGenere,
+        themeConfig: themeConfig as any,
         commissionRate: 0.06,
         statut: "active",
         planType: "palier0",

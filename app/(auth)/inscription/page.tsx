@@ -313,8 +313,8 @@ export default function InscriptionPage() {
 
           <div className="space-y-3">
             {[
-              { icon: Store, label: "Votre compte",       desc: "Email et mot de passe",     done: etape > 0 },
-              { icon: Bot,   label: "Axia configure tout", desc: "Décrivez votre business",  done: false },
+              { icon: Store, label: "Votre compte",       desc: "Email et mot de passe",     done: etape > 0, axia: false },
+              { icon: Bot,   label: "Axia configure tout", desc: "Décrivez votre business",  done: false,     axia: true },
             ].map((s, i) => (
               <div key={i}
                 className="flex items-center gap-3 p-3.5 rounded-2xl transition-all"
@@ -323,9 +323,9 @@ export default function InscriptionPage() {
                   border: i === etape ? "1px solid rgba(245,166,35,0.2)" : "1px solid transparent",
                   opacity: i > etape ? 0.4 : 1,
                 }}>
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: i <= etape ? `linear-gradient(135deg,${ACCENT},${ACCENT_DARK})` : "rgba(0,0,0,0.06)", color: i <= etape ? "#080808" : "rgba(0,0,0,0.4)" }}>
-                  {s.done ? <Check size={14} /> : <s.icon size={14} />}
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
+                  style={{ background: i <= etape ? (s.axia ? "#1B2A4A" : `linear-gradient(135deg,${ACCENT},${ACCENT_DARK})`) : "rgba(0,0,0,0.06)", color: i <= etape ? "#080808" : "rgba(0,0,0,0.4)" }}>
+                  {s.done ? <Check size={14} /> : s.axia ? <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" /> : <s.icon size={14} />}
                 </div>
                 <div>
                   <p className="text-sm font-semibold" style={{ color: i === etape ? "#111111" : "rgba(0,0,0,0.45)" }}>{s.label}</p>
@@ -371,6 +371,17 @@ export default function InscriptionPage() {
             {etape === 0 && (
               <form onSubmit={formCompte.handleSubmit(onSubmitCompte)} className="space-y-4">
                 <div className="mb-6">
+                  {/* Axia greeting */}
+                  <div className="flex gap-3 mb-5">
+                    <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 border"
+                      style={{ borderColor: "rgba(245,166,35,0.25)", background: "#1B2A4A" }}>
+                      <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 rounded-2xl px-4 py-2.5 text-sm text-[#444444]"
+                      style={{ background: "rgba(245,166,35,0.06)", border: "1px solid rgba(245,166,35,0.15)" }}>
+                      Bonjour ! Je suis <strong style={{ color: ACCENT }}>Axia</strong>, votre IA. En 2 étapes, je crée votre boutique complète automatiquement.
+                    </div>
+                  </div>
                   <h2 className="text-xl font-bold text-[#111111]">Créez votre compte</h2>
                   <p className="text-[#808080] text-sm mt-0.5">Gratuit · Pas de carte requise</p>
                 </div>
@@ -393,7 +404,10 @@ export default function InscriptionPage() {
                 <button type="submit"
                   className="w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-95 mt-2"
                   style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, color: "#080808", boxShadow: `0 8px 30px rgba(245,166,35,0.3)` }}>
-                  <Bot size={16} /> Continuer avec Axia <ArrowRight size={16} />
+                  <div className="w-5 h-5 rounded-md overflow-hidden flex-shrink-0" style={{ background: "#1B2A4A" }}>
+                    <img src="/axia-icon.png" alt="" className="w-full h-full object-cover" />
+                  </div>
+                  Continuer avec Axia <ArrowRight size={16} />
                 </button>
               </form>
             )}
