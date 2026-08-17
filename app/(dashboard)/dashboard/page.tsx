@@ -633,7 +633,7 @@ export default async function DashboardPage() {
                   {/* Step */}
                   <div className="flex-1 rounded-2xl border p-4 text-center"
                     style={{ background: step.bg, borderColor: `${step.color}20` }}>
-                    <div className="text-[20px] mb-1">{step.icon}</div>
+                    <div className="flex justify-center mb-1"><step.Icon size={20} style={{ color: step.color }} /></div>
                     <p className="text-[24px] font-black text-[#111111] leading-none" style={{ fontVariantNumeric: "tabular-nums" }}>
                       {step.value.toLocaleString("fr-FR")}
                     </p>
