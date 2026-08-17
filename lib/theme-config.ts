@@ -189,22 +189,33 @@ export interface ThemeSections {
   faq?: ThemeSectionFaq;
 }
 
-// ─── Page produit ────────────────────────────────────────────────────────────
-export interface ThemeProductPageConfig {
-  layout: "amazon" | "classic" | "minimal" | "fullwidth";
-  galleryStyle: "vertical-thumbs" | "horizontal-thumbs" | "dots";
-  zoomOnHover: boolean;
-  stickyPanel: boolean;
-  showBreadcrumbs: boolean;
-  showBadges: boolean;
-  showStockIndicator: boolean;
-  showQuantitySelector: boolean;
-  showReviews: boolean;
-  showSimilarProducts: boolean;
-  showDescriptionTabs: boolean;
-  showAiDescription: boolean;
-  imageRatio: "square" | "portrait" | "auto";
+// ─── Page produit — sections style Shopify ───────────────────────────────────
+export type ProductPageSectionType =
+  | "gallery" | "info" | "variants" | "quantity" | "trust" | "description" | "reviews" | "similar"
+  | "richtext" | "banner" | "video" | "faq" | "specs" | "countdown" | "social";
+
+export interface ProductPageSection {
+  id: string;
+  type: ProductPageSectionType;
+  actif: boolean;
+  config: Record<string, any>;
 }
+
+export interface ThemeProductPageConfig {
+  layout?: "amazon" | "classic" | "minimal" | "fullwidth";
+  sections?: ProductPageSection[];
+}
+
+export const DEFAULT_PRODUCT_SECTIONS: ProductPageSection[] = [
+  { id: "gallery",     type: "gallery",     actif: true, config: { style: "vertical-thumbs", zoom: true, sticky: true } },
+  { id: "info",        type: "info",        actif: true, config: { breadcrumbs: true, badges: true, stock: true } },
+  { id: "variants",    type: "variants",    actif: true, config: {} },
+  { id: "quantity",    type: "quantity",    actif: true, config: {} },
+  { id: "trust",       type: "trust",       actif: true, config: {} },
+  { id: "description", type: "description", actif: true, config: { ai: true } },
+  { id: "reviews",     type: "reviews",     actif: true, config: {} },
+  { id: "similar",     type: "similar",     actif: true, config: { count: 4, titre: "Vous aimerez aussi" } },
+];
 
 // ─── Config principale ───────────────────────────────────────────────────────
 export interface ThemeConfig {

@@ -12,8 +12,9 @@ import {
   ArrowUpDown, Megaphone, Shield, FolderOpen, BookOpen, HelpCircle,
   MessageCircle, Mail, Wrench, Award, LucideIcon,
   ShoppingBag, Maximize2, Minimize2, ZoomIn, Package,
+  ShoppingCart, Share2,
 } from "lucide-react";
-import { THEME_DEFAULTS, resolveThemeConfig, type ThemeConfig, type CustomSection } from "@/lib/theme-config";
+import { THEME_DEFAULTS, resolveThemeConfig, type ThemeConfig, type CustomSection, DEFAULT_PRODUCT_SECTIONS, type ProductPageSection } from "@/lib/theme-config";
 
 type Device = "desktop" | "tablet" | "mobile";
 type Panel = "sections" | "couleurs" | "typo" | "layout" | "medias" | "animations" | "boutons" | "avance" | "produit";
@@ -132,6 +133,7 @@ function generateAnimationCss(anim: ThemeConfig["animations"]): string {
 // ─── Product page defaults ────────────────────────────────────────────────────
 const DEFAULT_PRODUCT_PAGE = {
   layout: "amazon",
+  sections: DEFAULT_PRODUCT_SECTIONS,
   galleryStyle: "vertical-thumbs",
   zoomOnHover: true,
   stickyPanel: true,
@@ -160,6 +162,12 @@ export default function BuilderPage() {
   const [iframeKey, setIframeKey]     = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const iframeRef   = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
   const debounce    = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -314,7 +322,10 @@ export default function BuilderPage() {
               </button>
             ))}
           </div>
-          <button onClick={() => setIsFullscreen(v => !v)} title={isFullscreen ? "Quitter le plein écran" : "Plein écran"} className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all ${isFullscreen ? "border-[#F5A623]/50 bg-[#F5A623]/15 text-[#F5A623]" : "border-white/10 text-gray-500 hover:text-white hover:border-white/20"}`}>
+          <button
+            onClick={() => { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(() => {}); } else { document.exitFullscreen(); } }}
+            title={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
+            className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all ${isFullscreen ? "border-[#F5A623]/50 bg-[#F5A623]/15 text-[#F5A623]" : "border-white/10 text-gray-500 hover:text-white hover:border-white/20"}`}>
             {isFullscreen ? <Minimize2 size={11} /> : <Maximize2 size={11} />}
           </button>
           <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-gray-500 hover:text-white border border-white/10 hover:border-white/20 transition-all">
@@ -329,9 +340,8 @@ export default function BuilderPage() {
 
       {/* MAIN */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Icon sidebar — hidden in fullscreen */}
-        {!isFullscreen && (
-          <div className="w-11 flex-shrink-0 bg-[#08080f] border-r border-white/5 flex flex-col items-center py-3 gap-1">
+        {/* Icon sidebar */}
+        <div className="w-11 flex-shrink-0 bg-[#08080f] border-r border-white/5 flex flex-col items-center py-3 gap-1">
             {NAV_TABS.map(t => (
               <button key={t.id} onClick={() => setPanel(t.id)} title={t.tooltip}
                 className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${panel===t.id?"bg-[#F5A623]/20 text-[#F5A623]":"text-gray-600 hover:text-gray-400 hover:bg-white/5"}`}>
@@ -339,10 +349,8 @@ export default function BuilderPage() {
               </button>
             ))}
           </div>
-        )}
 
-        {/* Panel — hidden in fullscreen */}
-        {!isFullscreen && (
+        {/* Panel */}
           <div className="w-[300px] flex-shrink-0 bg-[#08080f] border-r border-white/5 flex flex-col overflow-hidden">
             <div className="px-4 py-2.5 border-b border-white/5 flex items-center justify-between flex-shrink-0">
               <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.18em]">{NAV_TABS.find(t=>t.id===panel)?.tooltip}</p>
@@ -367,7 +375,6 @@ export default function BuilderPage() {
               {panel === "avance"     && <PanelAvance    config={config} set={set} tenant={tenant} onReset={() => { const d = THEME_DEFAULTS[tenant.themeId] || THEME_DEFAULTS["terre-et-or"]; setConfig({ ...d }); }} />}
             </div>
           </div>
-        )}
 
             {/* Preview */}
             <div className="flex-1 bg-[#030305] flex flex-col overflow-hidden">
@@ -1314,117 +1321,341 @@ function PanelAvance({ config, set, tenant, onReset }: any) {
   );
 }
 
-// ─── Panel Fiche Produit ──────────────────────────────────────────────────────
+// ─── Panel Fiche Produit — Shopify-style section editor ──────────────────────
+const BUILTIN_TYPES = new Set(["gallery","info","variants","quantity","trust","description","reviews","similar"]);
+
+const PRODUIT_SECTION_META: Record<string, { label: string; Icon: any }> = {
+  gallery:     { label: "Galerie photos",      Icon: ImageIcon },
+  info:        { label: "Infos produit",       Icon: FileText },
+  variants:    { label: "Variantes",           Icon: Layers },
+  quantity:    { label: "Quantité & panier",   Icon: ShoppingCart },
+  trust:       { label: "Badges confiance",    Icon: Shield },
+  description: { label: "Description",         Icon: BookOpen },
+  reviews:     { label: "Avis clients",        Icon: Star },
+  similar:     { label: "Produits similaires", Icon: LayoutGrid },
+  richtext:    { label: "Texte libre",         Icon: FileText },
+  banner:      { label: "Bannière image",      Icon: ImageIcon },
+  video:       { label: "Vidéo",               Icon: Video },
+  faq:         { label: "FAQ produit",         Icon: HelpCircle },
+  specs:       { label: "Caractéristiques",    Icon: BarChart3 },
+  countdown:   { label: "Compte à rebours",    Icon: Timer },
+  social:      { label: "Partage social",      Icon: Share2 },
+};
+
+const PRODUIT_LIBRARY = [
+  { type: "richtext",  label: "Texte libre",         Icon: FileText,   desc: "Bloc de texte avec titre et bouton CTA" },
+  { type: "banner",    label: "Bannière image",       Icon: ImageIcon,  desc: "Image pleine largeur avec texte overlay" },
+  { type: "video",     label: "Vidéo",               Icon: Video,      desc: "YouTube, Vimeo ou fichier mp4" },
+  { type: "faq",       label: "FAQ produit",          Icon: HelpCircle, desc: "Questions fréquentes sur le produit" },
+  { type: "specs",     label: "Caractéristiques",     Icon: BarChart3,  desc: "Tableau des spécifications techniques" },
+  { type: "countdown", label: "Compte à rebours",     Icon: Timer,      desc: "Urgence pour une offre limitée" },
+  { type: "social",    label: "Partage social",        Icon: Share2,     desc: "Boutons Facebook, WhatsApp, lien copie" },
+];
+
+const LAYOUT_OPTIONS = [
+  { v: "amazon",    l: "Amazon",         desc: "Galerie gauche · infos droite · sticky · zoom hover" },
+  { v: "classic",   l: "Classique",      desc: "Image en haut · infos en dessous" },
+  { v: "minimal",   l: "Minimal",        desc: "Épuré, sans sidebar — idéal pour les services" },
+  { v: "fullwidth", l: "Pleine largeur", desc: "Image en plein écran avec overlay d'infos" },
+];
+
+function ProduitSectionSettings({ section, update }: { section: ProductPageSection; update: (id: string, patch: Record<string, any>) => void }) {
+  const c = section.config;
+  const up = (patch: Record<string, any>) => update(section.id, patch);
+
+  if (section.type === "gallery") return (
+    <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2.5">
+      <FSel label="Style de galerie" value={c.style || "vertical-thumbs"} onChange={v => up({ style: v })} opts={[
+        { v: "vertical-thumbs", l: "Miniatures verticales (Amazon)" },
+        { v: "horizontal-thumbs", l: "Miniatures horizontales" },
+        { v: "dots", l: "Points" },
+      ]} />
+      <div className="flex items-center justify-between py-1">
+        <span className="text-[11px] text-gray-400">Zoom au survol</span>
+        <button onClick={() => up({ zoom: c.zoom === false ? true : false })} className="flex-shrink-0">
+          {c.zoom !== false ? <ToggleRight size={17} style={{ color: "#F5A623" }} /> : <ToggleLeft size={17} className="text-gray-700" />}
+        </button>
+      </div>
+      <div className="flex items-center justify-between py-1">
+        <span className="text-[11px] text-gray-400">Panneau fixe au scroll</span>
+        <button onClick={() => up({ sticky: c.sticky === false ? true : false })} className="flex-shrink-0">
+          {c.sticky !== false ? <ToggleRight size={17} style={{ color: "#F5A623" }} /> : <ToggleLeft size={17} className="text-gray-700" />}
+        </button>
+      </div>
+    </div>
+  );
+
+  if (section.type === "info") return (
+    <div className="px-3 pb-3 space-y-0 border-t border-white/5 pt-2.5">
+      {[
+        { key: "breadcrumbs", label: "Fil d'Ariane" },
+        { key: "badges",      label: "Badges promo" },
+        { key: "stock",       label: "Indicateur de stock" },
+      ].map(({ key, label }) => (
+        <div key={key} className="flex items-center justify-between py-1.5">
+          <span className="text-[11px] text-gray-400">{label}</span>
+          <button onClick={() => up({ [key]: c[key] === false ? true : false })} className="flex-shrink-0">
+            {c[key] !== false ? <ToggleRight size={17} style={{ color: "#F5A623" }} /> : <ToggleLeft size={17} className="text-gray-700" />}
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+
+  if (section.type === "description") return (
+    <div className="px-3 pb-3 border-t border-white/5 pt-2.5">
+      <div className="flex items-center justify-between py-1.5">
+        <span className="text-[11px] text-gray-400">Description IA</span>
+        <button onClick={() => up({ ai: c.ai === false ? true : false })} className="flex-shrink-0">
+          {c.ai !== false ? <ToggleRight size={17} style={{ color: "#F5A623" }} /> : <ToggleLeft size={17} className="text-gray-700" />}
+        </button>
+      </div>
+    </div>
+  );
+
+  if (section.type === "similar") return (
+    <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2.5">
+      <FInp label="Titre de section" value={c.titre || "Vous aimerez aussi"} onChange={v => up({ titre: v })} />
+      <FSel label="Nombre de produits" value={String(c.count || 4)} onChange={v => up({ count: Number(v) })} opts={[
+        { v: "4", l: "4 produits" }, { v: "6", l: "6 produits" }, { v: "8", l: "8 produits" },
+      ]} />
+    </div>
+  );
+
+  if (section.type === "richtext") return (
+    <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2.5">
+      <FInp label="Titre" value={c.titre || ""} onChange={v => up({ titre: v })} />
+      <FInp label="Texte" value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
+      <FInp label="Bouton CTA (vide = masqué)" value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} />
+    </div>
+  );
+
+  if (section.type === "banner") return (
+    <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2.5">
+      <FInp label="Titre" value={c.titre || ""} onChange={v => up({ titre: v })} />
+      <FInp label="Texte" value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
+      <FInp label="URL de l'image" value={c.imageUrl || ""} onChange={v => up({ imageUrl: v })} />
+      <FInp label="Texte du bouton" value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} />
+    </div>
+  );
+
+  if (section.type === "video") return (
+    <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2.5">
+      <FInp label="Titre (optionnel)" value={c.titre || ""} onChange={v => up({ titre: v })} />
+      <FInp label="URL (YouTube, Vimeo, .mp4)" value={c.videoUrl || ""} onChange={v => up({ videoUrl: v })} />
+      <div className="flex items-center justify-between py-1">
+        <span className="text-[11px] text-gray-400">Lecture automatique</span>
+        <button onClick={() => up({ autoplay: !c.autoplay })} className="flex-shrink-0">
+          {c.autoplay ? <ToggleRight size={17} style={{ color: "#F5A623" }} /> : <ToggleLeft size={17} className="text-gray-700" />}
+        </button>
+      </div>
+    </div>
+  );
+
+  if (section.type === "faq") return (
+    <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2.5">
+      <FInp label="Titre" value={c.titre || ""} onChange={v => up({ titre: v })} />
+      {(c.items || []).map((item: any, i: number) => (
+        <div key={i} className="bg-white/[0.03] rounded-xl p-2 space-y-1.5">
+          <div className="flex gap-1.5">
+            <div className="flex-1 space-y-1.5 min-w-0">
+              <FInp label="Question" value={item.question} onChange={v => { const it=[...c.items]; it[i]={...it[i],question:v}; up({ items: it }); }} />
+              <FInp label="Réponse" value={item.reponse} onChange={v => { const it=[...c.items]; it[i]={...it[i],reponse:v}; up({ items: it }); }} multiline />
+            </div>
+            <button onClick={() => up({ items: c.items.filter((_: any, j: number) => j !== i) })} className="text-red-500/40 hover:text-red-400 flex-shrink-0 mt-5"><Trash2 size={11} /></button>
+          </div>
+        </div>
+      ))}
+      <button onClick={() => up({ items: [...(c.items || []), { question: "Question ?", reponse: "Réponse ici." }] })}
+        className="w-full text-[10px] text-gray-600 border border-dashed border-white/10 rounded-lg py-1.5 hover:border-white/20 transition-colors">
+        + Ajouter une question
+      </button>
+    </div>
+  );
+
+  if (section.type === "specs") return (
+    <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2.5">
+      <FInp label="Titre" value={c.titre || ""} onChange={v => up({ titre: v })} />
+      {(c.rows || []).map((row: any, i: number) => (
+        <div key={i} className="flex gap-1.5 items-end">
+          <div className="flex-1 min-w-0">
+            <FInp label={i === 0 ? "Clé" : ""} value={row.cle} onChange={v => { const r=[...c.rows]; r[i]={...r[i],cle:v}; up({ rows: r }); }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <FInp label={i === 0 ? "Valeur" : ""} value={row.valeur} onChange={v => { const r=[...c.rows]; r[i]={...r[i],valeur:v}; up({ rows: r }); }} />
+          </div>
+          <button onClick={() => up({ rows: c.rows.filter((_: any, j: number) => j !== i) })} className="text-red-500/40 hover:text-red-400 flex-shrink-0 mb-1.5"><Trash2 size={11} /></button>
+        </div>
+      ))}
+      <button onClick={() => up({ rows: [...(c.rows || []), { cle: "", valeur: "" }] })}
+        className="w-full text-[10px] text-gray-600 border border-dashed border-white/10 rounded-lg py-1.5 hover:border-white/20 transition-colors">
+        + Ajouter une ligne
+      </button>
+    </div>
+  );
+
+  if (section.type === "countdown") return (
+    <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2.5">
+      <FInp label="Titre" value={c.titre || ""} onChange={v => up({ titre: v })} />
+      <FInp label="Sous-texte" value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
+      <div>
+        <label className="block text-[10px] text-gray-500 mb-1">Date de fin</label>
+        <input type="datetime-local" value={c.dateFin || ""} onChange={e => up({ dateFin: e.target.value })}
+          className="w-full bg-[#12121c] border border-white/10 rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none focus:border-[#F5A623]/50 transition-colors" />
+      </div>
+      <FInp label="Texte du bouton" value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} />
+    </div>
+  );
+
+  return null;
+}
+
 function PanelProduit({ config, setProductPage }: any) {
-  const pp = { ...DEFAULT_PRODUCT_PAGE, ...(config.productPage || {}) };
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [showLibrary, setShowLibrary] = useState(false);
 
-  const LAYOUTS = [
-    { v: "amazon",    l: "Amazon",    desc: "Galerie gauche · info droite · sticky · zoom hover" },
-    { v: "classic",   l: "Classique", desc: "Image en haut · infos en dessous · simple et efficace" },
-    { v: "minimal",   l: "Minimal",   desc: "Épuré, sans sidebar — idéal pour les services" },
-    { v: "fullwidth", l: "Pleine largeur", desc: "Image en plein écran avec overlay d'infos" },
-  ];
+  const pp = config.productPage || {};
+  const layout: string = pp.layout || "amazon";
+  const sections: ProductPageSection[] = pp.sections?.length ? pp.sections : DEFAULT_PRODUCT_SECTIONS;
 
-  const GALLERY_STYLES = [
-    { v: "vertical-thumbs",   l: "Miniatures verticales", desc: "Bande à gauche — style Amazon" },
-    { v: "horizontal-thumbs", l: "Miniatures horizontales", desc: "Bande en bas — style Shopify" },
-    { v: "dots",              l: "Points",                 desc: "Indicateurs minimalistes" },
-  ];
+  const setSections = (newSections: ProductPageSection[]) => setProductPage({ sections: newSections });
 
-  const IMAGE_RATIOS = [
-    { v: "auto",     l: "Auto (natif)" },
-    { v: "square",   l: "Carré 1:1" },
-    { v: "portrait", l: "Portrait 4:5" },
-  ];
+  const moveSection = (idx: number, dir: -1 | 1) => {
+    const next = [...sections];
+    [next[idx], next[idx + dir]] = [next[idx + dir], next[idx]];
+    setSections(next);
+  };
 
-  const VISIBILITY_ITEMS = [
-    { key: "zoomOnHover",          label: "Zoom au survol de l'image",       icon: <ZoomIn size={12} /> },
-    { key: "stickyPanel",          label: "Panneau prix fixe au scroll",     icon: <Package size={12} /> },
-    { key: "showBreadcrumbs",      label: "Fil d'Ariane (chemin catégorie)", icon: <ChevronRight size={12} /> },
-    { key: "showBadges",           label: "Badges promo (–30%, Nouveau…)",  icon: <Star size={12} /> },
-    { key: "showStockIndicator",   label: "Indicateur de stock restant",     icon: <BarChart3 size={12} /> },
-    { key: "showQuantitySelector", label: "Sélecteur de quantité",           icon: <Plus size={12} /> },
-    { key: "showDescriptionTabs",  label: "Onglets description / specs",     icon: <FileText size={12} /> },
-    { key: "showAiDescription",    label: "Description générée par IA",      icon: <Sparkles size={12} /> },
-    { key: "showReviews",          label: "Section avis clients",            icon: <MessageCircle size={12} /> },
-    { key: "showSimilarProducts",  label: "Produits similaires",             icon: <LayoutGrid size={12} /> },
-  ];
+  const toggleSection = (id: string) => setSections(sections.map(s => s.id === id ? { ...s, actif: !s.actif } : s));
+
+  const updateSection = (id: string, patch: Record<string, any>) =>
+    setSections(sections.map(s => s.id === id ? { ...s, config: { ...s.config, ...patch } } : s));
+
+  const addSection = (type: string) => {
+    const defaults: Record<string, any> = {
+      richtext:  { titre: "Notre engagement", texte: "Votre texte ici.", ctaTexte: "" },
+      banner:    { titre: "Offre spéciale", texte: "", imageUrl: "", ctaTexte: "Profiter maintenant" },
+      video:     { titre: "", videoUrl: "", autoplay: false },
+      faq:       { titre: "Questions fréquentes", items: [{ question: "Comment utiliser ce produit ?", reponse: "Répondez ici." }] },
+      specs:     { titre: "Caractéristiques", rows: [{ cle: "Matière", valeur: "" }, { cle: "Dimensions", valeur: "" }] },
+      countdown: { titre: "Offre limitée", texte: "Ne manquez pas cette opportunité !", dateFin: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 16), ctaTexte: "Profiter maintenant" },
+      social:    {},
+    };
+    const id = `custom_${Date.now()}`;
+    const newSec: ProductPageSection = { id, type: type as any, actif: true, config: defaults[type] || {} };
+    setSections([...sections, newSec]);
+    setShowLibrary(false);
+    setActiveSection(id);
+  };
+
+  const removeSection = (id: string) => {
+    setSections(sections.filter(s => s.id !== id));
+    if (activeSection === id) setActiveSection(null);
+  };
+
+  // Library view
+  if (showLibrary) return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 flex-shrink-0">
+        <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.18em]">Bibliothèque de sections</p>
+        <button onClick={() => setShowLibrary(false)} className="text-gray-600 hover:text-gray-400"><X size={13} /></button>
+      </div>
+      <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+        {PRODUIT_LIBRARY.map(lib => {
+          const Li = lib.Icon;
+          return (
+            <button key={lib.type} onClick={() => addSection(lib.type)}
+              className="w-full text-left flex items-start gap-3 p-3 rounded-xl border border-white/10 hover:border-[#F5A623]/40 hover:bg-[#F5A623]/5 transition-all group">
+              <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0 group-hover:bg-[#F5A623]/10">
+                <Li size={14} className="text-gray-500 group-hover:text-[#F5A623]" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-white">{lib.label}</p>
+                <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">{lib.desc}</p>
+              </div>
+              <Plus size={12} className="flex-shrink-0 mt-0.5 text-gray-600 group-hover:text-[#F5A623]" />
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="p-4 space-y-5">
+    <div className="flex flex-col h-full">
+      <div className="flex-1 overflow-y-auto scrollbar-thin">
 
-      {/* Layout */}
-      <div>
-        <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.18em] mb-3">Modèle de mise en page</p>
-        <div className="space-y-1.5">
-          {LAYOUTS.map(lay => (
-            <button key={lay.v} onClick={() => setProductPage({ layout: lay.v })}
-              className={`w-full text-left p-3 rounded-xl border transition-all ${pp.layout === lay.v ? "border-[#F5A623]/50 bg-[#F5A623]/10" : "border-white/10 hover:border-white/20"}`}>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-white">{lay.l}</span>
-                {pp.layout === lay.v && <Check size={11} className="text-[#F5A623] flex-shrink-0" />}
-              </div>
-              <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">{lay.desc}</p>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Gallery style */}
-      <div className="border-t border-white/5 pt-4">
-        <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.18em] mb-3">Style de galerie</p>
-        <div className="space-y-1.5">
-          {GALLERY_STYLES.map(gs => (
-            <button key={gs.v} onClick={() => setProductPage({ galleryStyle: gs.v })}
-              className={`w-full text-left p-2.5 rounded-xl border transition-all ${pp.galleryStyle === gs.v ? "border-[#F5A623]/50 bg-[#F5A623]/10" : "border-white/10 hover:border-white/20"}`}>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-white">{gs.l}</span>
-                {pp.galleryStyle === gs.v && <Check size={11} className="text-[#F5A623] flex-shrink-0" />}
-              </div>
-              <p className="text-[10px] text-gray-500 mt-0.5">{gs.desc}</p>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Image ratio */}
-      <div className="border-t border-white/5 pt-4">
-        <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.18em] mb-2">Format d'image</p>
-        <div className="grid grid-cols-3 gap-1.5">
-          {IMAGE_RATIOS.map(r => (
-            <button key={r.v} onClick={() => setProductPage({ imageRatio: r.v })}
-              className={`py-2 rounded-xl text-[10px] font-semibold border text-center transition-all ${pp.imageRatio === r.v ? "border-[#F5A623]/50 bg-[#F5A623]/10 text-[#F5A623]" : "border-white/10 text-gray-500 hover:border-white/20"}`}>
-              {r.l}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Visibility toggles */}
-      <div className="border-t border-white/5 pt-4">
-        <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.18em] mb-3">Éléments affichés</p>
-        <div className="space-y-0.5">
-          {VISIBILITY_ITEMS.map(item => (
-            <div key={item.key} className="flex items-center justify-between py-2 px-1 rounded-lg hover:bg-white/[0.02] transition-colors">
-              <span className="text-xs text-gray-400 flex items-center gap-2">
-                <span className="text-gray-600">{item.icon}</span>
-                {item.label}
-              </span>
-              <button onClick={() => setProductPage({ [item.key]: !(pp as any)[item.key] })} className="flex-shrink-0">
-                {(pp as any)[item.key]
-                  ? <ToggleRight size={18} style={{ color: "#F5A623" }} />
-                  : <ToggleLeft size={18} className="text-gray-700" />}
+        {/* Layout picker */}
+        <div className="p-4 border-b border-white/5">
+          <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.18em] mb-2.5">Mise en page</p>
+          <div className="grid grid-cols-2 gap-1.5">
+            {LAYOUT_OPTIONS.map(lay => (
+              <button key={lay.v} onClick={() => setProductPage({ layout: lay.v })}
+                className={`text-left p-2.5 rounded-xl border transition-all ${layout === lay.v ? "border-[#F5A623]/50 bg-[#F5A623]/10" : "border-white/10 hover:border-white/20"}`}>
+                <p className="text-[11px] font-semibold text-white flex items-center gap-1">
+                  {layout === lay.v && <Check size={9} style={{ color: "#F5A623" }} />} {lay.l}
+                </p>
+                <p className="text-[9px] text-gray-600 mt-0.5 leading-relaxed">{lay.desc}</p>
               </button>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Info */}
-      <div className="border-t border-white/5 pt-3">
-        <p className="text-[9px] text-gray-600 leading-relaxed">
-          Ces réglages s'appliquent à toutes les fiches produits de votre boutique. Sauvegardez pour voir les changements.
-        </p>
+        {/* Section list */}
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-2.5">
+            <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.18em]">Sections de la fiche</p>
+            <button onClick={() => setShowLibrary(true)}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all"
+              style={{ backgroundColor: "#F5A623", color: "#050508" }}>
+              <Plus size={9} /> Ajouter
+            </button>
+          </div>
+          <div className="space-y-1">
+            {sections.map((sec, idx) => {
+              const meta = PRODUIT_SECTION_META[sec.type];
+              const SIcon = meta?.Icon ?? FileText;
+              const isActive = activeSection === sec.id;
+              const isBuiltIn = BUILTIN_TYPES.has(sec.type);
+              return (
+                <div key={sec.id} className={`rounded-xl border transition-all ${isActive ? "border-[#F5A623]/30 bg-[#F5A623]/5" : "border-white/8 bg-white/[0.02]"}`}>
+                  <div className="flex items-center gap-1.5 px-2 py-2">
+                    {/* Reorder */}
+                    <div className="flex flex-col gap-0.5 flex-shrink-0">
+                      <button onClick={() => idx > 0 && moveSection(idx, -1)} disabled={idx === 0}
+                        className="w-4 h-3 flex items-center justify-center text-gray-700 hover:text-gray-400 disabled:opacity-20 transition-colors"><ChevronUp size={10} /></button>
+                      <button onClick={() => idx < sections.length - 1 && moveSection(idx, 1)} disabled={idx === sections.length - 1}
+                        className="w-4 h-3 flex items-center justify-center text-gray-700 hover:text-gray-400 disabled:opacity-20 transition-colors"><ChevronDown size={10} /></button>
+                    </div>
+                    {/* Icon */}
+                    <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
+                      <SIcon size={11} className="text-gray-500" />
+                    </div>
+                    {/* Label */}
+                    <span className={`flex-1 text-[11px] font-medium truncate ${sec.actif ? "text-white" : "text-gray-600"}`}>{meta?.label ?? sec.type}</span>
+                    {/* Toggle */}
+                    <button onClick={() => toggleSection(sec.id)} className="flex-shrink-0">
+                      {sec.actif ? <ToggleRight size={16} style={{ color: "#F5A623" }} /> : <ToggleLeft size={16} className="text-gray-700" />}
+                    </button>
+                    {/* Delete (custom only) */}
+                    {!isBuiltIn && (
+                      <button onClick={() => removeSection(sec.id)} className="text-red-500/40 hover:text-red-400 flex-shrink-0 transition-colors"><Trash2 size={11} /></button>
+                    )}
+                    {/* Expand */}
+                    <button onClick={() => setActiveSection(isActive ? null : sec.id)} className="flex-shrink-0 text-gray-600 hover:text-gray-400 transition-colors">
+                      <ChevronDown size={12} className="transition-transform" style={{ transform: isActive ? "rotate(180deg)" : "" }} />
+                    </button>
+                  </div>
+                  {isActive && <ProduitSectionSettings section={sec} update={updateSection} />}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="px-4 pb-4">
+          <p className="text-[9px] text-gray-600 leading-relaxed">Ces réglages s'appliquent à toutes les fiches produits. Sauvegardez pour voir les changements.</p>
+        </div>
       </div>
     </div>
   );
