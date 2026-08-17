@@ -38,19 +38,45 @@ export default function LivreurPage() {
     if (!navigator.geolocation) { setStatus("error"); return; }
     setStatus("tracking");
 
+    function startWatch(highAccuracy: boolean) {
+      if (watchRef.current !== null) navigator.geolocation.clearWatch(watchRef.current);
+      watchRef.current = navigator.geolocation.watchPosition(
+        pos => sendPos(pos.coords.latitude, pos.coords.longitude),
+        err => {
+          // Code 3 = TIMEOUT — iOS Safari cold GPS; fallback to low accuracy
+          if (err.code === 3 && highAccuracy) startWatch(false);
+        },
+        { enableHighAccuracy: highAccuracy, maximumAge: 5000, timeout: 15000 }
+      );
+    }
+
+    // First fix: get position immediately with timeout so iOS Safari doesn't hang
     navigator.geolocation.getCurrentPosition(
       pos => sendPos(pos.coords.latitude, pos.coords.longitude),
-      () => setStatus("error"),
-      { enableHighAccuracy: true }
+      err => {
+        if (err.code === 3) {
+          // TIMEOUT on high accuracy — retry with low accuracy before giving up
+          navigator.geolocation.getCurrentPosition(
+            pos => sendPos(pos.coords.latitude, pos.coords.longitude),
+            () => setStatus("error"),
+            { enableHighAccuracy: false, timeout: 10000 }
+          );
+        } else {
+          setStatus("error");
+        }
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
     );
 
-    watchRef.current = navigator.geolocation.watchPosition(
-      pos => sendPos(pos.coords.latitude, pos.coords.longitude),
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 5000 }
-    );
+    startWatch(true);
+
+    // 30s periodic backup (catches gaps in watchPosition on some iOS versions)
     intervalRef.current = setInterval(() => {
-      navigator.geolocation.getCurrentPosition(pos => sendPos(pos.coords.latitude, pos.coords.longitude), () => {}, { enableHighAccuracy: true });
+      navigator.geolocation.getCurrentPosition(
+        pos => sendPos(pos.coords.latitude, pos.coords.longitude),
+        () => {},
+        { enableHighAccuracy: false, timeout: 10000 }
+      );
     }, 30000);
   }
 
@@ -66,6 +92,10 @@ export default function LivreurPage() {
 
       {/* Logo / boutique */}
       <div style={{ textAlign:"center", marginBottom:32 }}>
+        {/* Axso logo */}
+        <div style={{ marginBottom:16 }}>
+          <img src="/logo-dark.png" alt="Axso" style={{ height:28, objectFit:"contain", opacity:0.6, display:"inline-block" }} />
+        </div>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"center", width:64, height:64, borderRadius:"50%", background:"rgba(245,166,35,0.12)", border:"2px solid rgba(245,166,35,0.25)", margin:"0 auto 8px" }}>
           <Bike size={32} color="#F5A623" />
         </div>

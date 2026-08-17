@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { MapPin, Package, Phone, RefreshCw, CheckCircle2, Truck, ClipboardList, Check, Map, Bike } from "lucide-react";
+import { MapTracking } from "@/components/storefront/MapTracking";
 
 const STATUT_STEP_ICONS: Record<string, React.ReactNode> = {
   en_attente:     <ClipboardList size={16} />,
@@ -57,22 +58,21 @@ export default function TrackingPage() {
   );
 
   const pos = data.livreurPosition as any;
+  const annulee = data.statut === "annulee";
   const statutIdx = STATUT_STEPS.findIndex(s => s.key === data.statut);
   const currentStep = statutIdx >= 0 ? statutIdx : 0;
-
-  const mapSrc = pos?.lat && pos?.lng
-    ? `https://www.openstreetmap.org/export/embed.html?bbox=${pos.lng-0.02},${pos.lat-0.02},${pos.lng+0.02},${pos.lat+0.02}&layer=mapnik&marker=${pos.lat},${pos.lng}`
-    : data.latitudeClient && data.longitudeClient
-      ? `https://www.openstreetmap.org/export/embed.html?bbox=${data.longitudeClient-0.02},${data.latitudeClient-0.02},${data.longitudeClient+0.02},${data.latitudeClient+0.02}&layer=mapnik&marker=${data.latitudeClient},${data.longitudeClient}`
-      : null;
 
   return (
     <div style={{ minHeight:"100vh", background:"#0A0A0A", fontFamily:"'Inter',system-ui,sans-serif", color:"white" }}>
       <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}} @keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       {/* Header */}
-      <div style={{ background:"linear-gradient(135deg,#1A1A1A,#111)", padding:"20px 20px 16px", borderBottom:"1px solid rgba(245,166,35,0.15)" }}>
+      <div style={{ background:"linear-gradient(135deg,#1A1A1A,#111)", padding:"16px 20px 14px", borderBottom:"1px solid rgba(245,166,35,0.15)" }}>
         <div style={{ maxWidth:500, margin:"0 auto" }}>
+          {/* Axso logo top-center */}
+          <div style={{ textAlign:"center", marginBottom:12 }}>
+            <img src="/logo-dark.png" alt="Axso" style={{ height:22, objectFit:"contain", opacity:0.5 }} />
+          </div>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
             <div>
               <div style={{ fontSize:11, color:"#F5A623", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:4 }}>
@@ -90,8 +90,19 @@ export default function TrackingPage() {
 
       <div style={{ maxWidth:500, margin:"0 auto", padding:"20px 16px" }}>
 
+        {/* Annulée banner */}
+        {annulee && (
+          <div style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:16, padding:"14px 18px", marginBottom:16, display:"flex", alignItems:"center", gap:10 }}>
+            <span style={{ fontSize:18 }}>❌</span>
+            <div>
+              <div style={{ fontSize:14, fontWeight:700, color:"#f87171" }}>Commande annulée</div>
+              <div style={{ fontSize:12, color:"#888", marginTop:2 }}>Cette commande a été annulée. Contactez la boutique pour plus d'informations.</div>
+            </div>
+          </div>
+        )}
+
         {/* Étapes */}
-        <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:20, padding:20, marginBottom:16 }}>
+        {!annulee && <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:20, padding:20, marginBottom:16 }}>
           {STATUT_STEPS.map((step, i) => {
             const done = i < currentStep;
             const active = i === currentStep;
@@ -107,12 +118,18 @@ export default function TrackingPage() {
               </div>
             );
           })}
-        </div>
+        </div>}
 
         {/* Carte */}
-        {mapSrc ? (
+        {(pos?.lat || (data.latitudeClient && data.longitudeClient)) ? (
           <div style={{ borderRadius:20, overflow:"hidden", border:"1px solid rgba(255,255,255,0.08)", marginBottom:16, position:"relative" }}>
-            <iframe src={mapSrc} style={{ width:"100%", height:280, border:"none", display:"block" }} />
+            <MapTracking
+              livreurLat={pos?.lat ?? null}
+              livreurLng={pos?.lng ?? null}
+              clientLat={data.latitudeClient ?? null}
+              clientLng={data.longitudeClient ?? null}
+              livreurNom={data.livreurNom ?? null}
+            />
             {pos?.lat && (
               <div style={{ position:"absolute", bottom:12, left:12, right:12, background:"rgba(0,0,0,0.75)", backdropFilter:"blur(8px)", borderRadius:12, padding:"8px 14px", display:"flex", alignItems:"center", gap:8 }}>
                 <div style={{ width:8, height:8, borderRadius:"50%", background:"#22c55e", animation:"pulse 1s ease-in-out infinite" }} />

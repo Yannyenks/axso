@@ -23,6 +23,7 @@ export async function GET(req: Request) {
       devise: true,
       numeroSuivi: true,
       transporteur: true,
+      trackingToken: true,
       createdAt: true,
       updatedAt: true,
       tenant: {
