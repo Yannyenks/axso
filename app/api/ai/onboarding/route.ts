@@ -4,6 +4,7 @@ import { hash } from "bcryptjs";
 import { analyserBusinessEtCreerPlan, type PlanBoutique } from "@/lib/ai-agent";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
+import { generateStoreConfig } from "@/lib/generate-store-config";
 
 const schemaAnalyser = z.object({
   phase: z.literal("analyser"),
@@ -95,6 +96,20 @@ export async function POST(request: Request) {
         config: s.config ?? {},
       }));
 
+      // Générer le themeConfig structurel (sections homepage + page produit)
+      const { themeConfig: generatedConfig } = generateStoreConfig({
+        categorie: plan.categorie,
+        nomBoutique: plan.nomBoutique,
+        pays: plan.pays,
+        devise: plan.devise,
+      });
+
+      // Fusionner : structure générée + sections custom de l'IA
+      const themeConfig: Record<string, any> = {
+        ...generatedConfig,
+        ...(customSections.length > 0 && { customSections }),
+      };
+
       // Transaction : créer tenant + user + produits
       const { tenant, produitsCreees } = await prisma.$transaction(async (tx) => {
         const tenant = await tx.tenant.create({
@@ -112,9 +127,7 @@ export async function POST(request: Request) {
             commissionRate: 0.06,
             statut: "active",
             planType: "gratuit",
-            themeConfig: customSections.length > 0
-              ? { customSections }
-              : {},
+            themeConfig,
           },
         });
 

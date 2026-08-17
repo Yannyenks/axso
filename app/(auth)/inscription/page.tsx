@@ -36,14 +36,16 @@ const THEMES: Record<string, { nom: string; couleur: string }> = {
   "bwiti-forest":     { nom: "Bwiti Forest",     couleur: "#16a34a" },
 };
 
-function PlanPreviewCard({ plan, messageIA, onConfirmer, onModifier, loading }: {
+function PlanPreviewCard({ plan, messageIA, onConfirmer, onModifier, onChangeTheme, loading }: {
   plan: PlanBoutique & { messageIA?: string };
   messageIA: string;
   onConfirmer: () => void;
   onModifier: () => void;
+  onChangeTheme?: (themeId: string) => void;
   loading: boolean;
 }) {
   const theme = THEMES[plan.themeId] || THEMES["terre-et-or"];
+  const aiThemeId = plan.themeId; // garder l'id suggéré par Axia pour le badge
   return (
     <div className="space-y-4">
       <div className="flex gap-3">
@@ -107,6 +109,43 @@ function PlanPreviewCard({ plan, messageIA, onConfirmer, onModifier, loading }: 
           </div>
         )}
       </div>
+
+      {/* ── Theme picker ── */}
+      {onChangeTheme && (
+        <div>
+          <div className="flex items-center gap-2 mb-2.5">
+            <p className="text-xs font-semibold text-[#999999] uppercase tracking-wider">Choisir votre thème</p>
+            <div className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+              style={{ background: "rgba(245,166,35,0.1)", color: ACCENT, border: "1px solid rgba(245,166,35,0.2)" }}>
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: ACCENT }} />
+              Axia recommande <strong>{THEMES[aiThemeId]?.nom ?? aiThemeId}</strong>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {Object.entries(THEMES).map(([id, t]) => {
+              const selected = plan.themeId === id;
+              return (
+                <button key={id} onClick={() => onChangeTheme(id)} disabled={loading}
+                  className="relative p-2.5 rounded-xl border-2 transition-all text-left hover:scale-[1.02]"
+                  style={{
+                    borderColor: selected ? t.couleur : "rgba(0,0,0,0.08)",
+                    background: selected ? `${t.couleur}0a` : "white",
+                  }}>
+                  <div className="w-5 h-5 rounded-full mb-1.5 flex-shrink-0 shadow-sm"
+                    style={{ background: t.couleur }} />
+                  <p className="text-[11px] font-semibold text-[#111111] leading-tight">{t.nom}</p>
+                  {selected && (
+                    <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center"
+                      style={{ background: t.couleur }}>
+                      <Check size={9} color="white" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-3">
         <button onClick={onModifier} disabled={loading}
@@ -233,7 +272,10 @@ function EtapeIA({ onBack, compte }: { onBack: () => void; compte: CompteData })
 
       {phase === "plan" && plan && (
         <PlanPreviewCard plan={plan} messageIA={messageIA}
-          onConfirmer={executer} onModifier={() => { setPlan(null); setPhase("saisie"); }} loading={loading} />
+          onConfirmer={executer}
+          onModifier={() => { setPlan(null); setPhase("saisie"); }}
+          onChangeTheme={(themeId) => setPlan(p => p ? { ...p, themeId } : p)}
+          loading={loading} />
       )}
 
       {phase === "saisie" && (
