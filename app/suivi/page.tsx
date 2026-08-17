@@ -2,11 +2,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Search, Package, Truck, CheckCircle, Clock, MapPin, Phone,
-  ArrowLeft, AlertCircle, ShoppingBag, RefreshCw, ExternalLink,
+  ArrowLeft, AlertCircle, ShoppingBag, RefreshCw,
   Navigation, Bike, Check, X, ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { MapTracking } from "@/components/storefront/MapTracking";
 
 const ETAPES = [
   { statut: "en_attente",     label: "Reçue",       Icon: Clock       },
@@ -29,12 +30,15 @@ function formatMontant(val: number, devise = "FCFA") {
 export default function SuiviPage() {
   const [numero, setNumero]           = useState("");
   const [commande, setCommande]       = useState<any>(null);
+  const [liveData, setLiveData]       = useState<any>(null); // polling /api/tracking/[token]
   const [erreur, setErreur]           = useState("");
   const [recherche, setRecherche]     = useState(false);
   const [refresh, setRefresh]         = useState(false);
   const [lastUpdate, setLastUpdate]   = useState<Date | null>(null);
-  const intervalRef                   = useRef<NodeJS.Timeout | null>(null);
+  const intervalSuivi                 = useRef<NodeJS.Timeout | null>(null);
+  const intervalTracking              = useRef<NodeJS.Timeout | null>(null);
   const numeroRef                     = useRef("");
+  const tokenRef                      = useRef("");
 
   const charger = useCallback(async (num: string, silent = false) => {
     if (!num) return;
@@ -58,24 +62,57 @@ export default function SuiviPage() {
     }
   }, []);
 
-  // Auto-refresh every 20s once a commande is found
+  const chargerTracking = useCallback(async (token: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/tracking/${token}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.commande) {
+          setLiveData(data.commande);
+          setLastUpdate(new Date());
+        }
+      }
+    } catch { /* silent */ }
+  }, []);
+
+  // Auto-refresh order status every 20s
   useEffect(() => {
     if (!commande) return;
     numeroRef.current = commande.numero;
-    intervalRef.current = setInterval(() => charger(numeroRef.current, true), 20000);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    intervalSuivi.current = setInterval(() => charger(numeroRef.current, true), 20000);
+    return () => { if (intervalSuivi.current) clearInterval(intervalSuivi.current); };
   }, [commande?.numero, charger]);
+
+  // Poll live tracking (livreur position) every 10s when trackingToken available
+  useEffect(() => {
+    if (!commande?.trackingToken) return;
+    tokenRef.current = commande.trackingToken;
+    chargerTracking(tokenRef.current); // immediate first load
+    intervalTracking.current = setInterval(() => chargerTracking(tokenRef.current), 10000);
+    return () => { if (intervalTracking.current) clearInterval(intervalTracking.current); };
+  }, [commande?.trackingToken, chargerTracking]);
 
   function chercher(e: React.FormEvent) {
     e.preventDefault();
-    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (intervalSuivi.current) clearInterval(intervalSuivi.current);
+    if (intervalTracking.current) clearInterval(intervalTracking.current);
     setCommande(null);
+    setLiveData(null);
     charger(numero);
   }
 
   const etapeActuelle = commande ? ORDRE.indexOf(commande.statut) : -1;
   const annulee       = commande?.statut === "annulee";
   const livree        = commande?.statut === "livree";
+
+  // Live position from tracking poll, fall back to suivi data
+  const livePos       = liveData?.livreurPosition as any;
+  const livreurLat    = livePos?.lat ?? null;
+  const livreurLng    = livePos?.lng ?? null;
+  const clientLat     = liveData?.latitudeClient ?? null;
+  const clientLng     = liveData?.longitudeClient ?? null;
+  const showMap       = !annulee && (livreurLat || clientLat);
 
   return (
     <div className="min-h-screen bg-[#080808] text-white flex flex-col"
@@ -242,8 +279,31 @@ export default function SuiviPage() {
               )}
             </div>
 
-            {/* Real-time tracking link */}
-            {commande.trackingToken && !annulee && !livree && commande.tenant?.slug && (
+            {/* Live map */}
+            {showMap && (
+              <div className="rounded-2xl overflow-hidden"
+                style={{ border: "1px solid rgba(255,255,255,0.07)", position: "relative" }}>
+                <MapTracking
+                  livreurLat={livreurLat}
+                  livreurLng={livreurLng}
+                  clientLat={clientLat}
+                  clientLng={clientLng}
+                  livreurNom={liveData?.livreurNom ?? null}
+                />
+                {livreurLat && (
+                  <div style={{ position:"absolute", bottom:10, left:10, right:10, background:"rgba(0,0,0,0.7)", backdropFilter:"blur(8px)", borderRadius:10, padding:"7px 12px", display:"flex", alignItems:"center", gap:8, pointerEvents:"none" }}>
+                    <div style={{ width:7, height:7, borderRadius:"50%", background:"#22c55e", animation:"pulse 1.2s ease-in-out infinite", flexShrink:0 }} />
+                    <span style={{ fontSize:12, color:"white" }}>
+                      {liveData?.livreurNom ? `${liveData.livreurNom} — ` : "Livreur — "}
+                      mis à jour {livePos?.updatedAt ? new Date(livePos.updatedAt).toLocaleTimeString("fr", { hour:"2-digit", minute:"2-digit" }) : "récemment"}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Full-page tracking link when no live pos yet */}
+            {commande.trackingToken && !showMap && !annulee && commande.tenant?.slug && (
               <Link
                 href={`/${commande.tenant.slug}/tracking/${commande.trackingToken}`}
                 className="flex items-center justify-between rounded-2xl p-5 transition-all hover:border-[rgba(245,166,35,0.35)] group"
@@ -255,7 +315,7 @@ export default function SuiviPage() {
                   </div>
                   <div>
                     <p className="text-[13px] font-semibold text-white">Suivi GPS en temps réel</p>
-                    <p className="text-[11px] text-white/35 mt-0.5">Voir la position du livreur sur la carte</p>
+                    <p className="text-[11px] text-white/35 mt-0.5">La carte s'affichera dès que le livreur partagera sa position</p>
                   </div>
                 </div>
                 <ChevronRight size={16} className="text-white/25 group-hover:text-[#F5A623] transition-colors" />

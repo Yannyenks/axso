@@ -4,7 +4,7 @@
 
 export const TRANSITIONS_VALIDES: Record<string, string[]> = {
   en_attente:        ["confirmee", "annulee"],
-  confirmee:         ["en_preparation", "annulee"],
+  confirmee:         ["en_preparation", "expediee", "annulee"],
   en_preparation:    ["expediee", "annulee"],
   expediee:          ["livree", "tentative_echouee", "annulee"],
   // Replanification : le livreur retente, ou le marchand annule après échecs répétés
