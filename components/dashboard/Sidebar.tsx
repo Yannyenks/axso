@@ -52,6 +52,7 @@ const NAV_GROUPS = [
   {
     label: "Système",
     items: [
+      { href: "/dashboard/abonnement",    label: "Abonnement",   Icone: IconAbonnement },
       { href: "/dashboard/parametres",    label: "Paramètres",   Icone: IconParametres },
     ],
   },
