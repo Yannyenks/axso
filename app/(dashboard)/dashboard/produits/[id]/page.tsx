@@ -6,6 +6,7 @@ import {
   Package, Image as ImageIcon, Tag, BarChart2, Globe,
   Upload, Video, FileText, Truck, Download, ExternalLink, Info, Zap,
 } from "lucide-react";
+import { VariantesPrixManager } from "@/components/dashboard/VariantesPrixManager";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -54,6 +55,7 @@ export default function EditProduitPage() {
   const [imageInput, setImageInput] = useState("");
   const [stats, setStats] = useState({ ventes: 0, vues: 0, avis: 0, commandes: 0 });
   const [devise, setDevise] = useState("FCFA");
+  const [boutiqueSlug, setBoutiqueSlug] = useState("");
   const [variantes, setVariantes] = useState<{ id?: string; nom: string; valeur: string; sku: string; prix: string; stock: string; image: string; actif: boolean }[]>([]);
   const [varianteForm, setVarianteForm] = useState({ nom: "Taille", valeur: "", sku: "", prix: "", stock: "0", image: "" });
   const [savingVariante, setSavingVariante] = useState(false);
@@ -74,6 +76,10 @@ export default function EditProduitPage() {
   });
 
   useEffect(() => {
+    fetch("/api/tenants/moi").then(r => r.json()).then(d => {
+      if (d.tenant?.slug) setBoutiqueSlug(d.tenant.slug);
+    }).catch(() => {});
+
     fetch(`/api/produits/${id}`)
       .then(r => r.json())
       .then(d => {
@@ -625,6 +631,16 @@ export default function EditProduitPage() {
               <label className="ax-label block mb-1.5">Méta description</label>
               <textarea value={form.metaDesc} onChange={e => set("metaDesc", e.target.value)} rows={2} placeholder="Description Google..." className={`${inputClass} resize-none`} />
             </div>
+          </div>
+
+          {/* Tarification avancée (variantes de prix) */}
+          <div className="bg-white border border-gray-100 rounded-2xl p-5">
+            <VariantesPrixManager
+              produitId={id}
+              boutiqueSlug={boutiqueSlug}
+              produitSlug={form.slug}
+              devise={devise}
+            />
           </div>
         </div>
 

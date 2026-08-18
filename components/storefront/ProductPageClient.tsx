@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { formatMontant } from "@/lib/utils";
 import { useCartStore } from "@/store/cartStore";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   Package, AlertTriangle, Lock, RotateCcw, Check,
@@ -698,11 +698,32 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
   const [selectedVariante, setSelectedVariante] = useState<Variante | null>(null);
   const [quantite, setQuantite] = useState(1);
   const [tab, setTab] = useState<"description" | "livraison" | "avis">("description");
+  const [variantePrix, setVariantePrix] = useState<{ id: string; nom: string; prix: number; prixPromo: number | null } | null>(null);
 
   const { ajouterItem, setTenant } = useCartStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const prixEffectif  = selectedVariante?.prix ?? produit.prixAffiche;
+  // Présélection d'une variante de prix via ?v=
+  useEffect(() => {
+    const vId = searchParams.get("v");
+    if (!vId) return;
+    fetch(`/api/v/${vId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.variante) {
+          setVariantePrix({
+            id:       d.variante.id,
+            nom:      d.variante.nom,
+            prix:     d.variante.prix,
+            prixPromo: d.variante.prixPromo,
+          });
+        }
+      })
+      .catch(() => {});
+  }, [searchParams]);
+
+  const prixEffectif = variantePrix?.prix ?? selectedVariante?.prix ?? produit.prixAffiche;
   const stockEffectif = selectedVariante !== null ? selectedVariante.stock : produit.stock;
   const enRupture     = stockEffectif === 0;
 
@@ -787,10 +808,19 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
                     </span>
                   </div>
                 )}
+                {variantePrix && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold"
+                    style={{ background: `${accent}15`, color: accent, border: `1px solid ${accent}30` }}>
+                    <span>✦ Offre sélectionnée :</span>
+                    <span className="font-bold">{variantePrix.nom}</span>
+                  </div>
+                )}
                 <div className="flex items-baseline gap-3 flex-wrap">
                   <span className="text-4xl font-black" style={{ color: accent }}>{formatMontant(prixEffectif, devise)}</span>
-                  {produit.prixCompareAffiche && produit.prixCompareAffiche > produit.prixAffiche && (
-                    <span className="text-lg opacity-35 line-through">{formatMontant(produit.prixCompareAffiche, devise)}</span>
+                  {(variantePrix?.prixPromo || (produit.prixCompareAffiche && produit.prixCompareAffiche > produit.prixAffiche)) && (
+                    <span className="text-lg opacity-35 line-through">
+                      {formatMontant(variantePrix?.prixPromo ?? produit.prixCompareAffiche!, devise)}
+                    </span>
                   )}
                 </div>
                 {showStock && (
