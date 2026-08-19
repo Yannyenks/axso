@@ -18,10 +18,15 @@ export async function generateMetadata({ params }: Props) {
   const { id } = await params;
   const produit = await prisma.produit.findUnique({ where: { id } });
   if (!produit) return { title: "Produit introuvable" };
+  const ogImageUrl = (produit as any).ogImage || produit.images[0] || null;
   return {
     title: produit.metaTitle || produit.nom,
     description: produit.metaDesc || produit.description || "",
-    openGraph: { images: produit.images[0] ? [{ url: produit.images[0] }] : [] },
+    openGraph: {
+      title: produit.metaTitle || produit.nom,
+      description: produit.metaDesc || produit.description || "",
+      images: ogImageUrl ? [{ url: ogImageUrl, width: 1200, height: 630 }] : [],
+    },
   };
 }
 
@@ -97,6 +102,9 @@ export default async function ProduitPage({ params }: Props) {
     fichierNom: produit.fichierNom,
     categorie: produit.categorie,
     marque: (produit as any).marque ?? null,
+    masquerVentes: (produit as any).masquerVentes ?? false,
+    texteBoutonAchat: (produit as any).texteBoutonAchat ?? null,
+    faq: Array.isArray((produit as any).faq) ? (produit as any).faq as { question: string; reponse: string }[] : [],
     variantes: produit.variantes.map(v => ({
       id: v.id,
       nom: v.nom,

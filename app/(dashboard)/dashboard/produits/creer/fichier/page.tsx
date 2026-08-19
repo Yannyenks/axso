@@ -554,7 +554,7 @@ export default function CreerFichierPage() {
 
   return (
     <div className="max-w-xl mx-auto py-8 px-4">
-      <Link href="/dashboard/produits/creer" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 mb-6 transition-colors">
+      <Link href="/dashboard/produits/digital/nouveau" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 mb-6 transition-colors">
         <ArrowLeft size={14} /> Changer de type
       </Link>
 

@@ -102,6 +102,12 @@ model Produit {
   featured        Boolean  @default(false)
   metaTitle       String?
   metaDesc        String?
+  ogImage         String?   // Image Open Graph dédiée (sinon images[0])
+  masquerVentes   Boolean   @default(false)  // Masquer le compteur de ventes sur la boutique
+  visibleListage  Boolean   @default(true)   // false = masqué du catalogue, URL directe OK
+  texteBoutonAchat String?  // Texte personnalisé du bouton d'achat (défaut "Acheter")
+  faq             Json?     // [{ question: String, reponse: String }]
+  champsCommande  Json?     // [{ label: String, type: texte|email|telephone|choix, requis: Boolean, options?: String[] }]
   ventes          Int      @default(0)
   vues            Int      @default(0)
   // Type de produit

@@ -32,6 +32,15 @@ const schemaUpdate = z.object({
   nomFournisseur: z.string().optional().nullable(),
   affiliationActive: z.boolean().optional(),
   tauxCommissionAff: z.number().min(0).max(1).optional().nullable(),
+  ogImage: z.string().optional().nullable(),
+  masquerVentes: z.boolean().optional(),
+  visibleListage: z.boolean().optional(),
+  texteBoutonAchat: z.string().optional().nullable(),
+  faq: z.array(z.object({ question: z.string(), reponse: z.string() })).optional().nullable(),
+  champsCommande: z.array(z.object({
+    label: z.string(), type: z.string(), requis: z.boolean(),
+    options: z.array(z.string()).optional(),
+  })).optional().nullable(),
 });
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -75,6 +84,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const CHAMPS_DIRECTS = [
       "type", "slug", "videos", "fichierUrl", "fichierNom", "fichierTaille",
       "instructionsTelechargement", "prixFournisseur", "urlFournisseur", "nomFournisseur",
+      "ogImage", "masquerVentes", "visibleListage", "texteBoutonAchat", "faq", "champsCommande",
     ] as const;
     for (const champ of CHAMPS_DIRECTS) {
       if (champ in body) updateData[champ] = body[champ];
@@ -120,6 +130,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (body.actif !== undefined) data.actif = Boolean(body.actif);
   if (body.featured !== undefined) data.featured = Boolean(body.featured);
   if (body.stock !== undefined) data.stock = Number(body.stock);
+  if (body.masquerVentes !== undefined) data.masquerVentes = Boolean(body.masquerVentes);
+  if (body.visibleListage !== undefined) data.visibleListage = Boolean(body.visibleListage);
+  if (body.faq !== undefined) data.faq = body.faq;
+  if (body.champsCommande !== undefined) data.champsCommande = body.champsCommande;
+  if ("texteBoutonAchat" in body) data.texteBoutonAchat = body.texteBoutonAchat ?? null;
+  if ("ogImage" in body) data.ogImage = body.ogImage ?? null;
 
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ error: "Aucun champ valide à mettre à jour" }, { status: 400 });

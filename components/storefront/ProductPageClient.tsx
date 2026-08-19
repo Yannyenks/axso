@@ -42,6 +42,9 @@ export interface ProductPageClientProps {
     fichierNom: string | null; categorie: string | null; marque: string | null;
     variantes: Variante[]; avis: Avis[];
     collections: { nom: string; slug: string }[]; noteMoyenne: number;
+    masquerVentes?: boolean;
+    texteBoutonAchat?: string | null;
+    faq?: { question: string; reponse: string }[];
   };
   tenant: {
     id: string; slug: string; nomBoutique: string; devise: string; certifie: boolean;
@@ -667,6 +670,34 @@ function ComparisonSection({ config, accent, surface }: { config: Record<string,
   );
 }
 
+// ─── FAQ produit (questions spécifiques au produit, définies par le marchand) ──
+function ProduitFaqSection({ faq, accent, surface }: { faq: { question: string; reponse: string }[]; accent: string; surface: string }) {
+  const [open, setOpen] = React.useState<number | null>(null);
+  return (
+    <section className="max-w-3xl mx-auto px-4 py-10">
+      <h2 className="text-xl font-bold mb-6" style={{ color: accent }}>Questions fréquentes</h2>
+      <div className="space-y-3">
+        {faq.map((item, idx) => (
+          <div key={idx} className="rounded-2xl overflow-hidden border" style={{ borderColor: `${accent}18`, background: surface }}>
+            <button
+              onClick={() => setOpen(open === idx ? null : idx)}
+              className="w-full flex items-center justify-between gap-4 p-5 text-left"
+            >
+              <span className="font-semibold text-sm leading-snug">{item.question}</span>
+              <ChevronDown size={16} style={{ color: accent, flexShrink: 0, transform: open === idx ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
+            </button>
+            {open === idx && (
+              <div className="px-5 pb-5 text-sm opacity-80 leading-relaxed border-t" style={{ borderColor: `${accent}10` }}>
+                {item.reponse}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function ProductPageClient({ produit, tenant, produitsSimilaires }: ProductPageClientProps) {
   const { slug, devise, accent, fond, texte, surface, radius, whatsapp, whatsappNumero, nomBoutique, certifie } = tenant;
@@ -865,7 +896,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
                         className="w-full py-4 rounded-2xl font-bold text-base transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-35 flex items-center justify-center gap-3"
                         style={{ background: enRupture ? "#E0E0E0" : `linear-gradient(135deg, ${accent} 0%, ${accent}CC 100%)`, color: enRupture ? "#999" : "#fff", boxShadow: enRupture ? "none" : `0 6px 24px ${accent}40` }}>
                         {produit.type === "digital" ? <Download size={18} /> : <ShoppingCart size={18} />}
-                        {enRupture ? "Indisponible" : "Ajouter au panier"}
+                        {enRupture ? "Indisponible" : (produit.texteBoutonAchat || "Ajouter au panier")}
                       </button>
                       <button onClick={buyNow} disabled={enRupture}
                         className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-35 border-2 flex items-center justify-center gap-2"
@@ -1061,6 +1092,11 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
 
           </React.Fragment>
         ))}
+
+        {/* FAQ produit spécifique */}
+        {(produit.faq ?? []).length > 0 && (
+          <ProduitFaqSection faq={produit.faq!} accent={accent} surface={surface} />
+        )}
       </main>
 
       <footer className="border-t py-8 text-center text-xs" style={{ borderColor: `${accent}10`, opacity: 0.35 }}>

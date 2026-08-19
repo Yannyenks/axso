@@ -3,6 +3,38 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 
+const TYPES_DIGITAUX = ["fichier", "formation", "licence", "bundle"] as const;
+
+// GET — liste tous les produits digitaux (nouveau système) du tenant
+export async function GET(_req: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    const tenantId = (session.user as any)?.tenantId;
+
+    const produits = await prisma.produit.findMany({
+      where: { tenantId, type: { in: [...TYPES_DIGITAUX] } },
+      include: {
+        produitFichier: { include: { _count: { select: { fichiers: true } } } },
+        licenceProduit: {
+          include: {
+            _count: { select: { cles: true } },
+            cles: { where: { statut: "disponible" }, select: { id: true }, take: 1 },
+          },
+        },
+        bundleProduit: { include: { _count: { select: { elements: true } } } },
+        _count: { select: { lignesCommande: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return NextResponse.json({ produits });
+  } catch (err) {
+    console.error("[api/produits/digitaux GET]", err);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}
+
 // POST — crée un Produit (type=fichier/formation/licence/bundle) + son enregistrement de détail
 export async function POST(req: NextRequest) {
   try {

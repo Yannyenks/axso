@@ -63,6 +63,42 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       await prisma.produit.update({ where: { id }, data: champsProduit });
     }
 
+    // Config Formation
+    if (existant.type === "formation" && body.config) {
+      const c = body.config;
+      const cfg: any = {};
+      if ("niveau"   in c) cfg.niveau   = c.niveau;
+      if ("langue"   in c) cfg.langue   = c.langue;
+      if ("dureeMin" in c) cfg.dureeMin = c.dureeMin;
+      if ("certif"   in c) cfg.certif   = c.certif;
+      if (Object.keys(cfg).length > 0) {
+        await prisma.formation.upsert({
+          where:  { produitId: id },
+          create: { produitId: id, ...cfg },
+          update: cfg,
+        });
+      }
+    }
+
+    // Config LicenceProduit
+    if (existant.type === "licence" && body.config) {
+      const cfg: Record<string, any> = {};
+      const c = body.config;
+      if ("modeDistrib"    in c) cfg.modeDistrib    = c.modeDistrib;
+      if ("formatAuto"     in c) cfg.formatAuto     = c.formatAuto;
+      if ("longueur"       in c) cfg.longueur       = c.longueur;
+      if ("prefixe"        in c) cfg.prefixe        = c.prefixe;
+      if ("maxActivations" in c) cfg.maxActivations = c.maxActivations;
+      if ("dureeJours"     in c) cfg.dureeJours     = c.dureeJours;
+      if (Object.keys(cfg).length > 0) {
+        await prisma.licenceProduit.upsert({
+          where:  { produitId: id },
+          create: { produitId: id, ...cfg },
+          update: cfg,
+        });
+      }
+    }
+
     // Config ProduitFichier
     if (existant.type === "fichier" && body.config) {
       const cfg: Record<string, any> = {};

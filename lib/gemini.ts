@@ -92,6 +92,37 @@ Donne une réponse courte avec la fourchette de prix conseillée et un bref rais
   );
 }
 
+// Générer une FAQ produit
+export async function genererFaqProduit(
+  nom: string,
+  description: string
+): Promise<Array<{ question: string; reponse: string }>> {
+  try {
+    const texte = await completion(
+      [
+        { role: "system", content: SYSTEME_PROMPT },
+        {
+          role: "user",
+          content: `Génère une FAQ de 4 questions pour ce produit :
+Nom: ${nom}
+Description: ${description || "Produit digital"}
+
+Réponds uniquement en JSON : [{"question":"...","reponse":"..."},...]
+Les questions doivent être pratiques (accès, remboursement, format, délai…).`,
+        },
+      ],
+      600
+    );
+    const json = texte.match(/\[[\s\S]*\]/)?.[0];
+    return JSON.parse(json || "[]");
+  } catch {
+    return [
+      { question: "Comment accéder au contenu après achat ?", reponse: "Un lien de téléchargement vous sera envoyé par email immédiatement après confirmation de votre paiement." },
+      { question: "Puis-je obtenir un remboursement ?", reponse: "Contactez notre support dans les 7 jours suivant l'achat si vous rencontrez un problème avec votre commande." },
+    ];
+  }
+}
+
 // Chat général avec l'assistant IA
 export async function chatAvecIA(
   messages: Array<{ role: "user" | "assistant"; content: string }>

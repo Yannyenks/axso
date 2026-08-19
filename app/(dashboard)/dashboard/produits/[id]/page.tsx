@@ -5,8 +5,14 @@ import {
   ArrowLeft, Save, Trash2, X, Plus, Sparkles, Loader2,
   Package, Image as ImageIcon, Tag, BarChart2, Globe,
   Upload, Video, FileText, Truck, Download, ExternalLink, Info, Zap,
+  HelpCircle, ListOrdered, Eye, EyeOff, ShoppingCart,
 } from "lucide-react";
 import { VariantesPrixManager } from "@/components/dashboard/VariantesPrixManager";
+import ClesLicenceManager from "@/components/dashboard/ClesLicenceManager";
+import FormationManager from "@/components/dashboard/FormationManager";
+import FaqManager, { type FaqItem } from "@/components/dashboard/FaqManager";
+import ChampsCommandeManager, { type ChampCommande } from "@/components/dashboard/ChampsCommandeManager";
+import PublicationAssistant from "@/components/dashboard/PublicationAssistant";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -34,8 +40,10 @@ type FormState = {
   prix: string; prixCompare: string; stock: string; sku: string;
   categorie: string; tags: string[]; images: string[]; videos: string[];
   actif: boolean; featured: boolean; poids: string;
-  metaTitle: string; metaDesc: string;
-  type: "physique" | "digital" | "dropshipping";
+  metaTitle: string; metaDesc: string; ogImage: string;
+  masquerVentes: boolean; visibleListage: boolean; texteBoutonAchat: string;
+  faq: FaqItem[]; champsCommande: ChampCommande[];
+  type: "physique" | "digital" | "dropshipping" | "fichier" | "licence" | "bundle" | "formation";
   fichierUrl: string; fichierNom: string; fichierTaille: number; instructionsTelechargement: string;
   prixFournisseur: string; urlFournisseur: string; nomFournisseur: string;
   affiliationActive: boolean; tauxCommissionAff: string;
@@ -59,6 +67,7 @@ export default function EditProduitPage() {
   const [variantes, setVariantes] = useState<{ id?: string; nom: string; valeur: string; sku: string; prix: string; stock: string; image: string; actif: boolean }[]>([]);
   const [varianteForm, setVarianteForm] = useState({ nom: "Taille", valeur: "", sku: "", prix: "", stock: "0", image: "" });
   const [savingVariante, setSavingVariante] = useState(false);
+  const [showPubAssistant, setShowPubAssistant] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -68,7 +77,9 @@ export default function EditProduitPage() {
     nom: "", slug: "", description: "", prix: "", prixCompare: "", stock: "0", sku: "",
     categorie: "", tags: [], images: [], videos: [],
     actif: true, featured: false, poids: "",
-    metaTitle: "", metaDesc: "",
+    metaTitle: "", metaDesc: "", ogImage: "",
+    masquerVentes: false, visibleListage: true, texteBoutonAchat: "",
+    faq: [], champsCommande: [],
     type: "physique",
     fichierUrl: "", fichierNom: "", fichierTaille: 0, instructionsTelechargement: "",
     prixFournisseur: "", urlFournisseur: "", nomFournisseur: "",
@@ -103,6 +114,12 @@ export default function EditProduitPage() {
           poids: p.poids?.toString() ?? "",
           metaTitle: p.metaTitle ?? "",
           metaDesc: p.metaDesc ?? "",
+          ogImage: p.ogImage ?? "",
+          masquerVentes: p.masquerVentes ?? false,
+          visibleListage: p.visibleListage ?? true,
+          texteBoutonAchat: p.texteBoutonAchat ?? "",
+          faq: Array.isArray(p.faq) ? p.faq : [],
+          champsCommande: Array.isArray(p.champsCommande) ? p.champsCommande : [],
           type: p.type ?? "physique",
           fichierUrl: p.fichierUrl ?? "",
           fichierNom: p.fichierNom ?? "",
@@ -243,6 +260,10 @@ export default function EditProduitPage() {
         tags: form.tags, images: form.images, videos: form.videos,
         actif: form.actif, featured: form.featured, type: form.type,
         metaTitle: form.metaTitle || null, metaDesc: form.metaDesc || null,
+        ogImage: form.ogImage || null,
+        masquerVentes: form.masquerVentes,
+        visibleListage: form.visibleListage,
+        texteBoutonAchat: form.texteBoutonAchat || null,
         affiliationActive: form.affiliationActive,
         tauxCommissionAff: form.affiliationActive && form.tauxCommissionAff ? parseFloat(form.tauxCommissionAff) / 100 : null,
       };
@@ -286,6 +307,7 @@ export default function EditProduitPage() {
   );
 
   return (
+    <>
     <div className="max-w-4xl space-y-6">
 
       {/* ── Header ── */}
@@ -311,12 +333,16 @@ export default function EditProduitPage() {
             className="flex items-center gap-1.5 text-[12px] font-semibold px-3.5 py-2 rounded-2xl border border-[#FECACA] text-[#DC2626] hover:bg-[#FEF2F2] transition-all disabled:opacity-50">
             {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />} Supprimer
           </button>
-          <button onClick={() => set("actif", !form.actif)}
+          <button
+            onClick={() => {
+              if (!form.actif) { setShowPubAssistant(true); }
+              else { set("actif", false); }
+            }}
             className="text-[12px] font-semibold px-3.5 py-2 rounded-2xl border transition-all"
             style={form.actif
               ? { background: "#F0FDF4", borderColor: "#BBF7D0", color: "#16A34A" }
               : { background: "#F9F9F9", borderColor: "#E8E8E8", color: "#888888" }}>
-            {form.actif ? "✓ Actif" : "Brouillon"}
+            {form.actif ? "✓ Actif" : "Publier"}
           </button>
           <button onClick={sauvegarder} disabled={saving}
             className="flex items-center gap-1.5 text-[12px] font-semibold px-4 py-2 rounded-2xl text-white transition-all disabled:opacity-50"
@@ -617,19 +643,31 @@ export default function EditProduitPage() {
             </div>
           </div>
 
-          {/* SEO */}
+          {/* SEO & Open Graph */}
           <div className="ax-card p-6 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Globe size={15} className="text-[#F5A623]" />
-              <h2 className="text-[13px] font-semibold text-[#111111]">SEO</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">SEO & Open Graph</h2>
             </div>
             <div>
               <label className="ax-label block mb-1.5">Titre méta</label>
-              <input value={form.metaTitle} onChange={e => set("metaTitle", e.target.value)} placeholder="Titre pour Google" className={inputClass} />
+              <input value={form.metaTitle} onChange={e => set("metaTitle", e.target.value)} placeholder="Titre pour Google (max 60 car.)" className={inputClass} />
+              {form.metaTitle && <p className={`text-[10px] mt-1 ${form.metaTitle.length > 60 ? "text-red-400" : "text-gray-400"}`}>{form.metaTitle.length}/60</p>}
             </div>
             <div>
               <label className="ax-label block mb-1.5">Méta description</label>
-              <textarea value={form.metaDesc} onChange={e => set("metaDesc", e.target.value)} rows={2} placeholder="Description Google..." className={`${inputClass} resize-none`} />
+              <textarea value={form.metaDesc} onChange={e => set("metaDesc", e.target.value)} rows={2} placeholder="Description Google (max 155 car.)…" className={`${inputClass} resize-none`} />
+              {form.metaDesc && <p className={`text-[10px] mt-1 ${form.metaDesc.length > 155 ? "text-red-400" : "text-gray-400"}`}>{form.metaDesc.length}/155</p>}
+            </div>
+            <div>
+              <label className="ax-label block mb-1.5">Image Open Graph (partage réseaux sociaux)</label>
+              <input value={form.ogImage} onChange={e => set("ogImage", e.target.value)} placeholder="URL de l'image (1200×630px recommandé)" className={inputClass} />
+              {form.ogImage && (
+                <div className="mt-2 rounded-xl overflow-hidden border border-gray-200 h-20">
+                  <img src={form.ogImage} alt="OG" className="w-full h-full object-cover" onError={e => { e.currentTarget.style.display = "none"; }} />
+                </div>
+              )}
+              <p className="text-[10px] text-gray-400 mt-1">Si vide, la première image produit est utilisée.</p>
             </div>
           </div>
 
@@ -640,6 +678,46 @@ export default function EditProduitPage() {
               boutiqueSlug={boutiqueSlug}
               produitSlug={form.slug}
               devise={devise}
+            />
+          </div>
+
+          {/* Clés de licence */}
+          {form.type === "licence" && (
+            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+              <ClesLicenceManager produitId={id} />
+            </div>
+          )}
+
+          {/* Formation — chapitres et leçons */}
+          {form.type === "formation" && (
+            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+              <FormationManager produitId={id} />
+            </div>
+          )}
+
+          {/* FAQ */}
+          <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-2 px-5 pt-5 pb-1">
+              <HelpCircle size={15} className="text-[#F5A623]" />
+              <h2 className="text-[13px] font-semibold text-[#111111]">FAQ</h2>
+            </div>
+            <FaqManager
+              produitId={id}
+              initial={form.faq}
+              nom={form.nom}
+              description={form.description}
+            />
+          </div>
+
+          {/* Champs à la commande */}
+          <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-2 px-5 pt-5 pb-1">
+              <ListOrdered size={15} className="text-[#F5A623]" />
+              <h2 className="text-[13px] font-semibold text-[#111111]">Champs personnalisés à la commande</h2>
+            </div>
+            <ChampsCommandeManager
+              produitId={id}
+              initial={form.champsCommande}
             />
           </div>
         </div>
@@ -745,8 +823,10 @@ export default function EditProduitPage() {
           <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
             <h2 className="text-[13px] font-semibold text-[#111111] mb-1">Options</h2>
             {[
-              { label: "Produit actif", desc: "Visible sur la boutique", key: "actif" },
-              { label: "Mis en avant", desc: "Affiché en page d'accueil", key: "featured" },
+              { label: "Produit actif", desc: "Accessible et visible sur la boutique", key: "actif", icon: <Eye size={12} /> },
+              { label: "Mis en avant", desc: "Affiché en page d'accueil", key: "featured", icon: null },
+              { label: "Visible dans le catalogue", desc: "Masqué de la liste, accessible par lien direct", key: "visibleListage", icon: <EyeOff size={12} /> },
+              { label: "Masquer le compteur de ventes", desc: "Le nombre d'achats ne s'affiche pas", key: "masquerVentes", icon: null },
             ].map(opt => (
               <div key={opt.key} className="flex items-center justify-between">
                 <div>
@@ -754,13 +834,27 @@ export default function EditProduitPage() {
                   <p className="text-gray-400 text-xs">{opt.desc}</p>
                 </div>
                 <button onClick={() => set(opt.key, !(form as any)[opt.key])}
-                  className={`w-11 h-6 rounded-full transition-all relative ${(form as any)[opt.key] ? "bg-[#F5A623]" : "bg-gray-200"}`}>
+                  className={`w-11 h-6 rounded-full transition-all relative flex-shrink-0 ${(form as any)[opt.key] ? "bg-[#F5A623]" : "bg-gray-200"}`}>
                   <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${(form as any)[opt.key] ? "left-5" : "left-0.5"}`} />
                 </button>
               </div>
             ))}
+
+            {/* Texte bouton achat */}
+            <div className="pt-2 border-t border-gray-100">
+              <label className="ax-label block mb-1.5 flex items-center gap-1.5">
+                <ShoppingCart size={12} className="text-gray-400" /> Texte du bouton d'achat
+              </label>
+              <input
+                value={form.texteBoutonAchat}
+                onChange={e => set("texteBoutonAchat", e.target.value)}
+                placeholder="Acheter maintenant"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50"
+              />
+            </div>
+
             {form.type === "physique" && (
-              <div className="pt-2">
+              <div className="pt-2 border-t border-gray-100">
                 <label className="ax-label block mb-1.5">Poids (kg)</label>
                 <input type="number" value={form.poids} onChange={e => set("poids", e.target.value)} placeholder="0.5" min="0" step="0.01"
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50" />
@@ -791,5 +885,24 @@ export default function EditProduitPage() {
         </div>
       </div>
     </div>
+
+    {/* Publication assistant modal */}
+    {showPubAssistant && (
+      <PublicationAssistant
+        produitId={id}
+        nom={form.nom}
+        description={form.description}
+        images={form.images}
+        prix={form.prix}
+        metaTitle={form.metaTitle}
+        faqCount={form.faq.length}
+        onClose={() => setShowPubAssistant(false)}
+        onPublier={async () => {
+          set("actif", true);
+          await sauvegarder();
+        }}
+      />
+    )}
+    </>
   );
 }

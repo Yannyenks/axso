@@ -12,6 +12,7 @@ import {
   IconWhatsApp, IconAvis, IconPaiements, IconSourcing, IconThemes, IconWallet,
   IconConnecteurs, IconContenus,
 } from "./AppIcons";
+import { Download } from "lucide-react";
 
 const NAV_GROUPS = [
   {
@@ -20,8 +21,9 @@ const NAV_GROUPS = [
       { href: "/dashboard",           label: "Accueil",         Icone: IconAccueil,    exact: true },
       { href: "/dashboard/boutique",  label: "Ma boutique",     Icone: IconBoutique },
       { href: "/dashboard/builder",   label: "Constructeur",    Icone: IconBuilder },
-      { href: "/dashboard/produits",  label: "Produits",        Icone: IconProduits },
-      { href: "/dashboard/commandes", label: "Commandes",       Icone: IconCommandes,  badge: true },
+      { href: "/dashboard/produits",        label: "Produits",          Icone: IconProduits, excludePrefix: "/dashboard/produits/digital" },
+      { href: "/dashboard/produits/digital", label: "Produits Digitaux", Icone: Download },
+      { href: "/dashboard/commandes",        label: "Commandes",         Icone: IconCommandes,  badge: true },
       { href: "/dashboard/clients",   label: "Clients",         Icone: IconClients },
       { href: "/dashboard/whatsapp",  label: "WhatsApp",        Icone: IconWhatsApp,   badge: true },
       { href: "/dashboard/avis",      label: "Avis clients",    Icone: IconAvis },
@@ -69,8 +71,11 @@ export function Sidebar() {
   const pathname  = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
-  const isActive = (href: string, exact = false) =>
-    exact ? pathname === href : (href !== "/dashboard" ? pathname.startsWith(href) : pathname === href);
+  const isActive = (href: string, exact = false, excludePrefix?: string) => {
+    if (excludePrefix && pathname.startsWith(excludePrefix)) return false;
+    if (exact) return pathname === href;
+    return href !== "/dashboard" ? pathname.startsWith(href) : pathname === href;
+  };
 
   return (
     <aside
@@ -93,7 +98,7 @@ export function Sidebar() {
             <div className="px-2 space-y-0.5">
               {group.items.map((item) => {
                 const { Icone } = item;
-                const actif    = isActive(item.href, (item as any).exact);
+                const actif    = isActive(item.href, (item as any).exact, (item as any).excludePrefix);
 
                 return (
                   <Link

@@ -6,8 +6,133 @@ import {
   TrendingUp, Shield, MoreHorizontal, Copy, Archive, ArchiveRestore,
   ChevronDown, Search, X, Users, BarChart2, Send, Ban, ExternalLink,
   RefreshCw, Loader2, AlertCircle, Check, Eye, Tag, Clock, Infinity,
+  FileDown, Key, ChevronRight, Sparkles,
 } from "lucide-react";
 import { formatMontant, formatDate } from "@/lib/utils";
+
+// ─── Nouveau système : types digitaux avancés ─────────────────────────────────
+
+type NouveauProduit = {
+  id: string;
+  nom: string;
+  prix: number;
+  actif: boolean;
+  type: string;
+  images: string[];
+  createdAt: string;
+  _count: { lignesCommande: number };
+  produitFichier?: { _count: { fichiers: number } } | null;
+  licenceProduit?: { _count: { cles: number }; cles: { id: string }[] } | null;
+  bundleProduit?: { _count: { elements: number } } | null;
+};
+
+const NOUVEAU_TYPE_CONFIG: Record<string, { icon: any; label: string; color: string; bg: string }> = {
+  fichier:   { icon: FileDown, label: "Fichier(s)",  color: "#1B2A4A", bg: "#1B2A4A12" },
+  licence:   { icon: Key,      label: "Licence",     color: "#16a34a", bg: "#16a34a12" },
+  bundle:    { icon: Package,  label: "Bundle",      color: "#F5A623", bg: "#F5A62312" },
+  formation: { icon: BookOpen, label: "Formation",   color: "#0ea5e9", bg: "#0ea5e912" },
+};
+
+function NouveauxProduitsSection({ devise }: { devise: string }) {
+  const [produits, setProduits] = useState<NouveauProduit[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/produits/digitaux")
+      .then((r) => r.json())
+      .then((d) => { setProduits(d.produits ?? []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading) return null;
+  if (!produits.length) return null;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Sparkles size={14} className="text-[#F5A623]" />
+          <h2 className="text-sm font-semibold text-[#111111]">Nouveau système</h2>
+          <span className="text-xs text-[#AAAAAA] bg-[#F5F5F5] px-2 py-0.5 rounded-full">
+            {produits.length}
+          </span>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        {produits.map((p) => {
+          const cfg = NOUVEAU_TYPE_CONFIG[p.type] ?? NOUVEAU_TYPE_CONFIG.fichier;
+          const Icone = cfg.icon;
+          const thumb = p.images[0];
+
+          let meta = "";
+          if (p.type === "fichier" && p.produitFichier) {
+            const n = p.produitFichier._count.fichiers;
+            meta = `${n} fichier${n !== 1 ? "s" : ""}`;
+          } else if (p.type === "licence" && p.licenceProduit) {
+            const dispo = p.licenceProduit.cles.length;
+            const total = p.licenceProduit._count.cles;
+            meta = `${dispo > 0 ? dispo : 0} / ${total} clés dispo`;
+          } else if (p.type === "bundle" && p.bundleProduit) {
+            const n = p.bundleProduit._count.elements;
+            meta = `${n} produit${n !== 1 ? "s" : ""}`;
+          }
+
+          return (
+            <Link
+              key={p.id}
+              href={`/dashboard/produits/${p.id}`}
+              className="bg-white border border-[#E8E8E8] rounded-2xl overflow-hidden hover:border-[#D0D0D0] hover:shadow-sm transition-all group flex flex-col"
+            >
+              <div className="aspect-video bg-[#F5F5F5] relative overflow-hidden flex-shrink-0">
+                {thumb ? (
+                  <img src={thumb} alt={p.nom} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-1.5" style={{ background: cfg.bg }}>
+                    <Icone size={28} style={{ color: cfg.color }} />
+                    <span className="text-[10px] font-semibold" style={{ color: cfg.color }}>{cfg.label}</span>
+                  </div>
+                )}
+                <div className="absolute top-2 left-2">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ color: cfg.color, background: cfg.bg }}>
+                    <Icone size={9} /> {cfg.label}
+                  </span>
+                </div>
+                {!p.actif && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <span className="text-white text-xs font-bold px-3 py-1 rounded-full bg-black/50 border border-white/20">Brouillon</span>
+                  </div>
+                )}
+              </div>
+              <div className="p-4 flex-1 flex flex-col">
+                <p className="text-sm font-semibold text-[#111111] line-clamp-2 mb-1">{p.nom}</p>
+                {meta && <p className="text-[11px] text-[#AAAAAA] mb-2">{meta}</p>}
+                <div className="mt-auto flex items-center justify-between">
+                  <span className="text-base font-bold text-[#F5A623]">{formatMontant(p.prix, devise)}</span>
+                  <div className="flex items-center gap-1 text-[11px] text-[#AAAAAA]">
+                    <TrendingUp size={10} className="text-[#16A34A]" />
+                    {p._count.lignesCommande} vente{p._count.lignesCommande !== 1 ? "s" : ""}
+                  </div>
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+        <Link
+          href="/dashboard/produits/digital/nouveau"
+          className="border-2 border-dashed border-[#E8E8E8] rounded-2xl p-6 flex flex-col items-center justify-center gap-2 text-center hover:border-[#D0D0D0] hover:bg-[#F9F9F9] transition-all group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-[#F5F5F5] flex items-center justify-center group-hover:bg-[#EDEDED] transition-colors">
+            <Plus size={18} className="text-[#AAAAAA]" />
+          </div>
+          <span className="text-xs font-medium text-[#AAAAAA]">Nouveau produit</span>
+        </Link>
+      </div>
+      <div className="border-t border-[#F0F0F0] pt-4">
+        <p className="text-xs text-[#AAAAAA] font-medium uppercase tracking-wider">Produits classiques</p>
+      </div>
+    </div>
+  );
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -707,6 +832,9 @@ export default function DigitalProduitsPage() {
           Nouveau produit digital
         </Link>
       </div>
+
+      {/* ── Produits nouveau système ── */}
+      <NouveauxProduitsSection devise={devise} />
 
       {/* ── Stats cards ── */}
       {stats && (

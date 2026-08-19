@@ -31,7 +31,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
 
   const taux = tenant.commissionRate ?? 0.06;
 
-  const where: any = { tenantId: tenant.id, actif: true };
+  const where: any = { tenantId: tenant.id, actif: true, visibleListage: { not: false } };
   if (q) where.OR = [
     { nom: { contains: q, mode: "insensitive" } },
     { description: { contains: q, mode: "insensitive" } },
