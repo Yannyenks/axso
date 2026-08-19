@@ -33,7 +33,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <>
       {/* ─── Desktop : sidebar latérale ─────────────────────────── */}
       <div className="hidden md:flex h-screen bg-[#f0f2f8] text-gray-900 overflow-hidden" style={{ fontFamily: "'Poppins', 'Century Gothic', system-ui, sans-serif" }}>
-        <Sidebar />
+        <Sidebar boutiqueNom={boutique?.nomBoutique} boutiqueSlug={boutique?.slug} />
         <div className="flex flex-col flex-1 overflow-hidden">
           <main className={fullBleed ? "flex-1 overflow-hidden flex flex-col" : "flex-1 overflow-y-auto"}>
             {fullBleed ? children : (

@@ -1,16 +1,16 @@
 "use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
-  Home, ShoppingCart, Package, Users, DollarSign,
-  TrendingUp, Store, Settings2, X,
-  Download, FileText, RotateCcw, Monitor,
-  Star, Truck, CreditCard, Wallet,
-  Megaphone, PieChart, MessageSquare, Calendar,
-  BarChart3, Layers, Plug, Bell, Link2,
-  Box, Map, UserCheck, LayoutGrid,
+  Home, ShoppingCart, Monitor, Users, Package, Download,
+  Star, Truck, MessageSquare, BarChart3, Megaphone,
+  DollarSign, CreditCard, Wallet, Map, Box,
+  Settings2, ExternalLink, ArrowLeft, UserCheck,
+  LayoutGrid, Plug, Link2, Bell, Store, ChevronRight,
+  RotateCcw, FileText,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -19,370 +19,337 @@ interface NavItem {
   label: string;
   Icon: React.ElementType;
   badge?: boolean;
+  locked?: boolean;
   exact?: boolean;
   excludePrefix?: string;
 }
 
-interface Group {
-  id: string;
-  label: string;
-  Icon: React.ElementType;
-  gradient: string;
-  color: string;
-  items: NavItem[];
+type Entry = NavItem | { type: "label"; text: string };
+
+export interface SidebarProps {
+  boutiqueNom?: string;
+  boutiqueSlug?: string;
+  userInitials?: string;
 }
 
-// ─── Structure de navigation ──────────────────────────────────────────────────
-const GROUPS: Group[] = [
-  {
-    id: "ventes",
-    label: "Ventes",
-    Icon: ShoppingCart,
-    color: "#F5A623",
-    gradient: "linear-gradient(135deg,#F5A623 0%,#D4911A 100%)",
-    items: [
-      { href: "/dashboard/commandes",   label: "Commandes",       Icon: ShoppingCart, badge: true },
-      { href: "/dashboard/pos",          label: "Point de vente",  Icon: Monitor },
-      { href: "/dashboard/factures",     label: "Factures",        Icon: FileText },
-      { href: "/dashboard/retours",      label: "Retours",         Icon: RotateCcw },
-    ],
-  },
-  {
-    id: "catalogue",
-    label: "Catalogue",
-    Icon: Package,
-    color: "#1B2A4A",
-    gradient: "linear-gradient(135deg,#3a5480 0%,#1B2A4A 100%)",
-    items: [
-      { href: "/dashboard/produits",         label: "Produits",          Icon: Package,   excludePrefix: "/dashboard/produits/digital" },
-      { href: "/dashboard/produits/digital", label: "Produits Digitaux", Icon: Download },
-      { href: "/dashboard/dropshipping",     label: "Dropshipping",      Icon: Layers },
-      { href: "/dashboard/sourcing",         label: "Sourcing",          Icon: Map },
-      { href: "/dashboard/entrepots",        label: "Entrepôts",         Icon: Box },
-    ],
-  },
-  {
-    id: "clients",
-    label: "Clients",
-    Icon: Users,
-    color: "#7c3aed",
-    gradient: "linear-gradient(135deg,#a78bfa 0%,#7c3aed 100%)",
-    items: [
-      { href: "/dashboard/clients",  label: "Clients",       Icon: Users },
-      { href: "/dashboard/avis",     label: "Avis clients",  Icon: Star },
-      { href: "/dashboard/whatsapp", label: "WhatsApp",      Icon: MessageSquare, badge: true },
-      { href: "/dashboard/livreurs", label: "Livreurs",      Icon: Truck },
-    ],
-  },
-  {
-    id: "finance",
-    label: "Finance",
-    Icon: DollarSign,
-    color: "#15803d",
-    gradient: "linear-gradient(135deg,#4ade80 0%,#15803d 100%)",
-    items: [
-      { href: "/dashboard/revenus",     label: "Revenus",     Icon: BarChart3 },
-      { href: "/dashboard/paiements",   label: "Paiements",   Icon: CreditCard },
-      { href: "/dashboard/wallet",      label: "Wallet",      Icon: Wallet },
-      { href: "/dashboard/affiliation", label: "Affiliation", Icon: UserCheck },
-    ],
-  },
-  {
-    id: "croissance",
-    label: "Croissance",
-    Icon: TrendingUp,
-    color: "#be123c",
-    gradient: "linear-gradient(135deg,#fb7185 0%,#be123c 100%)",
-    items: [
-      { href: "/dashboard/marketing",  label: "Marketing",          Icon: Megaphone },
-      { href: "/dashboard/analytics",  label: "Analytics",          Icon: PieChart },
-      { href: "/dashboard/publicite",  label: "Publicités Ads",     Icon: TrendingUp },
-      { href: "/dashboard/messages",   label: "Axsocial",           Icon: MessageSquare, badge: true },
-      { href: "/dashboard/scheduler",  label: "Planificateur",      Icon: Calendar },
-      { href: "/dashboard/veille",     label: "Veille concurrente", Icon: BarChart3 },
-    ],
-  },
-  {
-    id: "boutique",
-    label: "Boutique",
-    Icon: Store,
-    color: "#0284c7",
-    gradient: "linear-gradient(135deg,#38bdf8 0%,#0284c7 100%)",
-    items: [
-      { href: "/dashboard/boutique",      label: "Ma boutique",    Icon: Store },
-      { href: "/dashboard/builder",       label: "Constructeur",   Icon: LayoutGrid },
-      { href: "/dashboard/transporteurs", label: "Transporteurs",  Icon: Truck },
-      { href: "/dashboard/connecteurs",   label: "Connecteurs",    Icon: Plug },
-      { href: "/dashboard/feeds",         label: "Flux produits",  Icon: Link2 },
-      { href: "/dashboard/campagnes",     label: "Campagnes",      Icon: Bell },
-    ],
-  },
-  {
-    id: "parametres",
-    label: "Paramètres",
-    Icon: Settings2,
-    color: "#475569",
-    gradient: "linear-gradient(135deg,#94a3b8 0%,#475569 100%)",
-    items: [
-      { href: "/dashboard/abonnement", label: "Abonnement", Icon: CreditCard },
-      { href: "/dashboard/parametres", label: "Paramètres", Icon: Settings2 },
-    ],
-  },
+// ─── Routes boutique ──────────────────────────────────────────────────────────
+const BOUTIQUE_ROUTES = [
+  "/dashboard/boutique",
+  "/dashboard/builder",
+  "/dashboard/themes",
+  "/dashboard/transporteurs",
+  "/dashboard/connecteurs",
+  "/dashboard/feeds",
+  "/dashboard/campagnes",
 ];
 
-const MAIN_GROUPS  = GROUPS.filter(g => g.id !== "parametres");
-const BOTTOM_GROUP = GROUPS.find(g => g.id === "parametres")!;
+// ─── Navigation principale ────────────────────────────────────────────────────
+const MAIN_NAV: Entry[] = [
+  { type: "label", text: "VENTES" },
+  { href: "/dashboard",                  label: "Accueil",           Icon: Home,          exact: true },
+  { href: "/dashboard/commandes",        label: "Commandes",         Icon: ShoppingCart,  badge: true },
+  { href: "/dashboard/pos",              label: "Point de vente",    Icon: Monitor },
+  { href: "/dashboard/factures",         label: "Factures",          Icon: FileText },
+  { href: "/dashboard/retours",          label: "Retours",           Icon: RotateCcw },
 
-// ─── Component ────────────────────────────────────────────────────────────────
-export function Sidebar() {
+  { type: "label", text: "CLIENTS" },
+  { href: "/dashboard/clients",          label: "Clients",           Icon: Users },
+  { href: "/dashboard/avis",             label: "Avis clients",      Icon: Star },
+  { href: "/dashboard/whatsapp",         label: "WhatsApp",          Icon: MessageSquare, badge: true },
+  { href: "/dashboard/livreurs",         label: "Livreurs",          Icon: Truck },
+
+  { type: "label", text: "CATALOGUE" },
+  { href: "/dashboard/produits",         label: "Produits",          Icon: Package,       excludePrefix: "/dashboard/produits/digital" },
+  { href: "/dashboard/produits/digital", label: "Produits Digitaux", Icon: Download },
+  { href: "/dashboard/sourcing",         label: "Sourcing",          Icon: Map },
+  { href: "/dashboard/entrepots",        label: "Entrepôts",         Icon: Box },
+
+  { type: "label", text: "CROISSANCE" },
+  { href: "/dashboard/analytics",        label: "Analytics",         Icon: BarChart3 },
+  { href: "/dashboard/marketing",        label: "Marketing",         Icon: Megaphone },
+  { href: "/dashboard/affiliation",      label: "Affiliation",       Icon: UserCheck },
+
+  { type: "label", text: "FINANCE" },
+  { href: "/dashboard/revenus",          label: "Revenus",           Icon: DollarSign },
+  { href: "/dashboard/paiements",        label: "Paiements",         Icon: CreditCard },
+  { href: "/dashboard/wallet",           label: "Wallet",            Icon: Wallet },
+
+  { type: "label", text: "COMPTE" },
+  { href: "/dashboard/abonnement",       label: "Abonnement",        Icon: CreditCard },
+];
+
+// ─── Navigation boutique ──────────────────────────────────────────────────────
+const BOUTIQUE_NAV: NavItem[] = [
+  { href: "/dashboard/boutique",         label: "Dashboard",          Icon: Home,         exact: true },
+  { href: "/dashboard/commandes",        label: "Commandes",          Icon: ShoppingCart, badge: true },
+  { href: "/dashboard/produits",         label: "Produits",           Icon: Package,      excludePrefix: "/dashboard/produits/digital" },
+  { href: "/dashboard/themes",           label: "Thèmes",             Icon: LayoutGrid },
+  { href: "/dashboard/builder",          label: "Constructeur",       Icon: LayoutGrid },
+  { href: "/dashboard/transporteurs",    label: "Transporteurs",      Icon: Truck },
+  { href: "/dashboard/connecteurs",      label: "Connecteurs",        Icon: Plug },
+  { href: "/dashboard/feeds",            label: "Flux produits",      Icon: Link2 },
+  { href: "/dashboard/campagnes",        label: "Campagnes",          Icon: Bell },
+  { href: "/dashboard/parametres",       label: "Réglages",           Icon: Settings2 },
+];
+
+// ─── Helper active ────────────────────────────────────────────────────────────
+function isActive(item: NavItem, pathname: string) {
+  if (item.excludePrefix && pathname.startsWith(item.excludePrefix)) return false;
+  if (item.exact) return pathname === item.href;
+  return item.href !== "/dashboard"
+    ? pathname.startsWith(item.href)
+    : pathname === item.href;
+}
+
+// ─── NavLink ──────────────────────────────────────────────────────────────────
+function NavLink({
+  item, pathname,
+  accent = "#F5A623",
+  activeBg = "#FFF7ED",
+  activeText = "#92400E",
+}: {
+  item: NavItem;
+  pathname: string;
+  accent?: string;
+  activeBg?: string;
+  activeText?: string;
+}) {
+  const active = isActive(item, pathname);
+  return (
+    <Link
+      href={item.href}
+      className={cn(
+        "relative flex items-center gap-2.5 px-3 py-[7px] rounded-xl text-[12.5px] font-medium transition-all duration-100 group",
+        !active && "hover:bg-gray-50/80"
+      )}
+      style={active ? { backgroundColor: activeBg, color: activeText } : undefined}
+    >
+      {active && (
+        <span
+          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[18px] rounded-full"
+          style={{ backgroundColor: accent }}
+        />
+      )}
+      <item.Icon
+        size={15}
+        className="flex-shrink-0 transition-colors"
+        style={{ color: active ? accent : "#94A3B8" }}
+      />
+      <span
+        className={cn("flex-1 truncate leading-none", !active && "text-gray-600 group-hover:text-gray-900")}
+      >
+        {item.label}
+      </span>
+      {item.badge && (
+        <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ backgroundColor: accent }} />
+      )}
+    </Link>
+  );
+}
+
+// ─── Sidebar principale ────────────────────────────────────────────────────────
+function MainSidebar({
+  pathname, boutiqueNom, userInitials, onBoutique,
+}: {
+  pathname: string;
+  boutiqueNom?: string;
+  userInitials?: string;
+  onBoutique: () => void;
+}) {
+  return (
+    <>
+      {/* Logo */}
+      <div className="h-14 flex items-center px-4 flex-shrink-0 border-b border-gray-100">
+        <img
+          src="/logo.png"
+          alt="Axso"
+          className="h-[28px] object-contain"
+          onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+        />
+      </div>
+
+      {/* Ma boutique CTA */}
+      <div className="px-3 pt-3 pb-2 flex-shrink-0">
+        <button
+          type="button"
+          onClick={onBoutique}
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:brightness-105 active:scale-[0.98] transition-all group"
+          style={{ background: "linear-gradient(135deg,#1B2A4A 0%,#2c4270 100%)" }}
+        >
+          <div className="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center flex-shrink-0">
+            <Store size={13} className="text-white" />
+          </div>
+          <div className="flex-1 min-w-0 text-left">
+            <div className="text-[11.5px] font-bold text-white leading-tight truncate">
+              {boutiqueNom || "Ma boutique"}
+            </div>
+            <div className="text-[9.5px] text-white/45 leading-none mt-[3px]">Gérer la boutique</div>
+          </div>
+          <ChevronRight size={12} className="text-white/35 group-hover:text-white/75 flex-shrink-0 transition-colors" />
+        </button>
+      </div>
+
+      {/* Nav */}
+      <nav
+        className="flex-1 px-2.5 pb-2 overflow-y-auto"
+        style={{ scrollbarWidth: "none" }}
+      >
+        <div className="space-y-px">
+          {MAIN_NAV.map((entry, i) => {
+            if ("type" in entry) {
+              return (
+                <div key={i} className="pt-3 pb-1 px-1">
+                  <span className="text-[9.5px] font-bold tracking-[0.12em] text-gray-400/70">
+                    {entry.text}
+                  </span>
+                </div>
+              );
+            }
+            return <NavLink key={entry.href} item={entry} pathname={pathname} />;
+          })}
+        </div>
+      </nav>
+
+      {/* Bottom — paramètres */}
+      <div className="border-t border-gray-100 px-3 py-3 flex-shrink-0">
+        <Link
+          href="/dashboard/parametres"
+          className={cn(
+            "flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all group",
+            pathname.startsWith("/dashboard/parametres") ? "bg-[#FFF7ED]" : "hover:bg-gray-50"
+          )}
+        >
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white text-[11px] font-bold"
+            style={{ background: "linear-gradient(135deg,#F5A623,#D4911A)" }}
+          >
+            {userInitials || "A"}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[11.5px] font-semibold text-gray-700 leading-tight">Mon compte</div>
+            <div className="text-[10px] text-gray-400 leading-none mt-[3px]">Paramètres</div>
+          </div>
+          <Settings2 size={13} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
+        </Link>
+      </div>
+    </>
+  );
+}
+
+// ─── Sidebar boutique (mode boutique) ─────────────────────────────────────────
+function BoutiqueSidebar({
+  pathname, boutiqueNom, boutiqueSlug, onRetour,
+}: {
+  pathname: string;
+  boutiqueNom?: string;
+  boutiqueSlug?: string;
+  onRetour: () => void;
+}) {
+  return (
+    <>
+      {/* Retour */}
+      <button
+        type="button"
+        onClick={onRetour}
+        className="h-14 w-full flex items-center gap-2.5 px-4 border-b border-gray-100 text-gray-400 hover:text-gray-700 hover:bg-gray-50/80 transition-all flex-shrink-0"
+      >
+        <ArrowLeft size={14} />
+        <span className="text-[12.5px] font-medium">Retour au dashboard</span>
+      </button>
+
+      {/* Store identity */}
+      <div className="px-4 py-3.5 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: "linear-gradient(135deg,#1B2A4A,#3a5480)" }}
+          >
+            <Store size={16} className="text-white" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[13px] font-bold text-gray-800 truncate leading-tight">
+              {boutiqueNom || "Ma boutique"}
+            </div>
+            <div className="text-[10px] font-semibold mt-[3px]" style={{ color: "#0284c7" }}>
+              Module Boutique
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Nav boutique */}
+      <nav
+        className="flex-1 px-2.5 py-3 overflow-y-auto space-y-px"
+        style={{ scrollbarWidth: "none" }}
+      >
+        {BOUTIQUE_NAV.map(item => (
+          <NavLink
+            key={item.href}
+            item={item}
+            pathname={pathname}
+            accent="#0284c7"
+            activeBg="#EFF6FF"
+            activeText="#0369a1"
+          />
+        ))}
+      </nav>
+
+      {/* Voir boutique */}
+      <div className="border-t border-gray-100 p-3 flex-shrink-0">
+        {boutiqueSlug ? (
+          <a
+            href={`/${boutiqueSlug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:brightness-105 active:scale-[0.98] transition-all"
+            style={{ background: "linear-gradient(135deg,#0284c7,#0369a1)" }}
+          >
+            <ExternalLink size={13} className="text-white/80 flex-shrink-0" />
+            <span className="text-[12px] font-bold text-white">Voir ma boutique</span>
+          </a>
+        ) : (
+          <div className="px-3 py-2 text-[11px] text-gray-400 text-center">
+            Boutique non configurée
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+// ─── Export ───────────────────────────────────────────────────────────────────
+export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials }: SidebarProps) {
   const pathname = usePathname();
-  const [activeGroup, setActiveGroup] = useState<string | null>(null);
+  const [mode, setMode] = useState<"main" | "boutique">("main");
 
-  // Sélectionne automatiquement le bon groupe au chargement initial
   useEffect(() => {
-    const match = GROUPS.find(g =>
-      g.items.some(i => {
-        if (i.excludePrefix && pathname.startsWith(i.excludePrefix)) return false;
-        if (i.exact) return pathname === i.href;
-        return i.href !== "/dashboard" && pathname.startsWith(i.href);
-      })
-    );
-    if (match) setActiveGroup(match.id);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const isItemActive = (item: NavItem) => {
-    if (item.excludePrefix && pathname.startsWith(item.excludePrefix)) return false;
-    if (item.exact) return pathname === item.href;
-    return item.href !== "/dashboard" ? pathname.startsWith(item.href) : pathname === item.href;
-  };
-
-  const isGroupHasActive = (g: Group) => g.items.some(isItemActive);
-
-  const currentGroup = GROUPS.find(g => g.id === activeGroup) ?? null;
-
-  const toggleGroup = (id: string) =>
-    setActiveGroup(prev => (prev === id ? null : id));
+    setMode(BOUTIQUE_ROUTES.some(r => pathname.startsWith(r)) ? "boutique" : "main");
+  }, [pathname]);
 
   return (
     <aside
-      className="flex h-screen flex-shrink-0"
-      style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}
+      className="flex-shrink-0 h-screen flex flex-col bg-white border-r border-gray-100"
+      style={{
+        width: "224px",
+        boxShadow: "1px 0 12px rgba(0,0,0,0.03)",
+        fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif",
+      }}
     >
-      {/* ════════════════════════════════════════════════════════════
-          RAIL — 64 px, toujours visible
-      ════════════════════════════════════════════════════════════ */}
-      <div className="w-[64px] flex flex-col bg-white border-r border-gray-100 shadow-sm flex-shrink-0 relative z-10">
-
-        {/* Logo */}
-        <div className="h-[56px] flex items-center justify-center border-b border-gray-100 flex-shrink-0">
-          <img
-            src="/logo-icon.png"
-            alt="Axso"
-            className="w-8 h-8 object-contain"
-            onError={e => { (e.currentTarget as HTMLImageElement).src = ""; }}
-          />
-        </div>
-
-        {/* Accueil — lien direct, pas de sous-panel */}
-        <div className="px-2 pt-3 pb-1">
-          <Link
-            href="/dashboard"
-            title="Accueil"
-            className={cn(
-              "flex flex-col items-center justify-center w-full py-2.5 rounded-2xl transition-all duration-150 group",
-              pathname === "/dashboard" ? "bg-[#1B2A4A]/8" : "hover:bg-gray-50"
-            )}
-          >
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg,#3a5480 0%,#1B2A4A 100%)" }}
-            >
-              <Home size={16} className="text-white" />
-            </div>
-            <span className="text-[9px] mt-1.5 font-semibold text-gray-400 group-hover:text-gray-600 leading-none">
-              Accueil
-            </span>
-          </Link>
-        </div>
-
-        <div className="mx-3 border-t border-gray-100 mb-1" />
-
-        {/* Groupes principaux */}
-        <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
-          {MAIN_GROUPS.map(g => {
-            const isOpen    = activeGroup === g.id;
-            const hasActive = isGroupHasActive(g);
-
-            return (
-              <button
-                key={g.id}
-                type="button"
-                title={g.label}
-                onClick={() => toggleGroup(g.id)}
-                className={cn(
-                  "relative flex flex-col items-center justify-center w-full py-2.5 rounded-2xl transition-all duration-150 group",
-                  isOpen    ? "bg-gray-100/80"  :
-                  hasActive ? "bg-gray-50"       : "hover:bg-gray-50"
-                )}
-              >
-                {/* Indicateur de page active quand panel fermé */}
-                {hasActive && !isOpen && (
-                  <span
-                    className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full"
-                    style={{ background: g.color }}
-                  />
-                )}
-
-                <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform duration-150 group-hover:scale-105"
-                  style={{
-                    background: isOpen || hasActive
-                      ? g.gradient
-                      : "linear-gradient(135deg,#e5e7eb,#d1d5db)",
-                  }}
-                >
-                  <g.Icon size={16} className="text-white" />
-                </div>
-                <span className={cn(
-                  "text-[9px] mt-1.5 font-semibold leading-none",
-                  isOpen    ? "text-gray-700"  :
-                  hasActive ? "text-gray-600"  : "text-gray-400 group-hover:text-gray-600"
-                )}>
-                  {g.label}
-                </span>
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Paramètres — fixé en bas */}
-        <div className="px-2 pb-3 pt-2 border-t border-gray-100 flex-shrink-0">
-          {(() => {
-            const g = BOTTOM_GROUP;
-            const isOpen    = activeGroup === g.id;
-            const hasActive = isGroupHasActive(g);
-            return (
-              <button
-                type="button"
-                title={g.label}
-                onClick={() => toggleGroup(g.id)}
-                className={cn(
-                  "flex flex-col items-center justify-center w-full py-2.5 rounded-2xl transition-all duration-150 group",
-                  isOpen ? "bg-gray-100/80" : "hover:bg-gray-50"
-                )}
-              >
-                <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform duration-150 group-hover:scale-105"
-                  style={{ background: isOpen || hasActive ? g.gradient : "linear-gradient(135deg,#e5e7eb,#d1d5db)" }}
-                >
-                  <g.Icon size={16} className="text-white" />
-                </div>
-                <span className={cn(
-                  "text-[9px] mt-1.5 font-semibold leading-none",
-                  isOpen ? "text-gray-700" : "text-gray-400 group-hover:text-gray-600"
-                )}>
-                  {g.label}
-                </span>
-              </button>
-            );
-          })()}
-        </div>
-      </div>
-
-      {/* ════════════════════════════════════════════════════════════
-          SOUS-PANEL — 196 px, apparaît/disparaît par transition CSS
-      ════════════════════════════════════════════════════════════ */}
-      <div
-        className={cn(
-          "flex flex-col bg-white border-r border-gray-100 overflow-hidden flex-shrink-0",
-          "transition-[width] duration-200 ease-in-out"
-        )}
-        style={{ width: activeGroup ? "196px" : "0px" }}
-      >
-        {currentGroup && (
-          <>
-            {/* En-tête du panel */}
-            <div className="h-[56px] flex items-center justify-between px-3.5 border-b border-gray-100 flex-shrink-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <div
-                  className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: currentGroup.gradient }}
-                >
-                  <currentGroup.Icon size={12} className="text-white" />
-                </div>
-                <span className="text-[10.5px] font-black uppercase tracking-[0.18em] text-gray-600 truncate">
-                  {currentGroup.label}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveGroup(null)}
-                className="w-6 h-6 rounded-lg flex items-center justify-center text-gray-300 hover:text-gray-600 hover:bg-gray-100 transition-all flex-shrink-0"
-              >
-                <X size={13} />
-              </button>
-            </div>
-
-            {/* Liste des sous-items */}
-            <nav
-              className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto"
-              style={{ scrollbarWidth: "none" }}
-            >
-              {currentGroup.items.map(item => {
-                const actif = isItemActive(item);
-                const ItemIcon = item.Icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all duration-100 group whitespace-nowrap",
-                      actif ? "bg-[#FFF3DC]" : "hover:bg-gray-50"
-                    )}
-                  >
-                    {/* Icône de l'item */}
-                    <div
-                      className="w-[26px] h-[26px] rounded-lg flex items-center justify-center flex-shrink-0 transition-all"
-                      style={{
-                        background: actif
-                          ? currentGroup.gradient
-                          : "transparent",
-                      }}
-                    >
-                      <ItemIcon
-                        size={13}
-                        className={cn(
-                          "transition-colors",
-                          actif
-                            ? "text-white"
-                            : "text-gray-400 group-hover:text-gray-600"
-                        )}
-                      />
-                    </div>
-
-                    <span className={cn(
-                      "text-[12px] font-medium flex-1 truncate",
-                      actif
-                        ? "text-[#B4740A] font-semibold"
-                        : "text-gray-500 group-hover:text-gray-800"
-                    )}>
-                      {item.label}
-                    </span>
-
-                    {item.badge && (
-                      <span
-                        className="w-2 h-2 rounded-full flex-shrink-0"
-                        style={{ background: currentGroup.color }}
-                      />
-                    )}
-                  </Link>
-                );
-              })}
-            </nav>
-          </>
-        )}
-      </div>
+      {mode === "boutique" ? (
+        <BoutiqueSidebar
+          pathname={pathname}
+          boutiqueNom={boutiqueNom}
+          boutiqueSlug={boutiqueSlug}
+          onRetour={() => setMode("main")}
+        />
+      ) : (
+        <MainSidebar
+          pathname={pathname}
+          boutiqueNom={boutiqueNom}
+          userInitials={userInitials}
+          onBoutique={() => { setMode("boutique"); }}
+        />
+      )}
     </aside>
   );
 }
