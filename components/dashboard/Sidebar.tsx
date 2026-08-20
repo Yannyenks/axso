@@ -83,6 +83,7 @@ const BOUTIQUE_NAV: NavItem[] = [
   { href: "/dashboard/boutique",         label: "Dashboard",          Icon: Home,         exact: true },
   { href: "/dashboard/commandes",        label: "Commandes",          Icon: ShoppingCart, badge: true },
   { href: "/dashboard/produits",         label: "Produits",           Icon: Package,      excludePrefix: "/dashboard/produits/digital" },
+  { href: "/dashboard/produits/digital", label: "Produits Digitaux",  Icon: Download },
   { href: "/dashboard/themes",           label: "Thèmes",             Icon: LayoutGrid },
   { href: "/dashboard/builder",          label: "Constructeur",       Icon: LayoutGrid },
   { href: "/dashboard/transporteurs",    label: "Transporteurs",      Icon: Truck },
