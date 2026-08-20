@@ -119,29 +119,44 @@ function NavLink({
     <Link
       href={item.href}
       className={cn(
-        "relative flex items-center gap-2.5 px-3 py-[7px] rounded-xl text-[12.5px] font-medium transition-all duration-100 group",
-        !active && "hover:bg-gray-50/80"
+        "relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13.5px] font-medium transition-all duration-150 group",
+        !active && "hover:bg-gray-50"
       )}
       style={active ? { backgroundColor: activeBg, color: activeText } : undefined}
     >
+      {/* Indicateur actif */}
       {active && (
         <span
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[18px] rounded-full"
+          className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full"
           style={{ backgroundColor: accent }}
         />
       )}
-      <item.Icon
-        size={15}
-        className="flex-shrink-0 transition-colors"
-        style={{ color: active ? accent : "#94A3B8" }}
-      />
+
+      {/* Icône */}
       <span
-        className={cn("flex-1 truncate leading-none", !active && "text-gray-600 group-hover:text-gray-900")}
+        className="flex-shrink-0 flex items-center justify-center w-[30px] h-[30px] rounded-lg transition-all"
+        style={active
+          ? { backgroundColor: `${accent}22`, color: accent }
+          : { backgroundColor: "transparent", color: "#9CA3AF" }
+        }
       >
+        <item.Icon size={16} />
+      </span>
+
+      {/* Label */}
+      <span className={cn(
+        "flex-1 truncate leading-none font-medium",
+        !active && "text-gray-500 group-hover:text-gray-800"
+      )}>
         {item.label}
       </span>
+
+      {/* Badge live */}
       {item.badge && (
-        <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ backgroundColor: accent }} />
+        <span
+          className="w-2 h-2 rounded-full flex-shrink-0 animate-pulse"
+          style={{ backgroundColor: accent }}
+        />
       )}
     </Link>
   );
@@ -159,49 +174,65 @@ function MainSidebar({
   return (
     <>
       {/* Logo */}
-      <div className="h-14 flex items-center px-4 flex-shrink-0 border-b border-gray-100">
+      <div className="h-[60px] flex items-center px-5 flex-shrink-0 border-b border-gray-100/80">
         <img
           src="/logo.png"
           alt="Axso"
-          className="h-[28px] object-contain"
+          className="h-8 object-contain"
           onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
         />
       </div>
 
       {/* Ma boutique CTA */}
-      <div className="px-3 pt-3 pb-2 flex-shrink-0">
+      <div className="px-3.5 pt-3.5 pb-2 flex-shrink-0">
         <button
           type="button"
           onClick={onBoutique}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:brightness-105 active:scale-[0.98] transition-all group"
-          style={{ background: "linear-gradient(135deg,#1B2A4A 0%,#2c4270 100%)" }}
+          className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl active:scale-[0.98] transition-all group"
+          style={{
+            background: "linear-gradient(135deg,#1B2A4A 0%,#2c4270 100%)",
+            boxShadow: "0 2px 12px rgba(27,42,74,0.25)",
+          }}
         >
-          <div className="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center flex-shrink-0">
-            <Store size={13} className="text-white" />
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: "rgba(255,255,255,0.12)" }}
+          >
+            <Store size={15} className="text-white" />
           </div>
           <div className="flex-1 min-w-0 text-left">
-            <div className="text-[11.5px] font-bold text-white leading-tight truncate">
+            <div className="text-[13px] font-bold text-white leading-tight truncate">
               {boutiqueNom || "Ma boutique"}
             </div>
-            <div className="text-[9.5px] text-white/45 leading-none mt-[3px]">Gérer la boutique</div>
+            <div className="text-[10.5px] text-white/50 leading-none mt-1">Gérer la boutique</div>
           </div>
-          <ChevronRight size={12} className="text-white/35 group-hover:text-white/75 flex-shrink-0 transition-colors" />
+          <ChevronRight
+            size={14}
+            className="text-white/40 group-hover:text-white/80 flex-shrink-0 transition-all group-hover:translate-x-0.5"
+          />
         </button>
       </div>
 
+      {/* Séparateur */}
+      <div className="mx-4 border-t border-gray-100 mb-1" />
+
       {/* Nav */}
       <nav
-        className="flex-1 px-2.5 pb-2 overflow-y-auto"
+        className="flex-1 px-3 pb-3 overflow-y-auto"
         style={{ scrollbarWidth: "none" }}
       >
-        <div className="space-y-px">
+        <div className="space-y-0.5">
           {MAIN_NAV.map((entry, i) => {
             if ("type" in entry) {
               return (
-                <div key={i} className="pt-3 pb-1 px-1">
-                  <span className="text-[9.5px] font-bold tracking-[0.12em] text-gray-400/70">
+                <div key={i} className="pt-4 pb-1.5 px-1 flex items-center gap-2">
+                  <span
+                    className="text-[10.5px] font-bold tracking-[0.15em] uppercase"
+                    style={{ color: "#B0B8C8" }}
+                  >
                     {entry.text}
                   </span>
+                  <div className="flex-1 h-px" style={{ backgroundColor: "#F1F4F9" }} />
                 </div>
               );
             }
@@ -211,32 +242,38 @@ function MainSidebar({
       </nav>
 
       {/* Bottom — paramètres */}
-      <div className="border-t border-gray-100 px-3 py-3 flex-shrink-0">
+      <div
+        className="flex-shrink-0 px-3.5 py-3"
+        style={{ borderTop: "1px solid #F1F4F9" }}
+      >
         <Link
           href="/dashboard/parametres"
           className={cn(
-            "flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all group",
+            "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group",
             pathname.startsWith("/dashboard/parametres") ? "bg-[#FFF7ED]" : "hover:bg-gray-50"
           )}
         >
           <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white text-[11px] font-bold"
-            style={{ background: "linear-gradient(135deg,#F5A623,#D4911A)" }}
+            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-[13px] font-bold"
+            style={{
+              background: "linear-gradient(135deg,#F5A623,#D4911A)",
+              boxShadow: "0 2px 8px rgba(245,166,35,0.3)",
+            }}
           >
             {userInitials || "A"}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[11.5px] font-semibold text-gray-700 leading-tight">Mon compte</div>
-            <div className="text-[10px] text-gray-400 leading-none mt-[3px]">Paramètres</div>
+            <div className="text-[13px] font-semibold text-gray-700 leading-tight">Mon compte</div>
+            <div className="text-[11px] text-gray-400 leading-none mt-1">Paramètres</div>
           </div>
-          <Settings2 size={13} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
+          <Settings2 size={14} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
         </Link>
       </div>
     </>
   );
 }
 
-// ─── Sidebar boutique (mode boutique) ─────────────────────────────────────────
+// ─── Sidebar boutique ─────────────────────────────────────────────────────────
 function BoutiqueSidebar({
   pathname, boutiqueNom, boutiqueSlug, onRetour,
 }: {
@@ -251,35 +288,48 @@ function BoutiqueSidebar({
       <button
         type="button"
         onClick={onRetour}
-        className="h-14 w-full flex items-center gap-2.5 px-4 border-b border-gray-100 text-gray-400 hover:text-gray-700 hover:bg-gray-50/80 transition-all flex-shrink-0"
+        className="h-[60px] w-full flex items-center gap-3 px-5 border-b border-gray-100/80 group transition-all hover:bg-gray-50 flex-shrink-0"
       >
-        <ArrowLeft size={14} />
-        <span className="text-[12.5px] font-medium">Retour au dashboard</span>
+        <span className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:bg-gray-200 transition-colors">
+          <ArrowLeft size={14} className="text-gray-500" />
+        </span>
+        <span className="text-[13.5px] font-medium text-gray-500 group-hover:text-gray-800 transition-colors">
+          Retour au dashboard
+        </span>
       </button>
 
       {/* Store identity */}
-      <div className="px-4 py-3.5 border-b border-gray-100 flex-shrink-0">
-        <div className="flex items-center gap-3">
+      <div className="px-4 py-4 flex-shrink-0">
+        <div
+          className="flex items-center gap-3 px-3.5 py-3 rounded-xl"
+          style={{ backgroundColor: "#F0F6FF" }}
+        >
           <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: "linear-gradient(135deg,#1B2A4A,#3a5480)" }}
+            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{
+              background: "linear-gradient(135deg,#1B2A4A,#3a5480)",
+              boxShadow: "0 2px 10px rgba(27,42,74,0.3)",
+            }}
           >
-            <Store size={16} className="text-white" />
+            <Store size={18} className="text-white" />
           </div>
           <div className="min-w-0">
-            <div className="text-[13px] font-bold text-gray-800 truncate leading-tight">
+            <div className="text-[13.5px] font-bold text-gray-800 truncate leading-tight">
               {boutiqueNom || "Ma boutique"}
             </div>
-            <div className="text-[10px] font-semibold mt-[3px]" style={{ color: "#0284c7" }}>
+            <div className="text-[11px] font-semibold mt-1" style={{ color: "#0284c7" }}>
               Module Boutique
             </div>
           </div>
         </div>
       </div>
 
+      {/* Séparateur */}
+      <div className="mx-4 border-t border-gray-100 mb-1" />
+
       {/* Nav boutique */}
       <nav
-        className="flex-1 px-2.5 py-3 overflow-y-auto space-y-px"
+        className="flex-1 px-3 py-2 overflow-y-auto space-y-0.5"
         style={{ scrollbarWidth: "none" }}
       >
         {BOUTIQUE_NAV.map(item => (
@@ -295,20 +345,24 @@ function BoutiqueSidebar({
       </nav>
 
       {/* Voir boutique */}
-      <div className="border-t border-gray-100 p-3 flex-shrink-0">
+      <div className="flex-shrink-0 px-3.5 py-3" style={{ borderTop: "1px solid #F1F4F9" }}>
         {boutiqueSlug ? (
           <a
             href={`/${boutiqueSlug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:brightness-105 active:scale-[0.98] transition-all"
-            style={{ background: "linear-gradient(135deg,#0284c7,#0369a1)" }}
+            className="flex items-center gap-3 px-3.5 py-3 rounded-xl active:scale-[0.98] transition-all group"
+            style={{
+              background: "linear-gradient(135deg,#0284c7,#0369a1)",
+              boxShadow: "0 2px 12px rgba(2,132,199,0.25)",
+            }}
           >
-            <ExternalLink size={13} className="text-white/80 flex-shrink-0" />
-            <span className="text-[12px] font-bold text-white">Voir ma boutique</span>
+            <ExternalLink size={15} className="text-white/80 flex-shrink-0" />
+            <span className="text-[13px] font-bold text-white flex-1">Voir ma boutique</span>
+            <ChevronRight size={13} className="text-white/40 group-hover:text-white/80 transition-all group-hover:translate-x-0.5" />
           </a>
         ) : (
-          <div className="px-3 py-2 text-[11px] text-gray-400 text-center">
+          <div className="px-3 py-3 text-[12px] text-gray-400 text-center bg-gray-50 rounded-xl">
             Boutique non configurée
           </div>
         )}
@@ -328,10 +382,10 @@ export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials }: SidebarProp
 
   return (
     <aside
-      className="flex-shrink-0 h-screen flex flex-col bg-white border-r border-gray-100"
+      className="flex-shrink-0 h-screen flex flex-col bg-white border-r border-gray-100/80"
       style={{
-        width: "224px",
-        boxShadow: "1px 0 12px rgba(0,0,0,0.03)",
+        width: "252px",
+        boxShadow: "2px 0 20px rgba(0,0,0,0.04)",
         fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif",
       }}
     >
@@ -347,7 +401,7 @@ export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials }: SidebarProp
           pathname={pathname}
           boutiqueNom={boutiqueNom}
           userInitials={userInitials}
-          onBoutique={() => { setMode("boutique"); }}
+          onBoutique={() => setMode("boutique")}
         />
       )}
     </aside>
