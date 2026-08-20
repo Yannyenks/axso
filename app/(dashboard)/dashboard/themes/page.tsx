@@ -3,8 +3,60 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PCOnlyGate } from "@/components/dashboard/PCOnlyGate";
-import { Plus, Palette, Check, Trash2, Edit2, ExternalLink, Sparkles } from "lucide-react";
+import {
+  Plus, Palette, Check, Trash2, Edit2, ExternalLink,
+  Sparkles, Sun, Layers, ArrowLeft, Zap,
+} from "lucide-react";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+type Variant = "original" | "light" | "concentrated";
+
+interface ThemeColors {
+  fond: string;
+  accent: string;
+  texte: string;
+  surface: string;
+  texteMuted?: string;
+  bordure?: string;
+}
+
+function lightVariantColors(base: ThemeColors): ThemeColors {
+  return {
+    fond: "#FFFFFF",
+    surface: "#F8F9FB",
+    texte: "#111827",
+    texteMuted: "#6B7280",
+    bordure: "#E5E7EB",
+    accent: base.accent,
+  };
+}
+
+function concentratedVariantColors(base: ThemeColors): ThemeColors {
+  const accent = base.accent;
+  return {
+    fond: base.texte,
+    surface: shadeHex(base.texte, 15),
+    texte: "#FFFFFF",
+    texteMuted: "rgba(255,255,255,0.6)",
+    bordure: "rgba(255,255,255,0.12)",
+    accent,
+  };
+}
+
+function shadeHex(hex: string, amount: number): string {
+  try {
+    const h = hex.replace("#", "");
+    const num = parseInt(h, 16);
+    const r = Math.min(255, Math.max(0, (num >> 16) + amount));
+    const g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + amount));
+    const b = Math.min(255, Math.max(0, (num & 0xff) + amount));
+    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
+  } catch {
+    return hex;
+  }
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function ThemesPage() {
   const router = useRouter();
   const [themes, setThemes] = useState<any[]>([]);
@@ -24,16 +76,23 @@ export default function ThemesPage() {
     });
   }, []);
 
-  async function activer(themeId: string) {
-    setActivating(themeId);
+  async function activer(themeSlug: string, variant: Variant, baseColors: ThemeColors) {
+    const key = `${themeSlug}-${variant}`;
+    setActivating(key);
     try {
+      let body: Record<string, any> = { themeId: themeSlug };
+      if (variant === "light") {
+        body.themeConfig = { colors: lightVariantColors(baseColors) };
+      } else if (variant === "concentrated") {
+        body.themeConfig = { colors: concentratedVariantColors(baseColors) };
+      }
       await fetch("/api/tenants", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ themeId }),
+        body: JSON.stringify(body),
       });
-      setTenant((t: any) => ({ ...t, themeId }));
-      toast.success("Thème activé sur votre boutique !");
+      setTenant((t: any) => ({ ...t, themeId: themeSlug, activeVariant: variant }));
+      toast.success(`Thème "${variant === "light" ? "Clair" : variant === "concentrated" ? "Concentré" : "Original"}" activé !`);
     } catch {
       toast.error("Erreur lors de l'activation");
     } finally {
@@ -57,7 +116,7 @@ export default function ThemesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-screen bg-white">
         <div className="w-6 h-6 border-2 border-[#F5A623] border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -67,182 +126,319 @@ export default function ThemesPage() {
   const custom = themes.filter((t) => !t.builtin);
 
   return (
-    <div className="max-w-6xl space-y-8">
+    <div
+      className="h-screen flex flex-col bg-[#F5F7FA] overflow-hidden"
+      style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}
+    >
       <PCOnlyGate label="Theme Studio" />
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 font-poppins">Theme Studio</h1>
-          <p className="text-gray-400 text-sm mt-1">Créez et gérez les thèmes de votre boutique</p>
-        </div>
+
+      {/* ── Header ── */}
+      <header className="h-14 flex items-center gap-4 px-6 bg-white border-b border-gray-200 flex-shrink-0">
         <button
-          onClick={() => router.push("/dashboard/themes/creer")}
-          className="flex items-center gap-2 bg-[#F5A623] text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-[#d4820a] transition-all shadow-lg shadow-[#F5A623]/25"
+          onClick={() => router.push("/dashboard/boutique")}
+          className="flex items-center gap-2 text-gray-400 hover:text-gray-700 transition-colors"
         >
-          <Plus size={16} /> Créer un thème
+          <ArrowLeft size={15} />
+          <span className="text-sm font-medium">Boutique</span>
         </button>
-      </div>
-
-      {/* Thème actif */}
-      {tenant && (
-        <div className="bg-gradient-to-r from-[#F5A623]/10 to-transparent border border-[#F5A623]/20 rounded-2xl p-4 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-[#F5A623]/20 flex items-center justify-center">
-            <Palette size={18} className="text-[#F5A623]" />
-          </div>
-          <div>
-            <p className="text-gray-500 text-xs">Thème actuellement actif</p>
-            <p className="text-gray-900 font-semibold">
-              {themes.find((t) => t.id === tenant.themeId || t.slug === tenant.themeId)?.nom || tenant.themeId}
-            </p>
-          </div>
-          {tenant.slug && (
-            <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer"
-              className="ml-auto flex items-center gap-1.5 text-xs text-[#F5A623] border border-[#F5A623]/30 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-all">
-              <ExternalLink size={11} /> Voir la boutique
-            </a>
-          )}
+        <div className="h-5 w-px bg-gray-200" />
+        <div className="flex items-center gap-2">
+          <Palette size={16} className="text-[#F5A623]" />
+          <h1 className="text-sm font-bold text-gray-800">Theme Studio</h1>
         </div>
-      )}
 
-      {/* Thèmes personnalisés */}
-      {custom.length > 0 && (
+        {tenant && (
+          <div className="ml-auto flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-[#FFF7ED] border border-[#F5A623]/20 rounded-lg">
+              <div className="w-2 h-2 rounded-full bg-[#F5A623]" />
+              <span className="text-xs font-medium text-[#92400E]">
+                {themes.find((t) => t.id === tenant.themeId || t.slug === tenant.themeId)?.nom || tenant.themeId}
+              </span>
+            </div>
+            {tenant.slug && (
+              <a
+                href={`/${tenant.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:border-gray-400 hover:text-gray-700 transition-all"
+              >
+                <ExternalLink size={11} /> Voir la boutique
+              </a>
+            )}
+            <button
+              onClick={() => router.push("/dashboard/themes/creer")}
+              className="flex items-center gap-2 bg-[#F5A623] text-white px-4 py-1.5 rounded-lg font-semibold text-xs hover:bg-[#d4820a] transition-all"
+            >
+              <Plus size={14} /> Créer un thème
+            </button>
+          </div>
+        )}
+      </header>
+
+      {/* ── Body ── */}
+      <div className="flex-1 overflow-y-auto px-6 py-6">
+
+        {/* Thèmes perso */}
+        {custom.length > 0 && (
+          <section className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles size={14} className="text-[#F5A623]" />
+              <h2 className="text-sm font-bold text-gray-700">Mes thèmes</h2>
+              <span className="text-[10px] bg-[#F5A623]/15 text-[#F5A623] px-2 py-0.5 rounded-full font-semibold">{custom.length}</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {custom.map((t) => (
+                <SimpleThemeCard
+                  key={t.id}
+                  theme={t}
+                  actif={tenant?.themeId === t.id}
+                  activating={activating === t.id}
+                  deleting={deleting === t.id}
+                  onActivate={() => {
+                    const colors = t.config?.colors || {};
+                    activer(t.id, "original", colors);
+                  }}
+                  onEdit={() => router.push(`/dashboard/themes/creer?id=${t.id}`)}
+                  onDelete={() => supprimer(t.id)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Thèmes intégrés — avec variantes */}
         <section>
           <div className="flex items-center gap-2 mb-4">
-            <Sparkles size={16} className="text-[#F5A623]" />
-            <h2 className="text-gray-800 font-semibold">Mes thèmes</h2>
-            <span className="text-xs bg-[#F5A623]/15 text-[#F5A623] px-2 py-0.5 rounded-full font-medium">{custom.length}</span>
+            <Layers size={14} className="text-gray-500" />
+            <h2 className="text-sm font-bold text-gray-700">Thèmes Axso Premium</h2>
+            <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{builtins.length} thèmes · 3 variantes chacun</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {custom.map((t) => (
-              <ThemeCard
+          <div className="space-y-6">
+            {builtins.map((t) => (
+              <BuiltinThemeRow
                 key={t.id}
                 theme={t}
-                actif={tenant?.themeId === t.id}
-                activating={activating === t.id}
-                deleting={deleting === t.id}
-                onActivate={() => activer(t.id)}
-                onEdit={() => router.push(`/dashboard/themes/creer?id=${t.id}`)}
-                onDelete={() => supprimer(t.id)}
-                showDelete
+                activeThemeId={tenant?.themeId}
+                activating={activating}
+                onActivate={(variant) => {
+                  const baseColors = t.config?.colors || {};
+                  activer(t.slug || t.id, variant, baseColors);
+                }}
+                onEdit={() => router.push(`/dashboard/themes/creer?base=${t.slug || t.id}`)}
               />
             ))}
           </div>
         </section>
-      )}
-
-      {/* Thèmes intégrés */}
-      <section>
-        <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-gray-800 font-semibold">Thèmes Axso Premium</h2>
-          <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{builtins.length} thèmes</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {builtins.map((t) => (
-            <ThemeCard
-              key={t.id}
-              theme={t}
-              actif={tenant?.themeId === t.id || tenant?.themeId === t.slug}
-              activating={activating === t.id}
-              onActivate={() => activer(t.slug || t.id)}
-              onEdit={() => router.push(`/dashboard/themes/creer?base=${t.slug || t.id}`)}
-              showDelete={false}
-            />
-          ))}
-        </div>
-      </section>
+      </div>
     </div>
   );
 }
 
-function ThemeCard({
-  theme, actif, activating, deleting, onActivate, onEdit, onDelete, showDelete,
+// ─── Ligne d'un thème intégré (3 variantes côte à côte) ──────────────────────
+function BuiltinThemeRow({
+  theme, activeThemeId, activating, onActivate, onEdit,
+}: {
+  theme: any;
+  activeThemeId: string;
+  activating: string | null;
+  onActivate: (v: Variant) => void;
+  onEdit: () => void;
+}) {
+  const [preview, setPreview] = useState<Variant>("original");
+  const slug = theme.slug || theme.id;
+  const isActive = activeThemeId === slug || activeThemeId === theme.id;
+
+  const base: ThemeColors = {
+    fond:    theme.config?.colors?.fond    || "#fff8f0",
+    accent:  theme.config?.colors?.accent  || "#F5A623",
+    texte:   theme.config?.colors?.texte   || "#111111",
+    surface: theme.config?.colors?.surface || "#fef3e8",
+    texteMuted: theme.config?.colors?.texteMuted,
+    bordure: theme.config?.colors?.bordure,
+  };
+
+  const variants: Array<{ id: Variant; label: string; Icon: any; colors: ThemeColors }> = [
+    { id: "original",     label: "Original",   Icon: Layers, colors: base },
+    { id: "light",        label: "Clair",       Icon: Sun,    colors: lightVariantColors(base) },
+    { id: "concentrated", label: "Concentré",   Icon: Zap,    colors: concentratedVariantColors(base) },
+  ];
+
+  const activeVariant = variants.find(v => v.id === preview)!;
+  const activatingKey = `${slug}-${preview}`;
+
+  return (
+    <div className={`rounded-2xl border-2 bg-white overflow-hidden transition-all ${isActive ? "border-[#F5A623] shadow-lg shadow-[#F5A623]/10" : "border-gray-200 hover:border-gray-300"}`}>
+      <div className="flex flex-col sm:flex-row">
+
+        {/* Preview principale */}
+        <div className="flex-1 min-w-0">
+          <ThemePreview colors={activeVariant.colors} radius={theme.config?.radius || "12px"} />
+        </div>
+
+        {/* Infos + variantes */}
+        <div className="w-full sm:w-64 flex-shrink-0 p-4 border-t sm:border-t-0 sm:border-l border-gray-100 flex flex-col">
+          {/* Nom + badge */}
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <div className="flex items-center gap-2 mb-0.5">
+                <p className="text-sm font-bold text-gray-800">{theme.nom}</p>
+                {isActive && (
+                  <span className="text-[9px] bg-[#F5A623] text-white px-1.5 py-0.5 rounded-full font-bold">ACTIF</span>
+                )}
+              </div>
+              {theme.description && (
+                <p className="text-[11px] text-gray-400 leading-snug">{theme.description}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Sélecteur de variante */}
+          <div className="mb-4">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Variante</p>
+            <div className="grid grid-cols-3 gap-1.5">
+              {variants.map(v => (
+                <button
+                  key={v.id}
+                  onClick={() => setPreview(v.id)}
+                  className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-all ${preview === v.id ? "border-[#F5A623] bg-[#FFF7ED]" : "border-gray-100 hover:border-gray-200 bg-gray-50"}`}
+                >
+                  {/* Mini preview de couleur */}
+                  <div className="flex gap-0.5 w-full">
+                    <div className="flex-1 h-3 rounded-l-md" style={{ backgroundColor: v.colors.fond }} />
+                    <div className="flex-1 h-3" style={{ backgroundColor: v.colors.accent }} />
+                    <div className="flex-1 h-3 rounded-r-md" style={{ backgroundColor: v.colors.surface }} />
+                  </div>
+                  <span className={`text-[10px] font-semibold leading-none ${preview === v.id ? "text-[#92400E]" : "text-gray-500"}`}>
+                    {v.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Palette de couleurs */}
+          <div className="flex gap-1 mb-4">
+            {[activeVariant.colors.fond, activeVariant.colors.accent, activeVariant.colors.texte, activeVariant.colors.surface].map((c, i) => (
+              <div key={i} className="w-5 h-5 rounded-full border border-gray-200 shadow-sm" style={{ backgroundColor: c }} title={c} />
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2 mt-auto">
+            {isActive ? (
+              <div className="flex-1 text-center py-2 rounded-xl text-[11px] font-semibold text-[#F5A623] bg-[#FFF7ED] border border-[#F5A623]/20">
+                ✓ Thème actif
+              </div>
+            ) : (
+              <button
+                onClick={() => onActivate(preview)}
+                disabled={activating === activatingKey}
+                className="flex-1 py-2 rounded-xl text-[11px] font-bold text-white transition-all disabled:opacity-50 hover:opacity-90"
+                style={{ backgroundColor: activeVariant.colors.accent }}
+              >
+                {activating === activatingKey ? "..." : `Activer — ${activeVariant.label}`}
+              </button>
+            )}
+            <button
+              onClick={onEdit}
+              className="w-8 h-8 rounded-xl flex items-center justify-center border border-gray-200 hover:border-[#F5A623]/40 text-gray-400 hover:text-[#F5A623] transition-all"
+            >
+              <Edit2 size={13} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Preview mini d'un thème ─────────────────────────────────────────────────
+function ThemePreview({ colors, radius }: { colors: ThemeColors; radius: string }) {
+  const r = parseInt(radius) || 12;
+  const rSm = `${Math.min(r, 8)}px`;
+  const rMd = `${Math.min(r, 12)}px`;
+  return (
+    <div className="h-48 sm:h-full min-h-[160px] p-3 flex flex-col gap-2" style={{ backgroundColor: colors.fond }}>
+      {/* Navbar */}
+      <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg" style={{ backgroundColor: colors.surface, borderRadius: rSm }}>
+        <div className="h-2 w-14 rounded" style={{ backgroundColor: colors.accent, borderRadius: "4px" }} />
+        <div className="flex gap-1">
+          {[1,2,3].map(i => <div key={i} className="h-1.5 w-7 rounded-sm" style={{ backgroundColor: `${colors.texte}30` }} />)}
+        </div>
+        <div className="h-5 w-10 rounded-md" style={{ backgroundColor: colors.accent, borderRadius: rSm }} />
+      </div>
+      {/* Hero */}
+      <div
+        className="flex-1 flex items-center justify-center"
+        style={{ backgroundColor: `${colors.accent}18`, borderRadius: rMd, border: `1px solid ${colors.accent}30` }}
+      >
+        <div className="text-center px-2">
+          <div className="h-3 w-24 rounded mx-auto mb-2" style={{ backgroundColor: colors.texte, opacity: 0.8, borderRadius: "4px" }} />
+          <div className="h-1.5 w-32 rounded mx-auto mb-3" style={{ backgroundColor: colors.texte, opacity: 0.3, borderRadius: "4px" }} />
+          <div className="h-6 w-16 rounded-lg mx-auto" style={{ backgroundColor: colors.accent, borderRadius: rSm }} />
+        </div>
+      </div>
+      {/* Products */}
+      <div className="grid grid-cols-4 gap-1.5">
+        {[1,2,3,4].map(i => (
+          <div key={i} style={{ backgroundColor: colors.surface, borderRadius: rSm, border: `1px solid ${colors.accent}18` }}>
+            <div className="h-8" style={{ backgroundColor: `${colors.accent}25`, borderRadius: `${rSm} ${rSm} 0 0` }} />
+            <div className="h-1.5 w-8 rounded mx-auto my-1" style={{ backgroundColor: `${colors.texte}30` }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Carte simple (thèmes custom) ────────────────────────────────────────────
+function SimpleThemeCard({
+  theme, actif, activating, deleting, onActivate, onEdit, onDelete,
 }: {
   theme: any; actif: boolean; activating: boolean;
   deleting?: boolean; onActivate: () => void; onEdit: () => void;
-  onDelete?: () => void; showDelete: boolean;
+  onDelete?: () => void;
 }) {
-  const cfg = theme.config?.colors || theme.config;
-  const fond = cfg?.fond || "#fff8f0";
-  const accent = cfg?.accent || "#F5A623";
-  const texte = cfg?.texte || "#2c1503";
-  const surface = cfg?.surface || "#fef3e8";
+  const colors: ThemeColors = {
+    fond:    theme.config?.colors?.fond    || "#fff8f0",
+    accent:  theme.config?.colors?.accent  || "#F5A623",
+    texte:   theme.config?.colors?.texte   || "#111111",
+    surface: theme.config?.colors?.surface || "#fef3e8",
+  };
 
   return (
     <div className={`rounded-2xl border-2 overflow-hidden transition-all ${actif ? "border-[#F5A623] shadow-lg shadow-[#F5A623]/15" : "border-gray-200 hover:border-gray-300"}`}>
-      {/* Aperçu */}
-      <div className="h-40 relative overflow-hidden" style={{ backgroundColor: fond }}>
-        {/* Mini storefront preview */}
-        <div className="absolute inset-0 p-3 flex flex-col gap-2">
-          {/* Navbar simulée */}
-          <div className="flex items-center justify-between px-2 py-1.5 rounded-lg" style={{ backgroundColor: `${fond}ee` }}>
-            <div className="h-2 w-16 rounded" style={{ backgroundColor: accent }} />
-            <div className="flex gap-1.5">
-              {[1, 2, 3].map((i) => <div key={i} className="h-1.5 w-8 rounded-sm" style={{ backgroundColor: `${texte}40` }} />)}
-            </div>
-          </div>
-          {/* Hero simulé */}
-          <div className="flex-1 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${accent}15`, border: `1px solid ${accent}30` }}>
-            <div className="text-center">
-              <div className="h-2.5 w-20 rounded mx-auto mb-1.5" style={{ backgroundColor: accent }} />
-              <div className="h-1.5 w-28 rounded mx-auto mb-2.5" style={{ backgroundColor: `${texte}50` }} />
-              <div className="h-5 w-16 rounded-lg mx-auto" style={{ backgroundColor: accent }} />
-            </div>
-          </div>
-          {/* Produits simulés */}
-          <div className="grid grid-cols-3 gap-1.5">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-10 rounded-lg" style={{ backgroundColor: surface, border: `1px solid ${accent}20` }}>
-                <div className="h-6 rounded-t-lg" style={{ backgroundColor: `${accent}20` }} />
-                <div className="h-1.5 w-8 rounded mx-auto mt-1" style={{ backgroundColor: `${texte}40` }} />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Badge actif */}
-        {actif && (
-          <div className="absolute top-2 right-2 bg-[#F5A623] text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-            <Check size={9} /> Actif
-          </div>
-        )}
-        {theme.badge && !actif && (
-          <div className="absolute top-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${accent}20`, color: accent }}>
-            {theme.badge}
-          </div>
-        )}
-      </div>
-
-      {/* Infos */}
-      <div className="bg-white p-4">
-        <div className="flex items-start justify-between mb-1">
-          <p className="text-gray-900 font-semibold text-sm">{theme.nom}</p>
+      <ThemePreview colors={colors} radius={theme.config?.radius || "12px"} />
+      <div className="bg-white p-3.5">
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-sm font-semibold text-gray-800">{theme.nom}</p>
           <div className="flex gap-1">
-            {[fond, accent, texte].map((c, i) => (
+            {[colors.fond, colors.accent, colors.texte].map((c, i) => (
               <div key={i} className="w-3.5 h-3.5 rounded-full border border-gray-200" style={{ backgroundColor: c }} />
             ))}
           </div>
         </div>
-        {theme.description && <p className="text-gray-400 text-xs mb-3">{theme.description}</p>}
-
+        {theme.description && <p className="text-gray-400 text-[11px] mb-3 leading-snug">{theme.description}</p>}
         <div className="flex gap-2">
           {actif ? (
-            <div className="flex-1 text-center py-2 rounded-xl text-xs font-semibold text-[#F5A623] bg-blue-50 border border-[#F5A623]/20">
+            <div className="flex-1 text-center py-2 rounded-xl text-[11px] font-semibold text-[#F5A623] bg-[#FFF7ED] border border-[#F5A623]/20">
               Thème actif
             </div>
           ) : (
-            <button onClick={onActivate} disabled={activating}
-              className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all text-white disabled:opacity-50"
-              style={{ backgroundColor: accent }}>
-              {activating ? "Activation..." : "Activer"}
+            <button
+              onClick={onActivate}
+              disabled={activating}
+              className="flex-1 py-2 rounded-xl text-[11px] font-bold text-white disabled:opacity-50 hover:opacity-90 transition-all"
+              style={{ backgroundColor: colors.accent }}
+            >
+              {activating ? "..." : "Activer"}
             </button>
           )}
-          <button onClick={onEdit}
-            className="w-9 h-9 rounded-xl flex items-center justify-center border border-gray-200 hover:border-[#F5A623]/40 text-gray-400 hover:text-[#F5A623] transition-all">
+          <button onClick={onEdit} className="w-8 h-8 rounded-xl flex items-center justify-center border border-gray-200 hover:border-[#F5A623]/40 text-gray-400 hover:text-[#F5A623] transition-all">
             <Edit2 size={13} />
           </button>
-          {showDelete && onDelete && (
-            <button onClick={onDelete} disabled={deleting}
-              className="w-9 h-9 rounded-xl flex items-center justify-center border border-gray-200 hover:border-red-200 text-gray-400 hover:text-red-400 transition-all">
+          {onDelete && (
+            <button onClick={onDelete} disabled={deleting} className="w-8 h-8 rounded-xl flex items-center justify-center border border-gray-200 hover:border-red-200 text-gray-400 hover:text-red-400 transition-all">
               {deleting ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" /> : <Trash2 size={13} />}
             </button>
           )}

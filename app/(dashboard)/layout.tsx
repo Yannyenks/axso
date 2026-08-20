@@ -10,7 +10,7 @@ import { QuotaBanner } from "@/components/dashboard/QuotaBanner";
 import { NotificationSound } from "@/components/ui/NotificationSound";
 import { quotaCommandesAtteint } from "@/lib/abonnement";
 
-const FULLBLEED_ROUTES: string[] = [];
+const FULLBLEED_ROUTES: string[] = ["/dashboard/builder", "/dashboard/themes"];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();

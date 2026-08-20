@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
@@ -161,7 +161,7 @@ export default function BuilderPage() {
   const [saving, setSaving]           = useState(false);
   const [saved, setSaved]             = useState(false);
   const [iframeKey, setIframeKey]     = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(true);
   const iframeRef   = useRef<HTMLIFrameElement>(null);
 
   const debounce    = useRef<NodeJS.Timeout | null>(null);
@@ -281,7 +281,7 @@ export default function BuilderPage() {
   const hasChanges = config && originalConfig && JSON.stringify(config) !== JSON.stringify(originalConfig);
 
   if (!config || !tenant) return (
-    <div className="h-screen bg-[#050508] flex items-center justify-center">
+    <div className="h-screen bg-white flex items-center justify-center">
       <div className="text-center">
         <div className="w-8 h-8 border-2 border-[#F5A623] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
         <p className="text-gray-500 text-sm">Chargement du constructeur</p>
@@ -292,27 +292,27 @@ export default function BuilderPage() {
   const sectionOrder = config.sectionOrder || DEFAULT_SECTION_ORDER;
 
   return (
-    <div className={`flex flex-col bg-[#050508] text-white overflow-hidden ${isFullscreen ? "fixed inset-0 z-[9999]" : "h-screen"}`} style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <div className={`flex flex-col bg-[#F5F7FA] text-gray-800 overflow-hidden ${isFullscreen ? "fixed inset-0 z-[9999]" : "h-screen"}`} style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <PCOnlyGate label="Le Constructeur de boutique" />
 
       {/* HEADER */}
-      <header className="h-11 flex items-center justify-between px-4 bg-[#08080f] border-b border-white/5 flex-shrink-0 gap-4">
+      <header className="h-11 flex items-center justify-between px-4 bg-white border-b border-gray-200 flex-shrink-0 gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <Link href="/dashboard" className="flex items-center gap-1.5 text-gray-500 hover:text-white transition-colors text-xs">
+          <Link href="/dashboard" className="flex items-center gap-1.5 text-gray-400 hover:text-gray-800 transition-colors text-xs">
             <ArrowLeft size={13} /> Dashboard
           </Link>
-          <div className="h-4 w-px bg-white/10" />
-          <span className="text-xs text-white font-medium truncate max-w-32">{tenant.nomBoutique}</span>
+          <div className="h-4 w-px bg-gray-100" />
+          <span className="text-xs text-gray-800 font-medium truncate max-w-32">{tenant.nomBoutique}</span>
           {hasChanges && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 animate-pulse">Modifié</span>}
           {saved && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-400">✓ Sauvegardé</span>}
         </div>
 
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium bg-white/10 text-white">
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium bg-gray-100 text-white">
           <Layers size={10} /> Constructeur
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex gap-0.5 bg-white/5 rounded-lg p-0.5">
+          <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
             {([["desktop",Monitor],["tablet",Tablet],["mobile",Smartphone]] as [Device, any][]).map(([d,Icon]) => (
               <button key={d} onClick={() => setDevice(d)} className={`w-7 h-7 rounded flex items-center justify-center transition-all ${device===d?"bg-[#F5A623]/20 text-[#F5A623]":"text-gray-600 hover:text-gray-400"}`}>
                 <Icon size={13} />
@@ -322,10 +322,10 @@ export default function BuilderPage() {
           <button
             onClick={() => setIsFullscreen(v => !v)}
             title={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
-            className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all ${isFullscreen ? "border-[#F5A623]/50 bg-[#F5A623]/15 text-[#F5A623]" : "border-white/10 text-gray-500 hover:text-white hover:border-white/20"}`}>
+            className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all ${isFullscreen ? "border-[#F5A623]/50 bg-[#F5A623]/15 text-[#F5A623]" : "border-gray-200 text-gray-500 hover:text-white hover:border-gray-300"}`}>
             {isFullscreen ? <Minimize2 size={11} /> : <Maximize2 size={11} />}
           </button>
-          <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-gray-500 hover:text-white border border-white/10 hover:border-white/20 transition-all">
+          <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-gray-500 hover:text-white border border-gray-200 hover:border-gray-300 transition-all">
             <ExternalLink size={10} /> Voir
           </a>
           <button onClick={handleSave} disabled={saving} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: saved?"#34d399":"#F5A623", color:"#050508" }}>
@@ -338,19 +338,19 @@ export default function BuilderPage() {
       {/* MAIN */}
       <div className="flex-1 flex overflow-hidden">
         {/* Icon sidebar */}
-        <div className="w-11 flex-shrink-0 bg-[#08080f] border-r border-white/5 flex flex-col items-center py-3 gap-1">
+        <div className="w-11 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col items-center py-3 gap-1">
             {NAV_TABS.map(t => (
               <button key={t.id} onClick={() => setPanel(t.id)} title={t.tooltip}
-                className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${panel===t.id?"bg-[#F5A623]/20 text-[#F5A623]":"text-gray-600 hover:text-gray-400 hover:bg-white/5"}`}>
+                className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${panel===t.id?"bg-[#F5A623]/20 text-[#F5A623]":"text-gray-400 hover:text-gray-700 hover:bg-gray-100"}`}>
                 {t.icon}
               </button>
             ))}
           </div>
 
         {/* Panel */}
-          <div className="w-[300px] flex-shrink-0 bg-[#08080f] border-r border-white/5 flex flex-col overflow-hidden">
-            <div className="px-4 py-2.5 border-b border-white/5 flex items-center justify-between flex-shrink-0">
-              <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.18em]">{NAV_TABS.find(t=>t.id===panel)?.tooltip}</p>
+          <div className="w-[300px] flex-shrink-0 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em]">{NAV_TABS.find(t=>t.id===panel)?.tooltip}</p>
               {panel === "sections" && (
                 <button onClick={() => setShowLibrary(v => !v)} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all" style={{ backgroundColor: "#F5A623", color: "#050508" }}>
                   <Plus size={10} /> Ajouter
@@ -374,19 +374,19 @@ export default function BuilderPage() {
           </div>
 
             {/* Preview */}
-            <div className="flex-1 bg-[#030305] flex flex-col overflow-hidden">
-              <div className="h-8 flex items-center gap-2 px-3 bg-[#08080f] border-b border-white/5 flex-shrink-0">
+            <div className="flex-1 bg-[#EEF0F6] flex flex-col overflow-hidden">
+              <div className="h-8 flex items-center gap-2 px-3 bg-white border-b border-gray-200 flex-shrink-0">
                 <div className="flex gap-1">
                   {["#ef444480","#eab30880","#22c55e80"].map(c=><div key={c} className="w-2 h-2 rounded-full" style={{ backgroundColor: c }} />)}
                 </div>
-                <div className="flex-1 bg-[#12121c] rounded px-3 py-0.5 text-[9px] text-gray-600 text-center truncate">
+                <div className="flex-1 bg-gray-100 rounded px-3 py-0.5 text-[9px] text-gray-600 text-center truncate">
                   {typeof window!=="undefined" ? window.location.origin : "http://localhost:3000"}/{tenant.slug}
                 </div>
                 <button onClick={() => setIframeKey(k=>k+1)} className="text-gray-600 hover:text-gray-400" title="Rafraîchir">
                   <RefreshCw size={10} />
                 </button>
               </div>
-              <div className="flex-1 flex items-stretch justify-center bg-[#070710] overflow-hidden p-1.5">
+              <div className="flex-1 flex items-stretch justify-center bg-[#E8EBF3] overflow-hidden p-1.5">
                 <div className="transition-all duration-500 bg-white overflow-hidden"
                   style={{ width: device==="desktop"?"100%":device==="tablet"?"768px":"390px", maxWidth:"100%", borderRadius: device!=="desktop"?"20px":"0", boxShadow: device!=="desktop"?"0 24px 80px rgba(0,0,0,0.7)":"none" }}>
                   <iframe ref={iframeRef} key={iframeKey} src={`/${tenant.slug}`} onLoad={injectLive}
@@ -407,13 +407,13 @@ function SectionLibrary({ onAdd, onClose }: { onAdd: (t: CustomSection["type"]) 
   return (
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-xs font-semibold text-white">Bibliothèque de sections</p>
+        <p className="text-xs font-semibold text-gray-700">Bibliothèque de sections</p>
         <button onClick={onClose} className="text-gray-500 hover:text-gray-300"><X size={13} /></button>
       </div>
       <div className="space-y-1.5">
         {CUSTOM_SECTION_TYPES.map(t => (
           <button key={t.type} onClick={() => onAdd(t.type as CustomSection["type"])}
-            className="w-full text-left flex items-start gap-3 p-3 rounded-xl border border-white/5 hover:border-[#F5A623]/30 hover:bg-[#F5A623]/5 transition-all group">
+            className="w-full text-left flex items-start gap-3 p-3 rounded-xl border border-gray-200 hover:border-[#F5A623]/30 hover:bg-[#F5A623]/5 transition-all group">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(245,166,35,0.08)" }}><t.Icon size={15} style={{ color: "#F5A623" }} /></div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-white group-hover:text-[#F5A623] transition-colors">{t.label}</p>
@@ -447,8 +447,8 @@ function PanelSections({ config, set, activeSection, setActiveSection, setSectio
         const customSec  = item.isCustom ? custom.find(c=>c.id===item.id) : null;
 
         return (
-          <div key={item.id} className={isOpen ? "bg-white/[0.02]" : ""}>
-            <div className="flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-white/[0.015] select-none"
+          <div key={item.id} className={isOpen ? "bg-gray-50/80" : ""}>
+            <div className="flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-gray-50 select-none"
               onClick={() => setActiveSection(isOpen ? null : item.id)}>
               {/* Reorder */}
               {!item.isCustom && (
@@ -459,7 +459,7 @@ function PanelSections({ config, set, activeSection, setActiveSection, setSectio
               )}
               <item.Icon size={13} className="flex-shrink-0 text-gray-400" />
               <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-semibold text-white truncate">{item.label}</p>
+                <p className="text-[11px] font-semibold text-gray-700 truncate">{item.label}</p>
                 {item.isCustom && <span className="text-[8px] text-[#F5A623]/70 uppercase tracking-wider">Section custom</span>}
               </div>
               <div className="flex items-center gap-1.5 flex-shrink-0" onClick={e=>e.stopPropagation()}>
@@ -480,7 +480,7 @@ function PanelSections({ config, set, activeSection, setActiveSection, setSectio
                 {item.isCustom && customSec && <CustomSectionControls section={customSec} update={updateCustomSection} />}
 
                 {/* Sous-sections personnalisées — disponibles dans TOUTE section, built-in ou custom */}
-                <div className="pt-3 mt-1 border-t border-white/5">
+                <div className="pt-3 mt-1 border-t border-gray-200">
                   <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.15em] mb-2">Sous-sections</p>
                   <SousBlocsEditor blocs={sousBlocsMap[item.id] || []} onChange={(blocs: any[]) => setSousBlocs(item.id, blocs)} />
                 </div>
@@ -546,7 +546,7 @@ function BuiltinSectionControls({ id, sec, setSection }: { id: SectionId; sec: a
               <button onClick={()=>{ const imgs=(sec.slideshowImages||[""]).filter((_:any,j:number)=>j!==i); s({slideshowImages:imgs}); }} className="text-red-500/40 hover:text-red-400 flex-shrink-0 mt-3.5"><Trash2 size={11}/></button>
             </div>
           ))}
-          <button onClick={()=>s({slideshowImages:[...(sec.slideshowImages||[""]),""]})} className="w-full text-[10px] text-gray-500 border border-dashed border-white/10 rounded-lg py-1.5 hover:border-white/20 hover:text-gray-400">
+          <button onClick={()=>s({slideshowImages:[...(sec.slideshowImages||[""]),""]})} className="w-full text-[10px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300 hover:text-gray-400">
             + Ajouter une image
           </button>
           <FSel label="Intervalle (secondes)" value={String(sec.slideshowInterval||5)} onChange={v=>s({slideshowInterval:Number(v)})} opts={[{v:"3",l:"3s"},{v:"4",l:"4s"},{v:"5",l:"5s"},{v:"7",l:"7s"},{v:"10",l:"10s"}]} />
@@ -561,7 +561,7 @@ function BuiltinSectionControls({ id, sec, setSection }: { id: SectionId; sec: a
     <>
       <FSel label="Style d'affichage" value={sec.layout||"icons"} onChange={v=>s({layout:v})} opts={[{v:"icons",l:"Icônes (minimal)"},{v:"cards",l:"Cartes avec fond"},{v:"bar",l:"Barre horizontale"}]} />
       {(sec.items||[]).map((item: any, i: number) => (
-        <div key={i} className="bg-white/[0.03] rounded-xl p-2.5 space-y-2">
+        <div key={i} className="bg-gray-50 rounded-xl p-2.5 space-y-2">
           <div className="flex gap-2">
             <FInp label="Emoji" value={item.icone} onChange={v=>{ const it=[...sec.items]; it[i]={...it[i],icone:v}; s({items:it}); }} />
             <FInp label="Titre" value={item.titre} onChange={v=>{ const it=[...sec.items]; it[i]={...it[i],titre:v}; s({items:it}); }} />
@@ -632,7 +632,7 @@ function BuiltinSectionControls({ id, sec, setSection }: { id: SectionId; sec: a
       <FSel label="Style" value={sec.layout||"accordion"} onChange={v=>s({layout:v})} opts={[{v:"accordion",l:"Accordéon"},{v:"grid",l:"Grille"},{v:"columns",l:"2 colonnes"}]} />
       <div className="space-y-2">
         {(sec.items||[]).map((item: any, i: number) => (
-          <div key={i} className="bg-white/[0.03] rounded-xl p-2.5 space-y-2">
+          <div key={i} className="bg-gray-50 rounded-xl p-2.5 space-y-2">
             <div className="flex items-start gap-1.5">
               <div className="flex-1 space-y-1.5">
                 <FInp label="Question" value={item.question} onChange={v=>{ const it=[...sec.items]; it[i]={...it[i],question:v}; s({items:it}); }} />
@@ -643,7 +643,7 @@ function BuiltinSectionControls({ id, sec, setSection }: { id: SectionId; sec: a
           </div>
         ))}
       </div>
-      <button onClick={()=>s({items:[...(sec.items||[]),{question:"Nouvelle question ?",reponse:"Votre réponse ici."}]})} className="w-full flex items-center justify-center gap-1.5 py-2 border border-dashed border-white/10 rounded-xl text-[10px] text-gray-500 hover:border-white/20 hover:text-gray-400">
+      <button onClick={()=>s({items:[...(sec.items||[]),{question:"Nouvelle question ?",reponse:"Votre réponse ici."}]})} className="w-full flex items-center justify-center gap-1.5 py-2 border border-dashed border-gray-200 rounded-xl text-[10px] text-gray-500 hover:border-gray-300 hover:text-gray-400">
         <Plus size={11} /> Ajouter une question
       </button>
     </>
@@ -680,7 +680,7 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
       <FInp label="Titre" value={c.titre||""} onChange={v=>up({titre:v})} />
       <FSel label="Colonnes" value={String(c.colonnes||3)} onChange={v=>up({colonnes:Number(v)})} opts={[{v:"2",l:"2"},{v:"3",l:"3"},{v:"4",l:"4 colonnes"}]} />
       {(c.items||[]).map((item: any, i: number) => (
-        <div key={i} className="bg-white/[0.03] rounded-xl p-2.5 space-y-1.5">
+        <div key={i} className="bg-gray-50 rounded-xl p-2.5 space-y-1.5">
           <div className="flex gap-2">
             <FInp label="Emoji" value={item.icone} onChange={v=>{ const it=[...c.items]; it[i]={...it[i],icone:v}; up({items:it}); }} />
             <FInp label="Titre" value={item.titre} onChange={v=>{ const it=[...c.items]; it[i]={...it[i],titre:v}; up({items:it}); }} />
@@ -688,7 +688,7 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
           <FInp label="Description" value={item.texte} onChange={v=>{ const it=[...c.items]; it[i]={...it[i],texte:v}; up({items:it}); }} multiline />
         </div>
       ))}
-      <button onClick={()=>up({items:[...(c.items||[]),{icone:"★",titre:"Avantage",texte:"Description"}]})} className="w-full text-[10px] text-gray-500 border border-dashed border-white/10 rounded-lg py-1.5 hover:border-white/20">+ Ajouter</button>
+      <button onClick={()=>up({items:[...(c.items||[]),{icone:"★",titre:"Avantage",texte:"Description"}]})} className="w-full text-[10px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">+ Ajouter</button>
     </>
   );
 
@@ -696,7 +696,7 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
     <>
       <FInp label="Titre" value={c.titre||""} onChange={v=>up({titre:v})} />
       {(c.items||[]).map((item: any, i: number) => (
-        <div key={i} className="bg-white/[0.03] rounded-xl p-2.5 flex gap-2">
+        <div key={i} className="bg-gray-50 rounded-xl p-2.5 flex gap-2">
           <FInp label="Valeur (ex: 10K+)" value={item.valeur} onChange={v=>{ const it=[...c.items]; it[i]={...it[i],valeur:v}; up({items:it}); }} />
           <FInp label="Label" value={item.label} onChange={v=>{ const it=[...c.items]; it[i]={...it[i],label:v}; up({items:it}); }} />
         </div>
@@ -710,7 +710,7 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
       <FInp label="Description" value={c.texte||""} onChange={v=>up({texte:v})} multiline />
       <div>
         <label className="text-[10px] text-gray-500 block mb-1.5">Date de fin</label>
-        <input type="datetime-local" value={c.dateFin||""} onChange={e=>up({dateFin:e.target.value})} className="w-full bg-[#12121c] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#F5A623]/50" />
+        <input type="datetime-local" value={c.dateFin||""} onChange={e=>up({dateFin:e.target.value})} className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#F5A623]/50" />
       </div>
       <FInp label="Texte du bouton CTA" value={c.ctaTexte||""} onChange={v=>up({ctaTexte:v})} />
     </>
@@ -728,7 +728,7 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
             <button onClick={()=>up({logos:c.logos.filter((_:any,j:number)=>j!==i)})} className="text-red-500/40 hover:text-red-400 flex-shrink-0 mt-3.5"><Trash2 size={11}/></button>
           </div>
         ))}
-        <button onClick={()=>up({logos:[...(c.logos||[]),""]})} className="w-full text-[10px] text-gray-500 border border-dashed border-white/10 rounded-lg py-1.5 hover:border-white/20">+ Ajouter un logo</button>
+        <button onClick={()=>up({logos:[...(c.logos||[]),""]})} className="w-full text-[10px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">+ Ajouter un logo</button>
       </div>
     </>
   );
@@ -754,7 +754,7 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
             <button onClick={()=>up({images:c.images.filter((_:any,j:number)=>j!==i)})} className="text-red-500/40 hover:text-red-400 flex-shrink-0 mt-3.5"><Trash2 size={11}/></button>
           </div>
         ))}
-        <button onClick={()=>up({images:[...(c.images||[]),""]})} className="w-full text-[10px] text-gray-500 border border-dashed border-white/10 rounded-lg py-1.5 hover:border-white/20">+ Ajouter une photo</button>
+        <button onClick={()=>up({images:[...(c.images||[]),""]})} className="w-full text-[10px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">+ Ajouter une photo</button>
       </div>
     </>
   );
@@ -792,7 +792,7 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
     <>
       <FInp label="Titre (optionnel)" value={c.titre||""} onChange={v=>up({titre:v})} />
       {(c.onglets||[]).map((tab: any, i: number) => (
-        <div key={tab.id} className="bg-white/[0.03] rounded-xl p-3 space-y-2.5 border border-white/5">
+        <div key={tab.id} className="bg-gray-50 rounded-xl p-3 space-y-2.5 border border-gray-200">
           <div className="flex gap-2 items-center">
             <div className="flex-1"><FInp label="Nom de l'onglet" value={tab.label} onChange={v=>{ const t=[...c.onglets]; t[i]={...t[i],label:v}; up({onglets:t}); }} /></div>
             <button onClick={()=>up({onglets:c.onglets.filter((_:any,j:number)=>j!==i)})} className="text-red-500/40 hover:text-red-400 flex-shrink-0 mt-4"><Trash2 size={13}/></button>
@@ -800,7 +800,7 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
           <SousBlocsEditor blocs={tab.blocs||[]} onChange={(blocs: any[])=>{ const t=[...c.onglets]; t[i]={...t[i],blocs}; up({onglets:t}); }} />
         </div>
       ))}
-      <button onClick={()=>up({onglets:[...(c.onglets||[]),{id:`tab_${Date.now()}`,label:"Nouvel onglet",blocs:[]}]})} className="w-full text-[10px] text-gray-500 border border-dashed border-white/10 rounded-lg py-1.5 hover:border-white/20">+ Ajouter un onglet</button>
+      <button onClick={()=>up({onglets:[...(c.onglets||[]),{id:`tab_${Date.now()}`,label:"Nouvel onglet",blocs:[]}]})} className="w-full text-[10px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">+ Ajouter un onglet</button>
     </>
   );
 
@@ -809,7 +809,7 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
       <FInp label="Titre (optionnel)" value={c.titre||""} onChange={v=>up({titre:v})} />
       <FSel label="Nombre de colonnes" value={String(c.nombreColonnes||3)} onChange={v=>up({nombreColonnes:Number(v)})} opts={[{v:"2",l:"2"},{v:"3",l:"3"},{v:"4",l:"4 colonnes"}]} />
       {(c.colonnes||[]).map((col: any, i: number) => (
-        <div key={col.id} className="bg-white/[0.03] rounded-xl p-3 space-y-2.5 border border-white/5">
+        <div key={col.id} className="bg-gray-50 rounded-xl p-3 space-y-2.5 border border-gray-200">
           <div className="flex items-center justify-between">
             <p className="text-[10px] text-gray-500 font-semibold">Colonne {i+1}</p>
             <button onClick={()=>up({colonnes:c.colonnes.filter((_:any,j:number)=>j!==i)})} className="text-red-500/40 hover:text-red-400"><Trash2 size={13}/></button>
@@ -817,7 +817,7 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
           <SousBlocsEditor blocs={col.blocs||[]} onChange={(blocs: any[])=>{ const cols=[...c.colonnes]; cols[i]={...cols[i],blocs}; up({colonnes:cols}); }} />
         </div>
       ))}
-      <button onClick={()=>up({colonnes:[...(c.colonnes||[]),{id:`col_${Date.now()}`,blocs:[]}]})} className="w-full text-[10px] text-gray-500 border border-dashed border-white/10 rounded-lg py-1.5 hover:border-white/20">+ Ajouter une colonne</button>
+      <button onClick={()=>up({colonnes:[...(c.colonnes||[]),{id:`col_${Date.now()}`,blocs:[]}]})} className="w-full text-[10px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">+ Ajouter une colonne</button>
     </>
   );
 
@@ -849,11 +849,11 @@ function SousBlocsEditor({ blocs, onChange }: { blocs: any[]; onChange: (b: any[
   const removeBloc = (i: number) => onChange(blocs.filter((_, j) => j !== i));
 
   return (
-    <div className="space-y-2 pl-2 border-l-2 border-white/5">
+    <div className="space-y-2 pl-2 border-l-2 border-gray-200">
       {blocs.map((b, i) => {
         const meta = SOUS_BLOC_TYPES.find(t => t.type === b.type);
         return (
-          <div key={b.id} className="bg-black/20 rounded-lg p-2 space-y-1.5">
+          <div key={b.id} className="bg-gray-200/50 rounded-lg p-2 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
                 {meta && <meta.Icon size={10} />} {meta?.label}
@@ -898,7 +898,7 @@ function SousBlocsEditor({ blocs, onChange }: { blocs: any[]; onChange: (b: any[
             {b.type === "features" && (
               <div>
                 {(b.config.items || []).map((it: any, j: number) => (
-                  <div key={j} className="space-y-1 mb-2 pb-2 border-b border-white/5 last:border-0">
+                  <div key={j} className="space-y-1 mb-2 pb-2 border-b border-gray-200 last:border-0">
                     <FInp label="Icône (emoji)" value={it.icone || ""} onChange={v => { const items = [...(b.config.items || [])]; items[j] = { ...items[j], icone: v }; updateBloc(i, { items }); }} />
                     <FInp label="Titre" value={it.titre || ""} onChange={v => { const items = [...(b.config.items || [])]; items[j] = { ...items[j], titre: v }; updateBloc(i, { items }); }} />
                     <FInp label="Texte" value={it.texte || ""} onChange={v => { const items = [...(b.config.items || [])]; items[j] = { ...items[j], texte: v }; updateBloc(i, { items }); }} />
@@ -910,7 +910,7 @@ function SousBlocsEditor({ blocs, onChange }: { blocs: any[]; onChange: (b: any[
             {b.type === "countdown" && (<>
               <FInp label="Texte" value={b.config.texte || ""} onChange={v => updateBloc(i, { texte: v })} />
               <label className="block text-[9px] text-gray-500 mb-0.5 mt-1">Date de fin</label>
-              <input type="datetime-local" value={b.config.dateFin || ""} onChange={e => updateBloc(i, { dateFin: e.target.value })} className="w-full bg-black/30 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] text-white mb-1.5" />
+              <input type="datetime-local" value={b.config.dateFin || ""} onChange={e => updateBloc(i, { dateFin: e.target.value })} className="w-full bg-gray-100 border border-gray-200 rounded-lg px-2 py-1.5 text-[10px] text-white mb-1.5" />
               <FInp label="Bouton" value={b.config.ctaTexte || ""} onChange={v => updateBloc(i, { ctaTexte: v })} />
             </>)}
             {b.type === "logos" && (
@@ -946,7 +946,7 @@ function SousBlocsEditor({ blocs, onChange }: { blocs: any[]; onChange: (b: any[
       <div className="flex flex-wrap gap-1">
         {SOUS_BLOC_TYPES.map(t => (
           <button key={t.type} onClick={() => addBloc(t.type)}
-            className="text-[9px] px-2 py-1 rounded-lg border border-dashed border-white/10 text-gray-500 hover:border-white/20 hover:text-gray-300 flex items-center gap-1">
+            className="text-[9px] px-2 py-1 rounded-lg border border-dashed border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-300 flex items-center gap-1">
             <Plus size={9} /> {t.label}
           </button>
         ))}
@@ -991,7 +991,7 @@ function PanelCouleurs({ config, setColors }: any) {
         <div className="grid grid-cols-4 gap-2">
           {PRESETS.map(p=>(
             <button key={p.l} onClick={()=>setColors(p.c)} className="group flex flex-col items-center gap-1.5">
-              <div className="w-full h-8 rounded-lg overflow-hidden flex border border-white/10 group-hover:border-[#F5A623]/50 transition-all">
+              <div className="w-full h-8 rounded-lg overflow-hidden flex border border-gray-200 group-hover:border-[#F5A623]/50 transition-all">
                 <div className="flex-1" style={{backgroundColor:p.c.fond}} />
                 <div className="flex-1" style={{backgroundColor:p.c.accent}} />
                 <div className="flex-1" style={{backgroundColor:p.c.surface}} />
@@ -1016,7 +1016,7 @@ function PanelTypo({ config, setFonts }: any) {
           <div key={cat}>
             <p className="text-[9px] text-gray-600 uppercase tracking-wider px-1 py-1">{cat}</p>
             {FONTS.filter(f=>f.cat===cat).map(f=>(
-              <button key={f.v} onClick={()=>setFonts({titre:f.v})} className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-all flex items-center justify-between ${config.fonts.titre===f.v?"bg-[#F5A623]/15 text-[#F5A623] border border-[#F5A623]/30":"text-gray-400 hover:bg-white/5 hover:text-gray-300"}`}>
+              <button key={f.v} onClick={()=>setFonts({titre:f.v})} className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-all flex items-center justify-between ${config.fonts.titre===f.v?"bg-[#F5A623]/15 text-[#F5A623] border border-[#F5A623]/30":"text-gray-400 hover:bg-gray-100 hover:text-gray-300"}`}>
                 <span>{f.label}</span>
                 {config.fonts.titre===f.v && <Check size={10}/>}
               </button>
@@ -1024,15 +1024,15 @@ function PanelTypo({ config, setFonts }: any) {
           </div>
         ))}
       </div>
-      <div className="border-t border-white/5 pt-4">
+      <div className="border-t border-gray-200 pt-4">
         <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-3">Police du corps</p>
         {FONTS.filter(f=>f.cat==="Sans-serif").map(f=>(
-          <button key={f.v} onClick={()=>setFonts({corps:f.v})} className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-all flex items-center justify-between ${config.fonts.corps===f.v?"bg-[#F5A623]/15 text-[#F5A623] border border-[#F5A623]/30":"text-gray-400 hover:bg-white/5"}`}>
+          <button key={f.v} onClick={()=>setFonts({corps:f.v})} className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-all flex items-center justify-between ${config.fonts.corps===f.v?"bg-[#F5A623]/15 text-[#F5A623] border border-[#F5A623]/30":"text-gray-400 hover:bg-gray-100"}`}>
             <span>{f.label}</span>{config.fonts.corps===f.v && <Check size={10}/>}
           </button>
         ))}
       </div>
-      <div className="border-t border-white/5 pt-4 space-y-3">
+      <div className="border-t border-gray-200 pt-4 space-y-3">
         <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest">Paramètres</p>
         <FSel label="Poids titre" value={config.fonts.poidsTitre||"700"} onChange={v=>setFonts({poidsTitre:v})} opts={[{v:"400",l:"Normal"},{v:"500",l:"Medium"},{v:"600",l:"SemiBold"},{v:"700",l:"Bold"},{v:"800",l:"ExtraBold"},{v:"900",l:"Black"}]} />
         <FSel label="Taille de base" value={config.fonts.tailleBase||"16px"} onChange={v=>setFonts({tailleBase:v})} opts={[{v:"13px",l:"13px"},{v:"14px",l:"14px"},{v:"15px",l:"15px"},{v:"16px",l:"16px (défaut)"},{v:"17px",l:"17px"},{v:"18px",l:"18px"}]} />
@@ -1055,31 +1055,31 @@ function PanelLayout({ config, setLayout, set }: any) {
         <FSel label="Largeur max" value={lay.largeurContainer||"1280px"} onChange={v=>setLayout({largeurContainer:v})} opts={[{v:"1024px",l:"1024px"},{v:"1280px",l:"1280px"},{v:"1440px",l:"1440px"},{v:"1600px",l:"1600px"},{v:"100%",l:"Pleine largeur"}]} />
         <FSel label="Padding sections" value={lay.paddingSection||"lg"} onChange={v=>setLayout({paddingSection:v})} opts={[{v:"sm",l:"Compact (2rem)"},{v:"md",l:"Normal (4rem)"},{v:"lg",l:"Large (6rem)"},{v:"xl",l:"XL (8rem)"}]} />
       </div>
-      <div className="border-t border-white/5 pt-4 space-y-3">
+      <div className="border-t border-gray-200 pt-4 space-y-3">
         <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest">Produits</p>
         <FSel label="Colonnes desktop" value={String(lay.colonnesProduits||4)} onChange={v=>setLayout({colonnesProduits:Number(v)})} opts={[{v:"2",l:"2"},{v:"3",l:"3"},{v:"4",l:"4"},{v:"5",l:"5"}]} />
         <FSel label="Colonnes mobile" value={String(lay.colonnesMobile||2)} onChange={v=>setLayout({colonnesMobile:Number(v)})} opts={[{v:"1",l:"1"},{v:"2",l:"2"}]} />
         <FSel label="Style des cartes" value={lay.styleCarte||"shadow"} onChange={v=>setLayout({styleCarte:v})} opts={[{v:"shadow",l:"Ombre portée"},{v:"bordered",l:"Bordure"},{v:"flat",l:"Flat (sans relief)"},{v:"lifted",l:"Surélevé au survol"}]} />
       </div>
-      <div className="border-t border-white/5 pt-4">
+      <div className="border-t border-gray-200 pt-4">
         <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-3">Coins arrondis</p>
         <div className="grid grid-cols-4 gap-1.5 mb-3">
           {RADII.map(r=>(
-            <button key={r.v} onClick={()=>set((p: ThemeConfig)=>({...p,radius:r.v}))} className={`flex flex-col items-center gap-1 p-2 border transition-all ${config.radius===r.v?"border-[#F5A623] bg-[#F5A623]/10":"border-white/10 hover:border-white/20"}`} style={{borderRadius:r.v==="0px"?"4px":r.v==="9999px"?"50%":r.v}}>
+            <button key={r.v} onClick={()=>set((p: ThemeConfig)=>({...p,radius:r.v}))} className={`flex flex-col items-center gap-1 p-2 border transition-all ${config.radius===r.v?"border-[#F5A623] bg-[#F5A623]/10":"border-gray-200 hover:border-gray-300"}`} style={{borderRadius:r.v==="0px"?"4px":r.v==="9999px"?"50%":r.v}}>
               <div className="w-4 h-4 border-2 border-current opacity-60" style={{borderRadius:r.v==="9999px"?"50%":r.v}} />
               <span className="text-[8px] text-gray-500">{r.l}</span>
             </button>
           ))}
         </div>
         <div className="flex items-center gap-2">
-          <input type="number" min={0} max={999} value={parseInt(config.radius)||0} onChange={e=>set((p: ThemeConfig)=>({...p,radius:`${e.target.value}px`}))} className="w-16 bg-[#12121c] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-[#F5A623]/50" />
+          <input type="number" min={0} max={999} value={parseInt(config.radius)||0} onChange={e=>set((p: ThemeConfig)=>({...p,radius:`${e.target.value}px`}))} className="w-16 bg-gray-100 border border-gray-200 rounded-lg px-2 py-1.5 text-xs text-gray-800 focus:outline-none focus:border-[#F5A623]/50" />
           <span className="text-xs text-gray-600">px (custom)</span>
         </div>
       </div>
-      <div className="border-t border-white/5 pt-4 space-y-1.5">
+      <div className="border-t border-gray-200 pt-4 space-y-1.5">
         <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-2">Ombres</p>
         {[{v:"none",l:"Aucune"},{v:"sm",l:"Légère"},{v:"md",l:"Moyenne"},{v:"lg",l:"Forte"},{v:"xl",l:"Très forte"}].map(o=>(
-          <button key={o.v} onClick={()=>setLayout({ombre:o.v})} className={`w-full text-left px-3 py-2 rounded-lg text-xs flex justify-between ${(lay.ombre||"md")===o.v?"bg-[#F5A623]/15 text-[#F5A623] border border-[#F5A623]/30":"text-gray-400 hover:bg-white/5"}`}>
+          <button key={o.v} onClick={()=>setLayout({ombre:o.v})} className={`w-full text-left px-3 py-2 rounded-lg text-xs flex justify-between ${(lay.ombre||"md")===o.v?"bg-[#F5A623]/15 text-[#F5A623] border border-[#F5A623]/30":"text-gray-400 hover:bg-gray-100"}`}>
             <span>{o.l}</span>{(lay.ombre||"md")===o.v&&<Check size={10}/>}
           </button>
         ))}
@@ -1098,8 +1098,8 @@ function PanelMedias({ config, setSection, updateCustomSection }: any) {
 
         <div className="space-y-4">
           {/* Hero */}
-          <div className="bg-white/[0.03] rounded-xl p-3 space-y-2.5">
-            <p className="text-xs font-semibold text-white flex items-center gap-1.5"><ImageIcon size={12} /> Hero — Image de fond</p>
+          <div className="bg-gray-50 rounded-xl p-3 space-y-2.5">
+            <p className="text-xs font-semibold text-gray-700 flex items-center gap-1.5"><ImageIcon size={12} /> Hero — Image de fond</p>
             <p className="text-[9px] text-gray-600">L'image de fond principale (bannière boutique) se configure dans <Link href="/dashboard/boutique" className="text-[#F5A623] underline">Ma boutique → Médias</Link></p>
             {sec.hero?.style === "slideshow" && (
               <div>
@@ -1107,35 +1107,35 @@ function PanelMedias({ config, setSection, updateCustomSection }: any) {
                 {(sec.hero.slideshowImages||[""]).map((url: string, i: number) => (
                   <div key={i} className="flex gap-1 mb-1.5 items-center">
                     <FInp label="" value={url} onChange={v=>{ const imgs=[...(sec.hero.slideshowImages||[""])]; imgs[i]=v; setSection("hero",{slideshowImages:imgs}); }} />
-                    {url && <img src={url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 border border-white/10" onError={e=>(e.currentTarget.style.display="none")} />}
+                    {url && <img src={url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 border border-gray-200" onError={e=>(e.currentTarget.style.display="none")} />}
                   </div>
                 ))}
-                <button onClick={()=>setSection("hero",{slideshowImages:[...(sec.hero.slideshowImages||[""]),""]})} className="w-full text-[10px] text-gray-500 border border-dashed border-white/10 rounded-lg py-1 hover:border-white/20">+ Ajouter</button>
+                <button onClick={()=>setSection("hero",{slideshowImages:[...(sec.hero.slideshowImages||[""]),""]})} className="w-full text-[10px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1 hover:border-gray-300">+ Ajouter</button>
               </div>
             )}
           </div>
 
           {/* À propos */}
           {sec.about?.actif && (
-            <div className="bg-white/[0.03] rounded-xl p-3 space-y-2">
-              <p className="text-xs font-semibold text-white flex items-center gap-1.5"><BookOpen size={12} /> Notre histoire — Image</p>
+            <div className="bg-gray-50 rounded-xl p-3 space-y-2">
+              <p className="text-xs font-semibold text-gray-700 flex items-center gap-1.5"><BookOpen size={12} /> Notre histoire — Image</p>
               <FInp label="URL" value={sec.about?.imageUrl||""} onChange={v=>setSection("about",{imageUrl:v})} />
-              {sec.about?.imageUrl && <img src={sec.about.imageUrl} alt="" className="w-full h-20 rounded-lg object-cover border border-white/10" onError={e=>(e.currentTarget.style.display="none")} />}
+              {sec.about?.imageUrl && <img src={sec.about.imageUrl} alt="" className="w-full h-20 rounded-lg object-cover border border-gray-200" onError={e=>(e.currentTarget.style.display="none")} />}
             </div>
           )}
 
           {/* Bannière promo */}
           {sec.promo?.actif && sec.promo?.style === "image" && (
-            <div className="bg-white/[0.03] rounded-xl p-3 space-y-2">
-              <p className="text-xs font-semibold text-white flex items-center gap-1.5"><Target size={12} /> Bannière promo — Image</p>
+            <div className="bg-gray-50 rounded-xl p-3 space-y-2">
+              <p className="text-xs font-semibold text-gray-700 flex items-center gap-1.5"><Target size={12} /> Bannière promo — Image</p>
               <FInp label="URL" value={sec.promo?.imageUrl||""} onChange={v=>setSection("promo",{imageUrl:v})} />
             </div>
           )}
 
           {/* Custom sections with images/video */}
           {(config.customSections||[]).filter((s: any) => ["gallery","video","brands"].includes(s.type)).map((s: any) => (
-            <div key={s.id} className="bg-white/[0.03] rounded-xl p-3 space-y-2">
-              <p className="text-xs font-semibold text-white">{s.label}</p>
+            <div key={s.id} className="bg-gray-50 rounded-xl p-3 space-y-2">
+              <p className="text-xs font-semibold text-gray-700">{s.label}</p>
               {s.type === "video" && (
                 <FInp label="URL vidéo" value={s.config.videoUrl||""} onChange={v=>updateCustomSection(s.id,{videoUrl:v})} />
               )}
@@ -1144,10 +1144,10 @@ function PanelMedias({ config, setSection, updateCustomSection }: any) {
                   {(s.config.images||[]).map((url: string, i: number) => (
                     <div key={i} className="flex gap-1 mb-1.5 items-center">
                       <FInp label="" value={url} onChange={v=>{ const imgs=[...s.config.images]; imgs[i]=v; updateCustomSection(s.id,{images:imgs}); }} />
-                      {url && <img src={url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 border border-white/10" onError={e=>(e.currentTarget.style.display="none")} />}
+                      {url && <img src={url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 border border-gray-200" onError={e=>(e.currentTarget.style.display="none")} />}
                     </div>
                   ))}
-                  <button onClick={()=>updateCustomSection(s.id,{images:[...(s.config.images||[]),""]})} className="w-full text-[10px] text-gray-500 border border-dashed border-white/10 rounded-lg py-1 hover:border-white/20">+ Ajouter</button>
+                  <button onClick={()=>updateCustomSection(s.id,{images:[...(s.config.images||[]),""]})} className="w-full text-[10px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1 hover:border-gray-300">+ Ajouter</button>
                 </div>
               )}
             </div>
@@ -1185,9 +1185,9 @@ function PanelAnimations({ config, setAnim }: any) {
         <div className="space-y-1.5">
           {PRESETS.map(p => (
             <button key={p.v} onClick={() => { setAnim({ preset: p.v, ...PRESETS_SETTINGS[p.v] }); }}
-              className={`w-full text-left p-3 rounded-xl border transition-all ${(anim.preset||"elegant")===p.v?"border-[#F5A623]/50 bg-[#F5A623]/10":"border-white/10 hover:border-white/20"}`}>
+              className={`w-full text-left p-3 rounded-xl border transition-all ${(anim.preset||"elegant")===p.v?"border-[#F5A623]/50 bg-[#F5A623]/10":"border-gray-200 hover:border-gray-300"}`}>
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-white">{p.l}</span>
+                <span className="text-xs font-semibold text-gray-700">{p.l}</span>
                 {(anim.preset||"elegant")===p.v && <Check size={11} className="text-[#F5A623]" />}
               </div>
               <p className="text-[10px] text-gray-500 mt-0.5">{p.desc}</p>
@@ -1196,7 +1196,7 @@ function PanelAnimations({ config, setAnim }: any) {
         </div>
       </div>
 
-      <div className="border-t border-white/5 pt-4 space-y-3">
+      <div className="border-t border-gray-200 pt-4 space-y-3">
         <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest">Personnalisation</p>
         <FSel label="Animation globale" value={anim.global||"slide-up"} onChange={v=>setAnim({global:v})} opts={[
           {v:"none",l:"Aucune"},{v:"fade-in",l:"Fondu"},{v:"slide-up",l:"Glissement vers le haut"},
@@ -1206,14 +1206,14 @@ function PanelAnimations({ config, setAnim }: any) {
         <FSel label="Vitesse" value={anim.vitesse||"normal"} onChange={v=>setAnim({vitesse:v})} opts={[{v:"fast",l:"Rapide (0.4s)"},{v:"normal",l:"Normal (0.6s)"},{v:"slow",l:"Lent (0.9s)"}]} />
       </div>
 
-      <div className="border-t border-white/5 pt-4 space-y-3">
+      <div className="border-t border-gray-200 pt-4 space-y-3">
         <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest">Effets avancés</p>
         <FCheck label="Décalage entre sections (stagger)" checked={anim.stagger!==false} onChange={v=>setAnim({stagger:v})} />
         <FCheck label="Effet parallaxe sur le hero" checked={anim.parallax||false} onChange={v=>setAnim({parallax:v})} />
         <FCheck label="Défilement fluide (smooth scroll)" checked={anim.smoothScroll!==false} onChange={v=>setAnim({smoothScroll:v})} />
       </div>
 
-      <div className="border-t border-white/5 pt-4">
+      <div className="border-t border-gray-200 pt-4">
         <p className="text-[9px] text-gray-600 leading-relaxed">Les animations sont appliquées via CSS injecté dans votre boutique. Sauvegardez pour voir le résultat en prévisualisation.</p>
       </div>
     </div>
@@ -1240,7 +1240,7 @@ function PanelBoutons({ config, setBoutons, setNavStyle }: any) {
         <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-3">Style des boutons</p>
         <div className="space-y-1.5">
           {[{v:"filled",l:"Plein"},{v:"outlined",l:"Contour"},{v:"ghost",l:"Fantôme"},{v:"pill",l:"Pilule (arrondi total)"},{v:"square",l:"Carré (sans arrondi)"}].map(s=>(
-            <button key={s.v} onClick={()=>setBoutons({style:s.v})} className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${(b.style||"filled")===s.v?"border-[#F5A623]/50 bg-[#F5A623]/10":"border-white/10 hover:border-white/20"}`}>
+            <button key={s.v} onClick={()=>setBoutons({style:s.v})} className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${(b.style||"filled")===s.v?"border-[#F5A623]/50 bg-[#F5A623]/10":"border-gray-200 hover:border-gray-300"}`}>
               <span className="text-xs text-gray-300">{s.l}</span>
               <div className="w-16 h-6 flex items-center justify-center text-[9px] font-semibold border"
                 style={{ backgroundColor: ["outlined","ghost"].includes(s.v)?"transparent":config.colors.accent, color: ["outlined","ghost"].includes(s.v)?config.colors.accent:config.colors.fond, borderColor: s.v!=="ghost"?config.colors.accent:"transparent", borderRadius: s.v==="pill"?"999px":s.v==="square"?"0":"8px", textDecoration: s.v==="ghost"?"underline":"none" }}>
@@ -1251,23 +1251,23 @@ function PanelBoutons({ config, setBoutons, setNavStyle }: any) {
         </div>
       </div>
 
-      <div className="border-t border-white/5 pt-4 space-y-3">
+      <div className="border-t border-gray-200 pt-4 space-y-3">
         <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest">Taille & effet</p>
         <div className="grid grid-cols-4 gap-1.5">
           {[{v:"sm",l:"XS"},{v:"md",l:"M"},{v:"lg",l:"L"},{v:"xl",l:"XL"}].map(s=>(
-            <button key={s.v} onClick={()=>setBoutons({taille:s.v})} className={`py-2 rounded-xl text-xs font-semibold border transition-all ${(b.taille||"md")===s.v?"border-[#F5A623]/50 bg-[#F5A623]/10 text-[#F5A623]":"border-white/10 text-gray-500 hover:border-white/20"}`}>{s.l}</button>
+            <button key={s.v} onClick={()=>setBoutons({taille:s.v})} className={`py-2 rounded-xl text-xs font-semibold border transition-all ${(b.taille||"md")===s.v?"border-[#F5A623]/50 bg-[#F5A623]/10 text-[#F5A623]":"border-gray-200 text-gray-500 hover:border-gray-300"}`}>{s.l}</button>
           ))}
         </div>
         <FSel label="Effet au survol" value={b.hover||"scale"} onChange={v=>setBoutons({hover:v})} opts={[{v:"lighten",l:"Éclaircir"},{v:"darken",l:"Assombrir"},{v:"scale",l:"Agrandir"},{v:"glow",l:"Lueur (glow)"},{v:"slide",l:"Glissement"}]} />
       </div>
 
-      <div className="border-t border-white/5 pt-4 space-y-3">
+      <div className="border-t border-gray-200 pt-4 space-y-3">
         <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest">Type de navigation</p>
         <div className="space-y-1.5">
           {NAV_TYPES.map(t=>(
-            <button key={t.v} onClick={()=>setNavStyle({type:t.v})} className={`w-full text-left p-3 rounded-xl border transition-all ${(nav.type||"classic")===t.v?"border-[#F5A623]/50 bg-[#F5A623]/10":"border-white/10 hover:border-white/20"}`}>
+            <button key={t.v} onClick={()=>setNavStyle({type:t.v})} className={`w-full text-left p-3 rounded-xl border transition-all ${(nav.type||"classic")===t.v?"border-[#F5A623]/50 bg-[#F5A623]/10":"border-gray-200 hover:border-gray-300"}`}>
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-white">{t.l}</span>
+                <span className="text-xs font-semibold text-gray-700">{t.l}</span>
                 {(nav.type||"classic")===t.v && <Check size={10} className="text-[#F5A623]"/>}
               </div>
               <p className="text-[10px] text-gray-500 mt-0.5">{t.desc}</p>
@@ -1276,7 +1276,7 @@ function PanelBoutons({ config, setBoutons, setNavStyle }: any) {
         </div>
       </div>
 
-      <div className="border-t border-white/5 pt-4 space-y-3">
+      <div className="border-t border-gray-200 pt-4 space-y-3">
         <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest">Style navbar</p>
         <FSel label="Apparence" value={nav.style||"light"} onChange={v=>setNavStyle({style:v})} opts={[{v:"light",l:"Claire (fond blanc)"},{v:"dark",l:"Sombre (fond noir)"},{v:"glass",l:"Verre (glassmorphism)"},{v:"transparent",l:"Transparente"}]} />
         <FSel label="Hauteur" value={nav.hauteur||"64px"} onChange={v=>setNavStyle({hauteur:v})} opts={[{v:"48px",l:"Compact (48px)"},{v:"64px",l:"Standard (64px)"},{v:"80px",l:"Large (80px)"}]} />
@@ -1297,17 +1297,17 @@ function PanelAvance({ config, set, tenant, onReset }: any) {
         <p className="text-[9px] text-gray-600 mb-3 leading-relaxed">Injecté dans toutes les pages de votre boutique. Utilisez les classes Tailwind ou du CSS natif.</p>
         <textarea value={config.customCss||""} onChange={e=>set((p: ThemeConfig)=>({...p,customCss:e.target.value}))} rows={14}
           placeholder={`/* Exemples */\n.hero h1 { letter-spacing: 0.05em; }\n.product-card { transition: all 0.4s; }\n\n/* Variables CSS */\n:root {\n  --radius-custom: 20px;\n}`}
-          className="w-full bg-[#080810] border border-white/10 rounded-xl px-3 py-3 text-xs text-green-400 font-mono focus:outline-none focus:border-[#F5A623]/50 resize-none leading-relaxed" />
+          className="w-full bg-[#080810] border border-gray-200 rounded-xl px-3 py-3 text-xs text-green-400 font-mono focus:outline-none focus:border-[#F5A623]/50 resize-none leading-relaxed" />
       </div>
-      <div className="border-t border-white/5 pt-4 space-y-2">
+      <div className="border-t border-gray-200 pt-4 space-y-2">
         <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-3">Actions</p>
-        <Link href="/dashboard/themes" className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-white/10 hover:border-white/20 text-xs text-gray-400 hover:text-gray-300 transition-all">
+        <Link href="/dashboard/themes" className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-gray-200 hover:border-gray-300 text-xs text-gray-400 hover:text-gray-300 transition-all">
           <span>Changer de thème de base</span><ChevronRight size={12}/>
         </Link>
-        <Link href="/dashboard/boutique" className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-white/10 hover:border-white/20 text-xs text-gray-400 hover:text-gray-300 transition-all">
+        <Link href="/dashboard/boutique" className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-gray-200 hover:border-gray-300 text-xs text-gray-400 hover:text-gray-300 transition-all">
           <span>Logo, bannière & SEO</span><ChevronRight size={12}/>
         </Link>
-        <button onClick={() => { if (typeof navigator !== "undefined") navigator.clipboard.writeText(JSON.stringify(config, null, 2)); }} className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-white/10 hover:border-white/20 text-xs text-gray-400 hover:text-gray-300 transition-all">
+        <button onClick={() => { if (typeof navigator !== "undefined") navigator.clipboard.writeText(JSON.stringify(config, null, 2)); }} className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-gray-200 hover:border-gray-300 text-xs text-gray-400 hover:text-gray-300 transition-all">
           <span>Exporter la config JSON</span><Copy size={11}/>
         </button>
         <button onClick={onReset} className="w-full px-3 py-2.5 rounded-xl border border-red-500/20 hover:border-red-400/40 text-xs text-red-500/60 hover:text-red-400 transition-all">
@@ -1377,7 +1377,7 @@ function ProduitSectionSettings({ section, update }: { section: ProductPageSecti
   const up = (patch: Record<string, any>) => update(section.id, patch);
 
   if (section.type === "gallery") return (
-    <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2.5">
+    <div className="px-3 pb-3 space-y-2 border-t border-gray-200 pt-2.5">
       <FSel label="Style de galerie" value={c.style || "vertical-thumbs"} onChange={v => up({ style: v })} opts={[
         { v: "vertical-thumbs", l: "Miniatures verticales (Amazon)" },
         { v: "horizontal-thumbs", l: "Miniatures horizontales" },
@@ -1399,7 +1399,7 @@ function ProduitSectionSettings({ section, update }: { section: ProductPageSecti
   );
 
   if (section.type === "info") return (
-    <div className="px-3 pb-3 space-y-0 border-t border-white/5 pt-2.5">
+    <div className="px-3 pb-3 space-y-0 border-t border-gray-200 pt-2.5">
       {[
         { key: "breadcrumbs", label: "Fil d'Ariane" },
         { key: "badges",      label: "Badges promo" },
@@ -1416,7 +1416,7 @@ function ProduitSectionSettings({ section, update }: { section: ProductPageSecti
   );
 
   if (section.type === "description") return (
-    <div className="px-3 pb-3 border-t border-white/5 pt-2.5">
+    <div className="px-3 pb-3 border-t border-gray-200 pt-2.5">
       <div className="flex items-center justify-between py-1.5">
         <span className="text-[11px] text-gray-400">Description IA</span>
         <button onClick={() => up({ ai: c.ai === false ? true : false })} className="flex-shrink-0">
@@ -1427,7 +1427,7 @@ function ProduitSectionSettings({ section, update }: { section: ProductPageSecti
   );
 
   if (section.type === "similar") return (
-    <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2.5">
+    <div className="px-3 pb-3 space-y-2 border-t border-gray-200 pt-2.5">
       <FInp label="Titre de section" value={c.titre || "Vous aimerez aussi"} onChange={v => up({ titre: v })} />
       <FSel label="Nombre de produits" value={String(c.count || 4)} onChange={v => up({ count: Number(v) })} opts={[
         { v: "4", l: "4 produits" }, { v: "6", l: "6 produits" }, { v: "8", l: "8 produits" },
@@ -1436,7 +1436,7 @@ function ProduitSectionSettings({ section, update }: { section: ProductPageSecti
   );
 
   if (section.type === "richtext") return (
-    <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2.5">
+    <div className="px-3 pb-3 space-y-2 border-t border-gray-200 pt-2.5">
       <FInp label="Titre" value={c.titre || ""} onChange={v => up({ titre: v })} />
       <FInp label="Texte" value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
       <FInp label="Bouton CTA (vide = masqué)" value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} />
@@ -1444,7 +1444,7 @@ function ProduitSectionSettings({ section, update }: { section: ProductPageSecti
   );
 
   if (section.type === "banner") return (
-    <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2.5">
+    <div className="px-3 pb-3 space-y-2 border-t border-gray-200 pt-2.5">
       <FInp label="Titre" value={c.titre || ""} onChange={v => up({ titre: v })} />
       <FInp label="Texte" value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
       <FInp label="URL de l'image" value={c.imageUrl || ""} onChange={v => up({ imageUrl: v })} />
@@ -1453,7 +1453,7 @@ function ProduitSectionSettings({ section, update }: { section: ProductPageSecti
   );
 
   if (section.type === "video") return (
-    <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2.5">
+    <div className="px-3 pb-3 space-y-2 border-t border-gray-200 pt-2.5">
       <FInp label="Titre (optionnel)" value={c.titre || ""} onChange={v => up({ titre: v })} />
       <FInp label="URL (YouTube, Vimeo, .mp4)" value={c.videoUrl || ""} onChange={v => up({ videoUrl: v })} />
       <div className="flex items-center justify-between py-1">
@@ -1466,10 +1466,10 @@ function ProduitSectionSettings({ section, update }: { section: ProductPageSecti
   );
 
   if (section.type === "faq") return (
-    <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2.5">
+    <div className="px-3 pb-3 space-y-2 border-t border-gray-200 pt-2.5">
       <FInp label="Titre" value={c.titre || ""} onChange={v => up({ titre: v })} />
       {(c.items || []).map((item: any, i: number) => (
-        <div key={i} className="bg-white/[0.03] rounded-xl p-2 space-y-1.5">
+        <div key={i} className="bg-gray-50 rounded-xl p-2 space-y-1.5">
           <div className="flex gap-1.5">
             <div className="flex-1 space-y-1.5 min-w-0">
               <FInp label="Question" value={item.question} onChange={v => { const it=[...c.items]; it[i]={...it[i],question:v}; up({ items: it }); }} />
@@ -1480,14 +1480,14 @@ function ProduitSectionSettings({ section, update }: { section: ProductPageSecti
         </div>
       ))}
       <button onClick={() => up({ items: [...(c.items || []), { question: "Question ?", reponse: "Réponse ici." }] })}
-        className="w-full text-[10px] text-gray-600 border border-dashed border-white/10 rounded-lg py-1.5 hover:border-white/20 transition-colors">
+        className="w-full text-[10px] text-gray-600 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300 transition-colors">
         + Ajouter une question
       </button>
     </div>
   );
 
   if (section.type === "specs") return (
-    <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2.5">
+    <div className="px-3 pb-3 space-y-2 border-t border-gray-200 pt-2.5">
       <FInp label="Titre" value={c.titre || ""} onChange={v => up({ titre: v })} />
       {(c.rows || []).map((row: any, i: number) => (
         <div key={i} className="flex gap-1.5 items-end">
@@ -1501,20 +1501,20 @@ function ProduitSectionSettings({ section, update }: { section: ProductPageSecti
         </div>
       ))}
       <button onClick={() => up({ rows: [...(c.rows || []), { cle: "", valeur: "" }] })}
-        className="w-full text-[10px] text-gray-600 border border-dashed border-white/10 rounded-lg py-1.5 hover:border-white/20 transition-colors">
+        className="w-full text-[10px] text-gray-600 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300 transition-colors">
         + Ajouter une ligne
       </button>
     </div>
   );
 
   if (section.type === "countdown") return (
-    <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2.5">
+    <div className="px-3 pb-3 space-y-2 border-t border-gray-200 pt-2.5">
       <FInp label="Titre" value={c.titre || ""} onChange={v => up({ titre: v })} />
       <FInp label="Sous-texte" value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
       <div>
         <label className="block text-[10px] text-gray-500 mb-1">Date de fin</label>
         <input type="datetime-local" value={c.dateFin || ""} onChange={e => up({ dateFin: e.target.value })}
-          className="w-full bg-[#12121c] border border-white/10 rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none focus:border-[#F5A623]/50 transition-colors" />
+          className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none focus:border-[#F5A623]/50 transition-colors" />
       </div>
       <FInp label="Texte du bouton" value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} />
     </div>
@@ -1577,7 +1577,7 @@ function PanelProduit({ config, setProductPage }: any) {
   // Library view
   if (showLibrary) return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
         <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.18em]">Bibliothèque de sections</p>
         <button onClick={() => setShowLibrary(false)} className="text-gray-600 hover:text-gray-400"><X size={13} /></button>
       </div>
@@ -1586,12 +1586,12 @@ function PanelProduit({ config, setProductPage }: any) {
           const Li = lib.Icon;
           return (
             <button key={lib.type} onClick={() => addSection(lib.type)}
-              className="w-full text-left flex items-start gap-3 p-3 rounded-xl border border-white/10 hover:border-[#F5A623]/40 hover:bg-[#F5A623]/5 transition-all group">
-              <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0 group-hover:bg-[#F5A623]/10">
+              className="w-full text-left flex items-start gap-3 p-3 rounded-xl border border-gray-200 hover:border-[#F5A623]/40 hover:bg-[#F5A623]/5 transition-all group">
+              <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:bg-[#F5A623]/10">
                 <Li size={14} className="text-gray-500 group-hover:text-[#F5A623]" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-white">{lib.label}</p>
+                <p className="text-xs font-semibold text-gray-700">{lib.label}</p>
                 <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">{lib.desc}</p>
               </div>
               <Plus size={12} className="flex-shrink-0 mt-0.5 text-gray-600 group-hover:text-[#F5A623]" />
@@ -1607,12 +1607,12 @@ function PanelProduit({ config, setProductPage }: any) {
       <div className="flex-1 overflow-y-auto scrollbar-thin">
 
         {/* Layout picker */}
-        <div className="p-4 border-b border-white/5">
+        <div className="p-4 border-b border-gray-200">
           <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.18em] mb-2.5">Mise en page</p>
           <div className="grid grid-cols-2 gap-1.5">
             {LAYOUT_OPTIONS.map(lay => (
               <button key={lay.v} onClick={() => setProductPage({ layout: lay.v })}
-                className={`text-left p-2.5 rounded-xl border transition-all ${layout === lay.v ? "border-[#F5A623]/50 bg-[#F5A623]/10" : "border-white/10 hover:border-white/20"}`}>
+                className={`text-left p-2.5 rounded-xl border transition-all ${layout === lay.v ? "border-[#F5A623]/50 bg-[#F5A623]/10" : "border-gray-200 hover:border-gray-300"}`}>
                 <p className="text-[11px] font-semibold text-white flex items-center gap-1">
                   {layout === lay.v && <Check size={9} style={{ color: "#F5A623" }} />} {lay.l}
                 </p>
@@ -1639,7 +1639,7 @@ function PanelProduit({ config, setProductPage }: any) {
               const isActive = activeSection === sec.id;
               const isBuiltIn = BUILTIN_TYPES.has(sec.type);
               return (
-                <div key={sec.id} className={`rounded-xl border transition-all ${isActive ? "border-[#F5A623]/30 bg-[#F5A623]/5" : "border-white/8 bg-white/[0.02]"}`}>
+                <div key={sec.id} className={`rounded-xl border transition-all ${isActive ? "border-[#F5A623]/30 bg-[#F5A623]/5" : "border-gray-100 bg-gray-50"}`}>
                   <div className="flex items-center gap-1.5 px-2 py-2">
                     {/* Reorder */}
                     <div className="flex flex-col gap-0.5 flex-shrink-0">
@@ -1649,11 +1649,11 @@ function PanelProduit({ config, setProductPage }: any) {
                         className="w-4 h-3 flex items-center justify-center text-gray-700 hover:text-gray-400 disabled:opacity-20 transition-colors"><ChevronDown size={10} /></button>
                     </div>
                     {/* Icon */}
-                    <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
+                    <div className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
                       <SIcon size={11} className="text-gray-500" />
                     </div>
                     {/* Label */}
-                    <span className={`flex-1 text-[11px] font-medium truncate ${sec.actif ? "text-white" : "text-gray-600"}`}>{meta?.label ?? sec.type}</span>
+                    <span className={`flex-1 text-[11px] font-medium truncate ${sec.actif ? "text-gray-800" : "text-gray-400"}`}>{meta?.label ?? sec.type}</span>
                     {/* Toggle */}
                     <button onClick={() => toggleSection(sec.id)} className="flex-shrink-0">
                       {sec.actif ? <ToggleRight size={16} style={{ color: "#F5A623" }} /> : <ToggleLeft size={16} className="text-gray-700" />}
@@ -1688,8 +1688,8 @@ function FInp({ label, value, onChange, multiline }: { label: string; value: str
     <div>
       {label && <label className="block text-[10px] text-gray-500 mb-1">{label}</label>}
       {multiline
-        ? <textarea value={value} onChange={e=>onChange(e.target.value)} rows={2} className="w-full bg-[#12121c] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#F5A623]/50 resize-none" />
-        : <input value={value} onChange={e=>onChange(e.target.value)} className="w-full bg-[#12121c] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#F5A623]/50" />
+        ? <textarea value={value} onChange={e=>onChange(e.target.value)} rows={2} className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#F5A623]/50 resize-none" />
+        : <input value={value} onChange={e=>onChange(e.target.value)} className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#F5A623]/50" />
       }
     </div>
   );
@@ -1700,8 +1700,8 @@ function FCol({ label, value, onChange }: { label: string; value: string; onChan
     <div className="flex items-center gap-2">
       <label className="text-[10px] text-gray-400 flex-1 min-w-0 truncate">{label}</label>
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        <input type="color" value={value} onChange={e=>onChange(e.target.value)} className="w-7 h-7 rounded-lg cursor-pointer border border-white/20" style={{padding:"1px"}} />
-        <input type="text" value={value.toUpperCase()} onChange={e=>{ if(/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) onChange(e.target.value); }} className="w-16 bg-[#12121c] border border-white/10 rounded-lg px-2 py-1 text-[10px] font-mono text-gray-400 focus:outline-none focus:border-[#F5A623]/50" />
+        <input type="color" value={value} onChange={e=>onChange(e.target.value)} className="w-7 h-7 rounded-lg cursor-pointer border border-gray-300" style={{padding:"1px"}} />
+        <input type="text" value={value.toUpperCase()} onChange={e=>{ if(/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) onChange(e.target.value); }} className="w-16 bg-gray-100 border border-gray-200 rounded-lg px-2 py-1 text-[10px] font-mono text-gray-700 focus:outline-none focus:border-[#F5A623]/50" />
       </div>
     </div>
   );
@@ -1711,7 +1711,7 @@ function FSel({ label, value, opts, onChange }: { label: string; value: string; 
   return (
     <div>
       {label && <label className="block text-[10px] text-gray-500 mb-1">{label}</label>}
-      <select value={value} onChange={e=>onChange(e.target.value)} className="w-full bg-[#12121c] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#F5A623]/50">
+      <select value={value} onChange={e=>onChange(e.target.value)} className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#F5A623]/50">
         {opts.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}
       </select>
     </div>
@@ -1722,7 +1722,7 @@ function FSli({ label, value, min, max, onChange }: { label: string; value: numb
   return (
     <div>
       <label className="block text-[10px] text-gray-500 mb-1.5">{label}</label>
-      <input type="range" min={min} max={max} value={value} onChange={e=>onChange(Number(e.target.value))} className="w-full h-1.5 rounded-full appearance-none bg-white/10 accent-[#F5A623] cursor-pointer" />
+      <input type="range" min={min} max={max} value={value} onChange={e=>onChange(Number(e.target.value))} className="w-full h-1.5 rounded-full appearance-none bg-gray-100 accent-[#F5A623] cursor-pointer" />
     </div>
   );
 }
@@ -1730,7 +1730,7 @@ function FSli({ label, value, min, max, onChange }: { label: string; value: numb
 function FCheck({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <div className="flex items-center justify-between py-1">
-      <span className="text-xs text-gray-400">{label}</span>
+      <span className="text-xs text-gray-600">{label}</span>
       <button onClick={()=>onChange(!checked)}>
         {checked ? <ToggleRight size={18} style={{color:"#F5A623"}} /> : <ToggleLeft size={18} className="text-gray-600" />}
       </button>
