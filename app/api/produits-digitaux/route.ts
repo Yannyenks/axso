@@ -166,20 +166,33 @@ export async function GET(request: Request) {
     if (statutFilter === "actif") where.actif = true;
     if (statutFilter === "archive") where.actif = false;
 
-    const [produits, telechargementCounts] = await Promise.all([
-      prisma.produit.findMany({
+    let produits: any[] = [];
+    try {
+      produits = await prisma.produit.findMany({
         where,
         include: {
           _count: { select: { telechargements: true, lignesCommande: true } },
         },
         orderBy: { createdAt: "desc" },
-      }),
-      prisma.telechargement.groupBy({
+      });
+    } catch {
+      // Fallback sans les counts si les relations manquent
+      produits = await prisma.produit.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+      });
+      produits = produits.map((p: any) => ({ ...p, _count: { telechargements: 0, lignesCommande: 0 } }));
+    }
+
+    // Telechargement counts — resilient (table may not exist in all envs)
+    let telechargementCounts: { produitId: string; _count: { _all: number } }[] = [];
+    try {
+      telechargementCounts = await prisma.telechargement.groupBy({
         by: ["produitId"],
         where: { produit: { tenantId } },
         _count: { _all: true },
-      }),
-    ]);
+      });
+    } catch { /* table may not be migrated yet */ }
 
     // Parse metadata and apply type filter
     let result = produits.map((p) => {
