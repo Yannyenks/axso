@@ -18,7 +18,7 @@ type Avis = {
   id: string; note: number; titre: string | null; commentaire: string | null;
   verifie: boolean; client: { nom: string } | null; createdAt: string;
 };
-type ProdSection = { id: string; type: string; actif: boolean; config: Record<string, any> };
+type ProdSection = { id: string; type: string; actif: boolean; config: Record<string, any>; style?: { bgColor?: string; textColor?: string; paddingY?: string; maxWidth?: string; align?: string } };
 
 const DEFAULT_SECTIONS: ProdSection[] = [
   { id: "gallery",     type: "gallery",     actif: true, config: { style: "vertical-thumbs", zoom: true, sticky: true } },
@@ -288,6 +288,29 @@ function VariantSelector({ variantes, accent, radius, selected, onSelect }: {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// ─── Wrapper de style par section (fond, texte, espacement, largeur, alignement) ─
+function StyledSection({ style, children }: { style?: { bgColor?: string; textColor?: string; paddingY?: string; maxWidth?: string; align?: string }; children: React.ReactNode }) {
+  if (!style || (!style.bgColor && !style.textColor && (!style.paddingY || style.paddingY === "none") && (!style.maxWidth || style.maxWidth === "full") && !style.align)) {
+    return <>{children}</>;
+  }
+  const paddingMap: Record<string, string> = { none: "0", sm: "24px", md: "48px", lg: "72px", xl: "96px" };
+  const maxWidthMap: Record<string, string> = { full: "100%", medium: "896px", narrow: "640px" };
+  const py = paddingMap[style.paddingY || "none"];
+  return (
+    <div style={{
+      background: style.bgColor || undefined,
+      color: style.textColor || undefined,
+      padding: style.bgColor ? `${py} 24px` : (py !== "0" ? `${py} 0` : undefined),
+      borderRadius: style.bgColor ? "24px" : undefined,
+      marginTop: style.bgColor ? "32px" : undefined,
+    }}>
+      <div style={{ maxWidth: maxWidthMap[style.maxWidth || "full"], margin: style.align === "center" ? "0 auto" : undefined, textAlign: style.align as any }}>
+        {children}
+      </div>
     </div>
   );
 }
@@ -945,7 +968,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
 
         {/* Below sections in order */}
         {belowSections.map(sec => (
-          <React.Fragment key={sec.id}>
+          <StyledSection key={sec.id} style={sec.style}>
 
             {sec.type === "description" && (
               <>
@@ -1090,7 +1113,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
             {sec.type === "countdown"    && <CountdownSection   config={sec.config} accent={accent} surface={surface} slug={slug} />}
             {sec.type === "social"       && <SocialSection      accent={accent} nom={produit.nom} />}
 
-          </React.Fragment>
+          </StyledSection>
         ))}
 
         {/* FAQ produit spécifique */}

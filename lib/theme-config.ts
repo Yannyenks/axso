@@ -194,11 +194,21 @@ export type ProductPageSectionType =
   | "gallery" | "info" | "variants" | "quantity" | "trust" | "description" | "reviews" | "similar"
   | "richtext" | "banner" | "video" | "faq" | "specs" | "countdown" | "social";
 
+// Style personnalisable par section de fiche produit (fond, couleurs, espacement, largeur)
+export interface ProductPageSectionStyle {
+  bgColor?: string;
+  textColor?: string;
+  paddingY?: "none" | "sm" | "md" | "lg" | "xl";
+  maxWidth?: "full" | "medium" | "narrow";
+  align?: "left" | "center";
+}
+
 export interface ProductPageSection {
   id: string;
   type: ProductPageSectionType;
   actif: boolean;
   config: Record<string, any>;
+  style?: ProductPageSectionStyle;
 }
 
 export interface ThemeProductPageConfig {

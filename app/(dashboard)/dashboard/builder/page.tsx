@@ -1372,7 +1372,46 @@ const LAYOUT_OPTIONS = [
   { v: "fullwidth", l: "Pleine largeur", desc: "Image en plein écran avec overlay d'infos" },
 ];
 
-function ProduitSectionSettings({ section, update }: { section: ProductPageSection; update: (id: string, patch: Record<string, any>) => void }) {
+const STYLE_DISABLED_TYPES = new Set(["gallery", "info", "variants", "quantity", "trust"]);
+
+function ProduitSectionSettings({ section, update, updateStyle }: { section: ProductPageSection; update: (id: string, patch: Record<string, any>) => void; updateStyle: (id: string, patch: Record<string, any>) => void }) {
+  return (
+    <>
+      <SectionTypeSettings section={section} update={update} />
+      {!STYLE_DISABLED_TYPES.has(section.type) && <SectionStylePanel section={section} updateStyle={updateStyle} />}
+    </>
+  );
+}
+
+function SectionStylePanel({ section, updateStyle }: { section: ProductPageSection; updateStyle: (id: string, patch: Record<string, any>) => void }) {
+  const st = section.style || {};
+  const up = (patch: Record<string, any>) => updateStyle(section.id, patch);
+  const bgActive = !!st.bgColor;
+  return (
+    <div className="px-3 pb-3 space-y-2.5 border-t border-gray-200 pt-2.5">
+      <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.16em]">Style de la section</p>
+      <div className="flex items-center justify-between py-1">
+        <span className="text-[11px] text-gray-400">Fond coloré</span>
+        <button onClick={() => up({ bgColor: bgActive ? undefined : "#F8F8F6" })} className="flex-shrink-0">
+          {bgActive ? <ToggleRight size={17} style={{ color: "#F5A623" }} /> : <ToggleLeft size={17} className="text-gray-700" />}
+        </button>
+      </div>
+      {bgActive && <FCol label="Couleur de fond" value={st.bgColor || "#F8F8F6"} onChange={v => up({ bgColor: v })} />}
+      <FCol label="Couleur du texte" value={st.textColor || "#111111"} onChange={v => up({ textColor: v })} />
+      <FSel label="Espacement vertical" value={st.paddingY || "none"} onChange={v => up({ paddingY: v as any })} opts={[
+        { v: "none", l: "Aucun" }, { v: "sm", l: "Petit" }, { v: "md", l: "Moyen" }, { v: "lg", l: "Grand" }, { v: "xl", l: "Très grand" },
+      ]} />
+      <FSel label="Largeur du contenu" value={st.maxWidth || "full"} onChange={v => up({ maxWidth: v as any })} opts={[
+        { v: "full", l: "Pleine largeur" }, { v: "medium", l: "Moyenne" }, { v: "narrow", l: "Étroite" },
+      ]} />
+      <FSel label="Alignement" value={st.align || "left"} onChange={v => up({ align: v as any })} opts={[
+        { v: "left", l: "Gauche" }, { v: "center", l: "Centré" },
+      ]} />
+    </div>
+  );
+}
+
+function SectionTypeSettings({ section, update }: { section: ProductPageSection; update: (id: string, patch: Record<string, any>) => void }) {
   const c = section.config;
   const up = (patch: Record<string, any>) => update(section.id, patch);
 
@@ -1526,6 +1565,8 @@ function ProduitSectionSettings({ section, update }: { section: ProductPageSecti
 function PanelProduit({ config, setProductPage }: any) {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [showLibrary, setShowLibrary] = useState(false);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [overIdx, setOverIdx] = useState<number | null>(null);
 
   const pp = config.productPage || {};
   const layout: string = pp.layout || "amazon";
@@ -1539,10 +1580,21 @@ function PanelProduit({ config, setProductPage }: any) {
     setSections(next);
   };
 
+  const reorderSection = (from: number, to: number) => {
+    if (from === to) return;
+    const next = [...sections];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setSections(next);
+  };
+
   const toggleSection = (id: string) => setSections(sections.map(s => s.id === id ? { ...s, actif: !s.actif } : s));
 
   const updateSection = (id: string, patch: Record<string, any>) =>
     setSections(sections.map(s => s.id === id ? { ...s, config: { ...s.config, ...patch } } : s));
+
+  const updateSectionStyle = (id: string, patch: Record<string, any>) =>
+    setSections(sections.map(s => s.id === id ? { ...s, style: { ...s.style, ...patch } } : s));
 
   const addSection = (type: string) => {
     const defaults: Record<string, any> = {
@@ -1639,8 +1691,19 @@ function PanelProduit({ config, setProductPage }: any) {
               const isActive = activeSection === sec.id;
               const isBuiltIn = BUILTIN_TYPES.has(sec.type);
               return (
-                <div key={sec.id} className={`rounded-xl border transition-all ${isActive ? "border-[#F5A623]/30 bg-[#F5A623]/5" : "border-gray-100 bg-gray-50"}`}>
+                <div key={sec.id}
+                  draggable
+                  onDragStart={() => setDragIdx(idx)}
+                  onDragOver={e => { e.preventDefault(); if (overIdx !== idx) setOverIdx(idx); }}
+                  onDragLeave={() => setOverIdx(o => o === idx ? null : o)}
+                  onDrop={e => { e.preventDefault(); if (dragIdx !== null) reorderSection(dragIdx, idx); setDragIdx(null); setOverIdx(null); }}
+                  onDragEnd={() => { setDragIdx(null); setOverIdx(null); }}
+                  className={`rounded-xl border transition-all ${isActive ? "border-[#F5A623]/30 bg-[#F5A623]/5" : "border-gray-100 bg-gray-50"} ${dragIdx === idx ? "opacity-40" : ""} ${overIdx === idx && dragIdx !== null && dragIdx !== idx ? "ring-2 ring-[#F5A623]/50" : ""}`}>
                   <div className="flex items-center gap-1.5 px-2 py-2">
+                    {/* Drag handle */}
+                    <div className="cursor-grab active:cursor-grabbing text-gray-600 hover:text-gray-400 flex-shrink-0" title="Glisser pour réordonner">
+                      <GripVertical size={12} />
+                    </div>
                     {/* Reorder */}
                     <div className="flex flex-col gap-0.5 flex-shrink-0">
                       <button onClick={() => idx > 0 && moveSection(idx, -1)} disabled={idx === 0}
@@ -1667,7 +1730,7 @@ function PanelProduit({ config, setProductPage }: any) {
                       <ChevronDown size={12} className="transition-transform" style={{ transform: isActive ? "rotate(180deg)" : "" }} />
                     </button>
                   </div>
-                  {isActive && <ProduitSectionSettings section={sec} update={updateSection} />}
+                  {isActive && <ProduitSectionSettings section={sec} update={updateSection} updateStyle={updateSectionStyle} />}
                 </div>
               );
             })}
