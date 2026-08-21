@@ -1,12 +1,10 @@
 import { cn } from "@/lib/utils";
+import { NOMS_PALIERS, type Palier } from "@/lib/plans";
 
-type Plan = "gratuit" | "starter" | "pro" | "business";
-
-const PLAN_CONFIG: Record<Plan, { label: string; couleur: string; bg: string; border: string }> = {
-  gratuit:  { label: "Gratuit",  couleur: "#6b7280", bg: "#6b728015", border: "#6b728030" },
-  starter:  { label: "Starter",  couleur: "#3b82f6", bg: "#3b82f615", border: "#3b82f630" },
-  pro:      { label: "Pro",      couleur: "#1B2A4A", bg: "#1B2A4A15", border: "#1B2A4A30" },
-  business: { label: "Business", couleur: "#F5A623", bg: "#F5A62315", border: "#F5A62330" },
+const PLAN_CONFIG: Record<Palier, { label: string; couleur: string; bg: string; border: string }> = {
+  palier0: { label: NOMS_PALIERS.palier0, couleur: "#6b7280", bg: "#6b728015", border: "#6b728030" },
+  palier1: { label: NOMS_PALIERS.palier1, couleur: "#F5A623", bg: "#F5A62315", border: "#F5A62330" },
+  palier2: { label: NOMS_PALIERS.palier2, couleur: "#1B2A4A", bg: "#1B2A4A15", border: "#1B2A4A30" },
 };
 
 interface PlanBadgeProps {
@@ -16,8 +14,8 @@ interface PlanBadgeProps {
 }
 
 export function PlanBadge({ plan, className, size = "md" }: PlanBadgeProps) {
-  const key = (plan?.toLowerCase() ?? "gratuit") as Plan;
-  const config = PLAN_CONFIG[key] ?? PLAN_CONFIG.gratuit;
+  const key = (plan?.toLowerCase() ?? "palier0") as Palier;
+  const config = PLAN_CONFIG[key] ?? PLAN_CONFIG.palier0;
 
   return (
     <span

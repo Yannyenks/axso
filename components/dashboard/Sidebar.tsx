@@ -10,8 +10,10 @@ import {
   DollarSign, CreditCard, Wallet, Map, Box,
   Settings2, ExternalLink, ArrowLeft, UserCheck,
   LayoutGrid, Plug, Link2, Bell, Store, ChevronRight,
-  RotateCcw, FileText,
+  RotateCcw, FileText, Lock, Target, FileBarChart,
 } from "lucide-react";
+import { useAbonnementOverlay } from "@/components/dashboard/AbonnementOverlayProvider";
+import { palierAuMoins, type Palier } from "@/lib/plans";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface NavItem {
@@ -22,6 +24,10 @@ interface NavItem {
   locked?: boolean;
   exact?: boolean;
   excludePrefix?: string;
+  requiresPalier?: Palier;
+  // Route qui ouvre directement l'overlay abonnement plein écran au lieu de
+  // naviguer vers une page classique (le lien "Abonnement" lui-même).
+  opensAbonnement?: boolean;
 }
 
 type Entry = NavItem | { type: "label"; text: string };
@@ -30,6 +36,7 @@ export interface SidebarProps {
   boutiqueNom?: string;
   boutiqueSlug?: string;
   userInitials?: string;
+  palier?: Palier;
 }
 
 // ─── Routes boutique ──────────────────────────────────────────────────────────
@@ -61,12 +68,14 @@ const MAIN_NAV: Entry[] = [
   { type: "label", text: "CATALOGUE" },
   { href: "/dashboard/produits",         label: "Produits",          Icon: Package,       excludePrefix: "/dashboard/produits/digital" },
   { href: "/dashboard/produits/digital", label: "Produits Digitaux", Icon: Download },
-  { href: "/dashboard/sourcing",         label: "Sourcing",          Icon: Map },
+  { href: "/dashboard/sourcing",         label: "Sourcing",          Icon: Map,           requiresPalier: "palier2" },
   { href: "/dashboard/entrepots",        label: "Entrepôts",         Icon: Box },
 
   { type: "label", text: "CROISSANCE" },
   { href: "/dashboard/analytics",        label: "Analytics",         Icon: BarChart3 },
-  { href: "/dashboard/marketing",        label: "Marketing",         Icon: Megaphone },
+  { href: "/dashboard/objectifs",        label: "Objectifs",         Icon: Target },
+  { href: "/dashboard/rapports",         label: "Rapports",          Icon: FileBarChart },
+  { href: "/dashboard/marketing",        label: "Marketing",         Icon: Megaphone,     requiresPalier: "palier1" },
   { href: "/dashboard/affiliation",      label: "Affiliation",       Icon: UserCheck },
 
   { type: "label", text: "FINANCE" },
@@ -75,7 +84,7 @@ const MAIN_NAV: Entry[] = [
   { href: "/dashboard/wallet",           label: "Wallet",            Icon: Wallet },
 
   { type: "label", text: "COMPTE" },
-  { href: "/dashboard/abonnement",       label: "Abonnement",        Icon: CreditCard },
+  { href: "/dashboard/abonnement",       label: "Abonnement",        Icon: CreditCard,    opensAbonnement: true },
 ];
 
 // ─── Navigation boutique ──────────────────────────────────────────────────────
@@ -104,27 +113,24 @@ function isActive(item: NavItem, pathname: string) {
 
 // ─── NavLink ──────────────────────────────────────────────────────────────────
 function NavLink({
-  item, pathname,
+  item, pathname, palier,
   accent = "#F5A623",
   activeBg = "#FFF7ED",
   activeText = "#92400E",
 }: {
   item: NavItem;
   pathname: string;
+  palier?: Palier;
   accent?: string;
   activeBg?: string;
   activeText?: string;
 }) {
+  const { openAbonnement } = useAbonnementOverlay();
   const active = isActive(item, pathname);
-  return (
-    <Link
-      href={item.href}
-      className={cn(
-        "relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13.5px] font-medium transition-all duration-150 group",
-        !active && "hover:bg-gray-50"
-      )}
-      style={active ? { backgroundColor: activeBg, color: activeText } : undefined}
-    >
+  const locked = !!item.requiresPalier && !palierAuMoins(palier ?? "palier0", item.requiresPalier);
+
+  const content = (
+    <>
       {/* Indicateur actif */}
       {active && (
         <span
@@ -138,7 +144,7 @@ function NavLink({
         className="flex-shrink-0 flex items-center justify-center w-[30px] h-[30px] rounded-lg transition-all"
         style={active
           ? { backgroundColor: `${accent}22`, color: accent }
-          : { backgroundColor: "transparent", color: "#9CA3AF" }
+          : { backgroundColor: "transparent", color: locked ? "#D1D5DB" : "#9CA3AF" }
         }
       >
         <item.Icon size={16} />
@@ -147,41 +153,83 @@ function NavLink({
       {/* Label */}
       <span className={cn(
         "flex-1 truncate leading-none font-medium",
-        !active && "text-gray-500 group-hover:text-gray-800"
+        locked ? "text-gray-400" : !active && "text-gray-500 group-hover:text-gray-800"
       )}>
         {item.label}
       </span>
 
+      {/* Cadenas — fonctionnalité hors du plan actuel */}
+      {locked && <Lock size={12} className="flex-shrink-0 text-gray-300" />}
+
       {/* Badge live */}
-      {item.badge && (
+      {!locked && item.badge && (
         <span
           className="w-2 h-2 rounded-full flex-shrink-0 animate-pulse"
           style={{ backgroundColor: accent }}
         />
       )}
+    </>
+  );
+
+  const className = cn(
+    "relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13.5px] font-medium transition-all duration-150 group",
+    !active && !locked && "hover:bg-gray-50",
+    locked && "cursor-pointer hover:bg-gray-50/60"
+  );
+
+  if (locked) {
+    return (
+      <button type="button" onClick={() => openAbonnement(item.requiresPalier)} className={cn(className, "w-full text-left")}>
+        {content}
+      </button>
+    );
+  }
+
+  if (item.opensAbonnement) {
+    return (
+      <button type="button" onClick={() => openAbonnement()} className={cn(className, "w-full text-left")}
+        style={active ? { backgroundColor: activeBg, color: activeText } : undefined}>
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <Link
+      href={item.href}
+      className={className}
+      style={active ? { backgroundColor: activeBg, color: activeText } : undefined}
+    >
+      {content}
     </Link>
   );
 }
 
 // ─── Sidebar principale ────────────────────────────────────────────────────────
 function MainSidebar({
-  pathname, boutiqueNom, userInitials, onBoutique,
+  pathname, boutiqueNom, userInitials, onBoutique, palier,
 }: {
   pathname: string;
   boutiqueNom?: string;
   userInitials?: string;
   onBoutique: () => void;
+  palier?: Palier;
 }) {
   return (
     <>
-      {/* Logo */}
+      {/* Slogan */}
       <div className="h-[60px] flex items-center px-5 flex-shrink-0 border-b border-gray-100/80">
-        <img
-          src="/logo.png"
-          alt="Axso"
-          className="h-8 object-contain"
-          onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-        />
+        <span
+          className="text-[15px] font-bold tracking-tight leading-tight"
+          style={{
+            background: "linear-gradient(135deg,#1B2A4A 0%,#2c4270 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}
+        >
+          Build your empire here
+        </span>
       </div>
 
       {/* Ma boutique CTA */}
@@ -237,7 +285,7 @@ function MainSidebar({
                 </div>
               );
             }
-            return <NavLink key={entry.href} item={entry} pathname={pathname} />;
+            return <NavLink key={entry.href} item={entry} pathname={pathname} palier={palier} />;
           })}
         </div>
       </nav>
@@ -373,7 +421,7 @@ function BoutiqueSidebar({
 }
 
 // ─── Export ───────────────────────────────────────────────────────────────────
-export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials }: SidebarProps) {
+export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier }: SidebarProps) {
   const pathname = usePathname();
   const [mode, setMode] = useState<"main" | "boutique">("main");
 
@@ -403,6 +451,7 @@ export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials }: SidebarProp
           boutiqueNom={boutiqueNom}
           userInitials={userInitials}
           onBoutique={() => setMode("boutique")}
+          palier={palier}
         />
       )}
     </aside>

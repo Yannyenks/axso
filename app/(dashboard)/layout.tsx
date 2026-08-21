@@ -8,7 +8,8 @@ import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { AxiaFloat } from "@/components/dashboard/AxiaFloat";
 import { QuotaBanner } from "@/components/dashboard/QuotaBanner";
 import { NotificationSound } from "@/components/ui/NotificationSound";
-import { quotaCommandesAtteint } from "@/lib/abonnement";
+import { quotaCommandesAtteint, planActif } from "@/lib/abonnement";
+import { AbonnementOverlayProvider } from "@/components/dashboard/AbonnementOverlayProvider";
 
 const FULLBLEED_ROUTES: string[] = ["/dashboard/builder", "/dashboard/themes"];
 
@@ -28,12 +29,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const pathname = (await headers()).get("x-pathname") || "";
   const fullBleed = FULLBLEED_ROUTES.some(r => pathname.startsWith(r));
   const quotaAtteint = tenantId ? await quotaCommandesAtteint(tenantId) : false;
+  const { plan: palier } = tenantId ? await planActif(tenantId) : { plan: "palier0" as const };
 
   return (
-    <>
+    <AbonnementOverlayProvider>
       {/* ─── Desktop : sidebar latérale ─────────────────────────── */}
       <div className="hidden md:flex h-screen bg-[#f0f2f8] text-gray-900 overflow-hidden" style={{ fontFamily: "'Poppins', 'Century Gothic', system-ui, sans-serif" }}>
-        <Sidebar boutiqueNom={boutique?.nomBoutique} boutiqueSlug={boutique?.slug} />
+        <Sidebar boutiqueNom={boutique?.nomBoutique} boutiqueSlug={boutique?.slug} palier={palier} />
         <div className="flex flex-col flex-1 overflow-hidden">
           <main className={fullBleed ? "flex-1 overflow-hidden flex flex-col" : "flex-1 overflow-y-auto"}>
             {fullBleed ? children : (
@@ -70,7 +72,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       {/* Son audio sur chaque notification toast */}
       <NotificationSound />
-    </>
+    </AbonnementOverlayProvider>
   );
 }
 
