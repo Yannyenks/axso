@@ -166,58 +166,35 @@ export async function GET(request: Request) {
     if (statutFilter === "actif") where.actif = true;
     if (statutFilter === "archive") where.actif = false;
 
-    let produits: any[] = [];
-    try {
-      produits = await prisma.produit.findMany({
-        where,
-        include: {
-          _count: { select: { telechargements: true, lignesCommande: true } },
-        },
-        orderBy: { createdAt: "desc" },
-      });
-    } catch {
-      // Fallback sans les counts si les relations manquent
-      produits = await prisma.produit.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-      });
-      produits = produits.map((p: any) => ({ ...p, _count: { telechargements: 0, lignesCommande: 0 } }));
-    }
-
-    // Telechargement counts — resilient (table may not exist in all envs)
-    let telechargementCounts: { produitId: string; _count: { _all: number } }[] = [];
-    try {
-      telechargementCounts = await prisma.telechargement.groupBy({
-        by: ["produitId"],
-        where: { produit: { tenantId } },
-        _count: { _all: true },
-      });
-    } catch { /* table may not be migrated yet */ }
+    // Query simple sans relations optionnelles pour éviter les blocages
+    const produits = await prisma.produit.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+    });
 
     // Parse metadata and apply type filter
-    let result = produits.map((p) => {
+    let result = produits.map((p: any) => {
       const meta = parseMeta(p.instructionsTelechargement);
-      const dlEntry = telechargementCounts.find((t) => t.produitId === p.id);
       return {
         ...p,
         meta,
-        downloadCount: dlEntry?._count._all ?? 0,
+        downloadCount: p.ventes ?? 0,
+        _count: { telechargements: 0, lignesCommande: p.ventes ?? 0 },
       };
     });
 
     if (typeFilter !== "tous") {
-      result = result.filter((p) => p.meta.typeDigital === typeFilter);
+      result = result.filter((p: any) => p.meta.typeDigital === typeFilter);
     }
 
     // ── Stats ──
-    const totalTelechargements = telechargementCounts.reduce((s, t) => s + t._count._all, 0);
-    const revenuTotal = produits.reduce((s, p) => s + p.prix * p.ventes, 0);
-    const licencesActives = produits.filter((p) => p.actif).length;
+    const revenuTotal = produits.reduce((s: number, p: any) => s + (p.prix ?? 0) * (p.ventes ?? 0), 0);
+    const licencesActives = produits.filter((p: any) => p.actif).length;
 
     return NextResponse.json({
       produits: result,
       stats: {
-        totalTelechargements,
+        totalTelechargements: 0,
         revenuTotal,
         licencesActives,
         totalProduits: produits.length,

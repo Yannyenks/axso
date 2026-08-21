@@ -749,16 +749,19 @@ export default function DigitalProduitsPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
     try {
       const params = new URLSearchParams({ type: typeFilter, statut: statutFilter });
-      const res = await fetch(`/api/produits-digitaux?${params}`);
+      const res = await fetch(`/api/produits-digitaux?${params}`, { signal: controller.signal });
       if (!res.ok) throw new Error("Erreur de chargement");
       const data = await res.json();
       setProduits(data.produits ?? []);
       setStats(data.stats);
     } catch (e: any) {
-      setError(e.message);
+      setError(e.name === "AbortError" ? "Délai dépassé — réessayez" : e.message);
     } finally {
+      clearTimeout(timeout);
       setLoading(false);
     }
   }, [typeFilter, statutFilter]);
