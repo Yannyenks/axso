@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { AxiaStorefront } from "@/components/storefront/AxiaStorefront";
@@ -7,6 +8,7 @@ import { TikTokPixel } from "@/components/storefront/TikTokPixel";
 import { SnapchatPixel } from "@/components/storefront/SnapchatPixel";
 import { GoogleTagManager } from "@/components/storefront/GoogleTagManager";
 import { CustomTrackingScripts } from "@/components/storefront/CustomTrackingScripts";
+import { AffiliationRefCapture } from "@/components/storefront/AffiliationRefCapture";
 
 interface Props {
   children: React.ReactNode;
@@ -32,6 +34,9 @@ export default async function StorefrontLayout({ children, params }: Props) {
   return (
     <>
       {children}
+      <Suspense fallback={null}>
+        <AffiliationRefCapture />
+      </Suspense>
       <AxiaStorefront slug={slug} nomBoutique={tenant.nomBoutique} accentColor={accent} />
       <StorefrontPopups slug={slug} accentColor={accent} />
       {tenant.metaPixelId && <MetaPixel pixelId={tenant.metaPixelId} />}

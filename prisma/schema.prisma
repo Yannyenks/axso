@@ -120,7 +120,7 @@ model Produit {
   // Chariow (paiement digital via API Chariow)
   chariowProduitId  String?  // ID du produit correspondant sur chariow.com (ex: prd_abc123)
   // Affiliation
-  affiliationActive   Boolean @default(false)
+  affiliationActive   Boolean @default(true)
   tauxCommissionAff   Float?  // ex: 0.20 = 20% pour l'affilieur (sur le prix HT commission Axso)
   // Dropshipping
   prixFournisseur Float?   // Prix d'achat fournisseur
@@ -1005,19 +1005,19 @@ model AgentDecision {
 }
 
 // =====================
-// AGENT GOAL (objectifs revenus)
+// AGENT GOAL (objectifs boutique — chiffre d'affaires, commandes, clients…)
 // =====================
 model AgentGoal {
   id        String   @id @default(cuid())
   tenantId  String
-  type      String
+  type      String   // ca | commandes | clients | panier_moyen
   titre     String
   cible     Float
-  actuel    Float    @default(0)
+  actuel    Float    @default(0) // dernier calcul mis en cache — la valeur réelle est recalculée en direct à chaque lecture
   devise    String   @default("XAF")
   deadline  DateTime
   statut    String   @default("actif") // actif | atteint | echoue | pause
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) // aussi le point de départ de la période suivie par l'objectif
   updatedAt DateTime @updatedAt
 
   @@index([tenantId, statut])
@@ -1440,9 +1440,23 @@ model Affilie {
   tenant     Tenant                @relation(fields: [tenantId], references: [id])
   programme  ProgrammeAffiliation? @relation(fields: [programmeId], references: [id])
   commissions CommissionAffilie[]
+  clicsLog    AffilieClic[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
+}
+
+// Historique des clics sur le lien de parrainage — le compteur Affilie.clics
+// reste la source rapide (total lifetime), ce log sert uniquement aux
+// graphiques jour par jour du portail affilié.
+model AffilieClic {
+  id        String   @id @default(cuid())
+  affilieId String
+  createdAt DateTime @default(now())
+
+  affilie Affilie @relation(fields: [affilieId], references: [id])
+
+  @@index([affilieId, createdAt])
 }
 
 // =====================

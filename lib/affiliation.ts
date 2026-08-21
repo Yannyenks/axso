@@ -70,6 +70,16 @@ type ProgrammePourCalcul = {
   produitIds: string[];
 };
 
+// Sous-types de produit considérés "digitaux" pour la règle de commission
+// d'affiliation par défaut (50%) — exclut "bundle", qui peut mélanger des
+// produits physiques et digitaux et ne doit pas hériter du taux digital.
+export const TYPES_PRODUIT_DIGITAL = new Set(["digital", "fichier", "formation", "licence"]);
+
+// Commission par défaut d'un produit digital sans taux personnalisé —
+// nettement supérieure au taux physique par défaut car sans coût de
+// livraison/stock pour le marchand.
+const TAUX_DEFAUT_DIGITAL = 0.5;
+
 function tauxPourPalier(programme: ProgrammePourCalcul, conversionsActuelles: number): number {
   if (!programme.tiersActifs) return programme.valeurCommission;
   if (conversionsActuelles >= programme.tier2Max) return programme.tier3Commission;
@@ -80,7 +90,7 @@ function tauxPourPalier(programme: ProgrammePourCalcul, conversionsActuelles: nu
 export function calculerCommissionLigne(params: {
   montantLigne: number;
   produitId: string;
-  produit: { affiliationActive: boolean; tauxCommissionAff: number | null } | null;
+  produit: { affiliationActive: boolean; tauxCommissionAff: number | null; type?: string } | null;
   programme: ProgrammePourCalcul;
   conversionsActuelles: number;
 }): number {
@@ -89,6 +99,8 @@ export function calculerCommissionLigne(params: {
   const eligible = programme.tousLesProduits || programme.produitIds.includes(produitId);
   if (!eligible) return 0;
 
+  const estDigital = !!produit?.type && TYPES_PRODUIT_DIGITAL.has(produit.type);
+
   if (programme.typeCommission === "fixe") {
     const montant = produit?.affiliationActive && produit.tauxCommissionAff
       ? produit.tauxCommissionAff
@@ -96,10 +108,11 @@ export function calculerCommissionLigne(params: {
     return Math.round(montant * 100) / 100;
   }
 
-  // Pourcentage : taux spécifique produit (déjà une fraction, ex 0.20) sinon
-  // taux du programme selon le palier atteint (stocké en points, ex 10 = 10%)
-  const tauxFraction = produit?.affiliationActive && produit.tauxCommissionAff
-    ? produit.tauxCommissionAff
+  // Pourcentage : taux spécifique produit (déjà une fraction, ex 0.20) sinon,
+  // pour un produit digital, 50% garanti ; sinon taux du programme selon le
+  // palier atteint (stocké en points, ex 10 = 10%).
+  const tauxFraction = produit?.affiliationActive
+    ? (produit.tauxCommissionAff ?? (estDigital ? TAUX_DEFAUT_DIGITAL : tauxPourPalier(programme, conversionsActuelles) / 100))
     : tauxPourPalier(programme, conversionsActuelles) / 100;
 
   return Math.round(montantLigne * tauxFraction * 100) / 100;
@@ -149,7 +162,7 @@ export async function enregistrerConversionAffiliation(params: {
 
   const produits = await prisma.produit.findMany({
     where: { id: { in: lignes.map((l) => l.produitId) } },
-    select: { id: true, affiliationActive: true, tauxCommissionAff: true },
+    select: { id: true, affiliationActive: true, tauxCommissionAff: true, type: true },
   });
   const produitsMap = new Map(produits.map((p) => [p.id, p]));
 
