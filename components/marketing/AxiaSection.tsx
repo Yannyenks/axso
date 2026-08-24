@@ -1,7 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Mic, Zap } from "lucide-react";
+
+// Scène 3D chargée uniquement côté client (WebGL indisponible en SSR)
+const Axia3D = dynamic(() => import("./Axia3D").then(m => m.Axia3D), { ssr: false });
 
 const MSG_USER = "Ajoute une promo -20% sur mes sneakers ce week-end";
 const MSG_AXIA  = "C'est fait ✓ La promo est active du samedi 00h00 au dimanche 23h59, et j'ai notifié tes 3 derniers clients intéressés.";
@@ -73,8 +77,8 @@ export function AxiaSection() {
           </div>
 
           <div className="order-1 lg:order-2" style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateX(24px)", transition: "all 0.8s 0.1s cubic-bezier(0.23,1,0.32,1)" }}>
-            <div className="ax-axia-mascot w-20 h-20 sm:w-24 sm:h-24 mb-5 rounded-3xl overflow-hidden flex items-center justify-center shadow-lg" style={{ background: "#1B2A4A" }}>
-              <img src="/axia-icon.png" alt="Axia, ton assistante IA" className="w-full h-full object-cover" />
+            <div className="w-full h-[280px] sm:h-[340px] lg:h-[380px] mb-2 -mt-4">
+              <Axia3D className="w-full h-full" />
             </div>
             <span className="text-[#F5A623] text-sm font-bold uppercase tracking-widest mb-4 block">Assistante IA</span>
             <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#111111] mb-5 leading-[1.08]">
