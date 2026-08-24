@@ -1005,6 +1005,20 @@ model AgentDecision {
 }
 
 // =====================
+// AXIA CONVERSATION (historique des discussions, façon ChatGPT)
+// =====================
+model AxiaConversation {
+  id        String   @id @default(cuid())
+  tenantId  String
+  titre     String   @default("Nouvelle conversation")
+  messages  Json     @default("[]") // [{ role, content, images?, videos?, audios?, actions? }]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, updatedAt])
+}
+
+// =====================
 // AGENT GOAL (objectifs boutique — chiffre d'affaires, commandes, clients…)
 // =====================
 model AgentGoal {

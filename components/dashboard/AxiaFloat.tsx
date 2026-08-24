@@ -4,9 +4,11 @@ import {
   Sparkles, X, Mic, Send, Volume2, VolumeX,
   Phone, Paperclip, ChevronDown, Zap, Image as ImageIcon,
   Trash2, Copy, Check, Square, RotateCcw, Video, Music,
-  BarChart3, Target, Smartphone,
+  BarChart3, Target, Smartphone, PanelLeft, Plus,
 } from "lucide-react";
 import { renderMarkdown, parseContent } from "@/lib/axia-format";
+import { useAxiaConversations } from "@/hooks/useAxiaConversations";
+import { AxiaConversationSidebar } from "@/components/dashboard/AxiaConversationSidebar";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type VoicePhase = "idle" | "listening" | "thinking" | "speaking";
@@ -84,6 +86,14 @@ export function AxiaFloat() {
   const [copiedIdx, setCopiedIdx]       = useState<number | null>(null);
   const [unread, setUnread]             = useState(0);
   const [thinkingMsgIdx, setThinkingMsgIdx] = useState(0);
+  const [sidebarOpen, setSidebarOpen]   = useState(false);
+
+  const {
+    conversations, activeId, loadingList,
+    creerConversation, chargerConversation, sauvegarder, renommer, supprimer, setActiveId,
+  } = useAxiaConversations();
+  const activeIdRef = useRef<string | null>(null);
+  useEffect(() => { activeIdRef.current = activeId; }, [activeId]);
 
   const bottomRef      = useRef<HTMLDivElement>(null);
   const voiceScrollRef = useRef<HTMLDivElement>(null);
@@ -135,8 +145,10 @@ export function AxiaFloat() {
     return () => { window.speechSynthesis.onvoiceschanged = null; };
   }, []);
 
-  // Persist conversation
+  // Persist conversation — localStorage en filet de secours + serveur pour
+  // apparaître dans l'historique partagé avec l'écran plein écran /dashboard.
   useEffect(() => { saveMessages(messages); }, [messages]);
+  useEffect(() => { if (activeId) sauvegarder(activeId, messages); }, [messages, activeId, sauvegarder]);
 
   // Unread badge
   useEffect(() => {
@@ -309,9 +321,13 @@ export function AxiaFloat() {
   }, [speakThenListen]);
 
   // ── Send ─────────────────────────────────────────────────────────────────────
-  const sendMessage = useCallback((text: string, imgUrl?: string | null) => {
+  const sendMessage = useCallback(async (text: string, imgUrl?: string | null) => {
     const t = text.trim();
     if (!t || loadingRef.current) return;
+    if (!activeIdRef.current) {
+      const id = await creerConversation();
+      activeIdRef.current = id;
+    }
     const userMsg: Msg = { role: "user", content: t, imageUrl: imgUrl ?? undefined };
     // On dérive nextMessages depuis messagesRef (toujours à jour) plutôt que de dépendre
     // du timing d'exécution du updater setMessages — sinon l'appel API peut partir avec
@@ -425,10 +441,23 @@ export function AxiaFloat() {
 
   const clearConversation = () => {
     if (messages.length === 0) return;
-    if (!confirm("Effacer toute la conversation ?")) return;
+    if (!confirm("Démarrer une nouvelle conversation ? L'ancienne reste dans l'historique.")) return;
     setMessages([]);
+    setActiveId(null);
     localStorage.removeItem(STORAGE_KEY);
   };
+
+  const ouvrirConversation = useCallback(async (id: string) => {
+    setActiveId(id);
+    setSidebarOpen(false);
+    const conv = await chargerConversation(id);
+    setMessages(conv?.messages ?? []);
+  }, [chargerConversation, setActiveId]);
+
+  const supprimerConversation = useCallback(async (id: string) => {
+    await supprimer(id);
+    if (activeIdRef.current === id) { setActiveId(null); setMessages([]); }
+  }, [supprimer, setActiveId]);
 
   const phase = PHASE_CONFIG[voicePhase];
   const isOrb = voicePhase === "listening" || voicePhase === "speaking";
@@ -551,22 +580,42 @@ export function AxiaFloat() {
         </div>
       )}
 
-      {/* ── Chat Panel ──────────────────────────────────────────────────────── */}
+      {/* ── Chat Panel — plein écran (accessible partout, immersif à l'ouverture) ── */}
       {open && !voiceMode && (
-        <div className="fixed right-4 sm:right-6 z-[9991] flex flex-col rounded-2xl overflow-hidden"
-          style={{
-            bottom: "88px",
-            width: "min(480px, calc(100vw - 24px))",
-            maxHeight: "min(700px, calc(100vh - 110px))",
-            fontFamily: "'Poppins',system-ui,sans-serif",
-            boxShadow: "0 24px 80px rgba(0,0,0,0.22), 0 4px 16px rgba(0,0,0,0.12), 0 0 0 1px rgba(27,42,74,0.15)",
-            background: "#fff",
-          }}>
+        <div className="fixed inset-0 z-[9991] flex overflow-hidden"
+          style={{ fontFamily: "'Poppins',system-ui,sans-serif", background: "#fff" }}>
 
+          {/* Sidebar historique — colonne desktop, tiroir mobile */}
+          <div className={`flex-shrink-0 overflow-hidden transition-all duration-300 hidden md:block ${sidebarOpen ? "w-[260px]" : "w-0"}`}>
+            <div className="w-[260px] h-full">
+              <AxiaConversationSidebar
+                conversations={conversations} activeId={activeId} loading={loadingList}
+                onSelect={ouvrirConversation} onNew={clearConversation}
+                onDelete={supprimerConversation} onRename={renommer}
+              />
+            </div>
+          </div>
+          {sidebarOpen && (
+            <div className="fixed inset-0 z-10 md:hidden" style={{ background: "rgba(0,0,0,0.5)" }} onClick={() => setSidebarOpen(false)}>
+              <div className="absolute left-0 top-0 bottom-0 w-[82%] max-w-[300px]" onClick={e => e.stopPropagation()}>
+                <AxiaConversationSidebar
+                  conversations={conversations} activeId={activeId} loading={loadingList}
+                  onSelect={ouvrirConversation} onNew={clearConversation}
+                  onDelete={supprimerConversation} onRename={renommer} onClose={() => setSidebarOpen(false)}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="flex-1 min-w-0 flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 flex-shrink-0"
             style={{ background: "linear-gradient(135deg, #0d1526 0%, #14213d 50%, #1B2A4A 100%)" }}>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <button onClick={() => setSidebarOpen(v => !v)} title="Historique des conversations"
+                className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/15 flex-shrink-0">
+                <PanelLeft size={14} className="text-white/80" />
+              </button>
               <div className="relative w-9 h-9 rounded-xl overflow-hidden flex-shrink-0"
                 style={{ boxShadow: "0 0 16px rgba(27,42,74,0.5)" }}>
                 <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
@@ -592,12 +641,12 @@ export function AxiaFloat() {
                 style={{ background: "rgba(27,42,74,0.35)" }}>
                 <Phone size={12} className="text-white" />
               </button>
-              <button onClick={clearConversation} title="Effacer la conversation"
+              <button onClick={clearConversation} title="Nouvelle conversation"
                 className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:bg-white/15"
                 style={{ background: "rgba(255,255,255,0.08)" }}>
-                <Trash2 size={11} className="text-white/60" />
+                <Plus size={13} className="text-white/60" />
               </button>
-              <button onClick={() => setOpen(false)}
+              <button onClick={() => setOpen(false)} title="Réduire"
                 className="w-7 h-7 rounded-full flex items-center justify-center transition-colors hover:bg-white/15"
                 style={{ background: "rgba(255,255,255,0.08)" }}>
                 <ChevronDown size={13} className="text-white" />
@@ -606,7 +655,7 @@ export function AxiaFloat() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4" style={{ minHeight: 0, background: "#f8f9fc" }}>
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 max-w-3xl w-full mx-auto" style={{ minHeight: 0, background: "#f8f9fc" }}>
 
             {messages.length === 0 && (
               <div className="text-center pt-4 pb-2">
@@ -804,6 +853,7 @@ export function AxiaFloat() {
                 </button>
               )}
             </div>
+          </div>
           </div>
         </div>
       )}

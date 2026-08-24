@@ -1,8 +1,13 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Send, Loader2, Mic, MicOff, LayoutDashboard, History, Sparkles } from "lucide-react";
+import dynamic from "next/dynamic";
+import { Send, Loader2, Mic, MicOff, LayoutDashboard, History, Sparkles, PanelLeft, Plus } from "lucide-react";
 import { renderMarkdown, parseContent } from "@/lib/axia-format";
+import { useAxiaConversations } from "@/hooks/useAxiaConversations";
+import { AxiaConversationSidebar } from "@/components/dashboard/AxiaConversationSidebar";
+
+const Axia3D = dynamic(() => import("@/components/marketing/Axia3D").then(m => m.Axia3D), { ssr: false });
 
 interface Msg { role: "user" | "assistant"; content: string; streaming?: boolean }
 
@@ -25,9 +30,15 @@ export default function AxiaHomePage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
+
+  const {
+    conversations, activeId, loadingList,
+    creerConversation, chargerConversation, sauvegarder, renommer, supprimer, setActiveId,
+  } = useAxiaConversations();
 
   useEffect(() => {
     fetch("/api/tenants/moi").then(r => r.json()).then(d => setNomBoutique(d?.nomBoutique ?? null)).catch(() => {});
@@ -36,6 +47,25 @@ export default function AxiaHomePage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  async function ouvrirConversation(id: string) {
+    setActiveId(id);
+    setSidebarOpen(false);
+    const conv = await chargerConversation(id);
+    setMessages(conv?.messages ?? []);
+  }
+
+  async function nouvelleConversation() {
+    setActiveId(null);
+    setMessages([]);
+    setSidebarOpen(false);
+    inputRef.current?.focus();
+  }
+
+  async function supprimerConversation(id: string) {
+    await supprimer(id);
+    if (activeId === id) { setActiveId(null); setMessages([]); }
+  }
 
   const toggleVoice = () => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -53,6 +83,10 @@ export default function AxiaHomePage() {
   const envoyer = async (txt?: string) => {
     const msg = (txt ?? input).trim();
     if (!msg || loading) return;
+
+    // Crée le fil de discussion au premier message si on part d'un écran vide.
+    let convId = activeId;
+    if (!convId) convId = await creerConversation();
 
     const hist: Msg[] = [...messages, { role: "user", content: msg }];
     setMessages([...hist, { role: "assistant", content: "", streaming: true }]);
@@ -106,9 +140,9 @@ export default function AxiaHomePage() {
     } finally {
       setLoading(false);
       setMessages(prev => {
-        const last = prev[prev.length - 1];
-        if (last?.streaming) return [...prev.slice(0, -1), { ...last, streaming: false }];
-        return prev;
+        const finalMsgs = prev.map(m => ({ ...m, streaming: false }));
+        if (convId) sauvegarder(convId, finalMsgs);
+        return finalMsgs;
       });
       inputRef.current?.focus();
     }
@@ -144,102 +178,137 @@ export default function AxiaHomePage() {
   );
 
   return (
-    <div className="h-full flex flex-col min-h-0" style={{ background: "linear-gradient(160deg,#0d1526 0%,#1B2A4A 55%,#16233f 100%)", fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
-      {/* Barre supérieure */}
-      <div className="flex-shrink-0 flex items-center justify-between px-5 sm:px-6 py-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl overflow-hidden flex-shrink-0" style={{ boxShadow: "0 0 20px rgba(245,166,35,0.25)" }}>
-            <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
-          </div>
-          <span className="text-white font-bold text-sm tracking-tight">AXIA</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/dashboard/axia/journal"
-            className="flex items-center gap-1.5 text-[11.5px] font-semibold text-white/60 hover:text-white border border-white/10 hover:border-white/25 rounded-full px-3 py-1.5 transition-all">
-            <History size={12} /> Journal
-          </Link>
-          <Link href="/dashboard/accueil"
-            className="flex items-center gap-1.5 text-[11.5px] font-bold rounded-full px-3.5 py-1.5 transition-all hover:opacity-90"
-            style={{ background: "#F5A623", color: "#1B2A4A" }}>
-            <LayoutDashboard size={12} /> Tableau de bord
-          </Link>
+    <div className="h-full flex min-h-0" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+
+      {/* Sidebar conversations — colonne persistante desktop, tiroir sur mobile */}
+      <div className={`flex-shrink-0 overflow-hidden transition-all duration-300 ${sidebarOpen ? "w-[260px]" : "w-0"} hidden lg:block`}>
+        <div className="w-[260px] h-full">
+          <AxiaConversationSidebar
+            conversations={conversations} activeId={activeId} loading={loadingList}
+            onSelect={ouvrirConversation} onNew={nouvelleConversation}
+            onDelete={supprimerConversation} onRename={renommer}
+          />
         </div>
       </div>
-
-      {isEmpty ? (
-        /* ── Écran d'accueil centré ────────────────────────────────── */
-        <div className="flex-1 flex flex-col items-center justify-center px-6 min-h-0">
-          <div className="w-16 h-16 rounded-3xl overflow-hidden mb-5" style={{ boxShadow: "0 0 60px rgba(245,166,35,0.3)" }}>
-            <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
-          </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white text-center mb-1.5">
-            {nomBoutique ? `Bonjour, ${nomBoutique}` : "Bonjour"}
-          </h1>
-          <p className="text-white/40 text-sm text-center mb-8">Que veux-tu faire pour ta boutique aujourd'hui ?</p>
-
-          <InputBar centered />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-6 w-full max-w-2xl">
-            {SUGGESTIONS.map(s => (
-              <button key={s} onClick={() => envoyer(s)}
-                className="flex items-center gap-2 text-left px-4 py-3 rounded-2xl text-[13px] text-white/70 hover:text-white transition-all"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                <Sparkles size={12} className="flex-shrink-0" style={{ color: "#F5A623" }} />
-                {s}
-              </button>
-            ))}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-40 lg:hidden" style={{ background: "rgba(0,0,0,0.5)" }} onClick={() => setSidebarOpen(false)}>
+          <div className="absolute left-0 top-0 bottom-0 w-[80%] max-w-[300px]" onClick={e => e.stopPropagation()}>
+            <AxiaConversationSidebar
+              conversations={conversations} activeId={activeId} loading={loadingList}
+              onSelect={ouvrirConversation} onNew={nouvelleConversation}
+              onDelete={supprimerConversation} onRename={renommer} onClose={() => setSidebarOpen(false)}
+            />
           </div>
         </div>
-      ) : (
-        /* ── Conversation ──────────────────────────────────────────── */
-        <>
-          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-4 min-h-0 max-w-3xl w-full mx-auto">
-            {messages.map((m, i) => {
-              const { text, images, videos } = parseContent(m.content);
-              return (
-                <div key={i} className={`flex gap-3 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 overflow-hidden"
-                    style={m.role === "user" ? { background: "#F5A623" } : { background: "rgba(255,255,255,0.08)" }}>
-                    {m.role === "assistant"
-                      ? <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
-                      : <span className="text-[11px] font-bold text-[#1B2A4A]">{(nomBoutique ?? "M")[0]}</span>}
-                  </div>
-                  <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${m.role === "user" ? "text-[#1B2A4A] font-medium" : "text-white/90"}`}
-                    style={m.role === "user" ? { background: "#F5A623" } : { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                    {m.role === "assistant"
-                      ? <div className="axia-md" dangerouslySetInnerHTML={{ __html: renderMarkdown(text || (m.streaming ? "" : m.content)) }} />
-                      : <span className="whitespace-pre-wrap">{text}</span>}
-                    {images.map((src, j) => <img key={j} src={src} alt="" className="rounded-xl mt-2 max-w-full" />)}
-                    {videos.map((src, j) => <video key={j} src={src} controls className="rounded-xl mt-2 max-w-full" />)}
-                    {m.streaming && (
-                      <span className="inline-flex gap-0.5 ml-1 align-middle">
-                        {[0, 1, 2].map(k => (
-                          <span key={k} className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: "rgba(255,255,255,0.4)", animation: `xdot 1s ${k * 0.15}s ease-in-out infinite` }} />
-                        ))}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-            <div ref={bottomRef} />
-          </div>
-          <InputBar />
-        </>
       )}
 
-      <style>{`
-        @keyframes xdot{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-4px)}}
-        .axia-md .axia-p{margin:0 0 8px}
-        .axia-md .axia-p:last-child{margin-bottom:0}
-        .axia-md .axia-h1,.axia-md .axia-h2,.axia-md .axia-h3{font-weight:700;margin:10px 0 4px;color:#fff}
-        .axia-md .axia-ul{margin:4px 0 8px;padding-left:18px}
-        .axia-md .axia-li{margin:2px 0}
-        .axia-md .axia-link{color:#F5A623;text-decoration:underline}
-        .axia-md .axia-inline-code{background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:5px;font-size:0.85em}
-        .axia-md .axia-pre{background:rgba(0,0,0,0.3);border-radius:10px;padding:10px 12px;overflow-x:auto;margin:6px 0}
-        .axia-md .axia-bq{border-left:2px solid #F5A623;padding-left:10px;opacity:0.8;margin:6px 0}
-      `}</style>
+      <div className="flex-1 min-w-0 h-full flex flex-col min-h-0" style={{ background: "linear-gradient(160deg,#0d1526 0%,#1B2A4A 55%,#16233f 100%)" }}>
+        {/* Barre supérieure */}
+        <div className="flex-shrink-0 flex items-center justify-between px-5 sm:px-6 py-4">
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => setSidebarOpen(v => !v)}
+              className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors hover:bg-white/10 flex-shrink-0"
+              title="Historique des conversations">
+              <PanelLeft size={15} className="text-white/60" />
+            </button>
+            <button onClick={nouvelleConversation}
+              className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors hover:bg-white/10 flex-shrink-0 lg:hidden"
+              title="Nouvelle conversation">
+              <Plus size={15} className="text-white/60" />
+            </button>
+            <div className="w-8 h-8 rounded-xl overflow-hidden flex-shrink-0 ml-1" style={{ boxShadow: "0 0 20px rgba(245,166,35,0.25)" }}>
+              <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
+            </div>
+            <span className="text-white font-bold text-sm tracking-tight">AXIA</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link href="/dashboard/axia/journal"
+              className="flex items-center gap-1.5 text-[11.5px] font-semibold text-white/60 hover:text-white border border-white/10 hover:border-white/25 rounded-full px-3 py-1.5 transition-all">
+              <History size={12} /> Journal
+            </Link>
+            <Link href="/dashboard/accueil"
+              className="flex items-center gap-1.5 text-[11.5px] font-bold rounded-full px-3.5 py-1.5 transition-all hover:opacity-90"
+              style={{ background: "#F5A623", color: "#1B2A4A" }}>
+              <LayoutDashboard size={12} /> Tableau de bord
+            </Link>
+          </div>
+        </div>
+
+        {isEmpty ? (
+          /* ── Écran d'accueil centré ────────────────────────────────── */
+          <div className="flex-1 flex flex-col items-center justify-center px-6 min-h-0">
+            <div className="w-28 h-28 sm:w-32 sm:h-32 mb-2">
+              <Axia3D className="w-full h-full" />
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold text-white text-center mb-1.5">
+              {nomBoutique ? `Bonjour, ${nomBoutique}` : "Bonjour"}
+            </h1>
+            <p className="text-white/40 text-sm text-center mb-8">Que veux-tu faire pour ta boutique aujourd'hui ?</p>
+
+            <InputBar centered />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-6 w-full max-w-2xl">
+              {SUGGESTIONS.map(s => (
+                <button key={s} onClick={() => envoyer(s)}
+                  className="flex items-center gap-2 text-left px-4 py-3 rounded-2xl text-[13px] text-white/70 hover:text-white transition-all"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <Sparkles size={12} className="flex-shrink-0" style={{ color: "#F5A623" }} />
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* ── Conversation ──────────────────────────────────────────── */
+          <>
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-4 min-h-0 max-w-3xl w-full mx-auto">
+              {messages.map((m, i) => {
+                const { text, images, videos } = parseContent(m.content);
+                return (
+                  <div key={i} className={`flex gap-3 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 overflow-hidden"
+                      style={m.role === "user" ? { background: "#F5A623" } : { background: "rgba(255,255,255,0.08)" }}>
+                      {m.role === "assistant"
+                        ? <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
+                        : <span className="text-[11px] font-bold text-[#1B2A4A]">{(nomBoutique ?? "M")[0]}</span>}
+                    </div>
+                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${m.role === "user" ? "text-[#1B2A4A] font-medium" : "text-white/90"}`}
+                      style={m.role === "user" ? { background: "#F5A623" } : { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      {m.role === "assistant"
+                        ? <div className="axia-md" dangerouslySetInnerHTML={{ __html: renderMarkdown(text || (m.streaming ? "" : m.content)) }} />
+                        : <span className="whitespace-pre-wrap">{text}</span>}
+                      {images.map((src, j) => <img key={j} src={src} alt="" className="rounded-xl mt-2 max-w-full" />)}
+                      {videos.map((src, j) => <video key={j} src={src} controls className="rounded-xl mt-2 max-w-full" />)}
+                      {m.streaming && (
+                        <span className="inline-flex gap-0.5 ml-1 align-middle">
+                          {[0, 1, 2].map(k => (
+                            <span key={k} className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: "rgba(255,255,255,0.4)", animation: `xdot 1s ${k * 0.15}s ease-in-out infinite` }} />
+                          ))}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              <div ref={bottomRef} />
+            </div>
+            <InputBar />
+          </>
+        )}
+
+        <style>{`
+          @keyframes xdot{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-4px)}}
+          .axia-md .axia-p{margin:0 0 8px}
+          .axia-md .axia-p:last-child{margin-bottom:0}
+          .axia-md .axia-h1,.axia-md .axia-h2,.axia-md .axia-h3{font-weight:700;margin:10px 0 4px;color:#fff}
+          .axia-md .axia-ul{margin:4px 0 8px;padding-left:18px}
+          .axia-md .axia-li{margin:2px 0}
+          .axia-md .axia-link{color:#F5A623;text-decoration:underline}
+          .axia-md .axia-inline-code{background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:5px;font-size:0.85em}
+          .axia-md .axia-pre{background:rgba(0,0,0,0.3);border-radius:10px;padding:10px 12px;overflow-x:auto;margin:6px 0}
+          .axia-md .axia-bq{border-left:2px solid #F5A623;padding-left:10px;opacity:0.8;margin:6px 0}
+        `}</style>
+      </div>
     </div>
   );
 }
