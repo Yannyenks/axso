@@ -387,20 +387,34 @@ main > section, main > div > section {
    .ax-reveal-visible ajoutée par ScrollReveal — la durée/délai viennent du
    config du thème (vitesse, stagger) donc passés en style inline plutôt
    qu'en durée fixée ici. ────────────────────────────────────────────── */
+/* Deux familles de courbes : "decel" pour tout ce qui glisse/s'estompe
+   (naturel, sans rebond — fade, slide, blur), "spring" pour ce qui doit
+   se sentir tactile/vivant (zoom, flip, hover, press — léger dépassement
+   avant de se stabiliser, comme un ressort qu'on relâche). */
+:root {
+  --ax-ease-decel: cubic-bezier(0.16, 1, 0.3, 1);
+  --ax-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 .ax-reveal-fade,
 .ax-reveal-up,
 .ax-reveal-left,
-.ax-reveal-zoom,
-.ax-reveal-flip,
 .ax-reveal-blur {
   opacity: 0;
   transition-property: opacity, transform, filter;
-  transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  transition-timing-function: var(--ax-ease-decel);
+  will-change: opacity, transform;
+}
+.ax-reveal-zoom,
+.ax-reveal-flip {
+  opacity: 0;
+  transition-property: opacity, transform, filter;
+  transition-timing-function: var(--ax-ease-spring);
   will-change: opacity, transform;
 }
 .ax-reveal-up   { transform: translateY(28px); }
 .ax-reveal-left { transform: translateX(-40px); }
-.ax-reveal-zoom { transform: scale(0.92); }
+.ax-reveal-zoom { transform: scale(0.9); }
 .ax-reveal-flip { transform: perspective(700px) rotateX(18deg) translateY(24px); }
 .ax-reveal-blur { filter: blur(10px); }
 
@@ -413,24 +427,30 @@ main > section, main > div > section {
 /* ── Micro-interactions dashboard — cascadent partout via les classes
    partagées (ax-card, ax-btn) plutôt que d'être ajoutées page par page ── */
 .ax-card {
-  transform: translateZ(0);
+  transform: translateY(0) scale(1);
+  transition: box-shadow 0.2s var(--ax-ease-decel), transform 0.4s var(--ax-ease-spring);
 }
 .ax-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px) scale(1.003);
 }
 .ax-btn {
   transform: scale(1);
+  transition: all 0.15s, transform 0.35s var(--ax-ease-spring);
+}
+.ax-btn:hover {
+  transform: scale(1.015);
 }
 .ax-btn:active {
   transform: scale(0.96);
+  transition-duration: 0.08s;
 }
 
 @keyframes axFadeInUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(12px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .ax-page-enter {
-  animation: axFadeInUp 0.35s cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation: axFadeInUp 0.45s var(--ax-ease-decel) both;
 }
 
 .ax-skeleton {
