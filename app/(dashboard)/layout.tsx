@@ -11,7 +11,7 @@ import { NotificationSound } from "@/components/ui/NotificationSound";
 import { quotaCommandesAtteint, planActif } from "@/lib/abonnement";
 import { AbonnementOverlayProvider } from "@/components/dashboard/AbonnementOverlayProvider";
 
-const FULLBLEED_ROUTES: string[] = ["/dashboard/builder", "/dashboard/themes"];
+const FULLBLEED_PREFIXES: string[] = ["/dashboard/builder", "/dashboard/themes"];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -27,7 +27,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   const pathname = (await headers()).get("x-pathname") || "";
-  const fullBleed = FULLBLEED_ROUTES.some(r => pathname.startsWith(r));
+  // /dashboard (exact) = écran d'accueil AXIA plein écran — pas un préfixe,
+  // sinon ça matcherait toutes les routes du dashboard.
+  const estAccueilAxia = pathname === "/dashboard";
+  const fullBleed = estAccueilAxia || FULLBLEED_PREFIXES.some(r => pathname.startsWith(r));
   const quotaAtteint = tenantId ? await quotaCommandesAtteint(tenantId) : false;
   const { plan: palier } = tenantId ? await planActif(tenantId) : { plan: "palier0" as const };
 
@@ -53,22 +56,27 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       {/* ─── Mobile : bottom nav îlot ────────────────────────────── */}
       <div className="md:hidden flex flex-col min-h-screen bg-[#f0f2f8] text-gray-900">
-        <MobileHeader boutiqueNom={boutique?.nomBoutique} />
-        <main className="flex-1 overflow-y-auto pb-32">
-          <div key={pathname} className="ax-page-enter px-3 pt-3 max-w-lg mx-auto space-y-4">
-            {quotaAtteint && <QuotaBanner />}
-            {children}
-          </div>
+        {!estAccueilAxia && <MobileHeader boutiqueNom={boutique?.nomBoutique} />}
+        <main className={estAccueilAxia ? "flex-1 overflow-hidden flex flex-col" : "flex-1 overflow-y-auto pb-32"}>
+          {estAccueilAxia ? children : (
+            <div key={pathname} className="ax-page-enter px-3 pt-3 max-w-lg mx-auto space-y-4 pb-32">
+              {quotaAtteint && <QuotaBanner />}
+              {children}
+            </div>
+          )}
         </main>
-        <MobileBottomNav />
+        {!estAccueilAxia && <MobileBottomNav />}
       </div>
 
-      {/* ─── Axia flottante (desktop uniquement — sur mobile, Axia est accessible
-           via le bouton central de MobileBottomNav → /dashboard/axia, la bulle
-           flottante chevaucherait sinon la barre de navigation basse) ───────── */}
-      <div className="hidden md:block">
-        <AxiaFloat />
-      </div>
+      {/* ─── Axia flottante — masquée sur l'écran d'accueil /dashboard,
+           qui EST déjà l'expérience Axia plein écran (la bulle serait
+           redondante par-dessus). Sur mobile aussi accessible via le
+           bouton central de MobileBottomNav → /dashboard/axia. ───────── */}
+      {!estAccueilAxia && (
+        <div className="hidden md:block">
+          <AxiaFloat />
+        </div>
+      )}
 
       {/* Son audio sur chaque notification toast */}
       <NotificationSound />

@@ -10,7 +10,7 @@ import {
   DollarSign, CreditCard, Wallet, Map, Box,
   Settings2, ExternalLink, ArrowLeft, UserCheck,
   LayoutGrid, Plug, Link2, Bell, Store, ChevronRight,
-  RotateCcw, FileText, Lock, Target, FileBarChart,
+  RotateCcw, FileText, Lock, Target, FileBarChart, Sparkles,
 } from "lucide-react";
 import { useAbonnementOverlay } from "@/components/dashboard/AbonnementOverlayProvider";
 import { palierAuMoins, type Palier } from "@/lib/plans";
@@ -53,7 +53,8 @@ const BOUTIQUE_ROUTES = [
 // ─── Navigation principale ────────────────────────────────────────────────────
 const MAIN_NAV: Entry[] = [
   { type: "label", text: "VENTES" },
-  { href: "/dashboard",                  label: "Accueil",           Icon: Home,          exact: true },
+  { href: "/dashboard",                  label: "AXIA",              Icon: Sparkles,      exact: true },
+  { href: "/dashboard/accueil",          label: "Tableau de bord",   Icon: Home,          exact: true },
   { href: "/dashboard/commandes",        label: "Commandes",         Icon: ShoppingCart,  badge: true },
   { href: "/dashboard/pos",              label: "Point de vente",    Icon: Monitor },
   { href: "/dashboard/factures",         label: "Factures",          Icon: FileText },

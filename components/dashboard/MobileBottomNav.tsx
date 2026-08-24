@@ -24,7 +24,7 @@ const GROUPS = [
   {
     label: "Boutique", color: "#F5A623",
     items: [
-      { href: "/dashboard",            label: "Accueil",          icon: LayoutDashboard },
+      { href: "/dashboard/accueil",    label: "Accueil",          icon: LayoutDashboard },
       { href: "/dashboard/produits",   label: "Produits",         icon: Package },
       { href: "/dashboard/commandes",  label: "Commandes",        icon: ShoppingCart },
       { href: "/dashboard/clients",    label: "Clients",          icon: Bot },
@@ -76,7 +76,7 @@ const GROUPS = [
 ];
 
 const MAIN_TABS = [
-  { href: "/dashboard",           label: "Accueil",   AppIcon: IconAccueil,   exact: true },
+  { href: "/dashboard/accueil",   label: "Accueil",   AppIcon: IconAccueil,   exact: true },
   { href: "/dashboard/produits",  label: "Produits",  AppIcon: IconProduits },
   { href: "/dashboard/commandes", label: "Commandes", AppIcon: IconCommandes },
 ];
@@ -122,8 +122,8 @@ export function MobileBottomNav() {
           >
             {/* Tabs gauche */}
             {MAIN_TABS.slice(0, 2).map((tab) => {
-              const active = tab.href === "/dashboard"
-                ? pathname === "/dashboard"
+              const active = tab.exact
+                ? pathname === tab.href
                 : pathname.startsWith(tab.href);
               const AppIcon = tab.AppIcon!;
               return (
@@ -258,8 +258,8 @@ export function MobileBottomNav() {
                   <div className="grid grid-cols-3 gap-2">
                     {group.items.map((item) => {
                       const Icon = item.icon;
-                      const active = item.href === "/dashboard"
-                        ? pathname === "/dashboard"
+                      const active = item.href === "/dashboard/accueil"
+                        ? pathname === "/dashboard/accueil"
                         : pathname.startsWith(item.href);
                       return (
                         <Link
