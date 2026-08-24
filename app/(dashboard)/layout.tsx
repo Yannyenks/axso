@@ -41,7 +41,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             {fullBleed ? children : (
               <>
                 <Header session={session} boutiqueSlug={boutique?.slug} boutiqueNom={boutique?.nomBoutique}/>
-                <div className="px-6 pb-8 max-w-7xl mx-auto w-full">
+                <div key={pathname} className="ax-page-enter px-6 pb-8 max-w-7xl mx-auto w-full">
                   {quotaAtteint && <QuotaBanner />}
                   {children}
                 </div>
@@ -55,7 +55,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <div className="md:hidden flex flex-col min-h-screen bg-[#f0f2f8] text-gray-900">
         <MobileHeader boutiqueNom={boutique?.nomBoutique} />
         <main className="flex-1 overflow-y-auto pb-32">
-          <div className="px-3 pt-3 max-w-lg mx-auto space-y-4">
+          <div key={pathname} className="ax-page-enter px-3 pt-3 max-w-lg mx-auto space-y-4">
             {quotaAtteint && <QuotaBanner />}
             {children}
           </div>

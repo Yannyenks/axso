@@ -380,3 +380,69 @@ main > section, main > div > section {
 .reveal-scale.visible {
   animation: scaleReveal3d 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
+
+/* ── Animations boutique — pilotées par ThemeAnimations (builder) ────────
+   Contrairement aux .reveal-* ci-dessus (landing, "animation" en JS toggle
+   une classe .visible), celles-ci transitionnent directement via une classe
+   .ax-reveal-visible ajoutée par ScrollReveal — la durée/délai viennent du
+   config du thème (vitesse, stagger) donc passés en style inline plutôt
+   qu'en durée fixée ici. ────────────────────────────────────────────── */
+.ax-reveal-fade,
+.ax-reveal-up,
+.ax-reveal-left,
+.ax-reveal-zoom,
+.ax-reveal-flip,
+.ax-reveal-blur {
+  opacity: 0;
+  transition-property: opacity, transform, filter;
+  transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  will-change: opacity, transform;
+}
+.ax-reveal-up   { transform: translateY(28px); }
+.ax-reveal-left { transform: translateX(-40px); }
+.ax-reveal-zoom { transform: scale(0.92); }
+.ax-reveal-flip { transform: perspective(700px) rotateX(18deg) translateY(24px); }
+.ax-reveal-blur { filter: blur(10px); }
+
+.ax-reveal-visible {
+  opacity: 1;
+  transform: none;
+  filter: blur(0);
+}
+
+/* ── Micro-interactions dashboard — cascadent partout via les classes
+   partagées (ax-card, ax-btn) plutôt que d'être ajoutées page par page ── */
+.ax-card {
+  transform: translateZ(0);
+}
+.ax-card:hover {
+  transform: translateY(-2px);
+}
+.ax-btn {
+  transform: scale(1);
+}
+.ax-btn:active {
+  transform: scale(0.96);
+}
+
+@keyframes axFadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ax-page-enter {
+  animation: axFadeInUp 0.35s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.ax-skeleton {
+  background: linear-gradient(110deg, var(--bg) 8%, #ECECEC 18%, var(--bg) 33%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ax-reveal-fade, .ax-reveal-up, .ax-reveal-left, .ax-reveal-zoom, .ax-reveal-flip, .ax-reveal-blur,
+  .ax-page-enter, .ax-card, .ax-btn {
+    animation: none !important;
+    transition: none !important;
+  }
+}

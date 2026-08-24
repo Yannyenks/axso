@@ -11,6 +11,7 @@ import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { SectionCountdown } from "@/components/storefront/SectionCountdown";
 import { SectionTabs } from "@/components/storefront/SectionTabs";
 import { SousBlocsRenderer } from "@/components/storefront/SousBlocsRenderer";
+import { ScrollReveal, type RevealType } from "@/components/storefront/ScrollReveal";
 import { Package, Lock, RotateCcw, MessageCircle, Star } from "lucide-react";
 
 interface Props {
@@ -74,6 +75,16 @@ export default async function StorefrontPage({ params }: Props) {
     "terre-et-or": `linear-gradient(135deg, #fef3e8 0%, #fde8d0 60%, #fef3e8 100%)`,
   };
   const heroGradient = heroGradients[tenant.themeId] || heroGradients["terre-et-or"];
+
+  // Animations de section pilotées par le builder (onglet "Animations") —
+  // taux d'apparition par section si défini, sinon le preset global du thème.
+  const animCfg = cfg.animations;
+  const vitesseGlobale = animCfg?.vitesse ?? "normal";
+  const staggerActif = !!animCfg?.stagger;
+  let staggerIndex = 0;
+  const revealType = (cle: string): RevealType =>
+    (animCfg?.sectionAnimations?.[cle] as RevealType) || (animCfg?.global as RevealType) || "fade-in";
+  const staggerDelay = () => (staggerActif ? staggerIndex++ * 90 : 0);
 
   return (
     <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
@@ -264,6 +275,7 @@ export default async function StorefrontPage({ params }: Props) {
 
       {/* ─── PRODUITS VEDETTES ─── */}
       {sec.vedettes.actif && vedettes.length > 0 && (
+      <ScrollReveal type={revealType("vedettes")} vitesse={vitesseGlobale} delay={staggerDelay()}>
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
           <div className="flex items-end justify-between mb-10">
             <div>
@@ -344,11 +356,13 @@ export default async function StorefrontPage({ params }: Props) {
             })}
           </div>
         </section>
+      </ScrollReveal>
       )}
       {sec.vedettes.actif && vedettes.length > 0 && <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.vedettes} accent={c.accent} texte={c.texte} />}
 
       {/* ─── COLLECTIONS ─── */}
       {sec.collections.actif && tenant.collections.length > 0 && (
+      <ScrollReveal type={revealType("collections")} vitesse={vitesseGlobale} delay={staggerDelay()}>
         <section className="py-16 sm:py-20" style={{ backgroundColor: c.surface }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
@@ -385,11 +399,13 @@ export default async function StorefrontPage({ params }: Props) {
             </div>
           </div>
         </section>
+      </ScrollReveal>
       )}
       {sec.collections.actif && tenant.collections.length > 0 && <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.collections} accent={c.accent} texte={c.texte} />}
 
       {/* ─── BANNIÈRE PROMO ─── */}
       {sec.promo.actif && (
+      <ScrollReveal type={revealType("promo")} vitesse={vitesseGlobale} delay={staggerDelay()}>
         <section className="py-16 sm:py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div
@@ -415,11 +431,13 @@ export default async function StorefrontPage({ params }: Props) {
             </div>
           </div>
         </section>
+      </ScrollReveal>
       )}
       {sec.promo.actif && <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.promo} accent={c.accent} texte={c.texte} />}
 
       {/* ─── AVIS CLIENTS ─── */}
       {sec.avis.actif && tenant.avis.length > 0 && (
+      <ScrollReveal type={revealType("avis")} vitesse={vitesseGlobale} delay={staggerDelay()}>
         <section className="py-16 sm:py-20" style={{ backgroundColor: c.surface }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
@@ -454,11 +472,13 @@ export default async function StorefrontPage({ params }: Props) {
             </div>
           </div>
         </section>
+      </ScrollReveal>
       )}
       {sec.avis.actif && tenant.avis.length > 0 && <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.avis} accent={c.accent} texte={c.texte} />}
 
       {/* ─── NEWSLETTER ─── */}
       {sec.newsletter.actif && (
+      <ScrollReveal type={revealType("newsletter")} vitesse={vitesseGlobale} delay={staggerDelay()}>
         <section className="py-16 sm:py-20" style={{ background: `linear-gradient(135deg, ${c.accent}15 0%, ${c.accent}05 100%)` }}>
           <div className="max-w-2xl mx-auto px-4 text-center">
             <h2 className="text-3xl sm:text-4xl font-bold font-playfair mb-3">{sec.newsletter.titre}</h2>
@@ -480,6 +500,7 @@ export default async function StorefrontPage({ params }: Props) {
             </form>
           </div>
         </section>
+      </ScrollReveal>
       )}
       {sec.newsletter.actif && <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.newsletter} accent={c.accent} texte={c.texte} />}
 
