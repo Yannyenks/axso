@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Send, Loader2, User, Mic, MicOff } from "lucide-react";
+import Link from "next/link";
+import { Send, Loader2, User, Mic, MicOff, History } from "lucide-react";
 
 interface Msg { role: "user" | "assistant"; content: string; streaming?: boolean }
 
@@ -119,9 +120,15 @@ export default function AxiaPage() {
           <h1 className="text-base font-bold text-gray-900">Axia — Assistante IA</h1>
           <p className="text-xs text-gray-400">Marketing · Stocks · Revenus · Clients · Livraisons</p>
         </div>
-        <div className="ml-auto flex items-center gap-1.5 bg-green-50 border border-green-200 rounded-full px-3 py-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-xs font-semibold text-green-700">En ligne</span>
+        <div className="ml-auto flex items-center gap-2">
+          <Link href="/dashboard/axia/journal"
+            className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-800 border border-gray-200 rounded-full px-3 py-1 transition-colors">
+            <History size={12} /> Journal
+          </Link>
+          <div className="flex items-center gap-1.5 bg-green-50 border border-green-200 rounded-full px-3 py-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-xs font-semibold text-green-700">En ligne</span>
+          </div>
         </div>
       </div>
 

@@ -312,6 +312,9 @@ ${args.remise_exclusive ? `<div style="background:#f0f7ff;padding:15px;border-ra
   }
 };
 
+// Exporté pour l'exécution autonome (lib/agent-consumer.ts)
+export { SYSTEM_PROMPT, OUTILS, executeOutil };
+
 export async function POST(req: NextRequest) {
   const session = await auth();
   const tenantId = (session?.user as any)?.tenantId;

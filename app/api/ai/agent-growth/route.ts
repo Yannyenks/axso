@@ -292,6 +292,9 @@ ${args.code_promo ? `<p><strong>Votre code exclusif : ${args.code_promo}</strong
   }
 };
 
+// Exporté pour l'exécution autonome (lib/agent-consumer.ts)
+export { SYSTEM_PROMPT, OUTILS, executeOutil };
+
 export async function POST(req: NextRequest) {
   const session = await auth();
   const tenantId = (session?.user as any)?.tenantId;

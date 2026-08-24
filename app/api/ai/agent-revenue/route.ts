@@ -316,6 +316,10 @@ ${args.code_promo ? `<p>Profitez de <strong>${args.code_promo}</strong> pour obt
   }
 };
 
+// Exporté pour l'exécution autonome (lib/agent-consumer.ts) — consomme les
+// tâches publiées par l'orchestrateur sans repasser par une requête HTTP.
+export { SYSTEM_PROMPT, OUTILS, executeOutil };
+
 export async function POST(req: NextRequest) {
   const session = await auth();
   const tenantId = (session?.user as any)?.tenantId;

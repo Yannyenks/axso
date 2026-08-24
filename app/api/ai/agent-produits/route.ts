@@ -205,6 +205,9 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
   }
 };
 
+// Exporté pour l'exécution autonome (lib/agent-consumer.ts)
+export { PROMPT, OUTILS, executeOutil };
+
 export async function POST(request: Request) {
   try {
     const session = await auth();
