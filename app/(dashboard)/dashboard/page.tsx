@@ -1,13 +1,10 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { Send, Loader2, Mic, MicOff, LayoutDashboard, History, Sparkles, PanelLeft, Plus } from "lucide-react";
 import { renderMarkdown, parseContent } from "@/lib/axia-format";
 import { useAxiaConversations } from "@/hooks/useAxiaConversations";
 import { AxiaConversationSidebar } from "@/components/dashboard/AxiaConversationSidebar";
-
-const Axia3D = dynamic(() => import("@/components/marketing/Axia3D").then(m => m.Axia3D), { ssr: false });
 
 interface Msg { role: "user" | "assistant"; content: string; streaming?: boolean }
 
@@ -237,8 +234,9 @@ export default function AxiaHomePage() {
         {isEmpty ? (
           /* ── Écran d'accueil centré ────────────────────────────────── */
           <div className="flex-1 flex flex-col items-center justify-center px-6 min-h-0">
-            <div className="w-28 h-28 sm:w-32 sm:h-32 mb-2">
-              <Axia3D className="w-full h-full" />
+            <div className="ax-axia-mascot w-20 h-20 sm:w-24 sm:h-24 mb-5 rounded-3xl overflow-hidden"
+              style={{ boxShadow: "0 0 50px rgba(245,166,35,0.35), 0 8px 30px rgba(0,0,0,0.3)" }}>
+              <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-white text-center mb-1.5">
               {nomBoutique ? `Bonjour, ${nomBoutique}` : "Bonjour"}

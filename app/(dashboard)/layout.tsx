@@ -38,7 +38,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <AbonnementOverlayProvider>
       {/* ─── Desktop : sidebar latérale ─────────────────────────── */}
       <div className="hidden md:flex h-screen bg-[#f0f2f8] text-gray-900 overflow-hidden" style={{ fontFamily: "'Poppins', 'Century Gothic', system-ui, sans-serif" }}>
-        <Sidebar boutiqueNom={boutique?.nomBoutique} boutiqueSlug={boutique?.slug} palier={palier} />
+        {/* Écran d'accueil AXIA = plein écran réel, la sidebar AXSO ne doit
+            pas rester visible à côté (sinon ce n'est qu'une zone de contenu
+            sans en-tête, pas un plein écran) — le retour au dashboard classique
+            se fait via le bouton dédié dans la barre supérieure d'AXIA. */}
+        {!estAccueilAxia && <Sidebar boutiqueNom={boutique?.nomBoutique} boutiqueSlug={boutique?.slug} palier={palier} />}
         <div className="flex flex-col flex-1 overflow-hidden">
           <main className={fullBleed ? "flex-1 overflow-hidden flex flex-col" : "flex-1 overflow-y-auto"}>
             {fullBleed ? children : (
