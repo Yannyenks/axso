@@ -447,40 +447,48 @@ const DEFAULTS: Record<string, ThemeConfig> = {
   },
 };
 
+// Fusionne une couche de surcharges (overrides — venant soit d'un thème custom
+// stocké en DB, soit des réglages live du tenant sauvegardés par le builder)
+// par-dessus une base ThemeConfig déjà complète. Utilisé pour empiler
+// plusieurs couches : défauts intégrés → thème custom → édits du builder.
+export function mergeThemeConfig(base: ThemeConfig, overrides: Record<string, any>): ThemeConfig {
+  return {
+    ...base,
+    colors: { ...base.colors, ...(overrides.colors || {}) },
+    fonts: { ...base.fonts, ...(overrides.fonts || {}) },
+    radius: overrides.radius || base.radius,
+    layout: { ...base.layout, ...(overrides.layout || {}) },
+    boutons: { ...base.boutons, ...(overrides.boutons || {}) },
+    navigationStyle: { ...base.navigationStyle, ...(overrides.navigationStyle || {}) },
+    animations: { ...base.animations, ...(overrides.animations || {}), sectionAnimations: { ...(base.animations?.sectionAnimations || {}), ...(overrides.animations?.sectionAnimations || {}) } },
+    customSections: overrides.customSections ?? base.customSections,
+    sectionOrder: overrides.sectionOrder ?? base.sectionOrder,
+    sectionSousBlocs: overrides.sectionSousBlocs ?? base.sectionSousBlocs ?? {},
+    customCss: overrides.customCss ?? base.customCss,
+    sections: {
+      annonce: { ...base.sections.annonce, ...(overrides.sections?.annonce || {}) },
+      hero: { ...base.sections.hero, ...(overrides.sections?.hero || {}) },
+      vedettes: { ...base.sections.vedettes, ...(overrides.sections?.vedettes || {}) },
+      collections: { ...base.sections.collections, ...(overrides.sections?.collections || {}) },
+      promo: { ...base.sections.promo, ...(overrides.sections?.promo || {}) },
+      avis: { ...base.sections.avis, ...(overrides.sections?.avis || {}) },
+      newsletter: { ...base.sections.newsletter, ...(overrides.sections?.newsletter || {}) },
+      confiance: overrides.sections?.confiance ?? base.sections.confiance ?? DEFAULT_CONFIANCE,
+      about: overrides.sections?.about ?? base.sections.about ?? DEFAULT_ABOUT,
+      faq: overrides.sections?.faq ?? base.sections.faq ?? DEFAULT_FAQ,
+    },
+    productPage: overrides.productPage ?? base.productPage,
+    builderHtml: overrides.builderHtml ?? base.builderHtml,
+    builderCss: overrides.builderCss ?? base.builderCss,
+  };
+}
+
 export function resolveThemeConfig(themeId: string, savedConfig: Record<string, any> = {}): ThemeConfig {
   const base = DEFAULTS[themeId] || DEFAULTS["terre-et-or"];
   const hasCustom = savedConfig && Object.keys(savedConfig).filter(k => k !== "builderHtml" && k !== "builderCss").length > 0;
   if (!hasCustom) return base;
 
-  return {
-    ...base,
-    colors: { ...base.colors, ...(savedConfig.colors || {}) },
-    fonts: { ...base.fonts, ...(savedConfig.fonts || {}) },
-    radius: savedConfig.radius || base.radius,
-    layout: { ...base.layout, ...(savedConfig.layout || {}) },
-    boutons: { ...base.boutons, ...(savedConfig.boutons || {}) },
-    navigationStyle: { ...base.navigationStyle, ...(savedConfig.navigationStyle || {}) },
-    animations: { ...base.animations, ...(savedConfig.animations || {}), sectionAnimations: { ...(base.animations?.sectionAnimations || {}), ...(savedConfig.animations?.sectionAnimations || {}) } },
-    customSections: savedConfig.customSections ?? base.customSections,
-    sectionOrder: savedConfig.sectionOrder ?? base.sectionOrder,
-    sectionSousBlocs: savedConfig.sectionSousBlocs ?? base.sectionSousBlocs ?? {},
-    customCss: savedConfig.customCss ?? base.customCss,
-    sections: {
-      annonce: { ...base.sections.annonce, ...(savedConfig.sections?.annonce || {}) },
-      hero: { ...base.sections.hero, ...(savedConfig.sections?.hero || {}) },
-      vedettes: { ...base.sections.vedettes, ...(savedConfig.sections?.vedettes || {}) },
-      collections: { ...base.sections.collections, ...(savedConfig.sections?.collections || {}) },
-      promo: { ...base.sections.promo, ...(savedConfig.sections?.promo || {}) },
-      avis: { ...base.sections.avis, ...(savedConfig.sections?.avis || {}) },
-      newsletter: { ...base.sections.newsletter, ...(savedConfig.sections?.newsletter || {}) },
-      confiance: savedConfig.sections?.confiance ?? base.sections.confiance ?? DEFAULT_CONFIANCE,
-      about: savedConfig.sections?.about ?? base.sections.about ?? DEFAULT_ABOUT,
-      faq: savedConfig.sections?.faq ?? base.sections.faq ?? DEFAULT_FAQ,
-    },
-    productPage: savedConfig.productPage ?? base.productPage,
-    builderHtml: savedConfig.builderHtml,
-    builderCss: savedConfig.builderCss,
-  };
+  return mergeThemeConfig(base, savedConfig);
 }
 
 export { DEFAULTS as THEME_DEFAULTS };
