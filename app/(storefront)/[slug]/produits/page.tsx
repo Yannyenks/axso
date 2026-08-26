@@ -29,6 +29,53 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
   const cfg = await resolveThemeConfigAsync(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
   const { colors: c, radius } = cfg;
 
+  const layoutCfg = cfg.layout ?? {};
+  const CONTAINER = layoutCfg.largeurContainer === "100%" ? "max-w-full" : `max-w-[${layoutCfg.largeurContainer || "1280px"}]`;
+  const colonnesDesktop = layoutCfg.colonnesProduits || 4;
+  const colonnesMobile = layoutCfg.colonnesMobile || 2;
+  const GRID_PRODUITS = `grid-cols-${colonnesMobile} sm:grid-cols-3 lg:grid-cols-${colonnesDesktop}`;
+  const OMBRE_MAP: Record<string, string> = { none: "", sm: "hover:shadow-md", md: "hover:shadow-lg", lg: "hover:shadow-xl", xl: "hover:shadow-2xl" };
+  const carteOmbreClass = OMBRE_MAP[layoutCfg.ombre || "md"];
+  const styleCarte = layoutCfg.styleCarte || "shadow";
+  const CARTE_CLASS: Record<string, string> = {
+    shadow: `border transition-all duration-300 ${carteOmbreClass} group-hover:-translate-y-1`,
+    bordered: "border-2 transition-colors duration-300",
+    flat: "border-0 transition-none",
+    lifted: `border transition-all duration-300 ${carteOmbreClass} group-hover:-translate-y-2 group-hover:scale-[1.02]`,
+  };
+  const carteClass = CARTE_CLASS[styleCarte] ?? CARTE_CLASS.shadow;
+
+  const boutonsCfg = cfg.boutons ?? {};
+  const btnStyle = boutonsCfg.style || "filled";
+  const btnRempli = !["outlined", "ghost"].includes(btnStyle);
+  const btnRadiusPx = btnStyle === "pill" ? "999px" : btnStyle === "square" ? "0px" : radius;
+  const TAILLE_MAP: Record<string, { padX: string; padY: string; text: string }> = {
+    sm: { padX: "20px", padY: "10px", text: "13px" },
+    md: { padX: "32px", padY: "14px", text: "15px" },
+    lg: { padX: "40px", padY: "16px", text: "16px" },
+    xl: { padX: "48px", padY: "20px", text: "18px" },
+  };
+  const btnTaille = TAILLE_MAP[boutonsCfg.taille || "md"];
+  const HOVER_CLASS: Record<string, string> = {
+    lighten: "hover:brightness-110",
+    darken: "hover:brightness-90",
+    scale: "hover:scale-105 active:scale-95",
+    glow: "axs-btn-glow",
+    slide: "hover:translate-x-0.5",
+  };
+  const btnHoverClass = `transition-all ${HOVER_CLASS[boutonsCfg.hover || "scale"] ?? HOVER_CLASS.scale}`;
+  const btnPrimaryStyle: React.CSSProperties = {
+    backgroundColor: btnRempli ? c.accent : "transparent",
+    color: btnRempli ? c.fond : c.accent,
+    border: btnStyle === "outlined" ? `2px solid ${c.accent}` : "none",
+    borderRadius: btnRadiusPx,
+    padding: `${btnTaille.padY} ${btnTaille.padX}`,
+    fontSize: btnTaille.text,
+    textDecoration: btnStyle === "ghost" ? "underline" : "none",
+    ["--ax-accent-glow" as any]: `${c.accent}80`,
+  };
+  const btnPrimaryClass = `inline-flex items-center justify-center gap-2 font-semibold ${btnHoverClass}`;
+
   const taux = tenant.commissionRate ?? 0.06;
 
   const where: any = { tenantId: tenant.id, actif: true, visibleListage: { not: false } };
@@ -73,7 +120,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
         certifie={tenant.certifie}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 py-10`}>
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-end justify-between mb-6">
@@ -111,8 +158,8 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
             </select>
             <button
               type="submit"
-              className="px-6 py-2.5 text-sm font-semibold transition-all hover:opacity-90 active:scale-95"
-              style={{ backgroundColor: c.accent, color: c.fond, borderRadius: radius }}
+              className={`text-sm ${btnPrimaryClass}`}
+              style={btnPrimaryStyle}
             >
               Filtrer
             </button>
@@ -202,14 +249,14 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
                 </p>
                 <Link
                   href={`/${slug}/produits`}
-                  className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold transition-all hover:opacity-90"
-                  style={{ backgroundColor: c.accent, color: c.fond, borderRadius: radius }}
+                  className={`text-sm ${btnPrimaryClass}`}
+                  style={btnPrimaryStyle}
                 >
                   Voir tous les produits
                 </Link>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+              <div className={`grid ${GRID_PRODUITS} gap-4 sm:gap-5`}>
                 {produits.map((p) => {
                   const prixAffiche = prixClient(p.prix, taux);
                   const prixCompareAffiche = p.prixCompare ? prixClient(p.prixCompare, taux) : null;
@@ -219,7 +266,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
                   return (
                     <Link key={p.id} href={`/${slug}/produits/${p.id}`} className="group">
                       <div
-                        className="rounded-2xl overflow-hidden border transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1"
+                        className={`rounded-2xl overflow-hidden ${carteClass}`}
                         style={{ backgroundColor: c.surface, borderColor: `${c.accent}12`, borderRadius: radius }}
                       >
                         <div className="relative aspect-square overflow-hidden" style={{ backgroundColor: c.fond }}>

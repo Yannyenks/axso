@@ -139,6 +139,8 @@ export default async function ProduitPage({ params }: Props) {
     whatsapp: tenant.whatsapp ?? null,
     whatsappNumero: tenant.whatsappNumero ?? null,
     productPage: cfg.productPage ?? null,
+    layout: cfg.layout ?? null,
+    boutons: cfg.boutons ?? null,
   };
 
   return (

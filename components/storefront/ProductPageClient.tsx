@@ -51,6 +51,8 @@ export interface ProductPageClientProps {
     accent: string; fond: string; texte: string; surface: string; radius: string;
     whatsapp: string | null; whatsappNumero: string | null;
     productPage?: { layout?: string; sections?: ProdSection[] } | null;
+    layout?: { largeurContainer?: string } | null;
+    boutons?: { style?: string; taille?: string; hover?: string } | null;
   };
   produitsSimilaires: { id: string; nom: string; images: string[]; prixAffiche: number }[];
 }
@@ -725,6 +727,35 @@ function ProduitFaqSection({ faq, accent, surface }: { faq: { question: string; 
 export function ProductPageClient({ produit, tenant, produitsSimilaires }: ProductPageClientProps) {
   const { slug, devise, accent, fond, texte, surface, radius, whatsapp, whatsappNumero, nomBoutique, certifie } = tenant;
 
+  // ─── Layout + Boutons (config globale du builder, comme sur la page d'accueil) ──
+  const layoutCfg = tenant.layout ?? {};
+  const CONTAINER = layoutCfg.largeurContainer === "100%" ? "max-w-full" : `max-w-[${layoutCfg.largeurContainer || "1280px"}]`;
+
+  const boutonsCfg = tenant.boutons ?? {};
+  const btnStyle = boutonsCfg.style || "filled";
+  const btnRempli = !["outlined", "ghost"].includes(btnStyle);
+  const btnRadiusPx = btnStyle === "pill" ? "999px" : btnStyle === "square" ? "0px" : radius;
+  const TAILLE_MAP: Record<string, { padY: string; text: string }> = {
+    sm: { padY: "10px", text: "13px" },
+    md: { padY: "14px", text: "15px" },
+    lg: { padY: "16px", text: "16px" },
+    xl: { padY: "20px", text: "18px" },
+  };
+  const btnTaille = TAILLE_MAP[boutonsCfg.taille || "lg"];
+  const HOVER_CLASS: Record<string, string> = {
+    lighten: "hover:brightness-110",
+    darken: "hover:brightness-90",
+    scale: "hover:scale-[1.02] active:scale-[0.98]",
+    glow: "axs-btn-glow",
+    slide: "hover:translate-x-0.5",
+  };
+  const btnHoverClass = `transition-all ${HOVER_CLASS[boutonsCfg.hover || "scale"] ?? HOVER_CLASS.scale}`;
+  const btnAchatSizing: React.CSSProperties = {
+    borderRadius: btnRadiusPx,
+    padding: `${btnTaille.padY} 24px`,
+    fontSize: btnTaille.text,
+  };
+
   // Sections resolution
   const pp = tenant.productPage;
   const sections: ProdSection[] = pp?.sections?.length ? pp.sections : DEFAULT_SECTIONS;
@@ -805,7 +836,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
 
       {/* Breadcrumb */}
       {showBreadcrumbs && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 py-3`}>
           <div className="flex items-center gap-1 text-xs flex-wrap" style={{ opacity: 0.45 }}>
             <Link href={`/${slug}`} className="hover:opacity-100 transition-opacity">Accueil</Link>
             <ChevronRight size={10} />
@@ -817,7 +848,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+      <main className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 pb-20`}>
         <div className="grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1.8fr)] gap-10 lg:gap-16 items-start">
 
           {/* Gallery */}
@@ -916,14 +947,22 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
                     </div>
                     <div className="space-y-2.5">
                       <button onClick={doAddToCart} disabled={enRupture}
-                        className="w-full py-4 rounded-2xl font-bold text-base transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-35 flex items-center justify-center gap-3"
-                        style={{ background: enRupture ? "#E0E0E0" : `linear-gradient(135deg, ${accent} 0%, ${accent}CC 100%)`, color: enRupture ? "#999" : "#fff", boxShadow: enRupture ? "none" : `0 6px 24px ${accent}40` }}>
+                        className={`w-full font-bold disabled:opacity-35 flex items-center justify-center gap-3 ${btnHoverClass}`}
+                        style={{
+                          ...btnAchatSizing,
+                          background: enRupture ? "#E0E0E0" : (btnRempli ? `linear-gradient(135deg, ${accent} 0%, ${accent}CC 100%)` : "transparent"),
+                          color: enRupture ? "#999" : (btnRempli ? "#fff" : accent),
+                          border: !btnRempli ? `2px solid ${accent}` : "none",
+                          textDecoration: btnStyle === "ghost" ? "underline" : "none",
+                          boxShadow: enRupture || !btnRempli ? "none" : `0 6px 24px ${accent}40`,
+                          ["--ax-accent-glow" as any]: `${accent}80`,
+                        }}>
                         {produit.type === "digital" ? <Download size={18} /> : <ShoppingCart size={18} />}
                         {enRupture ? "Indisponible" : (produit.texteBoutonAchat || "Ajouter au panier")}
                       </button>
                       <button onClick={buyNow} disabled={enRupture}
                         className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-35 border-2 flex items-center justify-center gap-2"
-                        style={{ borderColor: accent, color: accent, background: `${accent}08` }}>
+                        style={{ borderColor: accent, color: accent, background: `${accent}08`, borderRadius: btnRadiusPx }}>
                         <ShoppingBag size={16} /> Acheter maintenant
                       </button>
                       {waNum && (
