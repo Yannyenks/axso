@@ -1124,10 +1124,11 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
                   {produitsSimilaires.map(p => (
                     <Link key={p.id} href={`/${slug}/produits/${p.id}`} className="group">
                       <div className="rounded-2xl overflow-hidden border transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-0.5" style={{ background: surface, borderColor: `${accent}12` }}>
-                        <div className="aspect-square overflow-hidden" style={{ background: fond }}>
+                        <div className="relative aspect-square overflow-hidden" style={{ background: fond }}>
                           {p.images[0]
                             ? <img src={p.images[0]} alt={p.nom} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                             : <div className="w-full h-full flex items-center justify-center"><Package size={28} className="opacity-20" /></div>}
+                          <WishlistHeartButton produitId={p.id} accent={accent} fond={fond} size={13} className="absolute top-2 right-2 w-7 h-7 rounded-full" />
                         </div>
                         <div className="p-3">
                           <p className="text-sm font-medium line-clamp-2 leading-snug mb-1">{p.nom}</p>

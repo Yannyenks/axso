@@ -9,6 +9,7 @@ import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import Link from "next/link";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
+import { WishlistHeartButton } from "@/components/storefront/WishlistHeartButton";
 import { SectionCountdown } from "@/components/storefront/SectionCountdown";
 import { SectionTabs } from "@/components/storefront/SectionTabs";
 import { SousBlocsRenderer } from "@/components/storefront/SousBlocsRenderer";
@@ -353,6 +354,7 @@ export default async function StorefrontPage({ params }: Props) {
                       ) : (
                         <div className="w-full h-full flex items-center justify-center"><Package size={48} className="opacity-20" /></div>
                       )}
+                      <WishlistHeartButton produitId={p.id} accent={c.accent} fond={c.fond} className="absolute top-3 right-3 w-8 h-8 rounded-full" />
                       {/* Badges */}
                       <div className="absolute top-3 left-3 flex flex-col gap-1.5">
                         {p.featured && (
