@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Users, Percent, Clock, Award, CheckCircle2, Copy, Check, ArrowRight, Loader2 } from "lucide-react";
+import { enregistrerAffiliationLocale } from "@/lib/affiliation-local";
 
 interface Props {
   programmeId: string;
@@ -36,6 +37,12 @@ export function RejoindreForm(p: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setResultat(data.affilie);
+      enregistrerAffiliationLocale({
+        portalToken: data.affilie.portalToken,
+        nomBoutique: p.tenant.nomBoutique,
+        logoUrl: p.tenant.logoUrl,
+        nomProgramme: p.nomProgramme,
+      });
     } catch (e: any) {
       toast.error(e.message || "Erreur lors de l'inscription");
     } finally {
@@ -124,6 +131,11 @@ export function RejoindreForm(p: Props) {
             <a href={portalUrl} style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#F5A623", fontSize: 12.5, fontWeight: 700, textDecoration: "none" }}>
               Ouvrir mon portail <ArrowRight size={13} />
             </a>
+            <p style={{ marginTop: 14 }}>
+              <a href="/mon-espace-affilie" style={{ fontSize: 11.5, color: "#999", textDecoration: "underline" }}>
+                Voir tous mes marchands dans un seul tableau de bord
+              </a>
+            </p>
           </div>
         )}
 

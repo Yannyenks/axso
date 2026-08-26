@@ -9,6 +9,7 @@ const liens = {
     { label: "Thèmes", href: "/themes" },
     { label: "Intégrations paiements", href: "/#paiements" },
     { label: "Fonctionnalités", href: "/#fonctionnalites" },
+    { label: "Devenir affilié", href: "/affiliation" },
   ],
   Ressources: [
     { label: "Blog", href: "/blog" },
