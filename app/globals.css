@@ -453,6 +453,13 @@ main > section, main > div > section {
   animation: axFadeInUp 0.45s var(--ax-ease-decel) both;
 }
 
+/* ── Boutons boutique (storefront) — effet "glow" piloté par le builder ──
+   --ax-accent-glow est posée en inline style sur chaque bouton concerné
+   (couleur d'accent du thème + alpha), pas de valeur fixe ici. */
+.axs-btn-glow:hover {
+  box-shadow: 0 0 22px 4px var(--ax-accent-glow, rgba(245,166,35,0.4));
+}
+
 .ax-skeleton {
   background: linear-gradient(110deg, var(--bg) 8%, #ECECEC 18%, var(--bg) 33%);
   background-size: 200% 100%;

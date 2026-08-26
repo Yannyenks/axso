@@ -90,6 +90,58 @@ export default async function StorefrontPage({ params }: Props) {
     (animCfg?.sectionAnimations?.[cle] as RevealType) || (animCfg?.global as RevealType) || "fade-in";
   const staggerDelay = () => (staggerActif ? staggerIndex++ * 90 : 0);
 
+  // ─── Layout (onglet "Layout" du builder) — largeur, espacement, grille produits, cartes ──
+  const layoutCfg = cfg.layout ?? {};
+  const CONTAINER = layoutCfg.largeurContainer === "100%" ? "max-w-full" : `max-w-[${layoutCfg.largeurContainer || "1280px"}]`;
+  const SECTION_PY_MAP: Record<string, string> = { sm: "py-8 sm:py-10", md: "py-12 sm:py-16", lg: "py-16 sm:py-20", xl: "py-20 sm:py-28" };
+  const SECTION_PY = SECTION_PY_MAP[layoutCfg.paddingSection || "lg"];
+  const colonnesDesktop = layoutCfg.colonnesProduits || 4;
+  const colonnesMobile = layoutCfg.colonnesMobile || 2;
+  const GRID_PRODUITS = `grid-cols-${colonnesMobile} sm:grid-cols-3 lg:grid-cols-${colonnesDesktop}`;
+  const OMBRE_MAP: Record<string, string> = { none: "", sm: "hover:shadow-md", md: "hover:shadow-lg", lg: "hover:shadow-xl", xl: "hover:shadow-2xl" };
+  const carteOmbreClass = OMBRE_MAP[layoutCfg.ombre || "md"];
+  const styleCarte = layoutCfg.styleCarte || "shadow";
+  const CARTE_CLASS: Record<string, string> = {
+    shadow: `border transition-all duration-300 ${carteOmbreClass} group-hover:-translate-y-1`,
+    bordered: "border-2 transition-colors duration-300",
+    flat: "border-0 transition-none",
+    lifted: `border transition-all duration-300 ${carteOmbreClass} group-hover:-translate-y-2 group-hover:scale-[1.02]`,
+  };
+  const carteClass = CARTE_CLASS[styleCarte] ?? CARTE_CLASS.shadow;
+
+  // ─── Boutons (onglet "Boutons" du builder) — style, taille, effet au survol ──
+  const boutonsCfg = cfg.boutons ?? {};
+  const btnStyle = boutonsCfg.style || "filled";
+  const btnRempli = !["outlined", "ghost"].includes(btnStyle);
+  const btnRadiusPx = btnStyle === "pill" ? "999px" : btnStyle === "square" ? "0px" : radius;
+  const TAILLE_MAP: Record<string, { padX: string; padY: string; text: string }> = {
+    sm: { padX: "20px", padY: "10px", text: "13px" },
+    md: { padX: "32px", padY: "14px", text: "15px" },
+    lg: { padX: "40px", padY: "16px", text: "16px" },
+    xl: { padX: "48px", padY: "20px", text: "18px" },
+  };
+  const btnTaille = TAILLE_MAP[boutonsCfg.taille || "md"];
+  const HOVER_CLASS: Record<string, string> = {
+    lighten: "hover:brightness-110",
+    darken: "hover:brightness-90",
+    scale: "hover:scale-105 active:scale-95",
+    glow: "axs-btn-glow",
+    slide: "hover:translate-x-0.5",
+  };
+  const btnHoverClass = `transition-all ${HOVER_CLASS[boutonsCfg.hover || "scale"] ?? HOVER_CLASS.scale}`;
+  // Bouton principal (accent plein, sauf style outlined/ghost) — utilisé pour tous les CTA de la page.
+  const btnPrimaryStyle: React.CSSProperties = {
+    backgroundColor: btnRempli ? c.accent : "transparent",
+    color: btnRempli ? c.fond : c.accent,
+    border: btnStyle === "outlined" ? `2px solid ${c.accent}` : btnStyle === "ghost" ? "none" : "none",
+    borderRadius: btnRadiusPx,
+    padding: `${btnTaille.padY} ${btnTaille.padX}`,
+    fontSize: btnTaille.text,
+    textDecoration: btnStyle === "ghost" ? "underline" : "none",
+    ["--ax-accent-glow" as any]: `${c.accent}80`,
+  };
+  const btnPrimaryClass = `inline-flex items-center justify-center gap-2 font-semibold ${btnHoverClass}`;
+
   // ─── HERO ────────────────────────────────────────────────────────────────
   const heroInner = sec.hero.actif ? (() => {
     const h = sec.hero;
@@ -115,7 +167,7 @@ export default async function StorefrontPage({ params }: Props) {
             </h1>
             <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto leading-relaxed">{h.sousTitre}</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href={ctaHref} className="px-10 py-4 rounded-2xl font-semibold text-base transition-all hover:opacity-90 hover:scale-105 active:scale-95" style={{ backgroundColor: c.accent, color: c.fond, borderRadius: radius }}>
+              <Link href={ctaHref} className="px-10 py-4 rounded-2xl font-semibold text-base transition-all hover:opacity-90 hover:scale-105 active:scale-95" style={btnPrimaryStyle}>
                 {h.ctaTexte}
               </Link>
               <Link href={`/${slug}/produits`} className="px-10 py-4 rounded-2xl font-semibold text-base transition-all border-2 text-white border-white/40 hover:bg-white/10" style={{ borderRadius: radius }}>
@@ -129,7 +181,7 @@ export default async function StorefrontPage({ params }: Props) {
 
     if (h.style === "split") {
       return (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <section className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12`}>
           <div className="grid lg:grid-cols-2 gap-6 items-stretch min-h-[520px]">
             <div className="relative rounded-3xl overflow-hidden" style={{ background: heroGradient, minHeight: "420px" }}>
               {tenant.bannerUrl && (
@@ -151,7 +203,7 @@ export default async function StorefrontPage({ params }: Props) {
               </h1>
               <p className="text-lg mb-8 leading-relaxed" style={{ color: c.texte, opacity: 0.7 }}>{h.sousTitre}</p>
               <div className="flex flex-col sm:flex-row gap-3">
-                <Link href={ctaHref} className="px-8 py-4 font-semibold text-sm transition-all hover:opacity-90 hover:scale-105 active:scale-95 text-center" style={{ backgroundColor: c.accent, color: c.fond, borderRadius: radius }}>
+                <Link href={ctaHref} className="px-8 py-4 font-semibold text-sm transition-all hover:opacity-90 hover:scale-105 active:scale-95 text-center" style={btnPrimaryStyle}>
                   {h.ctaTexte}
                 </Link>
                 <Link href={`/${slug}/produits`} className="px-8 py-4 font-semibold text-sm transition-all border text-center" style={{ borderColor: `${c.accent}40`, color: c.texte, borderRadius: radius }}>
@@ -166,14 +218,14 @@ export default async function StorefrontPage({ params }: Props) {
 
     if (h.style === "minimal") {
       return (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+        <section className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24`}>
           <div className="max-w-3xl">
             <span className="text-sm font-semibold uppercase tracking-widest mb-4 block" style={{ color: c.accent }}>
               {tenant.categorie}
             </span>
             <h1 className="text-5xl sm:text-6xl font-bold font-playfair leading-tight mb-6">{h.titre}</h1>
             <p className="text-xl mb-8 leading-relaxed" style={{ opacity: 0.7 }}>{h.sousTitre}</p>
-            <Link href={ctaHref} className="inline-flex items-center gap-2 px-8 py-4 font-semibold text-sm transition-all hover:opacity-90" style={{ backgroundColor: c.accent, color: c.fond, borderRadius: radius }}>
+            <Link href={ctaHref} className="inline-flex items-center gap-2 px-8 py-4 font-semibold text-sm transition-all hover:opacity-90" style={btnPrimaryStyle}>
               {h.ctaTexte} →
             </Link>
           </div>
@@ -201,7 +253,7 @@ export default async function StorefrontPage({ params }: Props) {
             {h.sousTitre}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href={ctaHref} className="px-10 py-4 font-semibold text-base transition-all hover:opacity-90 hover:scale-105 active:scale-95" style={{ backgroundColor: c.accent, color: c.fond, borderRadius: radius }}>
+            <Link href={ctaHref} className="px-10 py-4 font-semibold text-base transition-all hover:opacity-90 hover:scale-105 active:scale-95" style={btnPrimaryStyle}>
               {h.ctaTexte}
             </Link>
             <Link href={`/${slug}/produits`} className="px-10 py-4 font-semibold text-base transition-all border-2" style={{ borderColor: `${c.accent}50`, color: tenant.bannerUrl ? "#fff" : c.texte, borderRadius: radius }}>
@@ -228,7 +280,7 @@ export default async function StorefrontPage({ params }: Props) {
   const confianceNode = (confianceCfg?.actif ?? true) && confianceItems.length > 0 ? (
     <ScrollReveal type={revealType("confiance")} vitesse={vitesseGlobale} delay={staggerDelay()}>
       <section className="border-y py-6" style={{ borderColor: `${c.accent}15`, backgroundColor: c.surface }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8`}>
           {confianceCfg?.layout === "cards" ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {confianceItems.map((b, i) => (
@@ -268,7 +320,7 @@ export default async function StorefrontPage({ params }: Props) {
   const vedettesNode = sec.vedettes.actif && vedettes.length > 0 ? (
     <>
       <ScrollReveal type={revealType("vedettes")} vitesse={vitesseGlobale} delay={staggerDelay()}>
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <section className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 ${SECTION_PY}`}>
           <div className="flex items-end justify-between mb-10">
             <div>
               <span className="text-xs font-semibold uppercase tracking-widest mb-2 block" style={{ color: c.accent }}>Sélection</span>
@@ -278,7 +330,7 @@ export default async function StorefrontPage({ params }: Props) {
               Voir tout →
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className={`grid ${GRID_PRODUITS} gap-4 sm:gap-6`}>
             {vedettes.map((p) => {
               const prixAffiche = prixClient(p.prix, tenant.commissionRate ?? 0.06);
               const prixCompareAffiche = p.prixCompare ? prixClient(p.prixCompare, tenant.commissionRate ?? 0.06) : null;
@@ -288,7 +340,7 @@ export default async function StorefrontPage({ params }: Props) {
               return (
                 <Link key={p.id} href={`/${slug}/produits/${p.id}`} className="group">
                   <div
-                    className="rounded-2xl overflow-hidden border transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1"
+                    className={`rounded-2xl overflow-hidden ${carteClass}`}
                     style={{ backgroundColor: c.surface, borderColor: `${c.accent}15`, borderRadius: radius }}
                   >
                     <div className="relative aspect-square overflow-hidden" style={{ backgroundColor: c.fond }}>
@@ -357,8 +409,8 @@ export default async function StorefrontPage({ params }: Props) {
   const collectionsNode = sec.collections.actif && tenant.collections.length > 0 ? (
     <>
       <ScrollReveal type={revealType("collections")} vitesse={vitesseGlobale} delay={staggerDelay()}>
-        <section className="py-16 sm:py-20" style={{ backgroundColor: c.surface }}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className={SECTION_PY} style={{ backgroundColor: c.surface }}>
+          <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8`}>
             <div className="text-center mb-12">
               <span className="text-xs font-semibold uppercase tracking-widest mb-2 block" style={{ color: c.accent }}>Univers</span>
               <h2 className="text-3xl sm:text-4xl font-bold font-playfair">{sec.collections.titre}</h2>
@@ -402,8 +454,8 @@ export default async function StorefrontPage({ params }: Props) {
   const aboutCfg = sec.about;
   const aboutNode = aboutCfg?.actif ? (
     <ScrollReveal type={revealType("about")} vitesse={vitesseGlobale} delay={staggerDelay()}>
-      <section className="py-16 sm:py-20">
-        <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${aboutCfg.layout === "fullwidth" ? "max-w-full" : "max-w-7xl"}`}>
+      <section className={SECTION_PY}>
+        <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${aboutCfg.layout === "fullwidth" ? "max-w-full" : CONTAINER}`}>
           {aboutCfg.layout === "centered" ? (
             <div className="max-w-2xl mx-auto text-center">
               {aboutCfg.badgeTexte && (
@@ -471,8 +523,8 @@ export default async function StorefrontPage({ params }: Props) {
   const promoNode = sec.promo.actif ? (
     <>
       <ScrollReveal type={revealType("promo")} vitesse={vitesseGlobale} delay={staggerDelay()}>
-        <section className="py-16 sm:py-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className={SECTION_PY}>
+          <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8`}>
             <div
               className="relative overflow-hidden py-14 px-8 sm:px-16 text-center"
               style={{
@@ -489,7 +541,7 @@ export default async function StorefrontPage({ params }: Props) {
               <Link
                 href={`/${slug}/produits`}
                 className="inline-flex items-center gap-2 px-8 py-4 font-semibold text-sm transition-all hover:opacity-90 hover:scale-105 active:scale-95"
-                style={{ backgroundColor: c.accent, color: c.fond, borderRadius: radius }}
+                style={btnPrimaryStyle}
               >
                 {sec.promo.ctaTexte} →
               </Link>
@@ -513,8 +565,8 @@ export default async function StorefrontPage({ params }: Props) {
   const avisNode = sec.avis.actif && tenant.avis.length > 0 ? (
     <>
       <ScrollReveal type={revealType("avis")} vitesse={vitesseGlobale} delay={staggerDelay()}>
-        <section className="py-16 sm:py-20" style={{ backgroundColor: c.surface }}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className={SECTION_PY} style={{ backgroundColor: c.surface }}>
+          <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8`}>
             <div className="text-center mb-12">
               <span className="text-xs font-semibold uppercase tracking-widest mb-2 block" style={{ color: c.accent }}>Témoignages</span>
               <h2 className="text-3xl sm:text-4xl font-bold font-playfair">{sec.avis.titre}</h2>
@@ -556,7 +608,7 @@ export default async function StorefrontPage({ params }: Props) {
   const newsletterNode = sec.newsletter.actif ? (
     <>
       <ScrollReveal type={revealType("newsletter")} vitesse={vitesseGlobale} delay={staggerDelay()}>
-        <section className="py-16 sm:py-20" style={{ background: `linear-gradient(135deg, ${c.accent}15 0%, ${c.accent}05 100%)` }}>
+        <section className={SECTION_PY} style={{ background: `linear-gradient(135deg, ${c.accent}15 0%, ${c.accent}05 100%)` }}>
           <div className="max-w-2xl mx-auto px-4 text-center">
             <h2 className="text-3xl sm:text-4xl font-bold font-playfair mb-3">{sec.newsletter.titre}</h2>
             <p className="mb-8 text-lg" style={{ opacity: 0.65 }}>{sec.newsletter.texte}</p>
@@ -570,7 +622,7 @@ export default async function StorefrontPage({ params }: Props) {
               <button
                 type="submit"
                 className="px-7 py-3.5 text-sm font-semibold transition-all hover:opacity-90"
-                style={{ backgroundColor: c.accent, color: c.fond, borderRadius: radius }}
+                style={btnPrimaryStyle}
               >
                 {sec.newsletter.ctaTexte}
               </button>
@@ -609,7 +661,7 @@ export default async function StorefrontPage({ params }: Props) {
           className="py-2.5 text-center text-xs font-semibold tracking-wide overflow-hidden"
           style={{ backgroundColor: sec.annonce.couleurFond, color: sec.annonce.couleurTexte }}
         >
-          <div className="max-w-7xl mx-auto px-4 truncate">{sec.annonce.texte}</div>
+          <div className={`${CONTAINER} mx-auto px-4 truncate`}>{sec.annonce.texte}</div>
         </div>
       )}
       <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.annonce} accent={c.accent} texte={c.texte} />
@@ -653,8 +705,8 @@ export default async function StorefrontPage({ params }: Props) {
           const images: string[] = section.config?.images ?? [];
           if (!images.length) return null;
           return (
-            <section key={section.id} className="py-16 sm:py-20">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <section key={section.id} className={SECTION_PY}>
+              <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8`}>
                 {section.config?.titre && (
                   <h2 className="text-3xl font-bold font-playfair text-center mb-10" style={{ color: c.texte }}>{section.config.titre}</h2>
                 )}
@@ -672,7 +724,7 @@ export default async function StorefrontPage({ params }: Props) {
         if (section.type === "stats") {
           return (
             <section key={section.id} className="py-14 sm:py-20" style={{ background: `${c.accent}08` }}>
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8`}>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
                   {(section.config?.items ?? []).map((stat: any, i: number) => (
                     <div key={i}>
@@ -739,7 +791,7 @@ export default async function StorefrontPage({ params }: Props) {
           if (!section.config?.videoUrl) return null;
           const isEmbed = /youtube|vimeo/.test(section.config.videoUrl);
           return (
-            <section key={section.id} className="py-16 sm:py-20">
+            <section key={section.id} className={SECTION_PY}>
               <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${section.config.style === "fullwidth" ? "max-w-full" : "max-w-4xl"}`}>
                 {section.config?.titre && (
                   <h2 className="text-3xl font-bold font-playfair text-center mb-10" style={{ color: c.texte }}>{section.config.titre}</h2>
@@ -836,7 +888,7 @@ export default async function StorefrontPage({ params }: Props) {
 
       {/* ─── FOOTER ─── */}
       <footer className="border-t mt-0" style={{ backgroundColor: c.fond, borderColor: `${c.accent}15` }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 py-14`}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
             {/* Brand */}
             <div className="lg:col-span-2">
@@ -925,7 +977,7 @@ export default async function StorefrontPage({ params }: Props) {
 
         {/* Copyright */}
         <div className="border-t py-5" style={{ borderColor: `${c.accent}10` }}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs" style={{ opacity: 0.4 }}>
+          <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs`} style={{ opacity: 0.4 }}>
             <p>© {new Date().getFullYear()} {tenant.nomBoutique}. Tous droits réservés.</p>
             <p>Propulsé par <span style={{ color: c.accent, opacity: 1 }}>Axso</span></p>
           </div>
