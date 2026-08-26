@@ -8,6 +8,7 @@ import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import Link from "next/link";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
+import { WishlistHeartButton } from "@/components/storefront/WishlistHeartButton";
 import { Package, ArrowLeft } from "lucide-react";
 
 interface Props {
@@ -96,6 +97,7 @@ export default async function CollectionPage({ params }: Props) {
         radius={radius}
         collections={tenant.collections}
         certifie={tenant.certifie}
+        navStyle={cfg.navigationStyle}
       />
 
       {/* Hero collection */}
@@ -158,6 +160,7 @@ export default async function CollectionPage({ params }: Props) {
                       ) : (
                         <div className="w-full h-full flex items-center justify-center"><Package size={40} className="opacity-20" /></div>
                       )}
+                      <WishlistHeartButton produitId={p.id} accent={c.accent} fond={c.fond} className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full" />
                       <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5">
                         {p.featured && (
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg" style={{ backgroundColor: c.accent, color: c.fond }}>

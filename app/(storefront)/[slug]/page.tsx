@@ -677,6 +677,7 @@ export default async function StorefrontPage({ params }: Props) {
         radius={radius}
         collections={tenant.collections}
         certifie={tenant.certifie}
+        navStyle={cfg.navigationStyle}
       />
 
       {ordre.map((id) => <Fragment key={id}>{SECTION_NODES[id]}</Fragment>)}

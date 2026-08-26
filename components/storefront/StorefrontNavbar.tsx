@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useCartStore } from "@/store/cartStore";
-import { ShoppingBag, Menu, X, Search, BadgeCheck } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useWishlistStore } from "@/store/wishlistStore";
+import { ShoppingBag, Menu, X, Search, BadgeCheck, Heart, ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import type { ThemeNavigationCfg } from "@/lib/theme-config";
 
 interface Props {
   slug: string;
@@ -15,12 +17,27 @@ interface Props {
   radius: string;
   collections: Array<{ slug: string; nom: string }>;
   certifie?: boolean;
+  navStyle?: ThemeNavigationCfg;
 }
 
-export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, texte, radius, collections, certifie }: Props) {
+const HAUTEUR_PX: Record<string, number> = { "48px": 48, "64px": 64, "80px": 80 };
+
+export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, texte, radius, collections, certifie, navStyle }: Props) {
   const totalItems = useCartStore((s) => s.totalItems());
+  const wishlistCount = useWishlistStore((s) => s.produitIds.length);
   const [menuOuvert, setMenuOuvert] = useState(false);
+  const [rechercheOuverte, setRechercheOuverte] = useState(false);
+  const [megaOuvert, setMegaOuvert] = useState(false);
   const [scroll, setScroll] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const type = navStyle?.type || "classic";
+  const style = navStyle?.style || "light";
+  const sticky = navStyle?.sticky !== false;
+  const hauteur = HAUTEUR_PX[navStyle?.hauteur || "64px"] ?? 64;
+  const showSearch = navStyle?.showSearch !== false;
+  const showWishlist = navStyle?.showWishlist === true;
+  const minimal = type === "minimal";
 
   useEffect(() => {
     const handler = () => setScroll(window.scrollY > 20);
@@ -28,120 +45,249 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
-  return (
-    <nav
-      className="sticky top-0 z-50 transition-all duration-500"
-      style={{
-        backgroundColor: scroll ? `${fond}f0` : `${fond}cc`,
-        backdropFilter: "blur(20px)",
-        borderBottom: `1px solid ${accent}18`,
-        boxShadow: scroll ? `0 1px 40px ${accent}08` : "none",
-      }}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        {/* Logo */}
-        <Link href={`/${slug}`} className="flex-shrink-0 min-w-0 flex items-center gap-1.5">
-          {logoUrl ? (
-            <img src={logoUrl} alt={nomBoutique} className="h-9 object-contain max-w-[180px]" />
+  useEffect(() => {
+    if (rechercheOuverte) searchRef.current?.focus();
+  }, [rechercheOuverte]);
+
+  // ─── Apparence (couleurs, flou, bordure) selon style + type ───────────────────
+  let bg: string, txt: string, border: string, blur: string | undefined, shadow: string;
+  if (type === "transparent-scroll") {
+    bg = scroll ? `${fond}f0` : `${fond}cc`;
+    txt = texte;
+    border = `1px solid ${accent}18`;
+    blur = "blur(20px)";
+    shadow = scroll ? `0 1px 40px ${accent}08` : "none";
+  } else if (style === "dark") {
+    bg = "rgba(10,10,12,0.94)";
+    txt = "#F5F5F5";
+    border = "1px solid rgba(255,255,255,0.08)";
+    blur = "blur(14px)";
+    shadow = "0 1px 24px rgba(0,0,0,0.25)";
+  } else if (style === "glass") {
+    bg = `${fond}40`;
+    txt = texte;
+    border = `1px solid ${accent}20`;
+    blur = "blur(24px) saturate(160%)";
+    shadow = `0 4px 30px ${accent}0a`;
+  } else if (style === "transparent") {
+    bg = "transparent";
+    txt = texte;
+    border = "none";
+    blur = undefined;
+    shadow = "none";
+  } else {
+    // light
+    bg = `${fond}f0`;
+    txt = texte;
+    border = `1px solid ${accent}18`;
+    blur = "blur(20px)";
+    shadow = "none";
+  }
+
+  const outerClass = [
+    "z-50 transition-all duration-500 w-full",
+    sticky ? "sticky top-0" : "relative",
+    type === "floating" ? "px-3 sm:px-6 pt-3" : "",
+  ].join(" ");
+
+  const barBase: React.CSSProperties = {
+    backgroundColor: bg,
+    backdropFilter: blur,
+    WebkitBackdropFilter: blur,
+    border,
+    boxShadow: shadow,
+    height: hauteur,
+  };
+  const barClass = type === "floating"
+    ? "max-w-5xl mx-auto rounded-2xl px-4 sm:px-6 flex items-center justify-between gap-4"
+    : "px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4";
+
+  const logoNode = (
+    <Link href={`/${slug}`} className="flex-shrink-0 min-w-0 flex items-center gap-1.5">
+      {logoUrl ? (
+        <img src={logoUrl} alt={nomBoutique} className="h-9 object-contain max-w-[180px]" />
+      ) : (
+        <span className="text-xl font-bold font-playfair truncate" style={{ color: accent }}>
+          {nomBoutique}
+        </span>
+      )}
+      {certifie && (
+        <span className="flex-shrink-0" title="Boutique certifiée Axso">
+          <BadgeCheck size={16} style={{ color: accent }} />
+        </span>
+      )}
+    </Link>
+  );
+
+  const collectionLinks = type === "mega" ? collections : collections.slice(0, 4);
+
+  const linksNode = !minimal && (
+    <div className="hidden md:flex items-center gap-8">
+      <Link href={`/${slug}/produits`} className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity tracking-wide" style={{ color: txt }}>
+        Produits
+      </Link>
+      {type === "mega" && collections.length > 0 ? (
+        <div className="relative" onMouseEnter={() => setMegaOuvert(true)} onMouseLeave={() => setMegaOuvert(false)}>
+          <button className="flex items-center gap-1 text-sm font-medium opacity-70 hover:opacity-100 transition-opacity tracking-wide" style={{ color: txt }}>
+            Collections <ChevronDown size={13} />
+          </button>
+          <div
+            className="absolute left-1/2 -translate-x-1/2 top-full pt-3 transition-all duration-200"
+            style={{ opacity: megaOuvert ? 1 : 0, pointerEvents: megaOuvert ? "auto" : "none", transform: megaOuvert ? "translate(-50%,0)" : "translate(-50%,-8px)" }}
+          >
+            <div className="grid grid-cols-2 gap-1 p-3 rounded-2xl min-w-[280px]" style={{ backgroundColor: fond, border: `1px solid ${accent}20`, boxShadow: "0 20px 50px rgba(0,0,0,0.15)" }}>
+              {collections.map((col) => (
+                <Link key={col.slug} href={`/${slug}/collections/${col.slug}`} className="px-3 py-2 rounded-xl text-sm hover:opacity-70 transition-opacity" style={{ color: texte }}>
+                  {col.nom}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        collectionLinks.map((col) => (
+          <Link key={col.slug} href={`/${slug}/collections/${col.slug}`} className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity tracking-wide" style={{ color: txt }}>
+            {col.nom}
+          </Link>
+        ))
+      )}
+    </div>
+  );
+
+  const actionsNode = (
+    <div className="flex items-center gap-2 flex-shrink-0">
+      {showSearch && !minimal && (
+        <div className="hidden sm:flex items-center">
+          {rechercheOuverte ? (
+            <form action={`/${slug}/produits`} method="GET" className="flex items-center" onBlur={() => setRechercheOuverte(false)}>
+              <input
+                ref={searchRef}
+                name="q"
+                placeholder="Rechercher…"
+                className="w-40 px-3 py-1.5 text-sm rounded-lg outline-none"
+                style={{ backgroundColor: `${accent}12`, color: txt, border: `1px solid ${accent}25` }}
+              />
+            </form>
           ) : (
-            <span className="text-xl font-bold font-playfair truncate" style={{ color: accent }}>
-              {nomBoutique}
-            </span>
+            <button
+              onClick={() => setRechercheOuverte(true)}
+              className="flex items-center justify-center w-9 h-9 rounded-xl transition-all hover:opacity-80"
+              style={{ backgroundColor: `${accent}12`, color: txt }}
+              aria-label="Rechercher"
+            >
+              <Search size={16} />
+            </button>
           )}
-          {certifie && (
-            <span className="flex-shrink-0" title="Boutique certifiée Axso">
-              <BadgeCheck size={16} style={{ color: accent }} />
+        </div>
+      )}
+
+      {showWishlist && (
+        <Link
+          href={`/${slug}/wishlist`}
+          className="relative flex items-center justify-center w-9 h-9 rounded-xl transition-all hover:opacity-80"
+          style={{ backgroundColor: `${accent}12`, color: txt }}
+          aria-label="Liste de souhaits"
+        >
+          <Heart size={16} />
+          {wishlistCount > 0 && (
+            <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold" style={{ backgroundColor: accent, color: fond }}>
+              {wishlistCount > 9 ? "9+" : wishlistCount}
             </span>
           )}
         </Link>
+      )}
 
-        {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-8 flex-1 justify-center">
-          <Link href={`/${slug}/produits`} className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity tracking-wide" style={{ color: texte }}>
-            Produits
+      <Link
+        href={`/${slug}/panier`}
+        className="relative flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-90 active:scale-95"
+        style={{ backgroundColor: accent, color: fond, borderRadius: radius }}
+      >
+        <ShoppingBag size={16} />
+        <span className="hidden sm:inline">Panier</span>
+        {totalItems > 0 && (
+          <span className="flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold" style={{ backgroundColor: fond, color: accent }}>
+            {totalItems > 99 ? "99+" : totalItems}
+          </span>
+        )}
+      </Link>
+
+      <button
+        onClick={() => setMenuOuvert(!menuOuvert)}
+        className={`${minimal ? "flex" : "md:hidden flex"} items-center justify-center w-10 h-10 rounded-xl transition-all`}
+        style={{ backgroundColor: `${accent}15`, color: txt }}
+        aria-label="Menu"
+      >
+        {menuOuvert ? <X size={18} /> : <Menu size={18} />}
+      </button>
+    </div>
+  );
+
+  const mobileMenu = (
+    <div
+      className={`overflow-hidden transition-all duration-300 ${minimal ? "" : "md:hidden"} ${menuOuvert ? "max-h-[420px] opacity-100" : "max-h-0 opacity-0"}`}
+      style={{ borderTop: menuOuvert ? `1px solid ${accent}20` : "none", backgroundColor: fond }}
+    >
+      <div className="px-4 py-4 space-y-1">
+        {showSearch && (
+          <form action={`/${slug}/produits`} method="GET" className="pb-2">
+            <input
+              name="q"
+              placeholder="Rechercher un produit…"
+              className="w-full px-3 py-2.5 text-sm rounded-xl outline-none"
+              style={{ backgroundColor: `${accent}0f`, color: texte, border: `1px solid ${accent}20` }}
+            />
+          </form>
+        )}
+        <Link href={`/${slug}/produits`} onClick={() => setMenuOuvert(false)} className="block px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
+          Tous les produits
+        </Link>
+        {showWishlist && (
+          <Link href={`/${slug}/wishlist`} onClick={() => setMenuOuvert(false)} className="flex items-center gap-2 px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
+            <Heart size={14} /> Liste de souhaits {wishlistCount > 0 && `(${wishlistCount})`}
           </Link>
-          {collections.slice(0, 4).map((col) => (
-            <Link
-              key={col.slug}
-              href={`/${slug}/collections/${col.slug}`}
-              className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity tracking-wide"
-              style={{ color: texte }}
-            >
-              {col.nom}
-            </Link>
-          ))}
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Cart */}
+        )}
+        {collections.map((col) => (
+          <Link key={col.slug} href={`/${slug}/collections/${col.slug}`} onClick={() => setMenuOuvert(false)} className="block px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
+            {col.nom}
+          </Link>
+        ))}
+        <div className="pt-2">
           <Link
             href={`/${slug}/panier`}
-            className="relative flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-90 active:scale-95"
-            style={{ backgroundColor: accent, color: fond, borderRadius: radius }}
+            onClick={() => setMenuOuvert(false)}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold w-full justify-center"
+            style={{ backgroundColor: accent, color: fond }}
           >
             <ShoppingBag size={16} />
-            <span className="hidden sm:inline">Panier</span>
-            {totalItems > 0 && (
-              <span
-                className="flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold"
-                style={{ backgroundColor: fond, color: accent }}
-              >
-                {totalItems > 99 ? "99+" : totalItems}
-              </span>
-            )}
+            Voir mon panier{totalItems > 0 && ` (${totalItems})`}
           </Link>
-
-          {/* Mobile hamburger */}
-          <button
-            onClick={() => setMenuOuvert(!menuOuvert)}
-            className="md:hidden flex items-center justify-center w-10 h-10 rounded-xl transition-all"
-            style={{ backgroundColor: `${accent}15`, color: texte }}
-            aria-label="Menu"
-          >
-            {menuOuvert ? <X size={18} /> : <Menu size={18} />}
-          </button>
         </div>
       </div>
+    </div>
+  );
 
-      {/* Mobile menu */}
-      <div
-        className={`md:hidden overflow-hidden transition-all duration-300 ${menuOuvert ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}
-        style={{ borderTop: menuOuvert ? `1px solid ${accent}20` : "none", backgroundColor: fond }}
-      >
-        <div className="px-4 py-4 space-y-1">
-          <Link
-            href={`/${slug}/produits`}
-            onClick={() => setMenuOuvert(false)}
-            className="block px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80"
-            style={{ color: texte }}
-          >
-            Tous les produits
-          </Link>
-          {collections.map((col) => (
-            <Link
-              key={col.slug}
-              href={`/${slug}/collections/${col.slug}`}
-              onClick={() => setMenuOuvert(false)}
-              className="block px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80"
-              style={{ color: texte }}
-            >
-              {col.nom}
-            </Link>
-          ))}
-          <div className="pt-2">
-            <Link
-              href={`/${slug}/panier`}
-              onClick={() => setMenuOuvert(false)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold w-full justify-center"
-              style={{ backgroundColor: accent, color: fond }}
-            >
-              <ShoppingBag size={16} />
-              Voir mon panier{totalItems > 0 && ` (${totalItems})`}
-            </Link>
-          </div>
+  if (type === "centered") {
+    return (
+      <nav className={outerClass}>
+        <div style={barBase} className={barClass}>
+          <div className="hidden md:flex flex-1">{linksNode}</div>
+          <div className="flex md:hidden">{logoNode}</div>
+          <div className="hidden md:flex flex-1 justify-center">{logoNode}</div>
+          <div className="flex flex-1 justify-end">{actionsNode}</div>
         </div>
+        {mobileMenu}
+      </nav>
+    );
+  }
+
+  return (
+    <nav className={outerClass}>
+      <div style={barBase} className={barClass}>
+        {logoNode}
+        {!minimal && <div className="flex-1 flex justify-center">{linksNode}</div>}
+        {actionsNode}
       </div>
+      {mobileMenu}
     </nav>
   );
 }

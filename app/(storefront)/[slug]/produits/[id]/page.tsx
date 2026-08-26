@@ -157,6 +157,7 @@ export default async function ProduitPage({ params }: Props) {
         radius={radius}
         collections={tenant.collections}
         certifie={tenant.certifie}
+        navStyle={cfg.navigationStyle}
       />
       <ProductPageClient
         produit={produitProps}

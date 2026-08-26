@@ -5,6 +5,7 @@ import { formatMontant } from "@/lib/utils";
 import { useCartStore } from "@/store/cartStore";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { WishlistHeartButton } from "./WishlistHeartButton";
 import {
   Package, AlertTriangle, Lock, RotateCcw, Check,
   Star, Minus, Plus, ShoppingCart, Truck, ZoomIn,
@@ -877,7 +878,10 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
                     Marque : <span style={{ opacity: 0.6, fontWeight: 400 }}>{produit.marque}</span>
                   </p>
                 )}
-                <h1 className="text-2xl sm:text-3xl font-bold leading-snug">{produit.nom}</h1>
+                <div className="flex items-start justify-between gap-3">
+                  <h1 className="text-2xl sm:text-3xl font-bold leading-snug">{produit.nom}</h1>
+                  <WishlistHeartButton produitId={produit.id} accent={accent} fond={surface} size={17} className="flex-shrink-0 w-10 h-10 rounded-full mt-0.5" />
+                </div>
                 {produit.avis.length > 0 && (
                   <button onClick={() => setTab("avis")} className="flex items-center gap-2 group">
                     <Stars note={produit.noteMoyenne} size={15} accent={accent} />
