@@ -5,6 +5,8 @@ import { TYPES_PRODUIT_DIGITAL } from "@/lib/affiliation";
 import { formatMontant } from "@/lib/utils";
 import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
+import { AffiliateAccountPanel } from "@/components/marketing/AffiliateAccountPanel";
+import { DevenirAffilieButton } from "@/components/marketing/DevenirAffilieButton";
 import Link from "next/link";
 import type { Metadata } from "next";
 import {
@@ -101,6 +103,9 @@ export default async function AffiliationMarketplacePage({ searchParams }: Props
           <p className="text-[#666666] text-xl leading-relaxed max-w-2xl mx-auto mb-8">
             Parcourez les produits de {nbMarchands}+ marchands africains, obtenez votre lien unique en un clic — sans compte à créer — et touchez jusqu'à {Math.round(commissionMax)}% de commission sur chaque vente.
           </p>
+          <div className="flex justify-center mb-4">
+            <AffiliateAccountPanel />
+          </div>
           <div className="flex flex-wrap gap-3 justify-center">
             <a href="#marketplace"
               className="inline-flex items-center gap-2 font-bold px-8 py-4 rounded-2xl transition-all hover:scale-105"
@@ -231,11 +236,7 @@ export default async function AffiliationMarketplacePage({ searchParams }: Props
                       {l.certifie && <BadgeCheck size={11} style={{ color: "#F5A623" }} />}
                     </div>
                     <p className="font-bold text-sm mb-3" style={{ color: "#111111" }}>{formatMontant(l.prix, l.devise)}</p>
-                    <Link href={`/rejoindre/${l.programmeId}`}
-                      className="block text-center py-2 rounded-xl text-xs font-bold transition-all hover:opacity-90"
-                      style={{ background: "#F5A623", color: "#080808" }}>
-                      Devenir affilié
-                    </Link>
+                    <DevenirAffilieButton programmeId={l.programmeId} nomBoutique={l.nomBoutique} logoUrl={l.logoUrl} nomProgramme={l.nomProgramme} />
                   </div>
                 </div>
               ))}

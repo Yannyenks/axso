@@ -56,3 +56,36 @@ export function extraireTokenPortail(input: string): string | null {
   if (/^[a-zA-Z0-9_-]{10,}$/.test(trimmed)) return trimmed;
   return null;
 }
+
+// ─── Profil affilié local ───────────────────────────────────────────────────
+// Nom/email/téléphone saisis une seule fois (via le marketplace ou le premier
+// formulaire de candidature), réutilisés pour rejoindre n'importe quel autre
+// programme en un clic — sans jamais redemander les mêmes infos.
+const PROFIL_KEY = "axso-profil-affilie";
+
+export interface ProfilAffilie {
+  nom: string;
+  email: string;
+  telephone?: string;
+}
+
+export function lireProfilAffilieLocal(): ProfilAffilie | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(PROFIL_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.nom && parsed?.email ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function sauverProfilAffilieLocal(profil: ProfilAffilie): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(PROFIL_KEY, JSON.stringify(profil));
+  } catch {
+    // stockage indisponible — dégrade sans bloquer
+  }
+}

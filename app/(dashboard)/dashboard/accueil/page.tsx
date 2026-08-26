@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { SalesChart } from "@/components/dashboard/SalesChart";
+import { AffiliationIncitationBanner } from "@/components/dashboard/AffiliationIncitationBanner";
 import { OrdersTable } from "@/components/dashboard/OrdersTable";
 import { formatMontant } from "@/lib/utils";
 import {
@@ -34,7 +35,7 @@ async function getData(tenantId: string) {
     today, yesterday, month, prevMonth, pending, visitors,
     recentOrders, lowStock, chartData, tenant, totalClients,
     commandesMois, statutsDist, topVilles, newClients, newClientsPrev,
-    weekRevenu, todayOrders,
+    weekRevenu, todayOrders, programmeAffiliation,
   ] = await Promise.all([
     prisma.commande.aggregate({ where: { tenantId, paiementStatut: "completed", createdAt: { gte: startOfDay } }, _sum: { montantTotal: true }, _count: true }),
     prisma.commande.aggregate({ where: { tenantId, paiementStatut: "completed", createdAt: { gte: startOfYest, lte: endOfYest } }, _sum: { montantTotal: true }, _count: true }),
@@ -57,6 +58,7 @@ async function getData(tenantId: string) {
     prisma.client.count({ where: { tenantId, createdAt: { gte: startOfPrevMonth, lte: endOfPrevMonth } } }),
     prisma.commande.aggregate({ where: { tenantId, paiementStatut: "completed", createdAt: { gte: startOfWeek } }, _sum: { montantTotal: true } }),
     prisma.commande.count({ where: { tenantId, createdAt: { gte: startOfDay } } }),
+    prisma.programmeAffiliation.findUnique({ where: { tenantId }, select: { actif: true } }),
   ]);
 
   const prodMap: Record<string, { nom: string; revenue: number; qte: number; img: string | null }> = {};
@@ -117,6 +119,7 @@ async function getData(tenantId: string) {
     devise:        tenant?.devise || "XOF",
     slug:          tenant?.slug || "",
     semaine:       weekRevenu._sum.montantTotal || 0,
+    programmeAffiliationActif: programmeAffiliation?.actif ?? false,
   };
 }
 
@@ -280,6 +283,8 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {!d.programmeAffiliationActif && <AffiliationIncitationBanner />}
 
       {/* ── Pulse du jour ──────────────────────────────────────────── */}
       <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border border-[#F0F0F0] bg-white flex-wrap">

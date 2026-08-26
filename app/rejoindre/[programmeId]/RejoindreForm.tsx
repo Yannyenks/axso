@@ -1,8 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Users, Percent, Clock, Award, CheckCircle2, Copy, Check, ArrowRight, Loader2 } from "lucide-react";
-import { enregistrerAffiliationLocale } from "@/lib/affiliation-local";
+import { enregistrerAffiliationLocale, lireProfilAffilieLocal, sauverProfilAffilieLocal } from "@/lib/affiliation-local";
 
 interface Props {
   programmeId: string;
@@ -25,6 +25,13 @@ export function RejoindreForm(p: Props) {
   const [resultat, setResultat] = useState<{ portalToken: string; statut: string } | null>(null);
   const [copie, setCopie] = useState(false);
 
+  // Préremplit avec le profil affilié déjà enregistré (créé via le
+  // marketplace ou une précédente candidature) — évite de tout ressaisir.
+  useEffect(() => {
+    const profil = lireProfilAffilieLocal();
+    if (profil) setForm({ nom: profil.nom, email: profil.email, telephone: profil.telephone || "" });
+  }, []);
+
   async function soumettre(e: React.FormEvent) {
     e.preventDefault();
     if (!form.nom.trim() || !form.email.trim()) { toast.error("Nom et email obligatoires"); return; }
@@ -37,6 +44,7 @@ export function RejoindreForm(p: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setResultat(data.affilie);
+      sauverProfilAffilieLocal({ nom: form.nom, email: form.email, telephone: form.telephone || undefined });
       enregistrerAffiliationLocale({
         portalToken: data.affilie.portalToken,
         nomBoutique: p.tenant.nomBoutique,
