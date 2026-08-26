@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import { Fragment } from "react";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { formatMontant } from "@/lib/utils";
@@ -12,6 +13,7 @@ import { SectionCountdown } from "@/components/storefront/SectionCountdown";
 import { SectionTabs } from "@/components/storefront/SectionTabs";
 import { SousBlocsRenderer } from "@/components/storefront/SousBlocsRenderer";
 import { ScrollReveal, type RevealType } from "@/components/storefront/ScrollReveal";
+import { HomeFaqSection } from "@/components/storefront/HomeFaqSection";
 import { Package, Lock, RotateCcw, MessageCircle, Star } from "lucide-react";
 
 interface Props {
@@ -28,6 +30,8 @@ export async function generateMetadata({ params }: Props) {
     openGraph: { images: tenant.bannerUrl ? [{ url: tenant.bannerUrl }] : [] },
   };
 }
+
+const DEFAULT_SECTION_ORDER = ["hero", "confiance", "vedettes", "collections", "about", "promo", "faq", "avis", "newsletter"];
 
 export default async function StorefrontPage({ params }: Props) {
   const { slug } = await params;
@@ -86,195 +90,183 @@ export default async function StorefrontPage({ params }: Props) {
     (animCfg?.sectionAnimations?.[cle] as RevealType) || (animCfg?.global as RevealType) || "fade-in";
   const staggerDelay = () => (staggerActif ? staggerIndex++ * 90 : 0);
 
-  return (
-    <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
-      <ThemeEffect themeId={tenant.themeId} />
+  // ─── HERO ────────────────────────────────────────────────────────────────
+  const heroInner = sec.hero.actif ? (() => {
+    const h = sec.hero;
+    const ctaHref = `/${slug}/${h.ctaLien || "produits"}`;
 
-      {/* ─── BARRE D'ANNONCE ─── */}
-      {sec.annonce.actif && (
-        <div
-          className="py-2.5 text-center text-xs font-semibold tracking-wide overflow-hidden"
-          style={{ backgroundColor: sec.annonce.couleurFond, color: sec.annonce.couleurTexte }}
-        >
-          <div className="max-w-7xl mx-auto px-4 truncate">{sec.annonce.texte}</div>
-        </div>
-      )}
-      <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.annonce} accent={c.accent} texte={c.texte} />
+    if (h.style === "fullscreen") {
+      return (
+        <section className="relative flex items-center justify-center" style={{ minHeight: "100vh" }}>
+          {tenant.bannerUrl && (
+            <img src={tenant.bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          )}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: tenant.bannerUrl
+                ? `linear-gradient(to bottom, rgba(0,0,0,${h.overlay / 100}) 0%, rgba(0,0,0,${(h.overlay + 20) / 100}) 100%)`
+                : heroGradient,
+            }}
+          />
+          <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
+            <h1 className="text-5xl sm:text-7xl font-bold font-playfair leading-tight mb-6 text-white">
+              {h.titre}
+            </h1>
+            <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto leading-relaxed">{h.sousTitre}</p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href={ctaHref} className="px-10 py-4 rounded-2xl font-semibold text-base transition-all hover:opacity-90 hover:scale-105 active:scale-95" style={{ backgroundColor: c.accent, color: c.fond, borderRadius: radius }}>
+                {h.ctaTexte}
+              </Link>
+              <Link href={`/${slug}/produits`} className="px-10 py-4 rounded-2xl font-semibold text-base transition-all border-2 text-white border-white/40 hover:bg-white/10" style={{ borderRadius: radius }}>
+                Voir tout
+              </Link>
+            </div>
+          </div>
+        </section>
+      );
+    }
 
-      {/* ─── NAVBAR ─── */}
-      <StorefrontNavbar
-        slug={slug}
-        nomBoutique={tenant.nomBoutique}
-        logoUrl={tenant.logoUrl}
-        accent={c.accent}
-        fond={c.fond}
-        texte={c.texte}
-        radius={radius}
-        collections={tenant.collections}
-        certifie={tenant.certifie}
-      />
-
-      {/* ─── HERO ─── */}
-      {sec.hero.actif && (() => {
-        const h = sec.hero;
-        const ctaHref = `/${slug}/${h.ctaLien || "produits"}`;
-
-        if (h.style === "fullscreen") {
-          return (
-            <section
-              className="relative flex items-center justify-center"
-              style={{ minHeight: "100vh" }}
-            >
+    if (h.style === "split") {
+      return (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+          <div className="grid lg:grid-cols-2 gap-6 items-stretch min-h-[520px]">
+            <div className="relative rounded-3xl overflow-hidden" style={{ background: heroGradient, minHeight: "420px" }}>
               {tenant.bannerUrl && (
                 <img src={tenant.bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
               )}
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: tenant.bannerUrl
-                    ? `linear-gradient(to bottom, rgba(0,0,0,${h.overlay / 100}) 0%, rgba(0,0,0,${(h.overlay + 20) / 100}) 100%)`
-                    : heroGradient,
-                }}
-              />
-              <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
-                <h1 className="text-5xl sm:text-7xl font-bold font-playfair leading-tight mb-6 text-white">
-                  {h.titre}
-                </h1>
-                <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto leading-relaxed">{h.sousTitre}</p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link href={ctaHref} className="px-10 py-4 rounded-2xl font-semibold text-base transition-all hover:opacity-90 hover:scale-105 active:scale-95" style={{ backgroundColor: c.accent, color: c.fond, borderRadius: radius }}>
-                    {h.ctaTexte}
-                  </Link>
-                  <Link href={`/${slug}/produits`} className="px-10 py-4 rounded-2xl font-semibold text-base transition-all border-2 text-white border-white/40 hover:bg-white/10" style={{ borderRadius: radius }}>
-                    Voir tout
-                  </Link>
-                </div>
-              </div>
-            </section>
-          );
-        }
-
-        if (h.style === "split") {
-          return (
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-              <div className="grid lg:grid-cols-2 gap-6 items-stretch min-h-[520px]">
-                <div
-                  className="relative rounded-3xl overflow-hidden"
-                  style={{ background: heroGradient, minHeight: "420px" }}
-                >
-                  {tenant.bannerUrl && (
-                    <img src={tenant.bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                  )}
-                  <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${h.overlay / 100})` }} />
-                  <div className="absolute bottom-8 left-8 right-8">
-                    <span className="text-sm font-semibold uppercase tracking-widest mb-3 block" style={{ color: c.accent }}>
-                      {tenant.categorie}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-col justify-center py-8 lg:py-0 lg:pl-8">
-                  <span className="text-sm font-semibold uppercase tracking-widest mb-4 inline-block" style={{ color: c.accent }}>
-                    Bienvenue
-                  </span>
-                  <h1 className="text-4xl sm:text-5xl font-bold font-playfair leading-tight mb-6" style={{ color: c.texte }}>
-                    {h.titre}
-                  </h1>
-                  <p className="text-lg mb-8 leading-relaxed" style={{ color: c.texte, opacity: 0.7 }}>{h.sousTitre}</p>
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <Link href={ctaHref} className="px-8 py-4 font-semibold text-sm transition-all hover:opacity-90 hover:scale-105 active:scale-95 text-center" style={{ backgroundColor: c.accent, color: c.fond, borderRadius: radius }}>
-                      {h.ctaTexte}
-                    </Link>
-                    <Link href={`/${slug}/produits`} className="px-8 py-4 font-semibold text-sm transition-all border text-center" style={{ borderColor: `${c.accent}40`, color: c.texte, borderRadius: radius }}>
-                      Voir tous les produits
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </section>
-          );
-        }
-
-        if (h.style === "minimal") {
-          return (
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-              <div className="max-w-3xl">
-                <span className="text-sm font-semibold uppercase tracking-widest mb-4 block" style={{ color: c.accent }}>
+              <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${h.overlay / 100})` }} />
+              <div className="absolute bottom-8 left-8 right-8">
+                <span className="text-sm font-semibold uppercase tracking-widest mb-3 block" style={{ color: c.accent }}>
                   {tenant.categorie}
                 </span>
-                <h1 className="text-5xl sm:text-6xl font-bold font-playfair leading-tight mb-6">{h.titre}</h1>
-                <p className="text-xl mb-8 leading-relaxed" style={{ opacity: 0.7 }}>{h.sousTitre}</p>
-                <Link href={ctaHref} className="inline-flex items-center gap-2 px-8 py-4 font-semibold text-sm transition-all hover:opacity-90" style={{ backgroundColor: c.accent, color: c.fond, borderRadius: radius }}>
-                  {h.ctaTexte} →
-                </Link>
               </div>
-            </section>
-          );
-        }
-
-        // Default: centered
-        return (
-          <section
-            className="relative flex items-center justify-center py-20 sm:py-32 px-4"
-            style={{ background: heroGradient }}
-          >
-            {tenant.bannerUrl && (
-              <img src={tenant.bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
-            )}
-            {tenant.bannerUrl && (
-              <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${h.overlay / 100})` }} />
-            )}
-            <div className="relative z-10 text-center max-w-3xl mx-auto">
-              <span className="text-sm font-semibold uppercase tracking-widest mb-5 block" style={{ color: tenant.bannerUrl ? "#fff" : c.accent }}>
-                {tenant.categorie} · {tenant.pays}
+            </div>
+            <div className="flex flex-col justify-center py-8 lg:py-0 lg:pl-8">
+              <span className="text-sm font-semibold uppercase tracking-widest mb-4 inline-block" style={{ color: c.accent }}>
+                Bienvenue
               </span>
-              <h1
-                className="text-4xl sm:text-6xl font-bold font-playfair leading-tight mb-6"
-                style={{ color: tenant.bannerUrl ? "#fff" : c.texte }}
-              >
+              <h1 className="text-4xl sm:text-5xl font-bold font-playfair leading-tight mb-6" style={{ color: c.texte }}>
                 {h.titre}
               </h1>
-              <p
-                className="text-lg sm:text-xl mb-10 leading-relaxed max-w-2xl mx-auto"
-                style={{ color: tenant.bannerUrl ? "rgba(255,255,255,0.8)" : c.texte, opacity: tenant.bannerUrl ? 1 : 0.7 }}
-              >
-                {h.sousTitre}
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href={ctaHref} className="px-10 py-4 font-semibold text-base transition-all hover:opacity-90 hover:scale-105 active:scale-95" style={{ backgroundColor: c.accent, color: c.fond, borderRadius: radius }}>
+              <p className="text-lg mb-8 leading-relaxed" style={{ color: c.texte, opacity: 0.7 }}>{h.sousTitre}</p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link href={ctaHref} className="px-8 py-4 font-semibold text-sm transition-all hover:opacity-90 hover:scale-105 active:scale-95 text-center" style={{ backgroundColor: c.accent, color: c.fond, borderRadius: radius }}>
                   {h.ctaTexte}
                 </Link>
-                <Link href={`/${slug}/produits`} className="px-10 py-4 font-semibold text-base transition-all border-2" style={{ borderColor: `${c.accent}50`, color: tenant.bannerUrl ? "#fff" : c.texte, borderRadius: radius }}>
-                  Tous les produits
+                <Link href={`/${slug}/produits`} className="px-8 py-4 font-semibold text-sm transition-all border text-center" style={{ borderColor: `${c.accent}40`, color: c.texte, borderRadius: radius }}>
+                  Voir tous les produits
                 </Link>
               </div>
             </div>
-          </section>
-        );
-      })()}
-      {sec.hero.actif && <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.hero} accent={c.accent} texte={c.texte} />}
+          </div>
+        </section>
+      );
+    }
 
-      {/* ─── BADGES DE CONFIANCE ─── */}
-      <section className="border-y py-6" style={{ borderColor: `${c.accent}15`, backgroundColor: c.surface }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {[
-              { icon: <Package size={24} style={{ color: c.accent }} />, titre: "Livraison rapide", texte: "Expédiée sous 24h-48h" },
-              { icon: <Lock size={24} style={{ color: c.accent }} />, titre: "Paiement sécurisé", texte: "Transactions protégées" },
-              { icon: <RotateCcw size={24} style={{ color: c.accent }} />, titre: "Retours faciles", texte: "Sous 14 jours" },
-              { icon: <MessageCircle size={24} style={{ color: c.accent }} />, titre: "Support dédié", texte: "Réponse rapide garantie" },
-            ].map((b) => (
-              <div key={b.titre} className="flex flex-col items-center gap-2">
-                {b.icon}
-                <p className="font-semibold text-sm">{b.titre}</p>
-                <p className="text-xs" style={{ opacity: 0.5 }}>{b.texte}</p>
-              </div>
-            ))}
+    if (h.style === "minimal") {
+      return (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+          <div className="max-w-3xl">
+            <span className="text-sm font-semibold uppercase tracking-widest mb-4 block" style={{ color: c.accent }}>
+              {tenant.categorie}
+            </span>
+            <h1 className="text-5xl sm:text-6xl font-bold font-playfair leading-tight mb-6">{h.titre}</h1>
+            <p className="text-xl mb-8 leading-relaxed" style={{ opacity: 0.7 }}>{h.sousTitre}</p>
+            <Link href={ctaHref} className="inline-flex items-center gap-2 px-8 py-4 font-semibold text-sm transition-all hover:opacity-90" style={{ backgroundColor: c.accent, color: c.fond, borderRadius: radius }}>
+              {h.ctaTexte} →
+            </Link>
+          </div>
+        </section>
+      );
+    }
+
+    // Default: centered
+    return (
+      <section className="relative flex items-center justify-center py-20 sm:py-32 px-4" style={{ background: heroGradient }}>
+        {tenant.bannerUrl && (
+          <img src={tenant.bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        )}
+        {tenant.bannerUrl && (
+          <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${h.overlay / 100})` }} />
+        )}
+        <div className="relative z-10 text-center max-w-3xl mx-auto">
+          <span className="text-sm font-semibold uppercase tracking-widest mb-5 block" style={{ color: tenant.bannerUrl ? "#fff" : c.accent }}>
+            {tenant.categorie} · {tenant.pays}
+          </span>
+          <h1 className="text-4xl sm:text-6xl font-bold font-playfair leading-tight mb-6" style={{ color: tenant.bannerUrl ? "#fff" : c.texte }}>
+            {h.titre}
+          </h1>
+          <p className="text-lg sm:text-xl mb-10 leading-relaxed max-w-2xl mx-auto" style={{ color: tenant.bannerUrl ? "rgba(255,255,255,0.8)" : c.texte, opacity: tenant.bannerUrl ? 1 : 0.7 }}>
+            {h.sousTitre}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href={ctaHref} className="px-10 py-4 font-semibold text-base transition-all hover:opacity-90 hover:scale-105 active:scale-95" style={{ backgroundColor: c.accent, color: c.fond, borderRadius: radius }}>
+              {h.ctaTexte}
+            </Link>
+            <Link href={`/${slug}/produits`} className="px-10 py-4 font-semibold text-base transition-all border-2" style={{ borderColor: `${c.accent}50`, color: tenant.bannerUrl ? "#fff" : c.texte, borderRadius: radius }}>
+              Tous les produits
+            </Link>
           </div>
         </div>
       </section>
+    );
+  })() : null;
 
-      {/* ─── PRODUITS VEDETTES ─── */}
-      {sec.vedettes.actif && vedettes.length > 0 && (
+  const heroNode = sec.hero.actif ? (
+    <>
+      <ScrollReveal type={revealType("hero")} vitesse={vitesseGlobale} delay={staggerDelay()}>
+        {heroInner}
+      </ScrollReveal>
+      <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.hero} accent={c.accent} texte={c.texte} />
+    </>
+  ) : null;
+
+  // ─── BADGES DE CONFIANCE — enfin pilotée par la vraie config ─────────────
+  const confianceCfg = sec.confiance;
+  const confianceItems = confianceCfg?.items ?? [];
+  const confianceNode = (confianceCfg?.actif ?? true) && confianceItems.length > 0 ? (
+    <ScrollReveal type={revealType("confiance")} vitesse={vitesseGlobale} delay={staggerDelay()}>
+      <section className="border-y py-6" style={{ borderColor: `${c.accent}15`, backgroundColor: c.surface }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {confianceCfg?.layout === "cards" ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {confianceItems.map((b, i) => (
+                <div key={i} className="flex flex-col items-center gap-2 text-center p-5 rounded-2xl" style={{ background: c.fond, border: `1px solid ${c.accent}15` }}>
+                  <span className="text-2xl">{b.icone}</span>
+                  <p className="font-semibold text-sm" style={{ color: c.texte }}>{b.titre}</p>
+                  <p className="text-xs" style={{ color: c.texte, opacity: 0.5 }}>{b.texte}</p>
+                </div>
+              ))}
+            </div>
+          ) : confianceCfg?.layout === "bar" ? (
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+              {confianceItems.map((b, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className="text-lg">{b.icone}</span>
+                  <span className="text-sm font-medium" style={{ color: c.texte }}>{b.titre}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+              {confianceItems.map((b, i) => (
+                <div key={i} className="flex flex-col items-center gap-2">
+                  <span className="text-2xl">{b.icone}</span>
+                  <p className="font-semibold text-sm" style={{ color: c.texte }}>{b.titre}</p>
+                  <p className="text-xs" style={{ color: c.texte, opacity: 0.5 }}>{b.texte}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    </ScrollReveal>
+  ) : null;
+
+  // ─── PRODUITS VEDETTES ────────────────────────────────────────────────────
+  const vedettesNode = sec.vedettes.actif && vedettes.length > 0 ? (
+    <>
       <ScrollReveal type={revealType("vedettes")} vitesse={vitesseGlobale} delay={staggerDelay()}>
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
           <div className="flex items-end justify-between mb-10">
@@ -357,11 +349,13 @@ export default async function StorefrontPage({ params }: Props) {
           </div>
         </section>
       </ScrollReveal>
-      )}
-      {sec.vedettes.actif && vedettes.length > 0 && <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.vedettes} accent={c.accent} texte={c.texte} />}
+      <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.vedettes} accent={c.accent} texte={c.texte} />
+    </>
+  ) : null;
 
-      {/* ─── COLLECTIONS ─── */}
-      {sec.collections.actif && tenant.collections.length > 0 && (
+  // ─── COLLECTIONS ──────────────────────────────────────────────────────────
+  const collectionsNode = sec.collections.actif && tenant.collections.length > 0 ? (
+    <>
       <ScrollReveal type={revealType("collections")} vitesse={vitesseGlobale} delay={staggerDelay()}>
         <section className="py-16 sm:py-20" style={{ backgroundColor: c.surface }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -400,11 +394,82 @@ export default async function StorefrontPage({ params }: Props) {
           </div>
         </section>
       </ScrollReveal>
-      )}
-      {sec.collections.actif && tenant.collections.length > 0 && <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.collections} accent={c.accent} texte={c.texte} />}
+      <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.collections} accent={c.accent} texte={c.texte} />
+    </>
+  ) : null;
 
-      {/* ─── BANNIÈRE PROMO ─── */}
-      {sec.promo.actif && (
+  // ─── NOTRE HISTOIRE (about) — nouvelle section, n'existait pas du tout ────
+  const aboutCfg = sec.about;
+  const aboutNode = aboutCfg?.actif ? (
+    <ScrollReveal type={revealType("about")} vitesse={vitesseGlobale} delay={staggerDelay()}>
+      <section className="py-16 sm:py-20">
+        <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${aboutCfg.layout === "fullwidth" ? "max-w-full" : "max-w-7xl"}`}>
+          {aboutCfg.layout === "centered" ? (
+            <div className="max-w-2xl mx-auto text-center">
+              {aboutCfg.badgeTexte && (
+                <span className="text-xs font-semibold uppercase tracking-widest mb-3 inline-block px-3 py-1 rounded-full" style={{ color: c.accent, background: `${c.accent}12` }}>{aboutCfg.badgeTexte}</span>
+              )}
+              <h2 className="text-3xl sm:text-4xl font-bold font-playfair mb-5" style={{ color: c.texte }}>{aboutCfg.titre}</h2>
+              <p className="text-base leading-relaxed mb-8" style={{ color: c.texte, opacity: 0.7 }}>{aboutCfg.texte}</p>
+              {!!aboutCfg.stats?.length && (
+                <div className="flex flex-wrap justify-center gap-8">
+                  {aboutCfg.stats.map((s, i) => (
+                    <div key={i}>
+                      <p className="text-3xl font-bold font-playfair" style={{ color: c.accent }}>{s.valeur}</p>
+                      <p className="text-xs mt-1" style={{ color: c.texte, opacity: 0.55 }}>{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : aboutCfg.layout === "fullwidth" ? (
+            <div className="relative overflow-hidden" style={{ minHeight: "420px" }}>
+              {aboutCfg.imageUrl && <img src={aboutCfg.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+              <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.25) 100%)" }} />
+              <div className="relative z-10 max-w-3xl mx-auto text-center px-6 py-24 text-white">
+                {aboutCfg.badgeTexte && <span className="text-xs font-semibold uppercase tracking-widest mb-3 inline-block">{aboutCfg.badgeTexte}</span>}
+                <h2 className="text-3xl sm:text-4xl font-bold font-playfair mb-5">{aboutCfg.titre}</h2>
+                <p className="text-base leading-relaxed opacity-85">{aboutCfg.texte}</p>
+              </div>
+            </div>
+          ) : (
+            <div className={`grid lg:grid-cols-2 gap-10 items-center ${aboutCfg.layout === "image-left" ? "" : ""}`}>
+              <div className={aboutCfg.layout === "image-left" ? "lg:order-1" : "lg:order-2"}>
+                {aboutCfg.imageUrl ? (
+                  <div className="rounded-3xl overflow-hidden" style={{ minHeight: "320px" }}>
+                    <img src={aboutCfg.imageUrl} alt="" className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="rounded-3xl" style={{ minHeight: "320px", background: heroGradient }} />
+                )}
+              </div>
+              <div className={aboutCfg.layout === "image-left" ? "lg:order-2" : "lg:order-1"}>
+                {aboutCfg.badgeTexte && (
+                  <span className="text-xs font-semibold uppercase tracking-widest mb-3 inline-block px-3 py-1 rounded-full" style={{ color: c.accent, background: `${c.accent}12` }}>{aboutCfg.badgeTexte}</span>
+                )}
+                <h2 className="text-3xl sm:text-4xl font-bold font-playfair mb-5" style={{ color: c.texte }}>{aboutCfg.titre}</h2>
+                <p className="text-base leading-relaxed mb-8" style={{ color: c.texte, opacity: 0.7 }}>{aboutCfg.texte}</p>
+                {!!aboutCfg.stats?.length && (
+                  <div className="flex flex-wrap gap-8">
+                    {aboutCfg.stats.map((s, i) => (
+                      <div key={i}>
+                        <p className="text-3xl font-bold font-playfair" style={{ color: c.accent }}>{s.valeur}</p>
+                        <p className="text-xs mt-1" style={{ color: c.texte, opacity: 0.55 }}>{s.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+    </ScrollReveal>
+  ) : null;
+
+  // ─── BANNIÈRE PROMO ───────────────────────────────────────────────────────
+  const promoNode = sec.promo.actif ? (
+    <>
       <ScrollReveal type={revealType("promo")} vitesse={vitesseGlobale} delay={staggerDelay()}>
         <section className="py-16 sm:py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -432,11 +497,21 @@ export default async function StorefrontPage({ params }: Props) {
           </div>
         </section>
       </ScrollReveal>
-      )}
-      {sec.promo.actif && <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.promo} accent={c.accent} texte={c.texte} />}
+      <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.promo} accent={c.accent} texte={c.texte} />
+    </>
+  ) : null;
 
-      {/* ─── AVIS CLIENTS ─── */}
-      {sec.avis.actif && tenant.avis.length > 0 && (
+  // ─── FAQ — nouvelle section, n'existait pas du tout ──────────────────────
+  const faqCfg = sec.faq;
+  const faqNode = faqCfg?.actif && (faqCfg.items?.length ?? 0) > 0 ? (
+    <ScrollReveal type={revealType("faq")} vitesse={vitesseGlobale} delay={staggerDelay()}>
+      <HomeFaqSection titre={faqCfg.titre} layout={faqCfg.layout} items={faqCfg.items} accent={c.accent} texte={c.texte} surface={c.surface} />
+    </ScrollReveal>
+  ) : null;
+
+  // ─── AVIS CLIENTS ─────────────────────────────────────────────────────────
+  const avisNode = sec.avis.actif && tenant.avis.length > 0 ? (
+    <>
       <ScrollReveal type={revealType("avis")} vitesse={vitesseGlobale} delay={staggerDelay()}>
         <section className="py-16 sm:py-20" style={{ backgroundColor: c.surface }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -473,11 +548,13 @@ export default async function StorefrontPage({ params }: Props) {
           </div>
         </section>
       </ScrollReveal>
-      )}
-      {sec.avis.actif && tenant.avis.length > 0 && <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.avis} accent={c.accent} texte={c.texte} />}
+      <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.avis} accent={c.accent} texte={c.texte} />
+    </>
+  ) : null;
 
-      {/* ─── NEWSLETTER ─── */}
-      {sec.newsletter.actif && (
+  // ─── NEWSLETTER ───────────────────────────────────────────────────────────
+  const newsletterNode = sec.newsletter.actif ? (
+    <>
       <ScrollReveal type={revealType("newsletter")} vitesse={vitesseGlobale} delay={staggerDelay()}>
         <section className="py-16 sm:py-20" style={{ background: `linear-gradient(135deg, ${c.accent}15 0%, ${c.accent}05 100%)` }}>
           <div className="max-w-2xl mx-auto px-4 text-center">
@@ -501,8 +578,56 @@ export default async function StorefrontPage({ params }: Props) {
           </div>
         </section>
       </ScrollReveal>
+      <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.newsletter} accent={c.accent} texte={c.texte} />
+    </>
+  ) : null;
+
+  // ─── Ordre des sections — enfin piloté par le glisser-déposer du builder ──
+  // (auparavant sectionOrder n'était jamais lu, l'ordre restait toujours figé)
+  const SECTION_NODES: Record<string, React.ReactNode> = {
+    hero: heroNode,
+    confiance: confianceNode,
+    vedettes: vedettesNode,
+    collections: collectionsNode,
+    about: aboutNode,
+    promo: promoNode,
+    faq: faqNode,
+    avis: avisNode,
+    newsletter: newsletterNode,
+  };
+  const ordreBrut = (cfg.sectionOrder?.length ? cfg.sectionOrder : DEFAULT_SECTION_ORDER).filter((id) => id !== "annonce" && SECTION_NODES.hasOwnProperty(id));
+  const ordre = [...ordreBrut];
+  for (const id of DEFAULT_SECTION_ORDER) if (!ordre.includes(id)) ordre.push(id);
+
+  return (
+    <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
+      <ThemeEffect themeId={tenant.themeId} />
+
+      {/* ─── BARRE D'ANNONCE ─── */}
+      {sec.annonce.actif && (
+        <div
+          className="py-2.5 text-center text-xs font-semibold tracking-wide overflow-hidden"
+          style={{ backgroundColor: sec.annonce.couleurFond, color: sec.annonce.couleurTexte }}
+        >
+          <div className="max-w-7xl mx-auto px-4 truncate">{sec.annonce.texte}</div>
+        </div>
       )}
-      {sec.newsletter.actif && <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.newsletter} accent={c.accent} texte={c.texte} />}
+      <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.annonce} accent={c.accent} texte={c.texte} />
+
+      {/* ─── NAVBAR ─── */}
+      <StorefrontNavbar
+        slug={slug}
+        nomBoutique={tenant.nomBoutique}
+        logoUrl={tenant.logoUrl}
+        accent={c.accent}
+        fond={c.fond}
+        texte={c.texte}
+        radius={radius}
+        collections={tenant.collections}
+        certifie={tenant.certifie}
+      />
+
+      {ordre.map((id) => <Fragment key={id}>{SECTION_NODES[id]}</Fragment>)}
 
       {/* ─── SECTIONS CUSTOM (générées par l'IA ou builder) ─── */}
       {(cfg.customSections ?? []).filter((s: any) => s.actif !== false).sort((a: any, b: any) => (a.ordre ?? 99) - (b.ordre ?? 99)).map((section: any) => {
