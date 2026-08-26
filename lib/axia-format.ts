@@ -1,5 +1,5 @@
-// Rendu Markdown léger + extraction média pour les réponses AXIA — partagé
-// entre la bulle flottante (AxiaFloat) et l'écran plein écran (/dashboard).
+// Rendu Markdown léger + extraction média pour les réponses AXIA, utilisé
+// par l'écran plein écran (/dashboard).
 export function renderMarkdown(raw: string): string {
   let s = raw
     // Fenced code blocks

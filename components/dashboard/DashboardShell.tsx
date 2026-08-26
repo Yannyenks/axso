@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Header } from "@/components/dashboard/Header";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
-import { AxiaFloat } from "@/components/dashboard/AxiaFloat";
 import { QuotaBanner } from "@/components/dashboard/QuotaBanner";
 import type { Palier } from "@/lib/plans";
 
@@ -66,14 +65,6 @@ export function DashboardShell({
         </main>
         {!estAccueilAxia && <MobileBottomNav />}
       </div>
-
-      {/* ─── Axia flottante — masquée sur l'écran d'accueil /dashboard,
-           qui EST déjà l'expérience Axia plein écran. ───────── */}
-      {!estAccueilAxia && (
-        <div className="hidden md:block">
-          <AxiaFloat />
-        </div>
-      )}
     </>
   );
 }
