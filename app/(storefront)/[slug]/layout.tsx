@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { StorefrontTypography } from "@/components/storefront/StorefrontTypography";
+import { StorefrontCustomCss } from "@/components/storefront/StorefrontCustomCss";
 import { AxiaStorefront } from "@/components/storefront/AxiaStorefront";
 import { StorefrontPopups } from "@/components/storefront/StorefrontPopups";
 import { MetaPixel } from "@/components/storefront/MetaPixel";
@@ -35,6 +36,7 @@ export default async function StorefrontLayout({ children, params }: Props) {
   return (
     <>
       <StorefrontTypography fonts={cfg.fonts} />
+      <StorefrontCustomCss css={cfg.customCss} />
       <div className="axs-store" style={{ display: "contents" }}>
         {children}
       </div>
