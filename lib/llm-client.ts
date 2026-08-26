@@ -1,14 +1,16 @@
 /**
- * LLM Client — Gemini only, via le SDK officiel @google/genai
+ * LLM Client — Gemini en principal, DeepSeek en secours automatique
  *
- * Toute la solution Axso tourne exclusivement sur Google Gemini, texte comme
- * média. Aucun autre fournisseur (Claude, GPT, Groq, NVIDIA, Cerebras,
- * Together, SambaNova, OpenRouter, fal.ai, ElevenLabs, Pollinations...) n'est
- * utilisé pour la génération de texte, d'image, de vidéo, de voix ou
- * l'exécution d'outils.
+ * Le texte (chat, tool-calling, streaming) essaie toujours Gemini d'abord ;
+ * si Gemini échoue (clé invalide, projet suspendu, quota, 5xx...), on
+ * bascule silencieusement sur DeepSeek (API compatible OpenAI) sans que
+ * l'appelant n'ait à le savoir — même signature de fonctions, même forme de
+ * retour. Nécessite DEEPSEEK_API_KEY ; sans elle, le comportement est
+ * strictement identique à avant (Gemini seul, erreur si Gemini échoue).
  *
- * Génération média : voir generateSpeechGemini / generateImageGemini /
- * startVideoGemini / pollVideoGemini ci-dessous, ainsi que lib/image-gen.ts.
+ * La génération média (images, vidéo, voix) reste exclusive à Gemini — voir
+ * generateSpeechGemini / generateImageGemini / startVideoGemini /
+ * pollVideoGemini ci-dessous, ainsi que lib/image-gen.ts.
  */
 import { GoogleGenAI } from "@google/genai";
 
@@ -45,6 +47,8 @@ export interface CompletionWithToolsResult {
 
 const GEMINI_MODEL = "gemini-3.1-flash-lite";
 const GEMINI_TTS_MODEL = "gemini-3.1-flash-tts-preview";
+const DEEPSEEK_MODEL = "deepseek-chat";
+const DEEPSEEK_BASE_URL = "https://api.deepseek.com";
 
 // ─── Client Gemini (singleton) ────────────────────────────────────────────────
 
@@ -60,6 +64,10 @@ function getGeminiClient(): GoogleGenAI {
 
 export function hasGemini(): boolean {
   return !!process.env.GEMINI_API_KEY;
+}
+
+export function hasDeepSeek(): boolean {
+  return !!process.env.DEEPSEEK_API_KEY;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -248,37 +256,168 @@ export async function completionWithToolsGemini(
   return { text: cleanModelResponse(response.text ?? ""), stopReason: "end_turn", provider: GEMINI_MODEL };
 }
 
+// ─── DeepSeek — secours automatique quand Gemini échoue ───────────────────────
+// API compatible OpenAI (chat.completions) — les messages de l'appelant sont
+// déjà quasi au format OpenAI (role/content/tool_calls/tool_call_id), donc
+// pas de conversion lourde comme pour Gemini, juste un passe-plat + le
+// formatage des tools au format { type: "function", function: {...} }.
+
+function toOpenAiTools(tools: ToolDefinition[]) {
+  if (!tools.length) return undefined;
+  return tools.map((t) => ({
+    type: "function" as const,
+    function: { name: t.name, description: t.description, parameters: t.parameters },
+  }));
+}
+
+/** Normalise les messages internes (contenu parfois en blocs image_url) vers le format OpenAI simple. */
+function toOpenAiMessages(messages: any[]): any[] {
+  return messages.map((m) => {
+    if (!m) return m;
+    if (Array.isArray(m.content)) {
+      // DeepSeek-chat ne supporte pas la vision — on ne garde que le texte.
+      const text = m.content.filter((b: any) => b?.type === "text").map((b: any) => b.text).join("\n");
+      return { ...m, content: text };
+    }
+    return m;
+  });
+}
+
+async function deepSeekChatCompletion(body: Record<string, any>): Promise<any> {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) throw new Error("DEEPSEEK_API_KEY manquante");
+  const res = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({ model: DEEPSEEK_MODEL, ...body }),
+  });
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    throw new Error(`DeepSeek ${res.status}: ${errText.slice(0, 200)}`);
+  }
+  return res.json();
+}
+
+export async function completionWithToolsDeepSeek(
+  messages: any[],
+  tools: ToolDefinition[],
+  maxTokens = 2000
+): Promise<CompletionWithToolsResult> {
+  const data = await deepSeekChatCompletion({
+    messages: toOpenAiMessages(messages),
+    ...(tools.length ? { tools: toOpenAiTools(tools) } : {}),
+    max_tokens: maxTokens,
+  });
+  const choice = data.choices?.[0];
+  const msg = choice?.message;
+
+  if (msg?.tool_calls?.length) {
+    const toolCalls: ToolCall[] = msg.tool_calls.map((tc: any) => ({
+      id: tc.id,
+      name: tc.function?.name ?? "",
+      arguments: (() => { try { return JSON.parse(tc.function?.arguments ?? "{}"); } catch { return {}; } })(),
+    }));
+    return { toolCalls, stopReason: "tool_use", provider: DEEPSEEK_MODEL };
+  }
+
+  return { text: cleanModelResponse(msg?.content ?? ""), stopReason: "end_turn", provider: DEEPSEEK_MODEL };
+}
+
+/** Stream DeepSeek (SSE natif OpenAI-style) — même contrat que streamGemini. */
+export async function* streamDeepSeek(
+  systemPrompt: string,
+  messages: Array<{ role: "user" | "assistant"; content: string }>,
+  maxTokens = 4000
+): AsyncGenerator<string> {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) throw new Error("DEEPSEEK_API_KEY manquante");
+
+  const res = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: DEEPSEEK_MODEL,
+      messages: [{ role: "system", content: systemPrompt }, ...toOpenAiMessages(messages)],
+      max_tokens: maxTokens,
+      stream: true,
+    }),
+  });
+  if (!res.ok || !res.body) {
+    const errText = await res.text().catch(() => "");
+    throw new Error(`DeepSeek ${res.status}: ${errText.slice(0, 200)}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    const lines = buf.split("\n");
+    buf = lines.pop() ?? "";
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const payload = line.slice(6);
+      if (payload === "[DONE]") return;
+      try {
+        const evt = JSON.parse(payload);
+        const delta = evt.choices?.[0]?.delta?.content;
+        if (delta) yield delta;
+      } catch {}
+    }
+  }
+}
+
 // ─── Streaming (synthèse de réponse) ──────────────────────────────────────────
 
-/** Stream Gemini natif — utilisé par lib/agent-runner.ts pour la synthèse SSE */
+/** Stream natif — Gemini d'abord, bascule sur DeepSeek si Gemini échoue (voir hasDeepSeek). */
 export async function* streamGemini(
   systemPrompt: string,
   messages: Array<{ role: "user" | "assistant"; content: string }>,
   maxTokens = 4000
 ): AsyncGenerator<string> {
-  const client = getGeminiClient();
-  const { contents } = await toGeminiContents(messages);
+  try {
+    const client = getGeminiClient();
+    const { contents } = await toGeminiContents(messages);
 
-  const stream = await client.models.generateContentStream({
-    model: GEMINI_MODEL,
-    contents,
-    config: {
-      systemInstruction: systemPrompt,
-      maxOutputTokens: maxTokens,
-      thinkingConfig: { thinkingBudget: 0 },
-    },
-  });
+    const stream = await client.models.generateContentStream({
+      model: GEMINI_MODEL,
+      contents,
+      config: {
+        systemInstruction: systemPrompt,
+        maxOutputTokens: maxTokens,
+        thinkingConfig: { thinkingBudget: 0 },
+      },
+    });
 
-  for await (const chunk of stream) {
-    const text = chunk.text;
-    if (text) yield text;
+    let emitted = false;
+    for await (const chunk of stream) {
+      const text = chunk.text;
+      if (text) { emitted = true; yield text; }
+    }
+    if (emitted) return;
+    // Gemini a répondu mais sans le moindre texte — probable coupure côté
+    // fournisseur, on tente quand même le secours plutôt que de renvoyer du vide.
+    throw new Error("Gemini n'a renvoyé aucun texte");
+  } catch (err) {
+    if (!hasDeepSeek()) throw err;
+    console.warn("[llm-client] streamGemini échoué, secours DeepSeek:", err instanceof Error ? err.message.slice(0, 150) : err);
+    yield* streamDeepSeek(systemPrompt, messages, maxTokens);
   }
 }
 
 // ─── Points d'entrée génériques (compat des appelants existants) ─────────────
 
 export async function completionAuto(messages: ChatMessage[], maxTokens = 800): Promise<CompletionResult> {
-  return completionGemini(messages, maxTokens);
+  try {
+    return await completionGemini(messages, maxTokens);
+  } catch (err) {
+    if (!hasDeepSeek()) throw err;
+    console.warn("[llm-client] completionGemini échoué, secours DeepSeek:", err instanceof Error ? err.message.slice(0, 150) : err);
+    const data = await deepSeekChatCompletion({ messages: toOpenAiMessages(messages), max_tokens: maxTokens });
+    return { text: cleanModelResponse(data.choices?.[0]?.message?.content ?? ""), provider: DEEPSEEK_MODEL };
+  }
 }
 
 export async function completionWithToolsAuto(
@@ -287,7 +426,13 @@ export async function completionWithToolsAuto(
   maxTokens = 2000,
   _fast = false
 ): Promise<CompletionWithToolsResult> {
-  return completionWithToolsGemini(messages, tools, maxTokens);
+  try {
+    return await completionWithToolsGemini(messages, tools, maxTokens);
+  } catch (err) {
+    if (!hasDeepSeek()) throw err;
+    console.warn("[llm-client] completionWithToolsGemini échoué, secours DeepSeek:", err instanceof Error ? err.message.slice(0, 150) : err);
+    return completionWithToolsDeepSeek(messages, tools, maxTokens);
+  }
 }
 
 // ─── Génération média — Gemini exclusif (images, vidéo, voix) ─────────────────
