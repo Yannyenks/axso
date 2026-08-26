@@ -186,7 +186,7 @@ section { width: 100%; }
 
 /* Classes utilitaires Axso */
 .font-playfair {
-  font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
+  font-family: var(--font-playfair), 'Playfair Display', Georgia, serif !important;
 }
 
 .gradient-or {

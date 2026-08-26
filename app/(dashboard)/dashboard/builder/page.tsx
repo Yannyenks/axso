@@ -16,34 +16,11 @@ import {
   ShoppingCart, Share2,
 } from "lucide-react";
 import { THEME_DEFAULTS, resolveThemeConfig, type ThemeConfig, type CustomSection, DEFAULT_PRODUCT_SECTIONS, type ProductPageSection } from "@/lib/theme-config";
+import { FONTS, googleFontsHref, typographyCss } from "@/lib/theme-fonts";
 
 type Device = "desktop" | "tablet" | "mobile";
 type Panel = "sections" | "couleurs" | "typo" | "layout" | "medias" | "animations" | "boutons" | "avance" | "produit";
 type SectionId = "annonce" | "hero" | "confiance" | "vedettes" | "collections" | "about" | "promo" | "faq" | "avis" | "newsletter";
-
-// ─── Google Fonts ─────────────────────────────────────────────────────────────
-const FONTS = [
-  { cat: "Sans-serif", v: "inter",             label: "Inter",              gf: "Inter:wght@400;500;600;700" },
-  { cat: "Sans-serif", v: "poppins",           label: "Poppins",            gf: "Poppins:wght@400;600;700;800" },
-  { cat: "Sans-serif", v: "dm-sans",           label: "DM Sans",            gf: "DM+Sans:wght@400;600;700" },
-  { cat: "Sans-serif", v: "outfit",            label: "Outfit",             gf: "Outfit:wght@400;600;700;800" },
-  { cat: "Sans-serif", v: "nunito",            label: "Nunito",             gf: "Nunito:wght@400;600;700;800" },
-  { cat: "Sans-serif", v: "plus-jakarta-sans", label: "Plus Jakarta Sans",  gf: "Plus+Jakarta+Sans:wght@400;600;700;800" },
-  { cat: "Sans-serif", v: "montserrat",        label: "Montserrat",         gf: "Montserrat:wght@400;600;700;800" },
-  { cat: "Sans-serif", v: "raleway",           label: "Raleway",            gf: "Raleway:wght@400;600;700;800" },
-  { cat: "Sans-serif", v: "space-grotesk",     label: "Space Grotesk",      gf: "Space+Grotesk:wght@400;600;700" },
-  { cat: "Sans-serif", v: "syne",              label: "Syne",               gf: "Syne:wght@400;700;800" },
-  { cat: "Serif",      v: "playfair",          label: "Playfair Display",   gf: "Playfair+Display:wght@400;700" },
-  { cat: "Serif",      v: "cormorant",         label: "Cormorant Garamond", gf: "Cormorant+Garamond:wght@400;600;700" },
-  { cat: "Serif",      v: "lora",              label: "Lora",               gf: "Lora:wght@400;600;700" },
-  { cat: "Serif",      v: "libre-baskerville", label: "Libre Baskerville",  gf: "Libre+Baskerville:wght@400;700" },
-  { cat: "Serif",      v: "eb-garamond",       label: "EB Garamond",        gf: "EB+Garamond:wght@400;600;700" },
-  { cat: "Display",    v: "josefin-sans",      label: "Josefin Sans",       gf: "Josefin+Sans:wght@400;600;700" },
-  { cat: "Display",    v: "italiana",          label: "Italiana",           gf: "Italiana" },
-  { cat: "Display",    v: "cinzel",            label: "Cinzel",             gf: "Cinzel:wght@400;600;700" },
-  { cat: "Display",    v: "abril-fatface",     label: "Abril Fatface",      gf: "Abril+Fatface" },
-  { cat: "Display",    v: "fraunces",          label: "Fraunces",           gf: "Fraunces:wght@400;700;900" },
-];
 
 // ─── Section library types ────────────────────────────────────────────────────
 const CUSTOM_SECTION_TYPES = [
@@ -183,11 +160,11 @@ export default function BuilderPage() {
       if (!doc) return;
       let st = doc.getElementById("bp") as HTMLStyleElement | null;
       if (!st) { st = doc.createElement("style"); st.id = "bp"; doc.head.appendChild(st); }
-      const font = FONTS.find(f => f.v === config.fonts.titre);
-      const fontImport = font ? `@import url('https://fonts.googleapis.com/css2?family=${font.gf}&display=swap');` : "";
-      const fam = font ? `'${font.label}'` : "inherit";
+      const href = googleFontsHref(config.fonts);
+      const fontImport = href ? `@import url('${href}');` : "";
+      const fontCss = typographyCss(config.fonts);
       const animCss = generateAnimationCss(config.animations);
-      st.textContent = `${fontImport}h1,h2,h3,h4,.font-playfair{font-family:${fam},serif!important;}${animCss}${config.customCss || ""}`;
+      st.textContent = `${fontImport}${fontCss}${animCss}${config.customCss || ""}`;
     } catch { /* cross-origin guard */ }
   }, [config]);
 
