@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 type Ctx = { params: Promise<{ token: string }> };
 
@@ -17,6 +18,7 @@ export async function GET(req: NextRequest, { params }: Ctx) {
     // Identifier quel fichier servir
     const url = new URL(req.url);
     const fichierId = url.searchParams.get("fichier");
+    const pw = url.searchParams.get("pw");
 
     // Récupérer les infos produit + commande
     const [produit, commande] = await Promise.all([
@@ -42,7 +44,11 @@ export async function GET(req: NextRequest, { params }: Ctx) {
     let filigrane = false;
 
     if (produit.produitFichier && produit.produitFichier.fichiers.length > 0) {
-      // Nouveau système multi-fichiers
+      // Nouveau système multi-fichiers — mot de passe optionnel (jamais vérifié
+      // avant ce fix, malgré le champ stocké et affiché comme actif au marchand).
+      if (produit.produitFichier.motDePasse && !(await bcrypt.compare(pw || "", produit.produitFichier.motDePasse))) {
+        return NextResponse.json({ error: "Mot de passe requis ou incorrect" }, { status: 401 });
+      }
       const fichiers = produit.produitFichier.fichiers;
       const fichier = fichierId
         ? fichiers.find((f) => f.id === fichierId) || fichiers[0]

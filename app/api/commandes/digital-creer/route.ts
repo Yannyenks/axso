@@ -15,6 +15,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Boutique introuvable" }, { status: 404 });
     }
 
+    // Refuse la commande avant paiement si un produit digital ne peut plus être
+    // livré — limite d'exemplaires atteinte (fichier) ou plus de clé disponible
+    // (licence). Mieux vaut bloquer ici que faire payer un client pour rien.
+    const produits = await prisma.produit.findMany({
+      where: { id: { in: items.map((i: any) => i.produitId) } },
+      select: {
+        id: true, nom: true, type: true,
+        produitFichier: { select: { limitAchats: true } },
+        licenceProduit: { select: { id: true, cles: { where: { statut: "disponible" }, select: { id: true }, take: 1 } } },
+      },
+    });
+    for (const p of produits) {
+      if (p.type === "fichier" && p.produitFichier?.limitAchats != null) {
+        const ventes = await prisma.commande.count({
+          where: { paiementStatut: "completed", lignes: { some: { produitId: p.id } } },
+        });
+        if (ventes >= p.produitFichier.limitAchats) {
+          return NextResponse.json({ error: `"${p.nom}" a atteint sa limite d'exemplaires disponibles` }, { status: 409 });
+        }
+      }
+      if (p.type === "licence" && p.licenceProduit && p.licenceProduit.cles.length === 0) {
+        return NextResponse.json({ error: `"${p.nom}" est en rupture de clés de licence — contactez le vendeur` }, { status: 409 });
+      }
+    }
+
     // Upsert client par email (clé naturelle pour les achats digitaux)
     let clientRecord = await prisma.client.findFirst({
       where: { tenantId, email: client.email },

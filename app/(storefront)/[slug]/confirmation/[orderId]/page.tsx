@@ -11,6 +11,7 @@ import { verifierPaiementNotchPay, hasNotchPay } from "@/lib/notchpay";
 import { confirmerPaiementCommande } from "@/lib/paiement-commande";
 import { TYPES_LIVRAISON_DIGITALE } from "@/lib/affiliation";
 import { CopyableKey } from "@/components/storefront/CopyableKey";
+import { LockedDownloads } from "@/components/storefront/LockedDownloads";
 
 interface Props {
   params: Promise<{ slug: string; orderId: string }>;
@@ -205,6 +206,9 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
                 const fichiers = dl.produit.produitFichier?.fichiers ?? [];
                 const nom = nomProduit.get(dl.produitId) ?? dl.produit.nom;
                 if (fichiers.length === 0) return null;
+                if (dl.produit.produitFichier?.motDePasse) {
+                  return <LockedDownloads key={dl.id} token={dl.token} nom={nom} accent={theme.accent} fond={theme.fond} />;
+                }
                 return (
                   <div key={dl.id} className="p-3 rounded-xl" style={{ backgroundColor: `${theme.accent}08`, border: `1px solid ${theme.accent}20` }}>
                     <p className="text-sm font-semibold mb-2">{nom}</p>
