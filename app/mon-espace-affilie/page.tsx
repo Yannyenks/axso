@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -9,10 +9,13 @@ import {
 } from "lucide-react";
 import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
+import { ClicsConversionsChart, CommissionsChart } from "@/components/affilie/AffiliationCharts";
 import {
   listerAffiliationsLocales, retirerAffiliationLocale, enregistrerAffiliationLocale,
   extraireTokenPortail, type AffiliationLocale,
 } from "@/lib/affiliation-local";
+
+interface Jour { date: string; clics: number; conversions: number; commissions: number; }
 
 interface Compte {
   entry: AffiliationLocale;
@@ -21,21 +24,25 @@ interface Compte {
   data?: {
     affilie: { nom: string; clics: number; conversions: number; commissionTotal: number; commissionPending: number; statut: string };
     tenant: { nomBoutique: string; slug: string; logoUrl: string | null; devise: string };
+    programme?: { nom: string } | null;
+    periode: { seriesJour: Jour[] };
   };
 }
 
+const PERIODES = [7, 30, 90] as const;
 const inp = "w-full px-4 py-3 text-sm rounded-xl border outline-none";
 const inpStyle = { borderColor: "rgba(0,0,0,0.1)" };
 
 export default function MonEspaceAffiliePage() {
   const [comptes, setComptes] = useState<Compte[]>([]);
   const [chargementInitial, setChargementInitial] = useState(true);
+  const [periode, setPeriode] = useState<7 | 30 | 90>(30);
   const [nouveauLien, setNouveauLien] = useState("");
   const [ajoutErreur, setAjoutErreur] = useState("");
 
-  async function chargerCompte(entry: AffiliationLocale): Promise<Compte> {
+  async function chargerCompte(entry: AffiliationLocale, p: number): Promise<Compte> {
     try {
-      const res = await fetch(`/api/affilie/${entry.portalToken}`);
+      const res = await fetch(`/api/affilie/${entry.portalToken}?periode=${p}`);
       if (!res.ok) return { entry, loading: false, erreur: true };
       const data = await res.json();
       return { entry, loading: false, erreur: false, data };
@@ -44,16 +51,16 @@ export default function MonEspaceAffiliePage() {
     }
   }
 
-  async function chargerTout() {
+  async function chargerTout(p: number) {
     const entries = listerAffiliationsLocales();
     if (entries.length === 0) { setComptes([]); setChargementInitial(false); return; }
     setComptes(entries.map((entry) => ({ entry, loading: true, erreur: false })));
-    const resultats = await Promise.all(entries.map(chargerCompte));
+    const resultats = await Promise.all(entries.map((e) => chargerCompte(e, p)));
     setComptes(resultats);
     setChargementInitial(false);
   }
 
-  useEffect(() => { chargerTout(); }, []);
+  useEffect(() => { chargerTout(periode); }, [periode]);
 
   async function ajouterLien(e: React.FormEvent) {
     e.preventDefault();
@@ -71,7 +78,7 @@ export default function MonEspaceAffiliePage() {
     });
     setNouveauLien("");
     toast.success("Compte ajouté !");
-    chargerTout();
+    chargerTout(periode);
   }
 
   function retirer(token: string) {
@@ -80,6 +87,7 @@ export default function MonEspaceAffiliePage() {
   }
 
   const comptesValides = comptes.filter((c) => c.data);
+
   const totaux = comptesValides.reduce(
     (acc, c) => ({
       clics: acc.clics + (c.data?.affilie.clics ?? 0),
@@ -90,14 +98,56 @@ export default function MonEspaceAffiliePage() {
     { clics: 0, conversions: 0, commissionTotal: 0, commissionPending: 0 }
   );
 
+  // Clics/conversions se cumulent sans souci de devise. Les commissions, elles,
+  // sont regroupées par devise pour ne jamais additionner des monnaies différentes.
+  const seriesClicsConv = useMemo<Jour[]>(() => {
+    if (comptesValides.length === 0) return [];
+    const longueur = Math.max(...comptesValides.map((c) => c.data!.periode.seriesJour.length));
+    return Array.from({ length: longueur }, (_, i) => {
+      let clics = 0, conversions = 0, date = "";
+      for (const c of comptesValides) {
+        const j = c.data!.periode.seriesJour[i];
+        if (j) { clics += j.clics; conversions += j.conversions; date = j.date; }
+      }
+      return { date, clics, conversions, commissions: 0 };
+    });
+  }, [comptesValides]);
+
+  const commissionsParDevise = useMemo(() => {
+    const groupes: Record<string, Jour[]> = {};
+    for (const c of comptesValides) {
+      const devise = c.data!.tenant.devise;
+      const serie = c.data!.periode.seriesJour;
+      if (!groupes[devise]) groupes[devise] = serie.map((j) => ({ ...j, clics: 0, conversions: 0, commissions: 0 }));
+      groupes[devise] = groupes[devise].map((acc, i) => ({
+        date: serie[i]?.date ?? acc.date,
+        clics: 0, conversions: 0,
+        commissions: acc.commissions + (serie[i]?.commissions ?? 0),
+      }));
+    }
+    return groupes;
+  }, [comptesValides]);
+
   return (
     <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       <section className="pt-32 pb-6 px-6 sm:px-10 lg:px-16 xl:px-24">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl font-black mb-2">Mon espace affilié</h1>
-          <p className="text-[#808080]">Vue agrégée de tous les marchands que vous promouvez sur AXSO.</p>
+        <div className="max-w-4xl mx-auto flex items-end justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-black mb-2">Mon espace affilié</h1>
+            <p className="text-[#808080]">Vue agrégée de tous les marchands que vous promouvez sur AXSO.</p>
+          </div>
+          {comptes.length > 0 && (
+            <div className="flex bg-gray-100 rounded-xl p-1">
+              {PERIODES.map((pv) => (
+                <button key={pv} onClick={() => setPeriode(pv)}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${periode === pv ? "bg-white shadow-sm text-[#111]" : "text-gray-400"}`}>
+                  {pv}j
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -142,7 +192,7 @@ export default function MonEspaceAffiliePage() {
       ) : (
         <>
           {/* Totaux agrégés */}
-          <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-10">
+          <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-8">
             <div className="max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
                 { Icon: Eye, n: totaux.clics.toLocaleString(), label: "clics" },
@@ -157,14 +207,27 @@ export default function MonEspaceAffiliePage() {
                 </div>
               ))}
             </div>
-            <p className="max-w-4xl mx-auto text-[11px] text-[#AAAAAA] mt-2 text-center">
-              Les montants sont dans la devise de chaque marchand — consultez chaque portail pour le détail exact.
-            </p>
+          </section>
+
+          {/* Graphiques combinés */}
+          <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-8">
+            <div className="max-w-4xl mx-auto space-y-4">
+              <ClicsConversionsChart donnees={seriesClicsConv} />
+              {Object.entries(commissionsParDevise).map(([devise, serie]) => (
+                <CommissionsChart key={devise} donnees={serie} devise={devise} />
+              ))}
+              {Object.keys(commissionsParDevise).length > 1 && (
+                <p className="text-[11px] text-[#AAAAAA] text-center">
+                  Un graphique par devise — les commissions ne sont jamais additionnées entre monnaies différentes.
+                </p>
+              )}
+            </div>
           </section>
 
           {/* Liste des comptes */}
           <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-28">
             <div className="max-w-4xl mx-auto space-y-3">
+              <p className="text-sm font-bold text-[#111111] mb-1">Détail par marchand</p>
               {comptes.map((c) => (
                 <div key={c.entry.portalToken} className="rounded-2xl border p-4 flex items-center gap-3" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
                   {c.entry.logoUrl ? (
