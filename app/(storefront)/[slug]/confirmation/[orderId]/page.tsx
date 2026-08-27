@@ -4,11 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { formatMontant, formatDate } from "@/lib/utils";
 import Link from "next/link";
-import { CheckCircle, XCircle, Shield, TrendingDown, Download, Zap, Package, MessageCircle, Check, X } from "lucide-react";
+import { CheckCircle, XCircle, Shield, TrendingDown, Download, Zap, Package, MessageCircle, Check, X, GraduationCap, KeyRound, Copy } from "lucide-react";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { verifierPaiementNotchPay, hasNotchPay } from "@/lib/notchpay";
 import { confirmerPaiementCommande } from "@/lib/paiement-commande";
+import { TYPES_LIVRAISON_DIGITALE } from "@/lib/affiliation";
+import { CopyableKey } from "@/components/storefront/CopyableKey";
 
 interface Props {
   params: Promise<{ slug: string; orderId: string }>;
@@ -62,9 +64,39 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
   const paye = commande.paiementStatut === "completed";
   const echoue = commande.paiementStatut === "failed";
   const isCOD = commande.methodePaiement === "whatsapp_cod" || commande.methodePaiement === "direct_cod";
-  const isDigital = commande.lignes.some(l => l.produit?.type === "digital");
+  const isDigital = commande.lignes.some(l => l.produit?.type && TYPES_LIVRAISON_DIGITALE.has(l.produit.type));
 
   const lignesDigitales = commande.lignes.filter(l => l.produit?.type === "digital" && l.produit?.fichierUrl);
+
+  // Résout aussi les produits inclus dans les bundles achetés — leurs livraisons
+  // (tokens/clés/accès) sont créées contre leur propre id, pas celui du bundle.
+  const ligneProduitIds = commande.lignes.map(l => l.produit?.id).filter((id): id is string => !!id);
+  const bundlesAchetes = ligneProduitIds.length
+    ? await prisma.bundleProduit.findMany({
+        where: { produitId: { in: ligneProduitIds } },
+        include: { elements: { include: { produitInclus: { select: { id: true, nom: true } } } } },
+      })
+    : [];
+  const produitsInclusBundle = bundlesAchetes.flatMap(b => b.elements.map(e => e.produitInclus));
+  const tousProduitIds = [...new Set([...ligneProduitIds, ...produitsInclusBundle.map(p => p.id)])];
+  const nomProduit = new Map<string, string>([
+    ...commande.lignes.filter(l => l.produit).map(l => [l.produit!.id, l.nom] as const),
+    ...produitsInclusBundle.map(p => [p.id, p.nom] as const),
+  ]);
+
+  const [telechargements, accesFormations, clesLicence] = tousProduitIds.length
+    ? await Promise.all([
+        prisma.telechargement.findMany({
+          where: { commandeId: orderId, produitId: { in: tousProduitIds } },
+          include: { produit: { include: { produitFichier: { include: { fichiers: { orderBy: { ordre: "asc" } } } } } } },
+        }),
+        prisma.accesFormation.findMany({ where: { commandeId: orderId, produitId: { in: tousProduitIds } } }),
+        prisma.cleLicence.findMany({
+          where: { commandeId: orderId, licenceProduit: { produitId: { in: tousProduitIds } } },
+          include: { licenceProduit: { select: { produitId: true } } },
+        }),
+      ])
+    : [[], [], []] as const;
 
   // commande.montantTotal est déjà majoré de la commission côté client (prix vendeur
   // × (1 + taux)) — le marchand reçoit son prix intégral, extrait par division.
@@ -161,6 +193,88 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
           </div>
         )}
 
+        {/* ── Fichiers (nouveau système multi-fichiers) ─────────────── */}
+        {telechargements.length > 0 && (paye || !echoue) && (
+          <div className="rounded-2xl border p-6 mb-4 space-y-4"
+            style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}40`, boxShadow: `0 0 0 1px ${theme.accent}20, 0 8px 32px ${theme.accent}12` }}>
+            <h3 className="font-bold text-base flex items-center gap-2" style={{ color: theme.accent }}>
+              <Download size={16} /> Vos fichiers
+            </h3>
+            <div className="space-y-3">
+              {telechargements.map((dl) => {
+                const fichiers = dl.produit.produitFichier?.fichiers ?? [];
+                const nom = nomProduit.get(dl.produitId) ?? dl.produit.nom;
+                if (fichiers.length === 0) return null;
+                return (
+                  <div key={dl.id} className="p-3 rounded-xl" style={{ backgroundColor: `${theme.accent}08`, border: `1px solid ${theme.accent}20` }}>
+                    <p className="text-sm font-semibold mb-2">{nom}</p>
+                    <div className="space-y-2">
+                      {fichiers.map((f) => (
+                        <div key={f.id} className="flex items-center justify-between gap-3">
+                          <span className="text-xs opacity-60 truncate">{f.nom}</span>
+                          <a href={`/api/telechargements/${dl.token}?fichier=${f.id}`}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold flex-shrink-0 transition-all hover:opacity-90"
+                            style={{ backgroundColor: theme.accent, color: theme.fond }}>
+                            <Download size={12} /> Télécharger
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex items-center gap-2 text-xs opacity-50">
+              <Zap size={11} style={{ color: theme.accent }} />
+              Accès valide 1 an · Retrouvez ce lien dans votre email de confirmation
+            </div>
+          </div>
+        )}
+
+        {/* ── Formations ───────────────────────────────────────────── */}
+        {accesFormations.length > 0 && (paye || !echoue) && (
+          <div className="rounded-2xl border p-6 mb-4 space-y-3"
+            style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}40`, boxShadow: `0 0 0 1px ${theme.accent}20, 0 8px 32px ${theme.accent}12` }}>
+            <h3 className="font-bold text-base flex items-center gap-2" style={{ color: theme.accent }}>
+              <GraduationCap size={16} /> Vos formations
+            </h3>
+            <div className="space-y-3">
+              {accesFormations.map((acces) => (
+                <div key={acces.id} className="flex items-center justify-between gap-4 p-3 rounded-xl"
+                  style={{ backgroundColor: `${theme.accent}08`, border: `1px solid ${theme.accent}20` }}>
+                  <p className="text-sm font-semibold truncate">{nomProduit.get(acces.produitId) ?? "Formation"}</p>
+                  <a href={`/${slug}/formation/${acces.token}`}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold flex-shrink-0 transition-all hover:opacity-90"
+                    style={{ backgroundColor: theme.accent, color: theme.fond }}>
+                    Accéder <GraduationCap size={14} />
+                  </a>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs opacity-50">Accès à vie · Retrouvez ce lien dans votre email de confirmation</p>
+          </div>
+        )}
+
+        {/* ── Licences ─────────────────────────────────────────────── */}
+        {clesLicence.length > 0 && (paye || !echoue) && (
+          <div className="rounded-2xl border p-6 mb-4 space-y-3"
+            style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}40`, boxShadow: `0 0 0 1px ${theme.accent}20, 0 8px 32px ${theme.accent}12` }}>
+            <h3 className="font-bold text-base flex items-center gap-2" style={{ color: theme.accent }}>
+              <KeyRound size={16} /> Vos clés de licence
+            </h3>
+            <div className="space-y-3">
+              {clesLicence.map((cle) => (
+                <div key={cle.id} className="flex items-center justify-between gap-4 p-3 rounded-xl"
+                  style={{ backgroundColor: `${theme.accent}08`, border: `1px solid ${theme.accent}20` }}>
+                  <p className="text-sm font-semibold truncate">{nomProduit.get(cle.licenceProduit.produitId) ?? "Licence"}</p>
+                  <CopyableKey value={cle.cle} accent={theme.accent} fond={theme.fond} />
+                </div>
+              ))}
+            </div>
+            <p className="text-xs opacity-50">Conservez précieusement vos clés — elles ne sont affichées qu'une fois.</p>
+          </div>
+        )}
+
         {/* ── WhatsApp CTA pour COD ─────────────────────────────────── */}
         {isCOD && (
           <div className="rounded-2xl border p-5 mb-4 flex items-center gap-4"
@@ -217,7 +331,7 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
             {commande.lignes.map((ligne) => (
               <div key={ligne.id} className="flex items-center justify-between text-sm gap-3">
                 <div className="flex items-center gap-2 min-w-0">
-                  {ligne.produit?.type === "digital"
+                  {ligne.produit?.type && TYPES_LIVRAISON_DIGITALE.has(ligne.produit.type)
                     ? <Zap size={12} style={{ color: theme.accent }} className="flex-shrink-0" />
                     : <Package size={12} className="opacity-40 flex-shrink-0" />
                   }

@@ -3,7 +3,7 @@
 // Idempotent : ne fait rien si la commande est déjà marquée payée.
 import { prisma } from "./prisma";
 import { crediterWallet } from "./wallet";
-import { traiterPaiementDigital, enregistrerConversionAffiliation, capturerCommissionAffiliation } from "./affiliation";
+import { traiterPaiementDigital, enregistrerConversionAffiliation, capturerCommissionAffiliation, TYPES_LIVRAISON_DIGITALE } from "./affiliation";
 import { notifierMarchand } from "./notifications-marchand";
 import { formatMontant } from "./utils";
 import { verifierPaiementNotchPay } from "./notchpay";
@@ -82,7 +82,7 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
     }).catch(() => {});
   }
 
-  const hasDigital = commande.lignes.some((l) => l.produit?.type === "digital");
+  const hasDigital = commande.lignes.some((l) => l.produit?.type && TYPES_LIVRAISON_DIGITALE.has(l.produit.type));
 
   if (hasDigital) {
     await traiterPaiementDigital({

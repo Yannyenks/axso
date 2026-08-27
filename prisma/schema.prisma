@@ -141,6 +141,7 @@ model Produit {
   avis            Avis[]
   wishlist        Wishlist[]
   telechargements Telechargement[]
+  accesFormations AccesFormation[]
   affiliationLiens AffiliationLien[]
   stocksEntrepot  StockEntrepot[]
   // Produits digitaux avancés
@@ -1614,6 +1615,23 @@ model ProgressionLecon {
 
   @@unique([leconId, clientEmail])
   @@index([commandeId])
+}
+
+// Accès self-service à une formation achetée — même principe que
+// Telechargement (token opaque non devinable dans l'URL), donne accès à
+// l'ensemble des chapitres/leçons d'une formation, sans expiration (achat
+// à vie, contrairement aux liens de téléchargement de fichiers).
+model AccesFormation {
+  id          String   @id @default(cuid())
+  produitId   String
+  commandeId  String
+  token       String   @unique
+  clientEmail String
+  createdAt   DateTime @default(now())
+
+  produit Produit @relation(fields: [produitId], references: [id])
+
+  @@index([produitId])
 }
 
 // =====================

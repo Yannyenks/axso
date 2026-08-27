@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { crediterWallet } from "./wallet";
 import { initierTransfertNotchPay } from "./notchpay";
+import { livrerBundle } from "./bundle-delivery";
 
 // ─── Codes ──────────────────────────────────────────────────────────────────
 
@@ -74,6 +75,12 @@ type ProgrammePourCalcul = {
 // d'affiliation par défaut (50%) — exclut "bundle", qui peut mélanger des
 // produits physiques et digitaux et ne doit pas hériter du taux digital.
 export const TYPES_PRODUIT_DIGITAL = new Set(["digital", "fichier", "formation", "licence"]);
+
+// Tous les types nécessitant une livraison digitale (token/clé/accès) après
+// paiement — contrairement à TYPES_PRODUIT_DIGITAL ci-dessus, inclut "bundle"
+// (qui doit toujours être résolu/livré via livrerBundle, même s'il ne compte
+// pas comme "digital" pour le calcul de commission).
+export const TYPES_LIVRAISON_DIGITALE = new Set(["digital", "fichier", "formation", "licence", "bundle"]);
 
 // Commission par défaut d'un produit digital sans taux personnalisé —
 // nettement supérieure au taux physique par défaut car sans coût de
@@ -375,8 +382,12 @@ export async function traiterPaiementDigital(params: {
   const { commande, lignes, reference, tauxCommission, fraisPasserelle } = params;
 
   const produits = await prisma.produit.findMany({
-    where: { id: { in: lignes.map((l) => l.produitId) }, type: "digital" },
-    select: { id: true, fichierUrl: true },
+    where: { id: { in: lignes.map((l) => l.produitId) }, type: { in: [...TYPES_LIVRAISON_DIGITALE] } },
+    select: {
+      id: true, type: true, fichierUrl: true,
+      produitFichier: true,
+      licenceProduit: true,
+    },
   });
 
   await crediterWallet({
@@ -390,19 +401,59 @@ export async function traiterPaiementDigital(params: {
     fraisPasserelle,
   });
 
-  // Tokens de téléchargement (48h)
+  // Livraison — un mécanisme distinct par type de produit digital.
   const crypto = await import("crypto");
+  const EXPIRE_FICHIER_JOURS = 365; // achat = accès longue durée, pas 48h comme le legacy
+
   for (const produit of produits) {
-    if (!produit.fichierUrl) continue;
-    const token = crypto.randomBytes(32).toString("hex");
-    await prisma.telechargement.create({
-      data: {
-        produitId: produit.id,
-        commandeId: commande.id,
-        token,
-        expireAt: new Date(Date.now() + 48 * 3600 * 1000),
-      },
-    });
+    try {
+      if (produit.type === "digital") {
+        // Legacy — un seul fichier direct, accès court (comportement historique conservé).
+        if (!produit.fichierUrl) continue;
+        const token = crypto.randomBytes(32).toString("hex");
+        await prisma.telechargement.create({
+          data: { produitId: produit.id, commandeId: commande.id, token, expireAt: new Date(Date.now() + 48 * 3600 * 1000) },
+        });
+      } else if (produit.type === "fichier" && produit.produitFichier) {
+        // Nouveau système multi-fichiers — un token couvre tous les fichiers du produit
+        // (voir app/api/telechargements/[token] qui liste via ?fichier=<id>).
+        const token = crypto.randomBytes(32).toString("hex");
+        await prisma.telechargement.create({
+          data: { produitId: produit.id, commandeId: commande.id, token, expireAt: new Date(Date.now() + EXPIRE_FICHIER_JOURS * 86400 * 1000) },
+        });
+      } else if (produit.type === "formation") {
+        // Accès à vie au contenu de la formation, via token self-service.
+        const token = crypto.randomBytes(32).toString("hex");
+        await prisma.accesFormation.create({
+          data: { produitId: produit.id, commandeId: commande.id, token, clientEmail: commande.clientEmail },
+        });
+      } else if (produit.type === "licence" && produit.licenceProduit) {
+        // Attribue la prochaine clé disponible (générée/importée à l'avance par le
+        // marchand). Si le stock de clés est épuisé, on ne bloque pas la commande —
+        // le marchand doit en générer davantage, visible via ses stats de licence.
+        const cle = await prisma.cleLicence.findFirst({
+          where: { licenceProduitId: produit.licenceProduit.id, statut: "disponible" },
+          orderBy: { createdAt: "asc" },
+        });
+        if (cle) {
+          const expiry = produit.licenceProduit.dureeJours
+            ? new Date(Date.now() + produit.licenceProduit.dureeJours * 86400 * 1000)
+            : null;
+          await prisma.cleLicence.update({
+            where: { id: cle.id },
+            data: { statut: "vendue", commandeId: commande.id, acheteurEmail: commande.clientEmail, expireAt: expiry },
+          });
+        }
+      } else if (produit.type === "bundle") {
+        // Résout et livre chaque élément inclus (fichier/licence/digital) — déjà
+        // implémenté dans lib/bundle-delivery.ts, jamais appelé jusqu'ici.
+        await livrerBundle(commande.id, produit.id);
+      }
+    } catch (err) {
+      // Une livraison en échec ne doit jamais bloquer la confirmation des autres
+      // lignes ni du paiement lui-même — le marchand voit l'erreur dans ses logs.
+      console.error(`[traiterPaiementDigital] échec livraison produit ${produit.id} (${produit.type})`, err);
+    }
   }
 
   await prisma.commande.update({

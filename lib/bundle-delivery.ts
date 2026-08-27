@@ -10,21 +10,25 @@ function expireAt(jours = EXPIRE_DEFAULT_JOURS) {
 }
 
 export async function livrerBundle(commandeId: string, bundleProduitId: string) {
-  const bundle = await prisma.bundleProduit.findUnique({
-    where: { produitId: bundleProduitId },
-    include: {
-      elements: {
-        include: {
-          produitInclus: {
-            include: {
-              produitFichier: { include: { fichiers: { orderBy: { ordre: "asc" } } } },
-              licenceProduit: true,
+  const [bundle, commande] = await Promise.all([
+    prisma.bundleProduit.findUnique({
+      where: { produitId: bundleProduitId },
+      include: {
+        elements: {
+          include: {
+            produitInclus: {
+              include: {
+                produitFichier: { include: { fichiers: { orderBy: { ordre: "asc" } } } },
+                licenceProduit: true,
+                formation: true,
+              },
             },
           },
         },
       },
-    },
-  });
+    }),
+    prisma.commande.findUnique({ where: { id: commandeId }, select: { clientEmail: true } }),
+  ]);
 
   if (!bundle) throw new Error("Bundle introuvable");
 
@@ -63,12 +67,19 @@ export async function livrerBundle(commandeId: string, bundleProduitId: string) 
         const expiry = p.licenceProduit.dureeJours ? expireAt(p.licenceProduit.dureeJours) : null;
         await prisma.cleLicence.update({
           where: { id: cle.id },
-          data: { statut: "vendue", commandeId, expireAt: expiry },
+          data: { statut: "vendue", commandeId, acheteurEmail: commande?.clientEmail, expireAt: expiry },
         });
         resultats.push({ produitId: p.id, type: "licence", data: { cle: cle.cle, expireAt: expiry } });
       } else {
         resultats.push({ produitId: p.id, type: "licence", data: { error: "Aucune clé disponible" } });
       }
+
+    } else if (p.type === "formation" && p.formation) {
+      const token = randomUUID();
+      await prisma.accesFormation.create({
+        data: { produitId: p.id, commandeId, token, clientEmail: commande?.clientEmail ?? "" },
+      });
+      resultats.push({ produitId: p.id, type: "formation", data: { token } });
     }
   }
 

@@ -29,7 +29,7 @@ const TYPES_PRODUIT = [
     id: "digital",
     icon: Download,
     label: "Digital",
-    desc: "PDF, vidéo, logiciel — livré par email",
+    desc: "Fichier, formation, licence, bundle — assistant dédié",
     color: "#1B2A4A",
   },
   {
@@ -272,10 +272,11 @@ export default function NouveauProduitPage() {
         {TYPES_PRODUIT.map((t) => {
           const Icone = t.icon;
           const actif = form.type === t.id;
+          const estDigital = t.id === "digital";
           return (
             <button
               key={t.id}
-              onClick={() => set("type", t.id)}
+              onClick={() => estDigital ? router.push("/dashboard/produits/digital/nouveau") : set("type", t.id)}
               className="flex items-start gap-3 p-4 rounded-2xl border text-left transition-all"
               style={{
                 borderColor: actif ? t.color + "50" : "rgba(229,231,235,1)",
@@ -291,7 +292,9 @@ export default function NouveauProduitPage() {
                 <p className="font-semibold text-gray-900 text-sm">{t.label}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{t.desc}</p>
               </div>
-              {actif && (
+              {estDigital ? (
+                <ExternalLink size={13} className="ml-auto text-gray-300 flex-shrink-0 mt-0.5" />
+              ) : actif && (
                 <div className="ml-auto w-5 h-5 rounded-full flex items-center justify-center" style={{ background: t.color }}>
                   <span className="text-white text-[10px] font-bold">✓</span>
                 </div>

@@ -33,6 +33,9 @@ const DEFAULT_SECTIONS: ProdSection[] = [
 ];
 
 const RIGHT_COL = new Set(["info", "variants", "quantity", "trust"]);
+// Types de produits digitaux — pas de stock physique, bouton "télécharger/accéder"
+// plutôt que "panier". Garder en phase avec TYPES_PRODUIT_DIGITAL (lib/affiliation.ts).
+const TYPES_DIGITAUX = new Set(["digital", "fichier", "formation", "licence"]);
 const BELOW_TYPES = new Set(["description","reviews","similar","richtext","features","howto","banner","video","faq","specs","ingredients","testimonials","sizeguide","guarantee","bundle","comparison","countdown","social"]);
 
 export interface ProductPageClientProps {
@@ -1018,7 +1021,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
                           boxShadow: enRupture || !btnRempli ? "none" : `0 6px 24px ${accent}40`,
                           ["--ax-accent-glow" as any]: `${accent}80`,
                         }}>
-                        {produit.type === "digital" ? <Download size={18} /> : <ShoppingCart size={18} />}
+                        {TYPES_DIGITAUX.has(produit.type) ? <Download size={18} /> : <ShoppingCart size={18} />}
                         {enRupture ? "Indisponible" : (produit.texteBoutonAchat || "Ajouter au panier")}
                       </button>
                       <button onClick={buyNow} disabled={enRupture}

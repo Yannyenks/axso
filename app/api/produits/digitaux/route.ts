@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
         description: description || null,
         prix,
         prixCompare: prixCompare || null,
-        stock: 0,
+        stock: 99999, // aucune contrainte d'inventaire physique — voir TYPES_DIGITAUX
         images: images || [],
         tags: tags || [],
         categorie: categorie || null,
