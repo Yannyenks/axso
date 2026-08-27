@@ -54,6 +54,7 @@ export interface ProductPageClientProps {
     productPage?: { layout?: string; sections?: ProdSection[] } | null;
     layout?: { largeurContainer?: string } | null;
     boutons?: { style?: string; taille?: string; hover?: string } | null;
+    peutDevenirAffilie?: boolean;
   };
   produitsSimilaires: { id: string; nom: string; images: string[]; prixAffiche: number }[];
 }
@@ -724,6 +725,62 @@ function ProduitFaqSection({ faq, accent, surface }: { faq: { question: string; 
   );
 }
 
+// ─── Lien d'affiliation B2B (marchand AXSO devenant affilié d'un produit) ────
+function AffiliateLinkButton({ tenantId, produitId, accent, surface }: {
+  tenantId: string; produitId: string; accent: string; surface: string;
+}) {
+  const [lien, setLien] = useState<{ code: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [copie, setCopie] = useState(false);
+
+  async function generer() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/affiliation/generer", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantId, produitId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      setLien(data.lien);
+    } catch (e: any) {
+      toast.error(e.message || "Impossible de générer le lien");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const url = lien && typeof window !== "undefined" ? `${window.location.origin}/api/track/${lien.code}` : "";
+
+  return (
+    <div className="rounded-xl p-4" style={{ background: surface }}>
+      <p className="text-xs font-bold flex items-center gap-1.5 mb-1" style={{ color: accent }}>
+        <Share2 size={12} /> Vous êtes marchand AXSO ?
+      </p>
+      {!lien ? (
+        <>
+          <p className="text-xs opacity-55 mb-2.5">Devenez affilié de ce produit et touchez une commission sur chaque vente que vous générez.</p>
+          <button onClick={generer} disabled={loading}
+            className="text-xs font-bold px-4 py-2 rounded-xl transition-all disabled:opacity-50"
+            style={{ background: accent, color: "#fff" }}>
+            {loading ? "…" : "Obtenir mon lien d'affiliation"}
+          </button>
+        </>
+      ) : (
+        <div className="flex items-center gap-2">
+          <div className="flex-1 rounded-lg px-2.5 py-1.5 text-[11px] font-mono truncate" style={{ background: "rgba(0,0,0,0.05)" }}>{url}</div>
+          <button
+            onClick={() => { navigator.clipboard.writeText(url); setCopie(true); toast.success("Copié !"); setTimeout(() => setCopie(false), 2000); }}
+            className="flex-shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-bold"
+            style={{ background: accent, color: "#fff" }}>
+            {copie ? "Copié" : "Copier"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function ProductPageClient({ produit, tenant, produitsSimilaires }: ProductPageClientProps) {
   const { slug, devise, accent, fond, texte, surface, radius, whatsapp, whatsappNumero, nomBoutique, certifie } = tenant;
@@ -1002,6 +1059,9 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
                         {certifie && <span className="ml-1.5 text-[10px] text-emerald-500 font-bold">✓ Certifié Axso</span>}
                       </p>
                     </div>
+                    {tenant.peutDevenirAffilie && (
+                      <AffiliateLinkButton tenantId={tenant.id} produitId={produit.id} accent={accent} surface={surface} />
+                    )}
                   </>
                 )}
               </React.Fragment>

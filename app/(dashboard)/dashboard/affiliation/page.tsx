@@ -682,7 +682,7 @@ function OngletLiens() {
 
   const totalClics = liens.reduce((a, l) => a + l.clics, 0);
   const totalConversions = liens.reduce((a, l) => a + l.conversions, 0);
-  const getLienUrl = (l: any) => `${appUrl}/${l.tenant.slug}${l.produit ? `/produits/${l.produit.nom}` : ""}?ref=${l.code}`;
+  const getLienUrl = (l: any) => `${appUrl}/${l.tenant.slug}${l.produitId ? `/produits/${l.produitId}` : ""}?ref=${l.code}`;
 
   if (loading) return <div className="py-8 text-center text-sm text-gray-400">Chargement…</div>;
 

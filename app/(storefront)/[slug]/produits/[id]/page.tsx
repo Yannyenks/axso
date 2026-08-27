@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { pourcentageRemise } from "@/lib/utils";
 import { prixClient } from "@/lib/pricing";
@@ -33,28 +34,39 @@ export async function generateMetadata({ params }: Props) {
 export default async function ProduitPage({ params }: Props) {
   const { slug, id } = await params;
 
-  const [tenant, produit] = await Promise.all([
-    prisma.tenant.findUnique({
-      where: { slug },
-      include: { collections: { where: { actif: true }, take: 5 } },
-    }),
-    prisma.produit.findUnique({
-      where: { id },
-      include: {
-        variantes: { orderBy: { nom: "asc" } },
-        avis: {
-          where: { approuve: true },
-          include: { client: { select: { nom: true } } },
-          take: 20,
-          orderBy: { createdAt: "desc" },
-        },
-        collections: { select: { nom: true, slug: true } },
-      },
-    }),
-  ]);
-
+  const tenant = await prisma.tenant.findUnique({
+    where: { slug },
+    include: { collections: { where: { actif: true }, take: 5 } },
+  });
   if (!tenant || tenant.statut !== "active") notFound();
+
+  const produitInclude = {
+    variantes: { orderBy: { nom: "asc" as const } },
+    avis: {
+      where: { approuve: true },
+      include: { client: { select: { nom: true } } },
+      take: 20,
+      orderBy: { createdAt: "desc" as const },
+    },
+    collections: { select: { nom: true, slug: true } },
+  };
+
+  // Résout par id (URL classique) puis, si absent, par slug — les liens
+  // d'affiliation générés côté tracker (/api/track/[code]) pointent vers le
+  // slug du produit, pas son id.
+  let produit = await prisma.produit.findUnique({ where: { id }, include: produitInclude });
+  if (!produit) {
+    produit = await prisma.produit.findFirst({ where: { tenantId: tenant.id, slug: id }, include: produitInclude });
+  }
+
   if (!produit || produit.tenantId !== tenant.id || !produit.actif) notFound();
+
+  // Un marchand AXSO connecté (autre que le propriétaire de cette boutique)
+  // peut devenir affilié de ce produit précis s'il l'autorise — bouton
+  // "Obtenir mon lien d'affiliation" affiché uniquement dans ce cas.
+  const session = await auth();
+  const visiteurTenantId = (session?.user as any)?.tenantId as string | undefined;
+  const peutDevenirAffilie = !!visiteurTenantId && visiteurTenantId !== tenant.id && produit.affiliationActive;
 
   const cfg = await resolveThemeConfigAsync(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
   const { colors: c, radius } = cfg;
@@ -141,6 +153,7 @@ export default async function ProduitPage({ params }: Props) {
     productPage: cfg.productPage ?? null,
     layout: cfg.layout ?? null,
     boutons: cfg.boutons ?? null,
+    peutDevenirAffilie,
   };
 
   return (
