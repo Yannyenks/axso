@@ -10,7 +10,7 @@ import {
   Package, AlertTriangle, Lock, RotateCcw, Check,
   Star, Minus, Plus, ShoppingCart, Truck, ZoomIn,
   MessageCircle, Download, ChevronRight, ShoppingBag,
-  ChevronDown, Share2,
+  ChevronDown, Share2, PlayCircle, Headphones, FileText,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -49,6 +49,12 @@ export interface ProductPageClientProps {
     masquerVentes?: boolean;
     texteBoutonAchat?: string | null;
     faq?: { question: string; reponse: string }[];
+    formationCurriculum?: {
+      chapitres: {
+        id: string; titre: string;
+        lecons: { id: string; titre: string; type: string; duree: number | null; gratuite: boolean; contenu: string | null; videoType: string | null; videoUrl: string | null; audioUrl: string | null }[];
+      }[];
+    } | null;
   };
   tenant: {
     id: string; slug: string; nomBoutique: string; devise: string; certifie: boolean;
@@ -728,6 +734,92 @@ function ProduitFaqSection({ faq, accent, surface }: { faq: { question: string; 
   );
 }
 
+// ─── Programme de la formation (aperçu avant achat) ──────────────────────────
+function embedVideoLecon(l: { videoType: string | null; videoUrl: string | null }): string | null {
+  if (!l.videoUrl) return null;
+  if (l.videoType === "youtube") {
+    const m = l.videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    return m ? `https://www.youtube.com/embed/${m[1]}` : l.videoUrl;
+  }
+  if (l.videoType === "vimeo") {
+    const m = l.videoUrl.match(/vimeo\.com\/(\d+)/);
+    return m ? `https://player.vimeo.com/video/${m[1]}` : l.videoUrl;
+  }
+  return l.videoUrl;
+}
+
+function FormationCurriculumSection({ chapitres, accent, texte, surface }: {
+  chapitres: NonNullable<ProductPageClientProps["produit"]["formationCurriculum"]>["chapitres"];
+  accent: string; texte: string; surface: string;
+}) {
+  const toutesLecons = chapitres.flatMap(c => c.lecons);
+  const totalDuree = toutesLecons.reduce((s, l) => s + (l.duree ?? 0), 0);
+  const [apercuId, setApercuId] = useState<string | null>(null);
+  const apercu = toutesLecons.find(l => l.id === apercuId) ?? null;
+  const embed = apercu ? embedVideoLecon(apercu) : null;
+
+  return (
+    <section className="max-w-3xl mx-auto px-4 py-10">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
+        <h2 className="text-xl font-bold" style={{ color: accent }}>Programme de la formation</h2>
+        <p className="text-xs opacity-50">
+          {chapitres.length} chapitre{chapitres.length > 1 ? "s" : ""} · {toutesLecons.length} leçon{toutesLecons.length > 1 ? "s" : ""}
+          {totalDuree > 0 && ` · ${Math.round(totalDuree / 60)} min`}
+        </p>
+      </div>
+
+      {apercu && (
+        <div className="mb-6 rounded-2xl overflow-hidden" style={{ border: `1px solid ${accent}25` }}>
+          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: `${accent}10` }}>
+            <span className="text-xs font-bold" style={{ color: accent }}>Aperçu gratuit — {apercu.titre}</span>
+            <button onClick={() => setApercuId(null)} className="text-xs opacity-50 hover:opacity-80">Fermer ✕</button>
+          </div>
+          {apercu.type === "video" && embed && (
+            <div className="relative w-full" style={{ paddingBottom: "56.25%", background: "#000" }}>
+              {apercu.videoType === "upload"
+                ? <video src={embed} controls className="absolute inset-0 w-full h-full object-cover" />
+                : <iframe src={embed} className="absolute inset-0 w-full h-full border-0" allowFullScreen />}
+            </div>
+          )}
+          {apercu.type === "audio" && apercu.audioUrl && <audio src={apercu.audioUrl} controls className="w-full p-4" />}
+          {apercu.contenu && <div className="p-4 text-sm leading-relaxed" style={{ opacity: 0.8, whiteSpace: "pre-line" }}>{apercu.contenu}</div>}
+        </div>
+      )}
+
+      <div className="space-y-4">
+        {chapitres.map((ch, ci) => (
+          <div key={ch.id} className="rounded-2xl overflow-hidden" style={{ background: surface }}>
+            <p className="text-xs font-bold uppercase tracking-widest px-4 pt-4 pb-2 opacity-50">Chapitre {ci + 1} · {ch.titre}</p>
+            <div className="pb-2">
+              {ch.lecons.map(l => {
+                const Icon = l.type === "video" ? PlayCircle : l.type === "audio" ? Headphones : FileText;
+                return (
+                  <div key={l.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Icon size={14} style={{ opacity: 0.35, flexShrink: 0 }} />
+                      <span className="text-sm truncate" style={{ opacity: l.gratuite ? 1 : 0.6 }}>{l.titre}</span>
+                      {l.duree ? <span className="text-[10px] opacity-35 flex-shrink-0">{Math.round(l.duree / 60)} min</span> : null}
+                    </div>
+                    {l.gratuite ? (
+                      <button onClick={() => setApercuId(l.id)}
+                        className="text-[10px] font-bold px-2.5 py-1 rounded-full flex-shrink-0"
+                        style={{ background: `${accent}15`, color: accent }}>
+                        Aperçu gratuit
+                      </button>
+                    ) : (
+                      <Lock size={12} style={{ opacity: 0.25, flexShrink: 0 }} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ─── Lien d'affiliation B2B (marchand AXSO devenant affilié d'un produit) ────
 function AffiliateLinkButton({ tenantId, produitId, accent, surface }: {
   tenantId: string; produitId: string; accent: string; surface: string;
@@ -1222,6 +1314,11 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
 
           </StyledSection>
         ))}
+
+        {/* Programme de la formation (aperçu avant achat) */}
+        {produit.formationCurriculum && produit.formationCurriculum.chapitres.length > 0 && (
+          <FormationCurriculumSection chapitres={produit.formationCurriculum.chapitres} accent={accent} texte={texte} surface={surface} />
+        )}
 
         {/* FAQ produit spécifique */}
         {(produit.faq ?? []).length > 0 && (

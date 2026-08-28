@@ -99,6 +99,22 @@ export default async function ProduitPage({ params }: Props) {
     prixAffiche: prixClient(p.prix, taux),
   }));
 
+  // Programme de la formation — affiché avant achat (aperçu gratuit pour les
+  // leçons marquées "gratuite", verrouillé pour le reste) pour donner
+  // confiance à l'acheteur sur le contenu réel qu'il va recevoir.
+  const formationCurriculum = produit.type === "formation"
+    ? await prisma.formation.findUnique({
+        where: { produitId: produit.id },
+        include: {
+          chapitres: {
+            where: { actif: true },
+            orderBy: { ordre: "asc" },
+            include: { lecons: { where: { actif: true }, orderBy: { ordre: "asc" }, select: { id: true, titre: true, type: true, contenu: true, videoType: true, videoUrl: true, audioUrl: true, duree: true, gratuite: true } } },
+          },
+        },
+      })
+    : null;
+
   const produitProps = {
     id: produit.id,
     nom: produit.nom,
@@ -117,6 +133,21 @@ export default async function ProduitPage({ params }: Props) {
     masquerVentes: (produit as any).masquerVentes ?? false,
     texteBoutonAchat: (produit as any).texteBoutonAchat ?? null,
     faq: Array.isArray((produit as any).faq) ? (produit as any).faq as { question: string; reponse: string }[] : [],
+    // Verrouille le contenu réel des leçons non gratuites — seule la structure
+    // (titre/durée) doit atteindre le client avant achat, jamais le contenu payant.
+    formationCurriculum: formationCurriculum ? {
+      chapitres: formationCurriculum.chapitres.map(ch => ({
+        id: ch.id,
+        titre: ch.titre,
+        lecons: ch.lecons.map(l => ({
+          id: l.id, titre: l.titre, type: l.type, duree: l.duree, gratuite: l.gratuite,
+          contenu: l.gratuite ? l.contenu : null,
+          videoType: l.gratuite ? l.videoType : null,
+          videoUrl: l.gratuite ? l.videoUrl : null,
+          audioUrl: l.gratuite ? l.audioUrl : null,
+        })),
+      })),
+    } : null,
     variantes: produit.variantes.map(v => ({
       id: v.id,
       nom: v.nom,
