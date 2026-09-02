@@ -30,12 +30,7 @@ interface NavItem {
   opensAbonnement?: boolean;
 }
 
-interface Categorie {
-  id: string;
-  label: string;
-  Icon: React.ElementType;
-  items: NavItem[];
-}
+type Entry = NavItem | { type: "label"; text: string };
 
 export interface SidebarProps {
   boutiqueNom?: string;
@@ -55,64 +50,42 @@ const BOUTIQUE_ROUTES = [
   "/dashboard/campagnes",
 ];
 
-// ─── Navigation principale — regroupée par grand titre ────────────────────────
-// Rail gauche = les ids/labels/icônes ci-dessous. Panneau droit = items de la
-// catégorie sélectionnée. Cf. doc navigation AXSO (pattern à deux niveaux,
-// déjà piloté sur le module Produits via ProduitsSubSidebar).
-const CATEGORIES: Categorie[] = [
-  {
-    id: "ventes", label: "Ventes", Icon: ShoppingCart,
-    items: [
-      { href: "/dashboard/accueil",   label: "Tableau de bord", Icon: Home,         exact: true },
-      { href: "/dashboard/commandes", label: "Commandes",       Icon: ShoppingCart, badge: true },
-      { href: "/dashboard/pos",       label: "Point de vente",  Icon: Monitor },
-      { href: "/dashboard/factures",  label: "Factures",        Icon: FileText },
-      { href: "/dashboard/retours",   label: "Retours",         Icon: RotateCcw },
-    ],
-  },
-  {
-    id: "clients", label: "Clients", Icon: Users,
-    items: [
-      { href: "/dashboard/clients",  label: "Clients",      Icon: Users },
-      { href: "/dashboard/avis",     label: "Avis clients", Icon: Star },
-      { href: "/dashboard/whatsapp", label: "WhatsApp",     Icon: MessageSquare, badge: true },
-      { href: "/dashboard/livreurs", label: "Livreurs",     Icon: Truck },
-    ],
-  },
-  {
-    id: "catalogue", label: "Catalogue", Icon: Package,
-    items: [
-      { href: "/dashboard/produits",         label: "Produits",          Icon: Package,  excludePrefix: "/dashboard/produits/digital" },
-      { href: "/dashboard/produits/digital", label: "Produits Digitaux", Icon: Download },
-      { href: "/dashboard/sourcing",         label: "Sourcing",          Icon: Map,      requiresPalier: "palier2" },
-      { href: "/dashboard/entrepots",        label: "Entrepôts",         Icon: Box },
-    ],
-  },
-  {
-    id: "croissance", label: "Croissance", Icon: BarChart3,
-    items: [
-      { href: "/dashboard/analytics",   label: "Analytics",   Icon: BarChart3 },
-      { href: "/dashboard/objectifs",   label: "Objectifs",   Icon: Target },
-      { href: "/dashboard/rapports",    label: "Rapports",    Icon: FileBarChart },
-      { href: "/dashboard/marketing",   label: "Marketing",   Icon: Megaphone, requiresPalier: "palier1" },
-      { href: "/dashboard/affiliation", label: "Affiliation", Icon: UserCheck },
-    ],
-  },
-  {
-    id: "finance", label: "Finance", Icon: DollarSign,
-    items: [
-      { href: "/dashboard/revenus",   label: "Revenus",   Icon: DollarSign },
-      { href: "/dashboard/paiements", label: "Paiements", Icon: CreditCard },
-      { href: "/dashboard/wallet",    label: "Wallet",    Icon: Wallet },
-    ],
-  },
-  {
-    id: "compte", label: "Compte", Icon: Settings2,
-    items: [
-      { href: "/dashboard/abonnement", label: "Abonnement", Icon: CreditCard, opensAbonnement: true },
-      { href: "/dashboard/parametres", label: "Paramètres", Icon: Settings2 },
-    ],
-  },
+// ─── Navigation principale ────────────────────────────────────────────────────
+const MAIN_NAV: Entry[] = [
+  { type: "label", text: "VENTES" },
+  { href: "/dashboard",                  label: "AXIA",              Icon: Sparkles,      exact: true },
+  { href: "/dashboard/accueil",          label: "Tableau de bord",   Icon: Home,          exact: true },
+  { href: "/dashboard/commandes",        label: "Commandes",         Icon: ShoppingCart,  badge: true },
+  { href: "/dashboard/pos",              label: "Point de vente",    Icon: Monitor },
+  { href: "/dashboard/factures",         label: "Factures",          Icon: FileText },
+  { href: "/dashboard/retours",          label: "Retours",           Icon: RotateCcw },
+
+  { type: "label", text: "CLIENTS" },
+  { href: "/dashboard/clients",          label: "Clients",           Icon: Users },
+  { href: "/dashboard/avis",             label: "Avis clients",      Icon: Star },
+  { href: "/dashboard/whatsapp",         label: "WhatsApp",          Icon: MessageSquare, badge: true },
+  { href: "/dashboard/livreurs",         label: "Livreurs",          Icon: Truck },
+
+  { type: "label", text: "CATALOGUE" },
+  { href: "/dashboard/produits",         label: "Produits",          Icon: Package,       excludePrefix: "/dashboard/produits/digital" },
+  { href: "/dashboard/produits/digital", label: "Produits Digitaux", Icon: Download },
+  { href: "/dashboard/sourcing",         label: "Sourcing",          Icon: Map,           requiresPalier: "palier2" },
+  { href: "/dashboard/entrepots",        label: "Entrepôts",         Icon: Box },
+
+  { type: "label", text: "CROISSANCE" },
+  { href: "/dashboard/analytics",        label: "Analytics",         Icon: BarChart3 },
+  { href: "/dashboard/objectifs",        label: "Objectifs",         Icon: Target },
+  { href: "/dashboard/rapports",         label: "Rapports",          Icon: FileBarChart },
+  { href: "/dashboard/marketing",        label: "Marketing",         Icon: Megaphone,     requiresPalier: "palier1" },
+  { href: "/dashboard/affiliation",      label: "Affiliation",       Icon: UserCheck },
+
+  { type: "label", text: "FINANCE" },
+  { href: "/dashboard/revenus",          label: "Revenus",           Icon: DollarSign },
+  { href: "/dashboard/paiements",        label: "Paiements",         Icon: CreditCard },
+  { href: "/dashboard/wallet",           label: "Wallet",            Icon: Wallet },
+
+  { type: "label", text: "COMPTE" },
+  { href: "/dashboard/abonnement",       label: "Abonnement",        Icon: CreditCard,    opensAbonnement: true },
 ];
 
 // ─── Navigation boutique ──────────────────────────────────────────────────────
@@ -137,16 +110,6 @@ function isActive(item: NavItem, pathname: string) {
   return item.href !== "/dashboard"
     ? pathname.startsWith(item.href)
     : pathname === item.href;
-}
-
-// Détermine quelle catégorie doit être ouverte dans le panneau droit pour une
-// route donnée — utilisé au chargement/à la navigation directe (deep link),
-// pas seulement au clic sur le rail gauche.
-function trouverCategorieActive(pathname: string): string {
-  for (const cat of CATEGORIES) {
-    if (cat.items.some(it => isActive(it, pathname))) return cat.id;
-  }
-  return "ventes";
 }
 
 // ─── NavLink ──────────────────────────────────────────────────────────────────
@@ -243,32 +206,7 @@ function NavLink({
   );
 }
 
-// ─── Bouton du rail gauche (grand titre / catégorie) ──────────────────────────
-function RailButton({
-  label, Icon, active, onClick, href,
-}: {
-  label: string; Icon: React.ElementType; active: boolean; onClick?: () => void; href?: string;
-}) {
-  const className = cn(
-    "w-full flex flex-col items-center gap-1 px-1 py-2.5 rounded-xl transition-all duration-150",
-    active ? "bg-[#FFF7ED]" : "hover:bg-gray-50"
-  );
-  const inner = (
-    <>
-      <Icon size={17} style={{ color: active ? "#F5A623" : "#9CA3AF" }} />
-      <span
-        className="text-[10px] font-bold leading-tight text-center px-0.5"
-        style={{ color: active ? "#92400E" : "#6B7280" }}
-      >
-        {label}
-      </span>
-    </>
-  );
-  if (href) return <Link href={href} className={className}>{inner}</Link>;
-  return <button type="button" onClick={onClick} className={className}>{inner}</button>;
-}
-
-// ─── Sidebar principale — rail gauche (grands titres) + panneau droit ─────────
+// ─── Sidebar principale ────────────────────────────────────────────────────────
 function MainSidebar({
   pathname, boutiqueNom, userInitials, onBoutique, palier,
 }: {
@@ -278,100 +216,110 @@ function MainSidebar({
   onBoutique: () => void;
   palier?: Palier;
 }) {
-  const [categorieId, setCategorieId] = useState<string>(() => trouverCategorieActive(pathname));
-
-  // Deep link / navigation directe (pas via clic sur le rail) : on rouvre la
-  // bonne catégorie pour que le panneau droit ne reste jamais désynchronisé.
-  useEffect(() => {
-    setCategorieId(trouverCategorieActive(pathname));
-  }, [pathname]);
-
-  const categorie = CATEGORIES.find(c => c.id === categorieId) ?? CATEGORIES[0];
-  const axiaActif = pathname === "/dashboard";
-
   return (
-    <div className="flex h-full min-h-0">
-      {/* ─── Rail gauche — grands titres ─────────────────────────── */}
-      <div className="w-[104px] flex-shrink-0 h-full flex flex-col border-r border-gray-100/80">
-        <div className="h-[60px] flex items-center justify-center flex-shrink-0 border-b border-gray-100/80">
-          <img src="/axia-icon.png" alt="Axso" className="w-8 h-8 object-contain rounded-xl" />
-        </div>
-
-        {/* Pinné : AXIA + Ma boutique */}
-        <div className="px-2 pt-3 pb-1 flex-shrink-0 space-y-1">
-          <RailButton label="AXIA" Icon={Sparkles} active={axiaActif} href="/dashboard" />
-          <RailButton label="Boutique" Icon={Store} active={false} onClick={onBoutique} />
-        </div>
-
-        <div className="mx-3 border-t border-gray-100 my-1.5 flex-shrink-0" />
-
-        {/* Grands titres */}
-        <nav className="flex-1 px-2 py-1 overflow-y-auto space-y-1" style={{ scrollbarWidth: "none" }}>
-          {CATEGORIES.map(cat => (
-            <RailButton
-              key={cat.id}
-              label={cat.label}
-              Icon={cat.Icon}
-              active={cat.id === categorieId}
-              onClick={() => setCategorieId(cat.id)}
-            />
-          ))}
-        </nav>
-
-        {/* Compte — accès rapide */}
-        <div className="flex-shrink-0 px-2 py-3 border-t border-gray-100/80">
-          <Link href="/dashboard/parametres" className="flex flex-col items-center gap-1 py-1.5 rounded-xl hover:bg-gray-50 transition-all group">
-            <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-[12px] font-bold"
-              style={{
-                background: "linear-gradient(135deg,#F5A623,#D4911A)",
-                boxShadow: "0 2px 8px rgba(245,166,35,0.3)",
-              }}
-            >
-              {userInitials || "A"}
-            </div>
-            <span className="text-[9.5px] font-semibold text-gray-400 group-hover:text-gray-600">Compte</span>
-          </Link>
-        </div>
+    <>
+      {/* Slogan */}
+      <div className="h-[60px] flex items-center px-5 flex-shrink-0 border-b border-gray-100/80">
+        <span
+          className="text-[15px] font-bold tracking-tight leading-tight"
+          style={{
+            background: "linear-gradient(135deg,#1B2A4A 0%,#2c4270 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}
+        >
+          Build your empire here
+        </span>
       </div>
 
-      {/* ─── Panneau droit — contenu du grand titre sélectionné ────── */}
-      <div className="flex-1 min-w-0 h-full flex flex-col">
-        <div className="h-[60px] flex items-center px-4 flex-shrink-0 border-b border-gray-100/80">
-          <span className="text-[14px] font-bold text-gray-800 tracking-tight">{categorie.label}</span>
-        </div>
-
-        {/* Ma boutique CTA — visible dans le panneau Catalogue, contexte le plus pertinent */}
-        {categorie.id === "catalogue" && (
-          <div className="px-3 pt-3 flex-shrink-0">
-            <button
-              type="button"
-              onClick={onBoutique}
-              className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl active:scale-[0.98] transition-all group"
-              style={{
-                background: "linear-gradient(135deg,#1B2A4A 0%,#2c4270 100%)",
-                boxShadow: "0 2px 12px rgba(27,42,74,0.25)",
-              }}
-            >
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.12)" }}>
-                <Store size={15} className="text-white" />
-              </div>
-              <div className="flex-1 min-w-0 text-left">
-                <div className="text-[13px] font-bold text-white leading-tight truncate">{boutiqueNom || "Ma boutique"}</div>
-                <div className="text-[10.5px] text-white/50 leading-none mt-1">Gérer la boutique</div>
-              </div>
-              <ChevronRight size={14} className="text-white/40 group-hover:text-white/80 flex-shrink-0 transition-all group-hover:translate-x-0.5" />
-            </button>
+      {/* Ma boutique CTA */}
+      <div className="px-3.5 pt-3.5 pb-2 flex-shrink-0">
+        <button
+          type="button"
+          onClick={onBoutique}
+          className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl active:scale-[0.98] transition-all group"
+          style={{
+            background: "linear-gradient(135deg,#1B2A4A 0%,#2c4270 100%)",
+            boxShadow: "0 2px 12px rgba(27,42,74,0.25)",
+          }}
+        >
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: "rgba(255,255,255,0.12)" }}
+          >
+            <Store size={15} className="text-white" />
           </div>
-        )}
-
-        <nav className="flex-1 px-3 py-3 overflow-y-auto space-y-0.5" style={{ scrollbarWidth: "none" }}>
-          {categorie.items.map(item => (
-            <NavLink key={item.href} item={item} pathname={pathname} palier={palier} />
-          ))}
-        </nav>
+          <div className="flex-1 min-w-0 text-left">
+            <div className="text-[13px] font-bold text-white leading-tight truncate">
+              {boutiqueNom || "Ma boutique"}
+            </div>
+            <div className="text-[10.5px] text-white/50 leading-none mt-1">Gérer la boutique</div>
+          </div>
+          <ChevronRight
+            size={14}
+            className="text-white/40 group-hover:text-white/80 flex-shrink-0 transition-all group-hover:translate-x-0.5"
+          />
+        </button>
       </div>
-    </div>
+
+      {/* Séparateur */}
+      <div className="mx-4 border-t border-gray-100 mb-1" />
+
+      {/* Nav */}
+      <nav
+        className="flex-1 px-3 pb-3 overflow-y-auto"
+        style={{ scrollbarWidth: "none" }}
+      >
+        <div className="space-y-0.5">
+          {MAIN_NAV.map((entry, i) => {
+            if ("type" in entry) {
+              return (
+                <div key={i} className="pt-4 pb-1.5 px-1 flex items-center gap-2">
+                  <span
+                    className="text-[10.5px] font-bold tracking-[0.15em] uppercase"
+                    style={{ color: "#B0B8C8" }}
+                  >
+                    {entry.text}
+                  </span>
+                  <div className="flex-1 h-px" style={{ backgroundColor: "#F1F4F9" }} />
+                </div>
+              );
+            }
+            return <NavLink key={entry.href} item={entry} pathname={pathname} palier={palier} />;
+          })}
+        </div>
+      </nav>
+
+      {/* Bottom — paramètres */}
+      <div
+        className="flex-shrink-0 px-3.5 py-3"
+        style={{ borderTop: "1px solid #F1F4F9" }}
+      >
+        <Link
+          href="/dashboard/parametres"
+          className={cn(
+            "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group",
+            pathname.startsWith("/dashboard/parametres") ? "bg-[#FFF7ED]" : "hover:bg-gray-50"
+          )}
+        >
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-[13px] font-bold"
+            style={{
+              background: "linear-gradient(135deg,#F5A623,#D4911A)",
+              boxShadow: "0 2px 8px rgba(245,166,35,0.3)",
+            }}
+          >
+            {userInitials || "A"}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[13px] font-semibold text-gray-700 leading-tight">Mon compte</div>
+            <div className="text-[11px] text-gray-400 leading-none mt-1">Paramètres</div>
+          </div>
+          <Settings2 size={14} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
+        </Link>
+      </div>
+    </>
   );
 }
 
@@ -486,7 +434,7 @@ export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier }: Sid
     <aside
       className="flex-shrink-0 h-screen flex flex-col bg-white border-r border-gray-100/80"
       style={{
-        width: mode === "boutique" ? "252px" : "300px",
+        width: "252px",
         boxShadow: "2px 0 20px rgba(0,0,0,0.04)",
         fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif",
       }}
