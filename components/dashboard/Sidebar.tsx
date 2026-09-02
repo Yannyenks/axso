@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -48,6 +48,16 @@ const BOUTIQUE_ROUTES = [
   "/dashboard/connecteurs",
   "/dashboard/feeds",
   "/dashboard/campagnes",
+];
+
+// ─── Routes point de vente (POS) ───────────────────────────────────────────────
+// /dashboard/pos redirige vers /dashboard/logistique?tab=pos — donc le mode
+// POS de la sidebar doit aussi reconnaître ce cas précis (même pathname que
+// les autres onglets logistique, distingué par le paramètre ?tab=).
+const POS_ROUTES = [
+  "/dashboard/pos",
+  "/dashboard/logistique/encaissements",
+  "/dashboard/factures",
 ];
 
 // ─── Navigation principale ────────────────────────────────────────────────────
@@ -103,6 +113,14 @@ const BOUTIQUE_NAV: NavItem[] = [
   { href: "/dashboard/parametres",       label: "Réglages",           Icon: Settings2 },
 ];
 
+// ─── Navigation point de vente ─────────────────────────────────────────────────
+const POS_NAV: NavItem[] = [
+  { href: "/dashboard/logistique?tab=pos",       label: "Caisse POS",          Icon: Monitor },
+  { href: "/dashboard/commandes",                label: "Historique des ventes", Icon: ShoppingCart, badge: true },
+  { href: "/dashboard/logistique/encaissements", label: "Encaissements COD",   Icon: Wallet },
+  { href: "/dashboard/factures",                 label: "Factures",            Icon: FileText },
+];
+
 // ─── Helper active ────────────────────────────────────────────────────────────
 function isActive(item: NavItem, pathname: string) {
   if (item.excludePrefix && pathname.startsWith(item.excludePrefix)) return false;
@@ -118,6 +136,7 @@ function NavLink({
   accent = "#F5A623",
   activeBg = "#FFF7ED",
   activeText = "#92400E",
+  activeOverride,
 }: {
   item: NavItem;
   pathname: string;
@@ -125,9 +144,13 @@ function NavLink({
   accent?: string;
   activeBg?: string;
   activeText?: string;
+  // Pour les items dont l'état actif dépend d'un paramètre de requête (ex:
+  // ?tab=pos) plutôt que du seul pathname — isActive() ne voit jamais la
+  // query string, usePathname() ne la retourne pas.
+  activeOverride?: boolean;
 }) {
   const { openAbonnement } = useAbonnementOverlay();
-  const active = isActive(item, pathname);
+  const active = activeOverride ?? isActive(item, pathname);
   const locked = !!item.requiresPalier && !palierAuMoins(palier ?? "palier0", item.requiresPalier);
 
   const content = (
@@ -208,12 +231,13 @@ function NavLink({
 
 // ─── Sidebar principale ────────────────────────────────────────────────────────
 function MainSidebar({
-  pathname, boutiqueNom, userInitials, onBoutique, palier,
+  pathname, boutiqueNom, userInitials, onBoutique, onPos, palier,
 }: {
   pathname: string;
   boutiqueNom?: string;
   userInitials?: string;
   onBoutique: () => void;
+  onPos: () => void;
   palier?: Palier;
 }) {
   return (
@@ -259,6 +283,36 @@ function MainSidebar({
           <ChevronRight
             size={14}
             className="text-white/40 group-hover:text-white/80 flex-shrink-0 transition-all group-hover:translate-x-0.5"
+          />
+        </button>
+      </div>
+
+      {/* Point de vente CTA — même logique que Ma boutique, en jaune */}
+      <div className="px-3.5 pb-2 flex-shrink-0">
+        <button
+          type="button"
+          onClick={onPos}
+          className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl active:scale-[0.98] transition-all group"
+          style={{
+            background: "linear-gradient(135deg,#F5A623 0%,#D4911A 100%)",
+            boxShadow: "0 2px 12px rgba(245,166,35,0.3)",
+          }}
+        >
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: "rgba(255,255,255,0.18)" }}
+          >
+            <Monitor size={15} className="text-white" />
+          </div>
+          <div className="flex-1 min-w-0 text-left">
+            <div className="text-[13px] font-bold text-white leading-tight truncate">
+              Point de vente
+            </div>
+            <div className="text-[10.5px] text-white/60 leading-none mt-1">Caisse & ventes en boutique</div>
+          </div>
+          <ChevronRight
+            size={14}
+            className="text-white/50 group-hover:text-white/90 flex-shrink-0 transition-all group-hover:translate-x-0.5"
           />
         </button>
       </div>
@@ -421,14 +475,111 @@ function BoutiqueSidebar({
   );
 }
 
+// ─── Sidebar point de vente ─────────────────────────────────────────────────────
+function PosSidebar({
+  pathname, boutiqueNom, onRetour,
+}: {
+  pathname: string;
+  boutiqueNom?: string;
+  onRetour: () => void;
+}) {
+  const searchParams = useSearchParams();
+  const caisseActive = pathname === "/dashboard/logistique" && searchParams.get("tab") === "pos";
+
+  return (
+    <>
+      {/* Retour */}
+      <button
+        type="button"
+        onClick={onRetour}
+        className="h-[60px] w-full flex items-center gap-3 px-5 border-b border-gray-100/80 group transition-all hover:bg-gray-50 flex-shrink-0"
+      >
+        <span className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:bg-gray-200 transition-colors">
+          <ArrowLeft size={14} className="text-gray-500" />
+        </span>
+        <span className="text-[13.5px] font-medium text-gray-500 group-hover:text-gray-800 transition-colors">
+          Retour au dashboard
+        </span>
+      </button>
+
+      {/* Identité module */}
+      <div className="px-4 py-4 flex-shrink-0">
+        <div
+          className="flex items-center gap-3 px-3.5 py-3 rounded-xl"
+          style={{ backgroundColor: "#FFF8EC" }}
+        >
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{
+              background: "linear-gradient(135deg,#F5A623,#D4911A)",
+              boxShadow: "0 2px 10px rgba(245,166,35,0.35)",
+            }}
+          >
+            <Monitor size={18} className="text-white" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[13.5px] font-bold text-gray-800 truncate leading-tight">
+              {boutiqueNom || "Ma boutique"}
+            </div>
+            <div className="text-[11px] font-semibold mt-1" style={{ color: "#D4911A" }}>
+              Module Point de vente
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Séparateur */}
+      <div className="mx-4 border-t border-gray-100 mb-1" />
+
+      {/* Nav POS */}
+      <nav
+        className="flex-1 px-3 py-2 overflow-y-auto space-y-0.5"
+        style={{ scrollbarWidth: "none" }}
+      >
+        {POS_NAV.map(item => (
+          <NavLink
+            key={item.href}
+            item={item}
+            pathname={pathname}
+            accent="#F5A623"
+            activeBg="#FFF7ED"
+            activeText="#92400E"
+            activeOverride={item.href.startsWith("/dashboard/logistique?tab=") ? caisseActive : undefined}
+          />
+        ))}
+      </nav>
+
+      {/* Ouvrir la caisse */}
+      <div className="flex-shrink-0 px-3.5 py-3" style={{ borderTop: "1px solid #F1F4F9" }}>
+        <Link
+          href="/dashboard/logistique?tab=pos"
+          className="flex items-center gap-3 px-3.5 py-3 rounded-xl active:scale-[0.98] transition-all group"
+          style={{
+            background: "linear-gradient(135deg,#F5A623,#D4911A)",
+            boxShadow: "0 2px 12px rgba(245,166,35,0.3)",
+          }}
+        >
+          <Monitor size={15} className="text-white/90 flex-shrink-0" />
+          <span className="text-[13px] font-bold text-white flex-1">Ouvrir la caisse</span>
+          <ChevronRight size={13} className="text-white/50 group-hover:text-white/90 transition-all group-hover:translate-x-0.5" />
+        </Link>
+      </div>
+    </>
+  );
+}
+
 // ─── Export ───────────────────────────────────────────────────────────────────
 export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier }: SidebarProps) {
   const pathname = usePathname();
-  const [mode, setMode] = useState<"main" | "boutique">("main");
+  const searchParams = useSearchParams();
+  const [mode, setMode] = useState<"main" | "boutique" | "pos">("main");
 
   useEffect(() => {
-    setMode(BOUTIQUE_ROUTES.some(r => pathname.startsWith(r)) ? "boutique" : "main");
-  }, [pathname]);
+    const surLogistiquePos = pathname === "/dashboard/logistique" && searchParams.get("tab") === "pos";
+    if (BOUTIQUE_ROUTES.some(r => pathname.startsWith(r))) setMode("boutique");
+    else if (surLogistiquePos || POS_ROUTES.some(r => pathname.startsWith(r))) setMode("pos");
+    else setMode("main");
+  }, [pathname, searchParams]);
 
   return (
     <aside
@@ -446,12 +597,19 @@ export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier }: Sid
           boutiqueSlug={boutiqueSlug}
           onRetour={() => setMode("main")}
         />
+      ) : mode === "pos" ? (
+        <PosSidebar
+          pathname={pathname}
+          boutiqueNom={boutiqueNom}
+          onRetour={() => setMode("main")}
+        />
       ) : (
         <MainSidebar
           pathname={pathname}
           boutiqueNom={boutiqueNom}
           userInitials={userInitials}
           onBoutique={() => setMode("boutique")}
+          onPos={() => setMode("pos")}
           palier={palier}
         />
       )}
