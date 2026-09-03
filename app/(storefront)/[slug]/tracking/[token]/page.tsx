@@ -26,6 +26,7 @@ export default function TrackingPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [liveInfo, setLiveInfo] = useState<{ distanceKm: number | null; etaMin: number | null; speedKmh: number | null }>({ distanceKm: null, etaMin: null, speedKmh: null });
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   async function load() {
@@ -129,14 +130,21 @@ export default function TrackingPage() {
               clientLat={data.latitudeClient ?? null}
               clientLng={data.longitudeClient ?? null}
               livreurNom={data.livreurNom ?? null}
+              onLiveInfo={setLiveInfo}
             />
             {pos?.lat && (
-              <div style={{ position:"absolute", bottom:12, left:12, right:12, background:"rgba(0,0,0,0.75)", backdropFilter:"blur(8px)", borderRadius:12, padding:"8px 14px", display:"flex", alignItems:"center", gap:8 }}>
-                <div style={{ width:8, height:8, borderRadius:"50%", background:"#22c55e", animation:"pulse 1s ease-in-out infinite" }} />
-                <span style={{ fontSize:12, color:"white" }}>
+              <div style={{ position:"absolute", bottom:12, left:12, right:12, background:"rgba(0,0,0,0.75)", backdropFilter:"blur(8px)", borderRadius:12, padding:"8px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, flexWrap:"wrap" }}>
+                <span style={{ fontSize:12, color:"white", display:"flex", alignItems:"center", gap:8 }}>
+                  <span style={{ width:8, height:8, borderRadius:"50%", background:"#22c55e", animation:"pulse 1s ease-in-out infinite", flexShrink:0 }} />
                   {data.livreurNom ? `${data.livreurNom} — ` : "Livreur — "}
                   Mis à jour {pos.updatedAt ? new Date(pos.updatedAt).toLocaleTimeString("fr", { hour:"2-digit", minute:"2-digit" }) : "récemment"}
                 </span>
+                {liveInfo.distanceKm != null && (
+                  <span style={{ fontSize:12, fontWeight:700, color:"#F5A623", whiteSpace:"nowrap" }}>
+                    {liveInfo.distanceKm < 1 ? `${Math.round(liveInfo.distanceKm * 1000)} m` : `${liveInfo.distanceKm} km`}
+                    {liveInfo.etaMin != null && ` · ≈ ${liveInfo.etaMin} min`}
+                  </span>
+                )}
               </div>
             )}
           </div>
