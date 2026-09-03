@@ -32,6 +32,7 @@ export const schemaProduit = z.object({
   actif: z.boolean().default(true),
   featured: z.boolean().default(false),
   poids: z.number().positive().optional(),
+  cout: z.number().min(0).optional(), // prix d'achat — sert au calcul de rentabilité (POS)
   metaTitle: z.string().max(60).optional(),
   metaDesc: z.string().max(155).optional(),
   // Type de produit

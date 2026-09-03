@@ -78,19 +78,35 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const parProduit = [...parProduitMap.values()]
-      .map(p => ({
-        ...p,
-        revenu: Math.round(p.revenu * 100) / 100,
-        cout: Math.round(p.cout * 100) / 100,
-        marge: Math.round((p.revenu - p.cout) * 100) / 100,
-        margePct: p.revenu > 0 ? Math.round(((p.revenu - p.cout) / p.revenu) * 1000) / 10 : 0,
-      }))
-      .sort((a, b) => b.marge - a.marge);
-
     const chargesTotal = charges.reduce((s, c) => s + c.montant, 0);
     const parCategorieCharge: Record<string, number> = {};
     for (const c of charges) parCategorieCharge[c.categorie] = Math.round(((parCategorieCharge[c.categorie] || 0) + c.montant) * 100) / 100;
+
+    // Bénéfice net par produit = marge brute − quote-part des charges
+    // d'exploitation, répartie au prorata du revenu de chaque produit (une
+    // charge fixe comme le loyer ne "appartient" à aucun produit en
+    // particulier — l'allocation proportionnelle est la convention standard
+    // pour donner un résultat net exploitable produit par produit).
+    const parProduit = [...parProduitMap.values()]
+      .map(p => {
+        const beneficeBrut = p.revenu - p.cout;
+        const quotePartCharges = revenuTotal > 0 ? chargesTotal * (p.revenu / revenuTotal) : 0;
+        const beneficeNet = beneficeBrut - quotePartCharges;
+        return {
+          ...p,
+          revenu: Math.round(p.revenu * 100) / 100,
+          cout: Math.round(p.cout * 100) / 100,
+          beneficeBrut: Math.round(beneficeBrut * 100) / 100,
+          beneficeBrutPct: p.revenu > 0 ? Math.round((beneficeBrut / p.revenu) * 1000) / 10 : 0,
+          quotePartCharges: Math.round(quotePartCharges * 100) / 100,
+          beneficeNet: Math.round(beneficeNet * 100) / 100,
+          beneficeNetPct: p.revenu > 0 ? Math.round((beneficeNet / p.revenu) * 1000) / 10 : 0,
+          // alias legacy pour compatibilité — même valeur que beneficeBrut
+          marge: Math.round(beneficeBrut * 100) / 100,
+          margePct: p.revenu > 0 ? Math.round((beneficeBrut / p.revenu) * 1000) / 10 : 0,
+        };
+      })
+      .sort((a, b) => b.beneficeNet - a.beneficeNet);
 
     const entreesTotales = ventesCumulTotal._sum.montantTotal ?? 0;
     const chargesTotalesCumul = chargesCumulTotal._sum.montant ?? 0;
@@ -100,10 +116,15 @@ export async function GET(req: NextRequest) {
       resume: {
         revenu: Math.round(revenuTotal * 100) / 100,
         coutMarchandises: Math.round(coutTotal * 100) / 100,
-        margeCommerciale: Math.round((revenuTotal - coutTotal) * 100) / 100,
+        // Bénéfice brut = revenu − coût des marchandises vendues (avant charges fixes)
+        beneficeBrut: Math.round((revenuTotal - coutTotal) * 100) / 100,
         chargesExploitation: Math.round(chargesTotal * 100) / 100,
-        resultatNet: Math.round((revenuTotal - coutTotal - chargesTotal) * 100) / 100,
+        // Bénéfice net = bénéfice brut − charges d'exploitation (résultat réel)
+        beneficeNet: Math.round((revenuTotal - coutTotal - chargesTotal) * 100) / 100,
         nombreVentes: ventes.length,
+        // alias legacy pour compatibilité
+        margeCommerciale: Math.round((revenuTotal - coutTotal) * 100) / 100,
+        resultatNet: Math.round((revenuTotal - coutTotal - chargesTotal) * 100) / 100,
       },
       parProduit,
       parCategorieCharge,

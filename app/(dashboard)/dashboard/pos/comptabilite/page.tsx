@@ -8,7 +8,9 @@ import {
 
 interface ProduitRentabilite {
   produitId: string; nom: string; image: string | null;
-  quantiteVendue: number; revenu: number; cout: number; marge: number; margePct: number;
+  quantiteVendue: number; revenu: number; cout: number;
+  beneficeBrut: number; beneficeBrutPct: number;
+  quotePartCharges: number; beneficeNet: number; beneficeNetPct: number;
 }
 
 const PERIODES = [
@@ -60,7 +62,7 @@ export default function ComptabilitePage() {
   }
 
   const r = data.resume;
-  const resultatPositif = r.resultatNet >= 0;
+  const resultatPositif = r.beneficeNet >= 0;
 
   return (
     <div className="p-5 max-w-5xl mx-auto space-y-5" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
@@ -79,23 +81,23 @@ export default function ComptabilitePage() {
         </div>
       </div>
 
-      {/* Résultat net — carte hero */}
+      {/* Bénéfice net — carte hero */}
       <div className="rounded-2xl p-6" style={{ background: resultatPositif ? "linear-gradient(135deg,#10b981,#059669)" : "linear-gradient(135deg,#ef4444,#dc2626)" }}>
-        <p className="text-[11px] font-semibold text-white/70 uppercase tracking-widest mb-1">Résultat net de la période</p>
+        <p className="text-[11px] font-semibold text-white/70 uppercase tracking-widest mb-1">Bénéfice net de la période</p>
         <p className="text-[32px] font-black text-white flex items-center gap-2">
           {resultatPositif ? <TrendingUp size={26} /> : <TrendingDown size={26} />}
-          {r.resultatNet.toLocaleString()} XAF
+          {r.beneficeNet.toLocaleString()} XAF
         </p>
         <p className="text-[12px] text-white/70 mt-1">
-          {r.revenu.toLocaleString()} XAF de revenu − {r.coutMarchandises.toLocaleString()} XAF de coût marchandises − {r.chargesExploitation.toLocaleString()} XAF de charges
+          {r.revenu.toLocaleString()} XAF de revenu − {r.coutMarchandises.toLocaleString()} XAF de coût d'achat − {r.chargesExploitation.toLocaleString()} XAF de charges d'exploitation
         </p>
       </div>
 
       {/* Résumé */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <CardResume label="Chiffre d'affaires" value={`${r.revenu.toLocaleString()} XAF`} Icon={Wallet} color="#1B2A4A" sub={`${r.nombreVentes} vente${r.nombreVentes > 1 ? "s" : ""}`} />
-        <CardResume label="Coût marchandises" value={`${r.coutMarchandises.toLocaleString()} XAF`} Icon={Package} color="#8b5cf6" />
-        <CardResume label="Marge commerciale" value={`${r.margeCommerciale.toLocaleString()} XAF`} Icon={ShoppingBag} color="#10b981" />
+        <CardResume label="Coût d'achat marchandises" value={`${r.coutMarchandises.toLocaleString()} XAF`} Icon={Package} color="#8b5cf6" />
+        <CardResume label="Bénéfice brut" value={`${r.beneficeBrut.toLocaleString()} XAF`} Icon={ShoppingBag} color="#10b981" sub="Avant charges d'exploitation" />
         <CardResume label="Charges d'exploitation" value={`${r.chargesExploitation.toLocaleString()} XAF`} Icon={TrendingDown} color="#ef4444" />
       </div>
 
@@ -120,21 +122,28 @@ export default function ComptabilitePage() {
 
       {/* Rentabilité par produit */}
       <div>
-        <p className="text-[12.5px] font-bold text-[#111] mb-2">Rentabilité par produit</p>
+        <p className="text-[12.5px] font-bold text-[#111] mb-1">Rentabilité par produit</p>
+        <p className="text-[11px] text-gray-400 mb-2">Bénéfice net = bénéfice brut − quote-part des charges d'exploitation, répartie au prorata du revenu de chaque produit</p>
         {data.parProduit.length === 0 ? (
           <div className="py-8 text-center text-sm text-gray-400 bg-white border border-dashed border-gray-200 rounded-2xl">Aucune vente sur cette période</div>
         ) : (
           <div className="bg-white border border-gray-100 rounded-2xl divide-y divide-gray-50">
             {data.parProduit.map((p: ProduitRentabilite) => (
-              <div key={p.produitId} className="flex items-center gap-3 p-3.5">
-                {p.image ? <img src={p.image} className="w-9 h-9 rounded-xl object-cover flex-shrink-0" /> : <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0"><Package size={14} className="text-gray-300" /></div>}
-                <div className="flex-1 min-w-0">
-                  <p className="text-[12.5px] font-semibold text-[#111] truncate">{p.nom}</p>
-                  <p className="text-[10.5px] text-gray-400">{p.quantiteVendue} vendu(s) · {p.revenu.toLocaleString()} XAF de revenu</p>
+              <div key={p.produitId} className="p-3.5">
+                <div className="flex items-center gap-3">
+                  {p.image ? <img src={p.image} className="w-9 h-9 rounded-xl object-cover flex-shrink-0" /> : <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0"><Package size={14} className="text-gray-300" /></div>}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12.5px] font-semibold text-[#111] truncate">{p.nom}</p>
+                    <p className="text-[10.5px] text-gray-400">{p.quantiteVendue} vendu(s) · {p.revenu.toLocaleString()} XAF de revenu · {p.cout.toLocaleString()} XAF de coût d'achat</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-[13px] font-bold" style={{ color: p.beneficeNet >= 0 ? "#10b981" : "#ef4444" }}>{p.beneficeNet.toLocaleString()} XAF</p>
+                    <p className="text-[10px] text-gray-400">{p.beneficeNetPct}% net</p>
+                  </div>
                 </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="text-[13px] font-bold" style={{ color: p.marge >= 0 ? "#10b981" : "#ef4444" }}>{p.marge.toLocaleString()} XAF</p>
-                  <p className="text-[10px] text-gray-400">{p.margePct}% marge</p>
+                <div className="flex items-center gap-4 mt-2 pl-12 text-[10.5px]">
+                  <span className="text-gray-400">Brut : <strong style={{ color: p.beneficeBrut >= 0 ? "#10b981" : "#ef4444" }}>{p.beneficeBrut.toLocaleString()} XAF</strong> ({p.beneficeBrutPct}%)</span>
+                  <span className="text-gray-400">Charges allouées : <strong className="text-red-400">-{p.quotePartCharges.toLocaleString()} XAF</strong></span>
                 </div>
               </div>
             ))}

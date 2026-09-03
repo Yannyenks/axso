@@ -37,7 +37,7 @@ function formatTaille(octets: number) {
 
 type FormState = {
   nom: string; slug: string; description: string;
-  prix: string; prixCompare: string; stock: string; sku: string;
+  prix: string; prixCompare: string; cout: string; stock: string; sku: string;
   categorie: string; tags: string[]; images: string[]; videos: string[];
   actif: boolean; featured: boolean; poids: string;
   metaTitle: string; metaDesc: string; ogImage: string;
@@ -74,7 +74,7 @@ export default function EditProduitPage() {
   const digitalFileRef = useRef<HTMLInputElement>(null);
 
   const [form, setFormState] = useState<FormState>({
-    nom: "", slug: "", description: "", prix: "", prixCompare: "", stock: "0", sku: "",
+    nom: "", slug: "", description: "", prix: "", prixCompare: "", cout: "", stock: "0", sku: "",
     categorie: "", tags: [], images: [], videos: [],
     actif: true, featured: false, poids: "",
     metaTitle: "", metaDesc: "", ogImage: "",
@@ -103,6 +103,7 @@ export default function EditProduitPage() {
           description: p.description ?? "",
           prix: p.prix?.toString() ?? "",
           prixCompare: p.prixCompare?.toString() ?? "",
+          cout: p.cout?.toString() ?? "",
           stock: p.stock?.toString() ?? "0",
           sku: p.sku ?? "",
           categorie: p.categorie ?? "",
@@ -193,6 +194,8 @@ export default function EditProduitPage() {
 
   const marge = form.prixFournisseur && form.prix
     ? Math.round((1 - parseFloat(form.prixFournisseur) / parseFloat(form.prix)) * 100) : null;
+  const margeCout = form.cout && form.prix
+    ? Math.round((1 - parseFloat(form.cout) / parseFloat(form.prix)) * 100) : null;
 
   async function uploadMedia(file: File, type: "image" | "video") {
     const fd = new FormData(); fd.append("file", file);
@@ -267,7 +270,10 @@ export default function EditProduitPage() {
         affiliationActive: form.affiliationActive,
         tauxCommissionAff: form.affiliationActive && form.tauxCommissionAff ? parseFloat(form.tauxCommissionAff) / 100 : null,
       };
-      if (form.type === "physique") payload.poids = form.poids ? parseFloat(form.poids) : null;
+      if (form.type === "physique") {
+        payload.poids = form.poids ? parseFloat(form.poids) : null;
+        payload.cout = form.cout ? parseFloat(form.cout) : null;
+      }
       if (form.type === "digital") {
         payload.fichierUrl = form.fichierUrl || null;
         payload.fichierNom = form.fichierNom || null;
@@ -444,6 +450,13 @@ export default function EditProduitPage() {
                   </div>
                 </>
               )}
+              {form.type === "physique" && (
+                <div>
+                  <label className="ax-label block mb-1.5">Prix d'achat (coût)</label>
+                  <input type="number" value={form.cout} onChange={e => set("cout", e.target.value)} min="0" placeholder="0" className={inputClass} />
+                  <p className="text-[11px] text-gray-400 mt-1">Utilisé pour calculer la vraie rentabilité (marge, bénéfices) dans le module Point de vente</p>
+                </div>
+              )}
             </div>
             {form.type === "digital" && (
               <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-2.5 text-purple-700 text-xs flex items-center gap-2">
@@ -453,6 +466,11 @@ export default function EditProduitPage() {
             {form.type === "dropshipping" && marge !== null && (
               <div className={`rounded-xl px-4 py-2.5 text-xs flex items-center gap-2 ${marge >= 30 ? "bg-green-50 border border-green-200 text-green-700" : marge >= 10 ? "bg-yellow-50 border border-yellow-200 text-yellow-700" : "bg-red-50 border border-red-200 text-red-600"}`}>
                 <BarChart2 size={12} /> Marge : {marge}% {marge >= 30 ? "✓ Bonne marge" : marge >= 10 ? "⚠ Marge faible" : "✗ Marge insuffisante"}
+              </div>
+            )}
+            {form.type === "physique" && margeCout !== null && (
+              <div className={`rounded-xl px-4 py-2.5 text-xs flex items-center gap-2 ${margeCout >= 30 ? "bg-green-50 border border-green-200 text-green-700" : margeCout >= 10 ? "bg-yellow-50 border border-yellow-200 text-yellow-700" : "bg-red-50 border border-red-200 text-red-600"}`}>
+                <BarChart2 size={12} /> Marge brute : {margeCout}% {margeCout >= 30 ? "✓ Bonne marge" : margeCout >= 10 ? "⚠ Marge faible" : "✗ Marge insuffisante"}
               </div>
             )}
           </div>
