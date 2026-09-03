@@ -11,6 +11,7 @@ import {
   Settings2, ExternalLink, ArrowLeft, UserCheck,
   LayoutGrid, Plug, Link2, Bell, Store, ChevronRight,
   RotateCcw, FileText, Lock, Target, FileBarChart, Sparkles,
+  Boxes, Receipt, Calculator,
 } from "lucide-react";
 import { useAbonnementOverlay } from "@/components/dashboard/AbonnementOverlayProvider";
 import { palierAuMoins, type Palier } from "@/lib/plans";
@@ -117,6 +118,10 @@ const BOUTIQUE_NAV: NavItem[] = [
 const POS_NAV: NavItem[] = [
   { href: "/dashboard/logistique?tab=pos",       label: "Caisse POS",          Icon: Monitor },
   { href: "/dashboard/commandes",                label: "Historique des ventes", Icon: ShoppingCart, badge: true },
+  { href: "/dashboard/pos/stock",                label: "Gestion des stocks",  Icon: Boxes },
+  { href: "/dashboard/pos/tracabilite",          label: "Traçabilité",         Icon: Package },
+  { href: "/dashboard/pos/comptabilite",         label: "Comptabilité",        Icon: Calculator },
+  { href: "/dashboard/pos/charges",              label: "Charges d'exploitation", Icon: Receipt },
   { href: "/dashboard/logistique/encaissements", label: "Encaissements COD",   Icon: Wallet },
   { href: "/dashboard/factures",                 label: "Factures",            Icon: FileText },
 ];

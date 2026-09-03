@@ -63,12 +63,48 @@ export async function POST(req: Request) {
     },
   });
 
-  // Deduct stock
+  // Déduit le stock + journalise chaque ligne dans StockMouvement (traçabilité)
+  // — consomme en FIFO le lot actif le plus ancien du produit s'il en existe,
+  // pour pouvoir remonter de toute vente jusqu'à son lot d'origine.
   for (const item of items) {
-    await prisma.produit.update({
-      where: { id: item.produitId },
-      data: { stock: { decrement: item.quantite }, ventes: { increment: item.quantite } },
-    }).catch(() => null);
+    try {
+      const produit = await prisma.produit.findUnique({ where: { id: item.produitId }, select: { stock: true } });
+      if (!produit) continue;
+      const stockAvant = produit.stock;
+      const stockApres = Math.max(0, stockAvant - item.quantite);
+
+      const lot = await prisma.lotTracabilite.findFirst({
+        where: { tenantId, produitId: item.produitId, statut: "actif", quantiteRestante: { gt: 0 } },
+        orderBy: { dateReception: "asc" },
+      });
+
+      await prisma.$transaction([
+        prisma.produit.update({ where: { id: item.produitId }, data: { stock: stockApres, ventes: { increment: item.quantite } } }),
+        prisma.stockMouvement.create({
+          data: {
+            tenantId, produitId: item.produitId, type: "vente",
+            quantite: item.quantite, stockAvant, stockApres,
+            motif: `Vente caisse #${commande.numero}`, lotId: lot?.id ?? null,
+            commandeId: commande.id, creePar: session.user.id,
+          },
+        }),
+        ...(lot
+          ? [prisma.lotTracabilite.update({
+              where: { id: lot.id },
+              data: { quantiteRestante: Math.max(0, lot.quantiteRestante - item.quantite) },
+            })]
+          : []),
+      ]);
+
+      if (lot) {
+        await prisma.ligneCommande.updateMany({
+          where: { commandeId: commande.id, produitId: item.produitId },
+          data: { lotId: lot.id },
+        });
+      }
+    } catch {
+      // Ne bloque jamais la vente déjà enregistrée pour un souci de journalisation
+    }
   }
 
   // Generate invoice automatically for POS sales
