@@ -1,5 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Truck, ToggleRight, KeyRound, Settings } from "lucide-react";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const TRANSPORTEURS_TUTORIAL_STEPS = [
+  { Icon: Truck,        titre: "Tes partenaires de livraison", description: "Chaque transporteur est listé avec ses zones de couverture et son logo." },
+  { Icon: ToggleRight,  titre: "Active un transporteur",       description: "Bascule l'interrupteur pour le rendre disponible lors de la création d'une livraison." },
+  { Icon: KeyRound,     titre: "Configure la clé API",         description: "Ajoute la clé API du transporteur pour synchroniser le suivi des colis automatiquement." },
+  { Icon: Settings,     titre: "Fixe un tarif",                description: "Renseigne un tarif fixe optionnel pour standardiser le coût de livraison de ce partenaire." },
+];
 
 type Transporteur = {
   code: string; nom: string; zones: string[]; logo: string;
@@ -37,8 +46,12 @@ export default function TransporteursPage() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-5" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
+      <ModuleTutorial moduleKey="transporteurs" titre="Transporteurs" sousTitre="Partenaires de livraison" steps={TRANSPORTEURS_TUTORIAL_STEPS} />
       <div>
-        <h1 className="text-[18px] font-bold text-[#111]">Transporteurs</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-[18px] font-bold text-[#111]">Transporteurs</h1>
+          <BoutonRevoirTutoriel moduleKey="transporteurs" />
+        </div>
         <p className="text-[12px] text-gray-500">Activez et configurez vos partenaires de livraison</p>
       </div>
 

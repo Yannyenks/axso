@@ -2,6 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { RefreshCw, CheckCircle, XCircle, Clock, Plus, ChevronDown } from "lucide-react";
+import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
+
+const RETOURS_TUTORIAL_STEPS = [
+  { Icon: Plus,         titre: "Crée un retour",       description: "Renseigne l'ID commande, la raison et le type de résolution (remboursement, échange, avoir)." },
+  { Icon: Clock,        titre: "Suis la progression",  description: "Fais passer un retour de \"Ouvert\" à \"En cours\" pendant qu'il est traité." },
+  { Icon: CheckCircle,  titre: "Accepte ou rejette",   description: "Décide du sort du retour : accepter, rejeter ou clore une fois la décision prise." },
+  { Icon: ChevronDown,  titre: "Consulte les détails", description: "Clique sur une ligne pour voir la description, l'email du client et les notes internes." },
+];
 
 interface Retour {
   id: string;
@@ -99,6 +107,7 @@ export function RetoursPanel() {
 
   return (
     <div className="space-y-5">
+      <ModuleTutorial moduleKey="logistique-retours" titre="Retours" sousTitre="Gestion des retours & RMA" steps={RETOURS_TUTORIAL_STEPS} />
       <div className="flex items-center justify-end">
         <button
           onClick={() => setShowForm(true)}

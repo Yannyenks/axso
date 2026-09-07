@@ -6,6 +6,14 @@ import {
   XCircle, TrendingUp, ShieldCheck, Loader2, RefreshCw,
   Smartphone, Building2, AlertCircle, Info,
 } from "lucide-react";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const WALLET_TUTORIAL_STEPS = [
+  { Icon: ShieldCheck,     titre: "Séquestre 48h",   description: "Chaque paiement client est placé en séquestre 48h (protection acheteur) avant d'être crédité sur ton solde disponible." },
+  { Icon: ArrowUpFromLine, titre: "Retirer tes fonds", description: "Clique \"Retirer les fonds\" dès que ton solde le permet (minimum 1 000 XAF) — par Mobile Money ou virement bancaire." },
+  { Icon: TrendingUp,      titre: "Suivi complet",     description: "Total reçu, total retiré, commissions Axso et montant en séquestre — tout est visible en un coup d'œil." },
+  { Icon: Clock,           titre: "Historique détaillé", description: "Bascule entre l'onglet Transactions et Retraits pour suivre chaque mouvement et son statut (en attente, en cours, complété)." },
+];
 
 interface Transaction {
   id: string; type: string; montant: number; devise: string;
@@ -128,11 +136,15 @@ export default function WalletPage() {
   return (
     <div className="space-y-5 max-w-5xl"
       style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+      <ModuleTutorial moduleKey="wallet" titre="Wallet" sousTitre="Ton solde et tes mouvements" steps={WALLET_TUTORIAL_STEPS} />
 
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4 pt-1">
         <div>
-          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Wallet Axso</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Wallet Axso</h1>
+            <BoutonRevoirTutoriel moduleKey="wallet" />
+          </div>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">Votre compte de paiement sécurisé</p>
         </div>
         <button onClick={charger}

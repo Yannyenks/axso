@@ -8,6 +8,14 @@ import {
 } from "lucide-react";
 import { formatMontant } from "@/lib/utils";
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const PRODUITS_TUTORIAL_STEPS = [
+  { Icon: Plus,          titre: "Ajoute un produit",       description: "Clique sur \"Nouveau produit\" pour créer une fiche avec photos, prix, variantes et stock." },
+  { Icon: Search,        titre: "Recherche & filtres",      description: "Retrouve un produit par nom, ou filtre par Actifs, Inactifs, Stock faible ou Épuisés." },
+  { Icon: AlertTriangle, titre: "Surveille ton stock",      description: "Les badges \"Stock faible\" et \"Épuisé\" apparaissent directement sur chaque fiche produit dès que le seuil de 5 unités est atteint." },
+  { Icon: TrendingUp,    titre: "Ventes & avis en un clin d'œil", description: "Le nombre de ventes et la note des avis clients s'affichent sous chaque produit pour repérer tes best-sellers." },
+];
 
 const FILTER_TABS = [
   { key: "all",      label: "Tous"         },
@@ -68,12 +76,14 @@ export default async function ProduitsPage({
   return (
     <div className="space-y-5"
       style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+      <ModuleTutorial moduleKey="produits" titre="Produits" sousTitre="Ton catalogue" steps={PRODUITS_TUTORIAL_STEPS} />
 
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4 flex-wrap pt-1">
         <div>
           <div className="flex items-center gap-2.5 mb-1">
             <h1 className="text-[20px] font-bold text-[#111111] tracking-tight inline-flex items-center gap-2">Produits <AgentActiveIndicator label="Agent Produits actif" /></h1>
+            <BoutonRevoirTutoriel moduleKey="produits" />
             <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
               {tous.length}
             </span>

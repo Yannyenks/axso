@@ -7,6 +7,14 @@ import {
   Users, XCircle,
 } from "lucide-react";
 import { PrintButton } from "@/components/dashboard/PrintButton";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const RAPPORTS_TUTORIAL_STEPS = [
+  { Icon: FileBarChart, titre: "Rapport de productivité",  description: "Revenus, commandes traitées, panier moyen et nouveaux clients, comparés à la période précédente." },
+  { Icon: Wallet,       titre: "Choisis ta période",        description: "Bascule entre 7, 30 et 90 jours en haut à droite pour ajuster la fenêtre d'analyse et sa comparaison." },
+  { Icon: ShoppingCart, titre: "Statuts & top produits",     description: "Visualise la répartition de tes commandes par statut, ton taux d'annulation et le classement de tes produits les plus vendus." },
+  { Icon: TrendingUp,   titre: "Exporte en PDF",             description: "Clique sur le bouton d'impression pour générer une version imprimable de ton rapport, prête à partager." },
+];
 
 const PERIODES = [
   { v: "7", l: "7 jours" },
@@ -107,11 +115,13 @@ export default async function RapportsPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="space-y-6" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+      <ModuleTutorial moduleKey="rapports" titre="Rapports" sousTitre="Exports & synthèses" steps={RAPPORTS_TUTORIAL_STEPS} />
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 print:block">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <FileBarChart size={18} className="text-[#F5A623]" />
             <h1 className="text-2xl font-bold text-gray-900">Rapport de productivité</h1>
+            <span className="print:hidden"><BoutonRevoirTutoriel moduleKey="rapports" /></span>
           </div>
           <p className="text-gray-400 text-sm">{tenant?.nomBoutique} · {jours} derniers jours · comparé aux {jours} jours précédents</p>
         </div>

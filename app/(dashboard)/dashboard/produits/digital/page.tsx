@@ -9,6 +9,14 @@ import {
   FileDown, Key, ChevronRight, Sparkles,
 } from "lucide-react";
 import { formatMontant, formatDate } from "@/lib/utils";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const DIGITAL_TUTORIAL_STEPS = [
+  { Icon: Package,    titre: "4 types de produits digitaux", description: "Fichier téléchargeable, licence à clés, bundle ou formation — clique \"Nouveau produit digital\" pour créer le tien." },
+  { Icon: TrendingUp, titre: "Suivi en un coup d'œil",         description: "Téléchargements, revenu total, licences actives et nombre de produits — tes stats clés tout en haut de la page." },
+  { Icon: Search,     titre: "Recherche & filtres",             description: "Filtre par type ou statut, ou cherche un produit par nom. Les pastilles en dessous affichent le nombre de produits par type." },
+  { Icon: Users,      titre: "Clients & Liens",                 description: "Depuis chaque produit, ouvre l'onglet \"Clients & Liens\" pour renvoyer un lien de téléchargement ou révoquer une clé de licence." },
+];
 
 // ─── Nouveau système : types digitaux avancés ─────────────────────────────────
 
@@ -812,11 +820,13 @@ export default function DigitalProduitsPage() {
 
   return (
     <div className="space-y-6">
+      <ModuleTutorial moduleKey="produits-digital" titre="Produits digitaux" sousTitre="Fichiers, formations, licences" steps={DIGITAL_TUTORIAL_STEPS} />
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <div className="flex items-center gap-3 mb-1">
             <h1 className="text-2xl font-bold text-[#111111] font-poppins">Produits Digitaux</h1>
+            <BoutonRevoirTutoriel moduleKey="produits-digital" />
             {stats && (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F4F4F4] text-[#717171] border border-[#E8E8E8]">
                 {stats.totalProduits} au total

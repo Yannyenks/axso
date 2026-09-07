@@ -2,6 +2,13 @@
 import { useEffect, useState } from "react";
 import { Copy, Check, ExternalLink, Package, RefreshCw, Info, Zap, Search, Globe, Music4, CheckCircle, ClipboardList, Gift } from "lucide-react";
 import { toast } from "sonner";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const FEEDS_TUTORIAL_STEPS = [
+  { Icon: Search,       titre: "Google Shopping gratuit", description: "Soumettez votre flux XML dans Google Merchant Center pour apparaître gratuitement dans Google Shopping et Google Images." },
+  { Icon: Globe,        titre: "Meta & TikTok Catalog",     description: "Un flux CSV pour chaque plateforme, à coller dans Meta Business Suite ou TikTok for Business pour lancer des Dynamic Ads." },
+  { Icon: Copy,         titre: "Copiez l'URL du flux",       description: "Chaque plateforme a sa propre URL, générée automatiquement à partir de votre catalogue. Copiez-collez, c'est tout." },
+];
 
 const PLATEFORMES_FEED = [
   {
@@ -93,13 +100,17 @@ export default function FeedsPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
+      <ModuleTutorial moduleKey="feeds" titre="Flux produits" sousTitre="Diffuse ton catalogue ailleurs" steps={FEEDS_TUTORIAL_STEPS} />
       {/* Header */}
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
           <Package size={22} className="text-white" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 font-poppins">Flux Produits (Feeds)</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900 font-poppins">Flux Produits (Feeds)</h1>
+            <BoutonRevoirTutoriel moduleKey="feeds" />
+          </div>
           <p className="text-gray-400 text-sm">Synchronisez votre catalogue sur Google, Meta et TikTok automatiquement</p>
         </div>
       </div>

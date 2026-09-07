@@ -6,7 +6,15 @@ import {
   Clock, CheckCircle, Truck, TrendingUp, Package, ChevronRight, ArrowUpRight,
 } from "lucide-react";
 import { CommandesExport } from "@/components/dashboard/CommandesExport";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { formatMontant, dateRelative } from "@/lib/utils";
+
+const COMMANDES_TUTORIAL_STEPS = [
+  { Icon: Package,      titre: "Toutes tes commandes",     description: "Retrouve chaque commande passée par tes clients, avec le nombre d'articles, le montant et la date, triées de la plus récente à la plus ancienne." },
+  { Icon: Clock,        titre: "Filtre par statut",        description: "Utilise les onglets En attente, Confirmée, Expédiée, Livrée ou Annulée pour te concentrer sur ce qui doit être traité." },
+  { Icon: Truck,        titre: "Suis chaque livraison",    description: "Clique sur une commande pour voir son détail complet et faire avancer son statut jusqu'à la livraison." },
+  { Icon: TrendingUp,   titre: "CA du mois en direct",      description: "Le chiffre d'affaires du mois, les commandes en attente, expédiées et livrées sont résumés en haut de page." },
+];
 
 const STATUTS: Record<string, { label: string; bg: string; text: string; dot: string; border: string }> = {
   en_attente:     { label: "En attente",     bg: "#FFFBEB", text: "#B45309", dot: "#F59E0B", border: "#FDE68A" },
@@ -122,12 +130,14 @@ export default async function CommandesPage({
   return (
     <div className="space-y-5"
       style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+      <ModuleTutorial moduleKey="commandes" titre="Commandes" sousTitre="Suivi et gestion des ventes" steps={COMMANDES_TUTORIAL_STEPS} />
 
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4 flex-wrap pt-1">
         <div>
           <div className="flex items-center gap-2.5 mb-1">
             <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Commandes</h1>
+            <BoutonRevoirTutoriel moduleKey="commandes" />
             <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
               {toutes.length}
             </span>

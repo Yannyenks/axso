@@ -1,6 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Plus, Trash2, Eye, MousePointer, Megaphone, Zap, Mail, MessageSquare, Phone, Trophy, ShoppingCart, Smile, Package, Gift, Clock, Sparkles } from "lucide-react";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const CAMPAGNES_TUTORIAL_STEPS = [
+  { Icon: Megaphone,   titre: "Créez des popups",              description: "Popup centré, bandeau ou slide-in : affichez une offre au bon moment (délai, exit intent, scroll, 1ère visite)." },
+  { Icon: ShoppingCart, titre: "Automatisez vos relances",       description: "Panier abandonné, bienvenue, après achat, anniversaire, client inactif — un message envoyé automatiquement par email, SMS ou WhatsApp." },
+  { Icon: Trophy,       titre: "Débloquez des badges",           description: "Gagnez des badges au fil de vos performances pour suivre votre progression de marchand." },
+];
 
 const TABS = [
   { id: "popups", label: "Popups" },
@@ -269,8 +276,12 @@ export default function CampagnesPage() {
 
   return (
     <div className="p-5 max-w-4xl mx-auto space-y-5" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
+      <ModuleTutorial moduleKey="campagnes" titre="Campagnes" sousTitre="Notifications & relances" steps={CAMPAGNES_TUTORIAL_STEPS} />
       <div>
-        <h1 className="text-[18px] font-bold text-[#111]">Campagnes</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-[18px] font-bold text-[#111]">Campagnes</h1>
+          <BoutonRevoirTutoriel moduleKey="campagnes" />
+        </div>
         <p className="text-[12px] text-gray-500">Popups, workflows automatisés et badges marchands</p>
       </div>
 

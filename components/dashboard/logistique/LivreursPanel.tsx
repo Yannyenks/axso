@@ -3,6 +3,14 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Truck, Plus, Phone, MapPin, Loader2, Globe } from "lucide-react";
 import { LiveFleetMap } from "@/components/dashboard/logistique/LiveFleetMap";
+import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
+
+const LIVREURS_TUTORIAL_STEPS = [
+  { Icon: Plus,   titre: "Crée un compte livreur",         description: "Ajoute un livreur à ton équipe avec nom, téléphone, véhicule et zone de couverture." },
+  { Icon: Globe,  titre: "Livreurs de la plateforme",       description: "Bascule sur l'onglet Plateforme pour voir les livreurs indépendants disponibles à assigner." },
+  { Icon: MapPin, titre: "Suis la flotte en direct",        description: "La carte en haut de page affiche la position en temps réel de tes livreurs actifs." },
+  { Icon: Truck,  titre: "Disponibilité en un coup d'œil",  description: "Le point vert indique qu'un livreur est disponible pour prendre une nouvelle livraison." },
+];
 
 type Livreur = {
   id: string;
@@ -71,6 +79,7 @@ export function LivreursPanel() {
 
   return (
     <div className="space-y-5">
+      <ModuleTutorial moduleKey="logistique-livreurs" titre="Livreurs" sousTitre="Ta flotte de livraison" steps={LIVREURS_TUTORIAL_STEPS} />
       <div className="flex items-center justify-end">
         <button
           onClick={() => setShowForm(!showForm)}

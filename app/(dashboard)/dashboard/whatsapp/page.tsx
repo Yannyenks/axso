@@ -10,6 +10,14 @@ import {
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { UpgradeGate } from "@/components/dashboard/UpgradeGate";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const WHATSAPP_TUTORIAL_STEPS = [
+  { Icon: Settings,      titre: "Connecte ton WhatsApp Business", description: "Clique sur l'icône réglages en haut de la liste pour connecter WhatsApp — via Genuka (simple) ou l'API officielle Meta." },
+  { Icon: MessageCircle, titre: "Toutes tes conversations",       description: "Retrouve tous tes contacts clients, avec badge de messages non lus et mise à jour automatique toutes les 15 secondes." },
+  { Icon: Zap,           titre: "Réponses rapides",                description: "Utilise l'éclair à côté du champ de saisie pour envoyer en un clic un message prêt : Bonjour, Reçu, Expédiée, Livrée..." },
+  { Icon: ShoppingBag,   titre: "Commandes liées au contact",      description: "À droite, confirme une commande, envoie le lien de suivi ou la facture directement dans la conversation. Si le client répond \"OUI\", sa commande se confirme automatiquement." },
+];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Conversation {
@@ -549,6 +557,7 @@ export default function WhatsAppPage() {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] rounded-2xl overflow-hidden border border-white/5" style={{ background: "#0d1117" }}>
+      <ModuleTutorial moduleKey="whatsapp" titre="WhatsApp" sousTitre="Vends et discute via WhatsApp" steps={WHATSAPP_TUTORIAL_STEPS} />
 
       {/* ── GAUCHE : Conversations ── */}
       <div className={`${mobileThread ? "hidden" : "flex"} lg:flex flex-col border-r border-white/8 flex-shrink-0`} style={{ width: 320 }}>
@@ -560,7 +569,10 @@ export default function WhatsAppPage() {
                 <MessageCircle size={17} className="text-white" />
               </div>
               <div>
-                <div className="font-bold text-white text-sm leading-tight">WhatsApp Business</div>
+                <div className="font-bold text-white text-sm leading-tight flex items-center gap-1.5">
+                  WhatsApp Business
+                  <BoutonRevoirTutoriel moduleKey="whatsapp" dark />
+                </div>
                 {connecte && waConfig?.via === "meta" && waConfig?.config?.numero_affiche && (
                   <div className="text-[10px] text-gray-500 font-mono">{waConfig.config.numero_affiche}</div>
                 )}

@@ -1,6 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Plus, Star, Package, Warehouse } from "lucide-react";
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const ENTREPOTS_TUTORIAL_STEPS = [
+  { Icon: Plus,      titre: "Ajoute un entrepôt",           description: "Renseigne le nom, la ville et l'adresse pour créer un nouveau point de stockage." },
+  { Icon: Star,      titre: "Définis l'entrepôt principal", description: "Marque un entrepôt comme principal — c'est celui utilisé par défaut pour ton stock." },
+  { Icon: Package,   titre: "Suis le stock par site",       description: "Chaque entrepôt affiche le nombre de SKUs qui y sont stockés." },
+  { Icon: Warehouse, titre: "Active ou désactive",          description: "Désactive temporairement un entrepôt sans perdre son historique de stock." },
+];
 
 interface Entrepot {
   id: string;
@@ -63,8 +72,12 @@ export default function EntrepotsPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
+      <ModuleTutorial moduleKey="entrepots" titre="Entrepôts" sousTitre="Tes points de stockage" steps={ENTREPOTS_TUTORIAL_STEPS} />
       <div>
-        <h1 className="text-[22px] font-bold text-[#111] inline-flex items-center gap-2">Entrepôts <AgentActiveIndicator label="Agent Stock actif" /></h1>
+        <h1 className="text-[22px] font-bold text-[#111] inline-flex items-center gap-2">
+          Entrepôts <AgentActiveIndicator label="Agent Stock actif" />
+          <BoutonRevoirTutoriel moduleKey="entrepots" />
+        </h1>
         <p className="text-[13px] text-[#888] mt-0.5">Gestion des stocks multi-entrepôts</p>
       </div>
 

@@ -6,6 +6,14 @@ import {
   Users, TrendingUp, ShoppingBag, Star, ChevronRight, ArrowUpRight,
 } from "lucide-react";
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const CLIENTS_TUTORIAL_STEPS = [
+  { Icon: Users,       titre: "Ta base clients complète", description: "Chaque client ayant commandé chez toi apparaît ici : coordonnées, nombre de commandes et dépenses totales." },
+  { Icon: Star,        titre: "Segments VIP / Régulier / Nouveau", description: "Un client devient VIP dès 5 commandes ou 100 000 dans son historique, Régulier dès 2 commandes, sinon Nouveau." },
+  { Icon: TrendingUp,  titre: "Revenu généré & panier moyen", description: "Suis le revenu total apporté par tes clients actifs et leur panier moyen en haut de page." },
+  { Icon: ChevronRight, titre: "Détail d'un client",        description: "Clique sur une ligne pour voir l'historique complet des commandes de ce client." },
+];
 
 const AVATAR_COLORS = [
   ["#FFF8EC","#F5A623"],["#EFF6FF","#3B82F6"],["#F0FDF4","#16A34A"],
@@ -101,12 +109,14 @@ export default async function ClientsPage() {
   return (
     <div className="space-y-5"
       style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+      <ModuleTutorial moduleKey="clients" titre="Clients" sousTitre="Ta base clients" steps={CLIENTS_TUTORIAL_STEPS} />
 
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4 flex-wrap pt-1">
         <div>
           <div className="flex items-center gap-2.5 mb-1">
             <h1 className="text-[20px] font-bold text-[#111111] tracking-tight inline-flex items-center gap-2">Clients <AgentActiveIndicator label="Agent Clients actif" /></h1>
+            <BoutonRevoirTutoriel moduleKey="clients" />
             <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
               {totalClients}
             </span>

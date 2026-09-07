@@ -3,10 +3,17 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PCOnlyGate } from "@/components/dashboard/PCOnlyGate";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import {
   Plus, Palette, Check, Trash2, Edit2, ExternalLink,
   Sparkles, Sun, Layers, ArrowLeft, Zap,
 } from "lucide-react";
+
+const THEMES_TUTORIAL_STEPS = [
+  { Icon: Palette,  titre: "Choisissez un thème Axso",     description: "Plusieurs thèmes premium prêts à l'emploi, pensés pour différents univers : mode, artisanat, beauté..." },
+  { Icon: Sun,      titre: "3 variantes par thème",         description: "Original, Clair ou Concentré : ajustez l'ambiance colorée en un clic sans perdre la structure du thème." },
+  { Icon: Sparkles, titre: "Créez votre thème personnalisé", description: "Partez d'un thème existant ou d'une page blanche pour composer vos propres couleurs et arrondis." },
+];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Variant = "original" | "light" | "concentrated";
@@ -130,6 +137,7 @@ export default function ThemesPage() {
       className="h-screen flex flex-col bg-[#F5F7FA] overflow-hidden"
       style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}
     >
+      <ModuleTutorial moduleKey="themes" titre="Thèmes" sousTitre="Personnalise l'apparence de ta boutique" steps={THEMES_TUTORIAL_STEPS} />
       <PCOnlyGate label="Theme Studio" />
 
       {/* ── Header ── */}
@@ -145,6 +153,7 @@ export default function ThemesPage() {
         <div className="flex items-center gap-2">
           <Palette size={16} className="text-[#F5A623]" />
           <h1 className="text-sm font-bold text-gray-800">Theme Studio</h1>
+          <BoutonRevoirTutoriel moduleKey="themes" />
         </div>
 
         {tenant && (

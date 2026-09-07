@@ -1,6 +1,14 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { Search, Plus, Minus, Trash2, ShoppingCart, X, Check, Printer, Banknote, Smartphone, CreditCard, Building2, ShoppingBag } from "lucide-react";
+import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
+
+const POS_TUTORIAL_STEPS = [
+  { Icon: Search,       titre: "Trouve un produit",     description: "Recherche par nom, SKU ou catégorie, puis clique sur une carte produit pour l'ajouter au panier." },
+  { Icon: ShoppingCart, titre: "Gère le panier",         description: "Ajuste les quantités, retire un article et applique une réduction avant d'encaisser." },
+  { Icon: Banknote,     titre: "Encaisse le paiement",   description: "Choisis le moyen de paiement (espèces, mobile money, carte, virement) puis valide la vente." },
+  { Icon: Printer,      titre: "Imprime le reçu",        description: "Une fois la vente enregistrée, imprime le reçu client ou lance directement une nouvelle vente." },
+];
 
 interface Produit {
   id: string;
@@ -151,6 +159,7 @@ export function POSPanel() {
 
   return (
     <div className="grid md:grid-cols-[1fr_340px] gap-4 items-start">
+      <ModuleTutorial moduleKey="logistique-pos" titre="Caisse POS" sousTitre="Module Point de vente" steps={POS_TUTORIAL_STEPS} />
       {/* ─── Catalogue ─── */}
       <div className="bg-white border border-[#F0F0F0] rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-[#F0F0F0]">

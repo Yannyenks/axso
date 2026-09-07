@@ -6,6 +6,14 @@ import {
   Settings, MessageCircle, ChevronRight, ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const PARAMETRES_TUTORIAL_STEPS = [
+  { Icon: Settings,      titre: "Vos informations générales", description: "Nom, description, catégorie, pays et devise — la base de votre identité sur Axso." },
+  { Icon: MessageCircle, titre: "Numéro WhatsApp Business",    description: "Ce numéro recevra les confirmations de commandes pour vos produits physiques et dropshipping." },
+  { Icon: ClipboardList, titre: "Formulaire de commande",       description: "Choisissez les informations demandées à l'acheteur qui commande sans passer par WhatsApp (email, GPS, champ personnalisé)." },
+  { Icon: Bell,          titre: "Domaine, notifications, équipe", description: "Retrouvez ici les réglages avancés : domaine personnalisé, alertes et accès de vos collaborateurs." },
+];
 
 const PAYS = ["Sénégal", "Côte d'Ivoire", "Mali", "Burkina Faso", "Guinée", "Cameroun", "Bénin", "Togo", "Niger", "Mauritanie", "Gabon", "Congo", "RDC", "Madagascar", "France", "Maroc", "Tunisie", "Algérie", "Autre"];
 const DEVISES = ["XOF", "XAF", "GNF", "MAD", "TND", "EUR", "USD"];
@@ -114,10 +122,14 @@ export default function ParametresPage() {
   return (
     <div className="space-y-5 max-w-2xl"
       style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+      <ModuleTutorial moduleKey="parametres" titre="Réglages" sousTitre="Configuration de ton compte" steps={PARAMETRES_TUTORIAL_STEPS} />
 
       {/* ── Header ── */}
       <div className="pt-1">
-        <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Paramètres</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Paramètres</h1>
+          <BoutonRevoirTutoriel moduleKey="parametres" />
+        </div>
         <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">
           Gérez votre boutique {tenant?.nomBoutique || ""}
         </p>

@@ -7,6 +7,14 @@ import {
   ShoppingCart, Factory, Link2, Moon, Zap, Lock, Sparkles,
 } from "lucide-react";
 import { aAcces, type Palier } from "@/lib/plans";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const SOURCING_TUTORIAL_STEPS = [
+  { Icon: Globe,        titre: "Fournisseurs vérifiés",     description: "AliExpress, Alibaba, CJ Dropshipping, Jumia, Spocket... une sélection de fournisseurs dropshipping vérifiés par l'équipe Axso." },
+  { Icon: Search,       titre: "Recherche & filtres",        description: "Recherche par nom, pays ou catégorie, et filtre par catégorie (Mode, Tech, Maison...) pour trouver le bon fournisseur en un instant." },
+  { Icon: ExternalLink, titre: "Note, délai et fiche",        description: "Chaque fournisseur affiche sa note, son délai de livraison et ses catégories. Clique \"Visiter\" pour ouvrir son site directement." },
+  { Icon: Lock,         titre: "Sourcing mondial — Palier 2", description: "Les fournisseurs internationaux (AliExpress, Alibaba...) sont réservés au Palier 2. Les fournisseurs Afrique restent accessibles à tous." },
+];
 
 const FOURNISSEURS = [
   {
@@ -160,6 +168,7 @@ export default function SourcingPage() {
 
   return (
     <div className="space-y-5" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+      <ModuleTutorial moduleKey="sourcing" titre="Sourcing" sousTitre="Trouve tes fournisseurs" steps={SOURCING_TUTORIAL_STEPS} />
 
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -173,9 +182,12 @@ export default function SourcingPage() {
                 <Globe size={10} strokeWidth={2.5} />
                 SOURCING MONDIAL
               </div>
-              <h1 className="text-[22px] font-bold text-gray-900 leading-tight tracking-tight">
-                Sourcing & Fournisseurs
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-[22px] font-bold text-gray-900 leading-tight tracking-tight">
+                  Sourcing & Fournisseurs
+                </h1>
+                <BoutonRevoirTutoriel moduleKey="sourcing" />
+              </div>
               <p className="text-gray-400 text-sm mt-1.5 max-w-md leading-relaxed">
                 Les meilleurs fournisseurs dropshipping mondiaux, vérifiés par l'équipe Axso.
               </p>

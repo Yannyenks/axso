@@ -3,6 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { formatDate } from "@/lib/utils";
 import { Star, MessageSquare, CheckCircle2, Clock, ShieldCheck } from "lucide-react";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const AVIS_TUTORIAL_STEPS = [
+  { Icon: Star,         titre: "Note moyenne & répartition", description: "Visualise ta note moyenne sur 5 et la répartition détaillée des avis, de 5 à 1 étoile." },
+  { Icon: Clock,        titre: "Modération avant publication", description: "Chaque nouvel avis arrive \"En attente\" — clique sur \"Approuver\" pour qu'il devienne visible sur ta boutique." },
+  { Icon: ShieldCheck,  titre: "Achats vérifiés",             description: "Le badge \"Achat vérifié\" signale les avis laissés par un client ayant réellement acheté le produit." },
+  { Icon: MessageSquare, titre: "Retours par produit",        description: "Chaque avis affiche le produit concerné, la note, le commentaire et la date, pour suivre la satisfaction commande par commande." },
+];
 
 const AVATAR_COLORS = [
   ["#FFF8EC","#F5A623"],["#EFF6FF","#3B82F6"],["#F0FDF4","#16A34A"],
@@ -59,12 +67,14 @@ export default async function AvisPage() {
   return (
     <div className="space-y-5"
       style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+      <ModuleTutorial moduleKey="avis" titre="Avis clients" sousTitre="Réputation & satisfaction" steps={AVIS_TUTORIAL_STEPS} />
 
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4 flex-wrap pt-1">
         <div>
           <div className="flex items-center gap-2.5 mb-1">
             <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Avis clients</h1>
+            <BoutonRevoirTutoriel moduleKey="avis" />
             <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
               {avis.length}
             </span>

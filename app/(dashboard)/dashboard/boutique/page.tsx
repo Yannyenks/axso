@@ -13,7 +13,15 @@ import {
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { PlanBadge } from "@/components/dashboard/PlanBadge";
 import { NouvelleBoutiqueModal } from "@/components/dashboard/NouvelleBoutiqueModal";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { aAcces, NOMS_PALIERS, type Palier } from "@/lib/plans";
+
+const BOUTIQUE_TUTORIAL_STEPS = [
+  { Icon: Store,   titre: "Complétez votre profil",        description: "Nom, description, contacts, pays... Chaque champ rempli fait grimper votre score de complétion vers 100%." },
+  { Icon: Palette, titre: "Personnalisez l'apparence",      description: "Logo, bannière et thème visuel : choisissez l'ambiance qui reflète votre marque, avec un aperçu en direct." },
+  { Icon: Truck,   titre: "Configurez la livraison",        description: "Frais fixes, minimum pour la livraison gratuite et zones desservies — tout est ajustable à tout moment." },
+  { Icon: Layers,  titre: "Gérez plusieurs boutiques",       description: "Basculez d'une boutique à l'autre en un clic ou créez-en une nouvelle si votre palier le permet." },
+];
 
 const THEMES = [
   { id: "noir-obsidien",      nom: "Noir Obsidien",       desc: "Luxe & Mode",               fond: "#0a0a0a", accent: "#1B4FD8", texte: "#F5F5F0", badge: "✦ Premium" },
@@ -237,6 +245,7 @@ export default function BoutiquePage() {
 
   return (
     <div className="space-y-5 pb-24" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+      <ModuleTutorial moduleKey="boutique" titre="Ma boutique" sousTitre="Vue d'ensemble du module Boutique" steps={BOUTIQUE_TUTORIAL_STEPS} />
 
       {/* ── Hero identité ── */}
       <div className="ax-card overflow-hidden">
@@ -273,6 +282,7 @@ export default function BoutiquePage() {
                 <h1 className="text-[19px] sm:text-[21px] font-bold text-[#111111] tracking-tight leading-tight truncate max-w-full">
                   {form.nomBoutique || "Ma Boutique"}
                 </h1>
+                <BoutonRevoirTutoriel moduleKey="boutique" />
                 <button onClick={() => setSection("avance")}
                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold leading-none flex-shrink-0 transition-all"
                   style={enLigne ? { background: "#ECFDF5", color: "#16A34A" } : { background: "#FFFBEB", color: "#D97706" }}>

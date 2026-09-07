@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { Monitor, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -23,7 +24,10 @@ export function PCOnlyGate({ label = "Cette fonctionnalité" }: Props) {
 
   if (!mounted || !isMobile) return null;
 
-  return (
+  // Portalé vers document.body : un ancêtre avec une animation `transform`
+  // (ex. .ax-page-enter) devient le containing block d'un position:fixed
+  // et casse inset:0 — le portail échappe à tout ancêtre transformé/scrollé.
+  return createPortal((
     <div style={{
       position: "fixed", inset: 0, zIndex: 9999,
       background: "linear-gradient(160deg, #080808 0%, #111 60%, #0a0a0a 100%)",
@@ -85,5 +89,5 @@ export function PCOnlyGate({ label = "Cette fonctionnalité" }: Props) {
         Retour au dashboard
       </button>
     </div>
-  );
+  ), document.body);
 }

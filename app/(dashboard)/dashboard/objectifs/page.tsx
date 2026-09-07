@@ -6,6 +6,14 @@ import {
   Target, Plus, X, Loader2, TrendingUp, ShoppingCart, Users, Wallet,
   Pause, Play, Trash2, CheckCircle2, XCircle, Clock,
 } from "lucide-react";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const OBJECTIFS_TUTORIAL_STEPS = [
+  { Icon: Target,     titre: "4 types d'objectifs", description: "Chiffre d'affaires, commandes, nouveaux clients ou panier moyen — choisis le type qui compte le plus pour ta boutique." },
+  { Icon: Plus,       titre: "Fixe ta cible",        description: "Donne un titre, une valeur à atteindre et une date limite, puis clique \"Nouvel objectif\" pour te lancer." },
+  { Icon: TrendingUp, titre: "Progression en temps réel", description: "La barre de progression et le pourcentage se mettent à jour automatiquement en fonction de tes ventes." },
+  { Icon: Pause,      titre: "Mets en pause ou supprime", description: "Un objectif atteint, dépassé ou plus pertinent ? Mets-le en pause ou supprime-le en un clic." },
+];
 
 type TypeObjectif = "ca" | "commandes" | "clients" | "panier_moyen";
 
@@ -92,11 +100,13 @@ export default function ObjectifsPage() {
 
   return (
     <div className="space-y-6" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+      <ModuleTutorial moduleKey="objectifs" titre="Objectifs" sousTitre="Fixe et suis tes ambitions" steps={OBJECTIFS_TUTORIAL_STEPS} />
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Target size={18} className="text-[#F5A623]" />
             <h1 className="text-2xl font-bold text-gray-900">Objectifs</h1>
+            <BoutonRevoirTutoriel moduleKey="objectifs" />
           </div>
           <p className="text-gray-400 text-sm">Fixez des objectifs pour votre boutique et suivez votre progression en temps réel</p>
         </div>

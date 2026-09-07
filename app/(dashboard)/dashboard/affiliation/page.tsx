@@ -9,7 +9,15 @@ import {
   Award, Target, Percent, Edit3, Trash2, UserCheck, UserX, ExternalLink,
 } from "lucide-react";
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { toast } from "sonner";
+
+const AFFILIATION_TUTORIAL_STEPS = [
+  { Icon: Settings, titre: "Configure ton programme",       description: "Définis ton taux de commission, la durée du cookie d'attribution et des paliers pour récompenser tes meilleurs affiliés." },
+  { Icon: Users,    titre: "Recrute et valide tes affiliés", description: "Approuve les demandes, suis les clics et conversions de chacun, et repère tes ambassadeurs les plus performants." },
+  { Icon: Link2,    titre: "Génère des liens et bannières",  description: "Chaque affilié obtient un lien trackable par produit ou pour toute la boutique, avec bannières et messages prêts à partager." },
+  { Icon: Wallet,   titre: "Paie les commissions",           description: "Suis les commissions en attente et valide les paiements dès qu'un affilié atteint son seuil." },
+];
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Programme {
@@ -995,8 +1003,12 @@ export default function AffiliationPage() {
 
   return (
     <div className="p-5 max-w-4xl mx-auto space-y-5" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
+      <ModuleTutorial moduleKey="affiliation" titre="Affiliation" sousTitre="Ton programme d'ambassadeurs" steps={AFFILIATION_TUTORIAL_STEPS} />
       <div>
-        <h1 className="text-[18px] font-bold text-[#111] inline-flex items-center gap-2">Affiliation <AgentActiveIndicator label="Agent Growth actif" /></h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-[18px] font-bold text-[#111] inline-flex items-center gap-2">Affiliation <AgentActiveIndicator label="Agent Growth actif" /></h1>
+          <BoutonRevoirTutoriel moduleKey="affiliation" />
+        </div>
         <p className="text-[12px] text-gray-500">Programme d'affiliation, affiliés et commissions</p>
       </div>
 

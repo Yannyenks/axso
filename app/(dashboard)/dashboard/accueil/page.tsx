@@ -3,13 +3,22 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { SalesChart } from "@/components/dashboard/SalesChart";
 import { AffiliationIncitationBanner } from "@/components/dashboard/AffiliationIncitationBanner";
+import { AxiaProNotice } from "@/components/dashboard/AxiaProNotice";
 import { OrdersTable } from "@/components/dashboard/OrdersTable";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { formatMontant } from "@/lib/utils";
 import {
   TrendingUp, ShoppingBag, Users, Eye, Package, AlertTriangle,
   ArrowUpRight, ArrowDownRight, Globe, Plus, MapPin, Zap,
   ChevronRight, Truck, Target, Wallet, BarChart3, Sparkles, CheckCircle,
 } from "lucide-react";
+
+const ACCUEIL_TUTORIAL_STEPS = [
+  { Icon: TrendingUp,   titre: "Tes KPIs en un coup d'œil", description: "Chiffre d'affaires du mois, commandes de la semaine, clients et taux de conversion, avec l'évolution vs le mois dernier." },
+  { Icon: Target,       titre: "Objectif & projection",     description: "Suis ta progression vers l'objectif mensuel et la projection de fin de mois calculée sur ta moyenne quotidienne." },
+  { Icon: AlertTriangle, titre: "Alertes en temps réel",     description: "Commandes en attente et produits en stock critique remontent directement ici pour que tu puisses agir vite." },
+  { Icon: BarChart3,    titre: "Top produits, villes & entonnoir", description: "Repère tes meilleures ventes, tes villes principales et suis le parcours complet, de la visite à la livraison." },
+];
 
 const STATUT_CFG: Record<string, { label: string; color: string }> = {
   en_attente:     { label: "En attente",     color: "#6B7280" },
@@ -244,6 +253,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-5">
+      <ModuleTutorial moduleKey="accueil" titre="Tableau de bord" sousTitre="Vue d'ensemble de ta boutique" steps={ACCUEIL_TUTORIAL_STEPS} />
 
       {/* ── Bannière d'accueil ─────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-[28px] px-6 py-8 sm:px-9 sm:py-10">
@@ -261,9 +271,12 @@ export default async function DashboardPage() {
             <span className="inline-flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#F5C55E] bg-[#EDA900]/15 border border-[#EDA900]/30 rounded-full px-2.5 py-1 mb-3">
               <Sparkles size={11} /> Axso
             </span>
-            <h1 className="text-[26px] sm:text-[30px] font-extrabold text-white tracking-tight leading-tight">
-              {greeting}, {prenom}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-[26px] sm:text-[30px] font-extrabold text-white tracking-tight leading-tight">
+                {greeting}, {prenom}
+              </h1>
+              <BoutonRevoirTutoriel moduleKey="accueil" dark />
+            </div>
             <p className="text-[13px] text-white/60 mt-1 capitalize">
               {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
             </p>
@@ -284,6 +297,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      <AxiaProNotice />
       {!d.programmeAffiliationActif && <AffiliationIncitationBanner />}
 
       {/* ── Pulse du jour ──────────────────────────────────────────── */}

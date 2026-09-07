@@ -15,6 +15,14 @@ import {
   Target,
 } from "lucide-react";
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const MARKETING_TUTORIAL_STEPS = [
+  { Icon: Tag,        titre: "Codes promo",         description: "Créez des remises en pourcentage ou en montant fixe pour fidéliser vos clients et booster vos ventes." },
+  { Icon: Mail,        titre: "Email marketing",      description: "Envoyez des campagnes ciblées à votre base clients directement depuis votre boutique." },
+  { Icon: Target,       titre: "Tracking & pixels",     description: "Branchez Meta, TikTok, Snapchat ou Google Tag Manager pour mesurer vos publicités." },
+  { Icon: TrendingUp,   titre: "SEO & visibilité",       description: "Optimisez vos fiches produits pour attirer plus de visiteurs depuis les moteurs de recherche." },
+];
 
 export default async function MarketingPage() {
   const session = await auth();
@@ -86,10 +94,14 @@ export default async function MarketingPage() {
 
   return (
     <div className="space-y-6">
+      <ModuleTutorial moduleKey="marketing" titre="Marketing" sousTitre="Codes promo, email, publicité" steps={MARKETING_TUTORIAL_STEPS} />
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#111111] font-poppins inline-flex items-center gap-2">Marketing <AgentActiveIndicator label="Agent Marketing actif" /></h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-[#111111] font-poppins inline-flex items-center gap-2">Marketing <AgentActiveIndicator label="Agent Marketing actif" /></h1>
+            <BoutonRevoirTutoriel moduleKey="marketing" />
+          </div>
           <p className="text-[#717171] text-sm mt-1">Boostez vos ventes avec des outils ciblés</p>
         </div>
         <div className="flex items-center gap-2 bg-white border border-[#E8E8E8] rounded-xl px-4 py-2">

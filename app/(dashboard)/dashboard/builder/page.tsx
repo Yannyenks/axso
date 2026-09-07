@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { PCOnlyGate } from "@/components/dashboard/PCOnlyGate";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import {
   Save, Monitor, Tablet, Smartphone, ExternalLink, ArrowLeft,
   LayoutGrid, Palette, Type, LayoutTemplate, MousePointer2, Code2,
@@ -67,6 +68,13 @@ const SECTION_META: Record<SectionId, { label: string; Icon: any; desc: string }
   avis:        { label: "Avis clients",      Icon: MessageCircle,desc: "Témoignages" },
   newsletter:  { label: "Newsletter",        Icon: Mail,         desc: "Inscription email" },
 };
+
+const BUILDER_TUTORIAL_STEPS = [
+  { Icon: LayoutGrid, titre: "Personnalise tes sections",       description: "Réordonne, active ou désactive les sections de ta page (héro, produits vedettes, avis, FAQ...) et ajoute des blocs personnalisés — vidéo, compte à rebours, galerie..." },
+  { Icon: Palette,    titre: "Couleurs, typo et mise en page",  description: "Ajuste ta palette, tes polices Google Fonts et ta mise en page en un clic — l'aperçu se met à jour en direct." },
+  { Icon: Monitor,    titre: "Prévisualise sur tous les écrans", description: "Bascule entre les vues Desktop, Tablette et Mobile pour vérifier le rendu avant de publier." },
+  { Icon: Save,       titre: "Sauvegarde tes changements",      description: "Rien n'est publié tant que tu n'as pas cliqué \"Sauvegarder\" — teste librement, tes visiteurs ne voient que la version en ligne." },
+];
 
 const NAV_TABS: Array<{ id: Panel; icon: React.ReactNode; tooltip: string }> = [
   { id: "sections",   icon: <LayoutGrid size={17} />,    tooltip: "Sections" },
@@ -271,6 +279,7 @@ export default function BuilderPage() {
   return (
     <div className={`flex flex-col bg-[#F5F7FA] text-gray-800 overflow-hidden ${isFullscreen ? "fixed inset-0 z-[9999]" : "h-screen"}`} style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <PCOnlyGate label="Le Constructeur de boutique" />
+      <ModuleTutorial moduleKey="builder" titre="Constructeur de boutique" sousTitre="Personnalise ta boutique en direct" steps={BUILDER_TUTORIAL_STEPS} />
 
       {/* HEADER */}
       <header className="h-11 flex items-center justify-between px-4 bg-white border-b border-gray-200 flex-shrink-0 gap-4">
@@ -286,6 +295,7 @@ export default function BuilderPage() {
 
         <div className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium bg-gray-100 text-white">
           <Layers size={10} /> Constructeur
+          <BoutonRevoirTutoriel moduleKey="builder" dark />
         </div>
 
         <div className="flex items-center gap-2">

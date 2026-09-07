@@ -2,6 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { FileText, Download, Plus, Search } from "lucide-react";
+import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
+
+const FACTURES_TUTORIAL_STEPS = [
+  { Icon: Plus,     titre: "Génère une facture",  description: "Saisis l'ID d'une commande et clique sur Générer pour créer automatiquement la facture HT/TVA/TTC." },
+  { Icon: Search,   titre: "Retrouve une facture", description: "Recherche par nom de client ou numéro de facture pour la retrouver en un instant." },
+  { Icon: Download, titre: "Télécharge le PDF",    description: "Chaque facture se télécharge en un clic, prête à être envoyée à ton client." },
+  { Icon: FileText, titre: "Suis le statut",       description: "Repère en un coup d'œil les factures émises, payées ou annulées grâce aux badges de statut." },
+];
 
 interface Facture {
   id: string;
@@ -118,6 +126,7 @@ export function FacturesPanel() {
 
   return (
     <div className="space-y-5">
+      <ModuleTutorial moduleKey="logistique-factures" titre="Factures" sousTitre="Suivi de facturation" steps={FACTURES_TUTORIAL_STEPS} />
       <div className="flex items-center justify-end gap-2">
         <input
           className="border border-[#E5E5E5] rounded-lg px-3 py-2 text-[12px] w-48"

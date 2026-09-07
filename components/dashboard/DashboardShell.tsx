@@ -53,7 +53,13 @@ export function DashboardShell({
       </div>
 
       {/* ─── Mobile : bottom nav îlot ────────────────────────────── */}
-      <div className="md:hidden flex flex-col min-h-screen bg-[#f0f2f8] text-gray-900">
+      {/* h-dvh (pas min-h-screen/100vh) : sur mobile, 100vh est calculé sur la
+          hauteur de viewport barre d'adresse masquée — plus grand que ce qui
+          est réellement visible au chargement. Avec min-h-screen, le wrapper
+          dépassait la zone visible et la page entière devenait scrollable,
+          au lieu que seul le <main> interne le soit — AXIA semblait "ne
+          prendre qu'une partie de l'écran" alors qu'il débordait en bas. */}
+      <div className="md:hidden flex flex-col h-dvh overflow-hidden bg-[#f0f2f8] text-gray-900">
         {!estAccueilAxia && <MobileHeader boutiqueNom={boutique?.nomBoutique} />}
         <main className={estAccueilAxia ? "flex-1 overflow-hidden flex flex-col" : "flex-1 overflow-y-auto pb-32"}>
           {estAccueilAxia ? children : (
