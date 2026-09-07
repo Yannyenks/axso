@@ -307,7 +307,7 @@ export default function MagicImportPage() {
               className="px-6 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200 transition-all">
               Voir les produits
             </Link>
-            <Link href="/dashboard/axia"
+            <Link href="/dashboard"
               className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-violet-600 text-white font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2">
               <Sparkles size={14} /> Demander à Axia de promouvoir
             </Link>

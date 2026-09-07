@@ -20,14 +20,8 @@ import { UpgradeGate } from "@/components/dashboard/UpgradeGate";
 import { LiveRefreshBadge } from "@/components/dashboard/LiveRefreshBadge";
 import { planActif } from "@/lib/abonnement";
 import { aAcces } from "@/lib/plans";
-import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
-
-const ANALYTICS_TUTORIAL_STEPS = [
-  { Icon: TrendingUp, titre: "4 indicateurs clés",           description: "Chiffre d'affaires, commandes, visiteurs et taux de conversion, comparés à la période précédente avec leur variation en %." },
-  { Icon: BarChart3,  titre: "Évolution, top produits & statuts", description: "La courbe du CA jour par jour, le classement de tes produits les plus vendus et la répartition des statuts de commandes." },
-  { Icon: Eye,        titre: "Entonnoir de conversion",       description: "Suis le parcours complet : visites → vues produits → ajouts au panier → achats, avec le taux de passage à chaque étape." },
-  { Icon: Star,       titre: "Derniers avis clients",         description: "Les 5 avis les plus récents de tes clients s'affichent directement ici, note et commentaire inclus." },
-];
+import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+import { AnalyticsTutorial } from "@/components/dashboard/tutorials/AnalyticsTutorial";
 
 export default async function AnalyticsPage() {
   const session = await auth();
@@ -182,7 +176,7 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <ModuleTutorial moduleKey="analytics" titre="Analytics" sousTitre="Performance de ta boutique" steps={ANALYTICS_TUTORIAL_STEPS} />
+      <AnalyticsTutorial />
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>

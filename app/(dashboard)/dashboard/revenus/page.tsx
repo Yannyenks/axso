@@ -6,14 +6,8 @@ import { formatMontant } from "@/lib/utils";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, DollarSign, BarChart3, ArrowRight, Wallet } from "lucide-react";
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
-import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
-
-const REVENUS_TUTORIAL_STEPS = [
-  { Icon: DollarSign,  titre: "Chiffre d'affaires",        description: "Suivez votre revenu brut sur 30 jours et 7 jours, calculé sur les commandes complétées." },
-  { Icon: TrendingDown, titre: "Commissions Axso",          description: "Les frais de plateforme sont automatiquement déduits — visualisez exactement combien est prélevé." },
-  { Icon: Wallet,        titre: "Revenu net",                 description: "Ce que vous empochez réellement, une fois les commissions retirées de votre chiffre d'affaires." },
-  { Icon: BarChart3,      titre: "Graphique journalier",        description: "Visualisez vos revenus jour par jour sur les 14 derniers jours pour repérer vos tendances." },
-];
+import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+import { RevenusTutorial } from "@/components/dashboard/tutorials/RevenusTutorial";
 
 export default async function RevenusPage() {
   const session = await auth();
@@ -90,7 +84,7 @@ export default async function RevenusPage() {
 
   return (
     <div className="space-y-6">
-      <ModuleTutorial moduleKey="revenus" titre="Revenus" sousTitre="Analyse financière de ta boutique" steps={REVENUS_TUTORIAL_STEPS} />
+      <RevenusTutorial />
       {/* Header */}
       <div>
         <div className="flex items-center gap-2">

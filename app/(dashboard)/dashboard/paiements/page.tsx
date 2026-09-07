@@ -7,14 +7,8 @@ import {
   CreditCard, TrendingUp, Clock, CheckCircle2,
   Wallet, ArrowDownLeft, ArrowUpRight, Lock, AlertCircle
 } from "lucide-react";
-import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
-
-const PAIEMENTS_TUTORIAL_STEPS = [
-  { Icon: Wallet,      titre: "Votre wallet Axso",     description: "Le solde disponible, ce que vous avez reçu, retiré et payé en commission — tout au même endroit." },
-  { Icon: Lock,         titre: "Séquestre 48h",          description: "Chaque paiement client transite d'abord par un séquestre de sécurité, libéré automatiquement après 48h." },
-  { Icon: CreditCard,    titre: "Historique des transactions", description: "Toutes vos commandes avec leur méthode de paiement, leur statut et leur montant, triées par date." },
-  { Icon: ArrowUpRight,   titre: "Retraits",               description: "Suivez vos demandes de retrait et leur statut, et lancez-en une nouvelle depuis le module Revenus." },
-];
+import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+import { PaiementsTutorial } from "@/components/dashboard/tutorials/PaiementsTutorial";
 
 const STATUT_PAIEMENT: Record<string, { label: string; color: string; bg: string }> = {
   pending:   { label: "En attente", color: "#d97706", bg: "#fffbeb" },
@@ -75,7 +69,7 @@ export default async function PaiementsPage() {
 
   return (
     <div className="space-y-6">
-      <ModuleTutorial moduleKey="paiements" titre="Paiements" sousTitre="Wallet, transactions, retraits" steps={PAIEMENTS_TUTORIAL_STEPS} />
+      <PaiementsTutorial />
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold text-gray-900">Paiements & Finances</h1>

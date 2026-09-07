@@ -15,14 +15,8 @@ import {
   Target,
 } from "lucide-react";
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
-import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
-
-const MARKETING_TUTORIAL_STEPS = [
-  { Icon: Tag,        titre: "Codes promo",         description: "Créez des remises en pourcentage ou en montant fixe pour fidéliser vos clients et booster vos ventes." },
-  { Icon: Mail,        titre: "Email marketing",      description: "Envoyez des campagnes ciblées à votre base clients directement depuis votre boutique." },
-  { Icon: Target,       titre: "Tracking & pixels",     description: "Branchez Meta, TikTok, Snapchat ou Google Tag Manager pour mesurer vos publicités." },
-  { Icon: TrendingUp,   titre: "SEO & visibilité",       description: "Optimisez vos fiches produits pour attirer plus de visiteurs depuis les moteurs de recherche." },
-];
+import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+import { MarketingTutorial } from "@/components/dashboard/tutorials/MarketingTutorial";
 
 export default async function MarketingPage() {
   const session = await auth();
@@ -94,7 +88,7 @@ export default async function MarketingPage() {
 
   return (
     <div className="space-y-6">
-      <ModuleTutorial moduleKey="marketing" titre="Marketing" sousTitre="Codes promo, email, publicité" steps={MARKETING_TUTORIAL_STEPS} />
+      <MarketingTutorial />
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>

@@ -17,7 +17,7 @@ const GROUPS = [
   {
     label: "Intelligence IA", color: "#1B2A4A",
     items: [
-      { href: "/dashboard/axia",       label: "Axia — Assistante IA", icon: Zap },
+      { href: "/dashboard",            label: "Axia — Assistante IA", icon: Zap },
       { href: "/dashboard/scheduler", label: "Planificateur",    icon: Calendar },
     ],
   },
@@ -85,7 +85,12 @@ export function MobileBottomNav() {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const axiaActive = pathname.startsWith("/dashboard/axia");
+  // "/dashboard" est l'interface AXIA plein écran réelle (voir
+  // app/(dashboard)/dashboard/page.tsx) — /dashboard/axia est une ancienne
+  // page de chat basique conservée pour compatibilité mais plus utilisée
+  // comme point d'entrée. Un compte palier0 tapant ce bouton est redirigé
+  // côté serveur vers le tableau de bord avec le toast explicatif Pro.
+  const axiaActive = pathname === "/dashboard";
 
   return (
     <>
@@ -98,7 +103,7 @@ export function MobileBottomNav() {
 
           {/* Axia — flottante au-dessus du centre */}
           <Link
-            href="/dashboard/axia"
+            href="/dashboard"
             className="absolute left-1/2 -translate-x-1/2 -top-10 z-10 flex flex-col items-center gap-0.5"
           >
             <div
@@ -258,8 +263,8 @@ export function MobileBottomNav() {
                   <div className="grid grid-cols-3 gap-2">
                     {group.items.map((item) => {
                       const Icon = item.icon;
-                      const active = item.href === "/dashboard/accueil"
-                        ? pathname === "/dashboard/accueil"
+                      const active = item.href === "/dashboard/accueil" || item.href === "/dashboard"
+                        ? pathname === item.href
                         : pathname.startsWith(item.href);
                       return (
                         <Link

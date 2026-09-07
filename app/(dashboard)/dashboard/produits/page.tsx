@@ -8,14 +8,8 @@ import {
 } from "lucide-react";
 import { formatMontant } from "@/lib/utils";
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
-import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
-
-const PRODUITS_TUTORIAL_STEPS = [
-  { Icon: Plus,          titre: "Ajoute un produit",       description: "Clique sur \"Nouveau produit\" pour créer une fiche avec photos, prix, variantes et stock." },
-  { Icon: Search,        titre: "Recherche & filtres",      description: "Retrouve un produit par nom, ou filtre par Actifs, Inactifs, Stock faible ou Épuisés." },
-  { Icon: AlertTriangle, titre: "Surveille ton stock",      description: "Les badges \"Stock faible\" et \"Épuisé\" apparaissent directement sur chaque fiche produit dès que le seuil de 5 unités est atteint." },
-  { Icon: TrendingUp,    titre: "Ventes & avis en un clin d'œil", description: "Le nombre de ventes et la note des avis clients s'affichent sous chaque produit pour repérer tes best-sellers." },
-];
+import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+import { ProduitsTutorial } from "@/components/dashboard/tutorials/ProduitsTutorial";
 
 const FILTER_TABS = [
   { key: "all",      label: "Tous"         },
@@ -76,7 +70,7 @@ export default async function ProduitsPage({
   return (
     <div className="space-y-5"
       style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
-      <ModuleTutorial moduleKey="produits" titre="Produits" sousTitre="Ton catalogue" steps={PRODUITS_TUTORIAL_STEPS} />
+      <ProduitsTutorial />
 
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4 flex-wrap pt-1">
