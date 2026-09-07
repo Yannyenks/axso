@@ -3,6 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Receipt, Plus, Trash2, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const CHARGES_TUTORIAL_STEPS = [
+  { Icon: Plus,          titre: "Enregistrer une charge", description: "Loyer, salaires, électricité, fournitures... Choisis une catégorie, un montant et une fréquence (ponctuelle ou récurrente)." },
+  { Icon: Clock,         titre: "Suivi du paiement",       description: "Marque une charge \"En attente\" tant qu'elle n'est pas réglée, puis clique \"Payer\" une fois le paiement effectué." },
+  { Icon: CheckCircle2,  titre: "Impact sur la rentabilité", description: "Toutes tes charges alimentent automatiquement le module Comptabilité pour calculer ton vrai bénéfice net." },
+];
 
 interface Charge {
   id: string; categorie: string; description: string; montant: number; devise: string;
@@ -68,9 +75,13 @@ export default function ChargesPage() {
 
   return (
     <div className="p-5 max-w-5xl mx-auto space-y-5" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
+      <ModuleTutorial moduleKey="pos-charges" titre="Charges d'exploitation" sousTitre="Module Point de vente" steps={CHARGES_TUTORIAL_STEPS} />
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h1 className="text-[18px] font-bold text-[#111]">Charges d'exploitation</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-[18px] font-bold text-[#111]">Charges d'exploitation</h1>
+            <BoutonRevoirTutoriel moduleKey="pos-charges" />
+          </div>
           <p className="text-[12px] text-gray-500">Loyer, salaires, énergie... les coûts fixes de votre boutique physique</p>
         </div>
         <button onClick={() => setShowForm(v => !v)} className="px-4 py-2 bg-[#F5A623] text-white rounded-xl text-[12px] font-bold flex items-center gap-1.5">

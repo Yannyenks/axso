@@ -3,6 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Boxes, Plus, AlertTriangle, XCircle, CheckCircle2, Ban, Package } from "lucide-react";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const TRACABILITE_TUTORIAL_STEPS = [
+  { Icon: Plus,           titre: "Réceptionner un lot",  description: "À chaque livraison fournisseur, enregistre un lot : quantité, date de péremption, référence — le stock du produit est crédité automatiquement." },
+  { Icon: Boxes,          titre: "Consommation FIFO",    description: "Chaque vente en caisse consomme automatiquement le lot actif le plus ancien du produit — premier entré, premier sorti." },
+  { Icon: AlertTriangle,  titre: "Alertes péremption",   description: "Les lots qui expirent sous 7 jours ou déjà expirés sont mis en évidence pour que rien ne se périme sans que tu le saches." },
+  { Icon: Ban,            titre: "Rappel produit",       description: "En cas de problème, marque un lot \"Périmé\" ou \"Rappelé\" — son solde est retiré du stock vendable, et tu peux remonter jusqu'à chaque vente concernée." },
+];
 
 interface Produit { id: string; nom: string; }
 interface Lot {
@@ -109,9 +117,13 @@ export default function TracabilitePage() {
 
   return (
     <div className="p-5 max-w-5xl mx-auto space-y-5" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
+      <ModuleTutorial moduleKey="pos-tracabilite" titre="Traçabilité" sousTitre="Module Point de vente" steps={TRACABILITE_TUTORIAL_STEPS} />
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h1 className="text-[18px] font-bold text-[#111]">Traçabilité</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-[18px] font-bold text-[#111]">Traçabilité</h1>
+            <BoutonRevoirTutoriel moduleKey="pos-tracabilite" />
+          </div>
           <p className="text-[12px] text-gray-500">Lots reçus, péremption et rappel produit</p>
         </div>
         <button onClick={() => setShowForm(v => !v)} className="px-4 py-2 bg-[#F5A623] text-white rounded-xl text-[12px] font-bold flex items-center gap-1.5">

@@ -6,6 +6,13 @@ import {
   Package, AlertTriangle, XCircle, Search, Plus, Minus, RotateCcw,
   Clock, ArrowUpRight, ArrowDownRight, Wallet, Box,
 } from "lucide-react";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const STOCK_TUTORIAL_STEPS = [
+  { Icon: Box,        titre: "Vue d'ensemble du stock", description: "Chaque produit physique de ta boutique avec son stock actuel, sa valeur (au coût d'achat) et son statut — OK, stock bas ou rupture." },
+  { Icon: Plus,        titre: "Mouvements de stock",     description: "Clique \"Mouvement\" sur un produit pour enregistrer une entrée (réassort), une sortie, une perte ou un ajustement après inventaire." },
+  { Icon: Clock,       titre: "Journal complet",         description: "Chaque mouvement — manuel ou automatique via une vente en caisse — est journalisé avec la date, le motif et le solde avant/après." },
+];
 
 interface Produit {
   id: string; nom: string; images: string[]; sku: string | null; categorie: string | null;
@@ -124,10 +131,12 @@ export default function PosStockPage() {
 
   return (
     <div className="p-5 max-w-5xl mx-auto space-y-5" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
-      <div>
+      <ModuleTutorial moduleKey="pos-stock" titre="Gestion des stocks" sousTitre="Module Point de vente" steps={STOCK_TUTORIAL_STEPS} />
+      <div className="flex items-center gap-2">
         <h1 className="text-[18px] font-bold text-[#111]">Gestion des stocks</h1>
-        <p className="text-[12px] text-gray-500">Inventaire, mouvements et alertes de la boutique physique</p>
+        <BoutonRevoirTutoriel moduleKey="pos-stock" />
       </div>
+      <p className="text-[12px] text-gray-500 -mt-4">Inventaire, mouvements et alertes de la boutique physique</p>
 
       {stats && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

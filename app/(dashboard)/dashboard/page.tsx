@@ -4,10 +4,20 @@ import Link from "next/link";
 import {
   Send, Loader2, Mic, MicOff, LayoutDashboard, History, Sparkles, PanelLeft, Plus,
   Volume2, VolumeX, Phone, Paperclip, X, Copy, Check, RotateCcw, Square, Image as ImageIcon, Video,
+  MessageSquare, Bell,
 } from "lucide-react";
 import { renderMarkdown, parseContent } from "@/lib/axia-format";
 import { useAxiaConversations } from "@/hooks/useAxiaConversations";
 import { AxiaConversationSidebar } from "@/components/dashboard/AxiaConversationSidebar";
+import { AxiaNotifBell } from "@/components/dashboard/AxiaNotifBell";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const AXIA_TUTORIAL_STEPS = [
+  { Icon: MessageSquare, titre: "Discute avec AXIA", description: "Pose n'importe quelle question sur ta boutique — ventes, stock, clients — ou demande-lui d'agir directement : créer un produit, lancer une promo, relancer un client." },
+  { Icon: Mic,           titre: "Mode vocal",         description: "Touche l'icône téléphone pour parler à AXIA à voix haute — elle t'écoute, réfléchit et te répond, comme un vrai appel." },
+  { Icon: History,       titre: "Historique & Journal", description: "Toutes tes conversations sont sauvegardées (icône panneau à gauche). Le Journal liste chaque action qu'AXIA a effectuée pour toi, en toute transparence." },
+  { Icon: Bell,          titre: "Notifications",      description: "La cloche en haut t'alerte en temps réel dès qu'une nouvelle commande ou un événement important arrive, même depuis cet écran." },
+];
 
 interface Msg {
   role: "user" | "assistant";
@@ -61,6 +71,7 @@ const PHASE_CONFIG: Record<VoicePhase, { orbGrad: string; orbShadow: string; rin
 // conversation texte + voix, pièces jointes, historique multi-fils.
 export default function AxiaHomePage() {
   const [nomBoutique, setNomBoutique] = useState<string | null>(null);
+  const [palier, setPalier] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -109,6 +120,7 @@ export default function AxiaHomePage() {
 
   useEffect(() => {
     fetch("/api/tenants/moi").then(r => r.json()).then(d => setNomBoutique(d?.nomBoutique ?? null)).catch(() => {});
+    fetch("/api/tenants/moi-palier").then(r => r.json()).then(d => setPalier(d?.palier ?? null)).catch(() => {});
   }, []);
 
   // Sélectionne la meilleure voix française du navigateur (fallback si le TTS premium est indisponible)
@@ -421,6 +433,16 @@ export default function AxiaHomePage() {
   return (
     <div className="h-full flex min-h-0" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
 
+      {palier !== null && (
+        <ModuleTutorial
+          moduleKey="axia"
+          titre="AXIA"
+          sousTitre="Ton assistant boutique intelligent"
+          steps={AXIA_TUTORIAL_STEPS}
+          offrePalier={palier === "palier0" ? { label: "Aller au tableau de bord", href: "/dashboard/accueil" } : undefined}
+        />
+      )}
+
       {/* ── Mode vocal plein écran ─────────────────────────────────────────── */}
       {voiceMode && (
         <div className="fixed inset-0 z-[9990] flex flex-col select-none"
@@ -552,41 +574,43 @@ export default function AxiaHomePage() {
 
       <div className="flex-1 min-w-0 h-full flex flex-col min-h-0" style={{ background: "linear-gradient(160deg,#0d1526 0%,#1B2A4A 55%,#16233f 100%)" }}>
         {/* Barre supérieure */}
-        <div className="flex-shrink-0 flex items-center justify-between px-5 sm:px-6 py-4">
-          <div className="flex items-center gap-1.5">
+        <div className="flex-shrink-0 flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 gap-2">
+          <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
             <button onClick={() => setSidebarOpen(v => !v)}
-              className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors hover:bg-white/10 flex-shrink-0"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center transition-colors hover:bg-white/10 flex-shrink-0"
               title="Historique des conversations">
-              <PanelLeft size={15} className="text-white/60" />
+              <PanelLeft size={14} className="text-white/60" />
             </button>
             <button onClick={nouvelleConversation}
-              className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors hover:bg-white/10 flex-shrink-0"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center transition-colors hover:bg-white/10 flex-shrink-0"
               title="Nouvelle conversation">
-              <Plus size={15} className="text-white/60" />
+              <Plus size={14} className="text-white/60" />
             </button>
-            <div className="w-8 h-8 rounded-xl overflow-hidden flex-shrink-0 ml-1" style={{ boxShadow: "0 0 20px rgba(245,166,35,0.25)" }}>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl overflow-hidden flex-shrink-0 ml-0.5 sm:ml-1" style={{ boxShadow: "0 0 20px rgba(245,166,35,0.25)" }}>
               <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
             </div>
-            <span className="text-white font-bold text-sm tracking-tight">AXIA</span>
+            <span className="hidden sm:inline text-white font-bold text-sm tracking-tight">AXIA</span>
+            <span className="hidden sm:block ml-0.5"><BoutonRevoirTutoriel moduleKey="axia" dark /></span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+            <AxiaNotifBell />
             <button onClick={() => setTtsOn(v => !v)} title="Réponses vocales"
-              className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors hover:bg-white/10">
-              {ttsOn ? <Volume2 size={14} className="text-white/60" /> : <VolumeX size={14} className="text-white/25" />}
+              className="flex w-7 h-7 sm:w-8 sm:h-8 rounded-xl items-center justify-center transition-colors hover:bg-white/10 flex-shrink-0">
+              {ttsOn ? <Volume2 size={13} className="text-white/60" /> : <VolumeX size={13} className="text-white/25" />}
             </button>
             <button onClick={openVoiceMode} title="Mode vocal"
-              className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center transition-colors flex-shrink-0"
               style={{ background: "rgba(245,166,35,0.15)" }}>
-              <Phone size={13} className="text-[#F5A623]" />
+              <Phone size={12} className="text-[#F5A623]" />
             </button>
-            <Link href="/dashboard/axia/journal"
-              className="hidden sm:flex items-center gap-1.5 text-[11.5px] font-semibold text-white/60 hover:text-white border border-white/10 hover:border-white/25 rounded-full px-3 py-1.5 transition-all">
+            <Link href="/dashboard/axia/journal" title="Journal"
+              className="hidden sm:flex items-center gap-1.5 text-[11.5px] font-semibold text-white/60 hover:text-white border border-white/10 hover:border-white/25 rounded-full px-3 py-1.5 transition-all flex-shrink-0">
               <History size={12} /> Journal
             </Link>
-            <Link href="/dashboard/accueil"
-              className="flex items-center gap-1.5 text-[11.5px] font-bold rounded-full px-3.5 py-1.5 transition-all hover:opacity-90"
+            <Link href="/dashboard/accueil" title="Tableau de bord"
+              className="flex items-center gap-1.5 text-[11.5px] font-bold rounded-full px-2.5 sm:px-3.5 py-1.5 transition-all hover:opacity-90 flex-shrink-0"
               style={{ background: "#F5A623", color: "#1B2A4A" }}>
-              <LayoutDashboard size={12} /> Tableau de bord
+              <LayoutDashboard size={12} /> <span className="hidden sm:inline">Tableau de bord</span>
             </Link>
           </div>
         </div>

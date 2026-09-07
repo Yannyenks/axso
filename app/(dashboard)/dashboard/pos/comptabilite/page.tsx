@@ -5,6 +5,13 @@ import {
   TrendingUp, TrendingDown, Wallet, ShoppingBag, PiggyBank,
   Package, BarChart3, Calendar,
 } from "lucide-react";
+import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+
+const COMPTA_TUTORIAL_STEPS = [
+  { Icon: BarChart3,  titre: "Bénéfice brut vs net",  description: "Le bénéfice brut, c'est ton revenu moins le coût d'achat des produits vendus. Le bénéfice net va plus loin : il retire aussi ta part des charges d'exploitation (loyer, salaires...)." },
+  { Icon: ShoppingBag, titre: "Rentabilité par produit", description: "Vois quels produits te rapportent vraiment, une fois le coût d'achat ET la quote-part des charges pris en compte — pas juste le chiffre d'affaires." },
+  { Icon: PiggyBank,   titre: "Fonds généraux",        description: "Le solde net cumulé de toute ton activité en boutique physique — entrées moins charges, depuis le début." },
+];
 
 interface ProduitRentabilite {
   produitId: string; nom: string; image: string | null;
@@ -66,9 +73,13 @@ export default function ComptabilitePage() {
 
   return (
     <div className="p-5 max-w-5xl mx-auto space-y-5" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
+      <ModuleTutorial moduleKey="pos-comptabilite" titre="Comptabilité" sousTitre="Module Point de vente" steps={COMPTA_TUTORIAL_STEPS} />
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h1 className="text-[18px] font-bold text-[#111] inline-flex items-center gap-2"><BarChart3 size={17} className="text-[#F5A623]" /> Comptabilité boutique</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-[18px] font-bold text-[#111] inline-flex items-center gap-2"><BarChart3 size={17} className="text-[#F5A623]" /> Comptabilité boutique</h1>
+            <BoutonRevoirTutoriel moduleKey="pos-comptabilite" />
+          </div>
           <p className="text-[12px] text-gray-500">Rentabilité, entrées, charges et fonds généraux de la vente physique</p>
         </div>
         <div className="flex items-center gap-1.5 bg-gray-100 rounded-2xl p-1">
