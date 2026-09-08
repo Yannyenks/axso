@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { Search, Plus, Minus, Trash2, ShoppingCart, X, Check, Printer, Banknote, Smartphone, CreditCard, Building2, ShoppingBag } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingCart, X, Check, Printer, Banknote, Smartphone, CreditCard, Building2, ShoppingBag, ScanLine } from "lucide-react";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
+import { BarcodeScanner } from "@/components/dashboard/logistique/BarcodeScanner";
 
 const POS_TUTORIAL_STEPS = [
   { Icon: Search,       titre: "Trouve un produit",     description: "Recherche par nom, SKU ou catégorie, puis clique sur une carte produit pour l'ajouter au panier." },
@@ -50,6 +51,7 @@ export function POSPanel() {
   const [success, setSuccess] = useState(false);
   const [derniereCommande, setDerniereCommande] = useState<string | null>(null);
   const [varianteModal, setVarianteModal] = useState<Produit | null>(null);
+  const [scannerOuvert, setScannerOuvert] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -163,15 +165,25 @@ export function POSPanel() {
       {/* ─── Catalogue ─── */}
       <div className="bg-white border border-[#F0F0F0] rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-[#F0F0F0]">
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#AAA]" />
-            <input
-              ref={searchRef}
-              className="w-full border border-[#E8E8E8] rounded-xl pl-9 pr-4 py-2.5 text-[13px] outline-none focus:border-[#F5A623]/60"
-              placeholder="Rechercher par nom, SKU, catégorie..."
-              value={recherche}
-              onChange={e => setRecherche(e.target.value)}
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#AAA]" />
+              <input
+                ref={searchRef}
+                className="w-full border border-[#E8E8E8] rounded-xl pl-9 pr-4 py-2.5 text-[13px] outline-none focus:border-[#F5A623]/60"
+                placeholder="Rechercher par nom, SKU, catégorie..."
+                value={recherche}
+                onChange={e => setRecherche(e.target.value)}
+              />
+            </div>
+            <button
+              onClick={() => setScannerOuvert(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-white font-semibold text-[12.5px] transition-all shrink-0 hover:opacity-90"
+              style={{ background: "#F5A623" }}
+              title="Scanner un code-barres"
+            >
+              <ScanLine size={14} /> Scanner
+            </button>
           </div>
         </div>
 
@@ -316,6 +328,13 @@ export function POSPanel() {
           </div>
         </div>
       )}
+
+      {/* ─── Scanner code-barres ─── */}
+      <BarcodeScanner
+        open={scannerOuvert}
+        onClose={() => setScannerOuvert(false)}
+        onProduitScanne={p => ajouterAuCart(p)}
+      />
     </div>
   );
 }

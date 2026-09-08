@@ -96,6 +96,7 @@ model Produit {
   cout            Float?
   stock           Int      @default(0)
   sku             String?
+  codeBarres      String?  // EAN/UPC — utilisé par le scanner de la Caisse POS
   images          String[]
   videos          String[] // URLs vidéos produit (Vercel Blob)
   categorie       String?
@@ -158,6 +159,7 @@ model Produit {
   inclusEnBundle  ElementBundle[]  @relation("InclusDansBundle")
 
   @@unique([tenantId, slug])
+  @@unique([tenantId, codeBarres])
 }
 
 // =====================
@@ -186,6 +188,7 @@ model Variante {
   prix      Float?
   stock     Int     @default(0)
   sku       String?
+  codeBarres String?
   image     String?
   actif     Boolean @default(true)
   dimension String? // ex: "XL / Rouge / Coton"
@@ -481,15 +484,22 @@ model Wishlist {
 // MEMBRE ÉQUIPE
 // =====================
 model MembreEquipe {
-  id        String   @id @default(cuid())
-  tenantId  String
-  email     String
-  nom       String
-  role      String   @default("editeur")
-  actif     Boolean  @default(true)
-  createdAt DateTime @default(now())
+  id              String    @id @default(cuid())
+  tenantId        String
+  userId          String?   @unique // lié une fois l'invitation acceptée
+  email           String
+  nom             String
+  role            String    @default("gerant") // gerant | caissier | comptable | lecture | personnalise
+  permissions     Json?     // grille custom {module: "aucun"|"lecture"|"ecriture"} — utilisée si role="personnalise"
+  statut          String    @default("invite") // invite | actif | suspendu
+  inviteToken     String?   @unique
+  inviteExpiresAt DateTime?
+  actif           Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User?  @relation(fields: [userId], references: [id])
 }
 
 // =====================
@@ -574,6 +584,7 @@ model User {
   sessions Session[]
   livreur  Livreur?
   boutiques ProprietaireBoutique[]
+  membreEquipe MembreEquipe?
 }
 
 // Boutiques possédées par un compte utilisateur — permet le multi-boutique

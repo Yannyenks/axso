@@ -25,6 +25,7 @@ export const schemaProduit = z.object({
   prixCompare: z.number().positive().optional(),
   stock: z.number().int().min(0),
   sku: z.string().optional(),
+  codeBarres: z.string().optional(),
   categorie: z.string().optional(),
   tags: z.array(z.string()).default([]),
   images: z.array(z.string()).default([]),

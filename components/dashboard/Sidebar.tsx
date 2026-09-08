@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useAbonnementOverlay } from "@/components/dashboard/AbonnementOverlayProvider";
 import { palierAuMoins, type Palier } from "@/lib/plans";
+import type { ModuleKey, Niveau } from "@/lib/permissions";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface NavItem {
@@ -29,6 +30,11 @@ interface NavItem {
   // Route qui ouvre directement l'overlay abonnement plein écran au lieu de
   // naviguer vers une page classique (le lien "Abonnement" lui-même).
   opensAbonnement?: boolean;
+  // Module de permissions dont dépend la VISIBILITÉ de l'item (masqué
+  // entièrement si "aucun", pas juste cadenassé — mécanisme différent de
+  // requiresPalier ci-dessus : un membre d'équipe sans accès à un module ne
+  // doit même pas voir l'entrée exister, contrairement à l'upsell palier.
+  moduleKey?: ModuleKey;
 }
 
 type Entry = NavItem | { type: "label"; text: string };
@@ -38,6 +44,35 @@ export interface SidebarProps {
   boutiqueSlug?: string;
   userInitials?: string;
   palier?: Palier;
+  // Grille de permissions de l'équipe (undefined = propriétaire, tout est
+  // affiché sans filtrage — voir permissionsSession() dans lib/permissions.ts).
+  permissions?: Record<ModuleKey, Niveau>;
+}
+
+// ─── Filtrage par permissions ──────────────────────────────────────────────────
+// Masque entièrement les items dont le module est "aucun" pour la session
+// courante. Si `permissions` est undefined (propriétaire, pas de ligne
+// MembreEquipe), retourne la liste telle quelle — no-op garanti.
+function filterNavItems<T extends NavItem>(items: T[], permissions?: Record<ModuleKey, Niveau>): T[] {
+  if (!permissions) return items;
+  return items.filter(item => !item.moduleKey || permissions[item.moduleKey] !== "aucun");
+}
+
+// Variante pour MAIN_NAV, qui mélange NavItem et labels de section : filtre
+// les items puis retire les labels devenus orphelins (plus aucun item avant
+// le label suivant ou la fin de liste) pour éviter un séparateur "flottant".
+function filterNavEntries(entries: Entry[], permissions?: Record<ModuleKey, Niveau>): Entry[] {
+  if (!permissions) return entries;
+  const kept = entries.filter(entry => "type" in entry || !entry.moduleKey || permissions[entry.moduleKey] !== "aucun");
+  return kept.filter((entry, i) => {
+    if (!("type" in entry)) return true;
+    for (let j = i + 1; j < kept.length; j++) {
+      const next = kept[j];
+      if ("type" in next) return false; // prochain label direct => orphelin
+      return true;
+    }
+    return false; // rien après => orphelin
+  });
 }
 
 // ─── Routes boutique ──────────────────────────────────────────────────────────
@@ -66,64 +101,67 @@ const MAIN_NAV: Entry[] = [
   { type: "label", text: "VENTES" },
   { href: "/dashboard",                  label: "AXIA",              Icon: Sparkles,      exact: true },
   { href: "/dashboard/accueil",          label: "Tableau de bord",   Icon: Home,          exact: true },
-  { href: "/dashboard/commandes",        label: "Commandes",         Icon: ShoppingCart,  badge: true },
-  { href: "/dashboard/pos",              label: "Point de vente",    Icon: Monitor },
-  { href: "/dashboard/factures",         label: "Factures",          Icon: FileText },
-  { href: "/dashboard/retours",          label: "Retours",           Icon: RotateCcw },
+  { href: "/dashboard/commandes",        label: "Commandes",         Icon: ShoppingCart,  badge: true, moduleKey: "commandes" },
+  { href: "/dashboard/pos",              label: "Point de vente",    Icon: Monitor,       moduleKey: "pos" },
+  { href: "/dashboard/factures",         label: "Factures",          Icon: FileText,      moduleKey: "finance" },
+  { href: "/dashboard/retours",          label: "Retours",           Icon: RotateCcw,     moduleKey: "commandes" },
 
   { type: "label", text: "CLIENTS" },
-  { href: "/dashboard/clients",          label: "Clients",           Icon: Users },
-  { href: "/dashboard/avis",             label: "Avis clients",      Icon: Star },
-  { href: "/dashboard/whatsapp",         label: "WhatsApp",          Icon: MessageSquare, badge: true },
-  { href: "/dashboard/livreurs",         label: "Livreurs",          Icon: Truck },
+  { href: "/dashboard/clients",          label: "Clients",           Icon: Users,         moduleKey: "clients" },
+  { href: "/dashboard/avis",             label: "Avis clients",      Icon: Star,          moduleKey: "clients" },
+  { href: "/dashboard/whatsapp",         label: "WhatsApp",          Icon: MessageSquare, badge: true, moduleKey: "clients" },
+  { href: "/dashboard/livreurs",         label: "Livreurs",          Icon: Truck,         moduleKey: "clients" },
 
   { type: "label", text: "CATALOGUE" },
-  { href: "/dashboard/produits",         label: "Produits",          Icon: Package,       excludePrefix: "/dashboard/produits/digital" },
-  { href: "/dashboard/produits/digital", label: "Produits Digitaux", Icon: Download },
-  { href: "/dashboard/sourcing",         label: "Sourcing",          Icon: Map,           requiresPalier: "palier2" },
-  { href: "/dashboard/entrepots",        label: "Entrepôts",         Icon: Box },
+  { href: "/dashboard/produits",         label: "Produits",          Icon: Package,       excludePrefix: "/dashboard/produits/digital", moduleKey: "produits" },
+  { href: "/dashboard/produits/digital", label: "Produits Digitaux", Icon: Download,      moduleKey: "produits" },
+  { href: "/dashboard/sourcing",         label: "Sourcing",          Icon: Map,           requiresPalier: "palier2", moduleKey: "produits" },
+  { href: "/dashboard/entrepots",        label: "Entrepôts",         Icon: Box,           moduleKey: "produits" },
 
   { type: "label", text: "CROISSANCE" },
-  { href: "/dashboard/analytics",        label: "Analytics",         Icon: BarChart3 },
-  { href: "/dashboard/objectifs",        label: "Objectifs",         Icon: Target },
-  { href: "/dashboard/rapports",         label: "Rapports",          Icon: FileBarChart },
-  { href: "/dashboard/marketing",        label: "Marketing",         Icon: Megaphone,     requiresPalier: "palier1" },
-  { href: "/dashboard/affiliation",      label: "Affiliation",       Icon: UserCheck },
+  { href: "/dashboard/analytics",        label: "Analytics",         Icon: BarChart3,     moduleKey: "produits" },
+  { href: "/dashboard/objectifs",        label: "Objectifs",         Icon: Target,        moduleKey: "produits" },
+  { href: "/dashboard/rapports",         label: "Rapports",          Icon: FileBarChart,  moduleKey: "produits" },
+  { href: "/dashboard/marketing",        label: "Marketing",         Icon: Megaphone,     requiresPalier: "palier1", moduleKey: "marketing" },
+  { href: "/dashboard/affiliation",      label: "Affiliation",       Icon: UserCheck,     moduleKey: "marketing" },
 
   { type: "label", text: "FINANCE" },
-  { href: "/dashboard/revenus",          label: "Revenus",           Icon: DollarSign },
-  { href: "/dashboard/paiements",        label: "Paiements",         Icon: CreditCard },
-  { href: "/dashboard/wallet",           label: "Wallet",            Icon: Wallet },
+  { href: "/dashboard/revenus",          label: "Revenus",           Icon: DollarSign,    moduleKey: "finance" },
+  { href: "/dashboard/paiements",        label: "Paiements",         Icon: CreditCard,    moduleKey: "finance" },
+  { href: "/dashboard/wallet",           label: "Wallet",            Icon: Wallet,        moduleKey: "finance" },
 
   { type: "label", text: "COMPTE" },
-  { href: "/dashboard/abonnement",       label: "Abonnement",        Icon: CreditCard,    opensAbonnement: true },
+  { href: "/dashboard/abonnement",       label: "Abonnement",        Icon: CreditCard,    opensAbonnement: true, moduleKey: "parametres" },
 ];
 
 // ─── Navigation boutique ──────────────────────────────────────────────────────
 const BOUTIQUE_NAV: NavItem[] = [
   { href: "/dashboard/boutique",         label: "Dashboard",          Icon: Home,         exact: true },
-  { href: "/dashboard/commandes",        label: "Commandes",          Icon: ShoppingCart, badge: true },
-  { href: "/dashboard/produits",         label: "Produits",           Icon: Package,      excludePrefix: "/dashboard/produits/digital" },
-  { href: "/dashboard/produits/digital", label: "Produits Digitaux",  Icon: Download },
-  { href: "/dashboard/themes",           label: "Thèmes",             Icon: LayoutGrid },
-  { href: "/dashboard/builder",          label: "Constructeur",       Icon: LayoutGrid },
-  { href: "/dashboard/transporteurs",    label: "Transporteurs",      Icon: Truck },
-  { href: "/dashboard/connecteurs",      label: "Connecteurs",        Icon: Plug },
-  { href: "/dashboard/feeds",            label: "Flux produits",      Icon: Link2 },
-  { href: "/dashboard/campagnes",        label: "Campagnes",          Icon: Bell },
-  { href: "/dashboard/parametres",       label: "Réglages",           Icon: Settings2 },
+  { href: "/dashboard/commandes",        label: "Commandes",          Icon: ShoppingCart, badge: true, moduleKey: "commandes" },
+  { href: "/dashboard/produits",         label: "Produits",           Icon: Package,      excludePrefix: "/dashboard/produits/digital", moduleKey: "produits" },
+  { href: "/dashboard/produits/digital", label: "Produits Digitaux",  Icon: Download,     moduleKey: "produits" },
+  { href: "/dashboard/themes",           label: "Thèmes",             Icon: LayoutGrid,   moduleKey: "boutique" },
+  { href: "/dashboard/builder",          label: "Constructeur",       Icon: LayoutGrid,   moduleKey: "boutique" },
+  { href: "/dashboard/transporteurs",    label: "Transporteurs",      Icon: Truck,        moduleKey: "boutique" },
+  { href: "/dashboard/connecteurs",      label: "Connecteurs",        Icon: Plug,         moduleKey: "boutique" },
+  { href: "/dashboard/feeds",            label: "Flux produits",      Icon: Link2,        moduleKey: "boutique" },
+  { href: "/dashboard/campagnes",        label: "Campagnes",          Icon: Bell,         moduleKey: "boutique" },
+  { href: "/dashboard/parametres",       label: "Réglages",           Icon: Settings2,    moduleKey: "parametres" },
 ];
 
 // ─── Navigation point de vente ─────────────────────────────────────────────────
 const POS_NAV: NavItem[] = [
-  { href: "/dashboard/logistique?tab=pos",       label: "Caisse POS",          Icon: Monitor },
-  { href: "/dashboard/commandes",                label: "Historique des ventes", Icon: ShoppingCart, badge: true },
-  { href: "/dashboard/pos/stock",                label: "Gestion des stocks",  Icon: Boxes },
-  { href: "/dashboard/pos/tracabilite",          label: "Traçabilité",         Icon: Package },
-  { href: "/dashboard/pos/comptabilite",         label: "Comptabilité",        Icon: Calculator },
-  { href: "/dashboard/pos/charges",              label: "Charges d'exploitation", Icon: Receipt },
-  { href: "/dashboard/logistique/encaissements", label: "Encaissements COD",   Icon: Wallet },
-  { href: "/dashboard/factures",                 label: "Factures",            Icon: FileText },
+  { href: "/dashboard/logistique?tab=pos",       label: "Caisse POS",          Icon: Monitor,       moduleKey: "pos" },
+  { href: "/dashboard/commandes",                label: "Historique des ventes", Icon: ShoppingCart, badge: true, moduleKey: "pos" },
+  { href: "/dashboard/pos/stock",                label: "Gestion des stocks",  Icon: Boxes,         moduleKey: "pos" },
+  { href: "/dashboard/pos/tracabilite",          label: "Traçabilité",         Icon: Package,       moduleKey: "pos" },
+  // Comptabilité/Charges/Encaissements/Factures = sous-outils financiers du
+  // module POS, gérés par la permission "finance" (pas "pos") : un caissier
+  // pur (pos:ecriture, finance:aucun) voit la caisse mais pas la compta.
+  { href: "/dashboard/pos/comptabilite",         label: "Comptabilité",        Icon: Calculator,    moduleKey: "finance" },
+  { href: "/dashboard/pos/charges",              label: "Charges d'exploitation", Icon: Receipt,    moduleKey: "finance" },
+  { href: "/dashboard/logistique/encaissements", label: "Encaissements COD",   Icon: Wallet,        moduleKey: "finance" },
+  { href: "/dashboard/factures",                 label: "Factures",            Icon: FileText,      moduleKey: "finance" },
 ];
 
 // ─── Helper active ────────────────────────────────────────────────────────────
@@ -236,7 +274,7 @@ function NavLink({
 
 // ─── Sidebar principale ────────────────────────────────────────────────────────
 function MainSidebar({
-  pathname, boutiqueNom, userInitials, onBoutique, onPos, palier,
+  pathname, boutiqueNom, userInitials, onBoutique, onPos, palier, permissions,
 }: {
   pathname: string;
   boutiqueNom?: string;
@@ -244,7 +282,9 @@ function MainSidebar({
   onBoutique: () => void;
   onPos: () => void;
   palier?: Palier;
+  permissions?: Record<ModuleKey, Niveau>;
 }) {
+  const navEntries = filterNavEntries(MAIN_NAV, permissions);
   return (
     <>
       {/* Slogan */}
@@ -331,7 +371,7 @@ function MainSidebar({
         style={{ scrollbarWidth: "none" }}
       >
         <div className="space-y-0.5">
-          {MAIN_NAV.map((entry, i) => {
+          {navEntries.map((entry, i) => {
             if ("type" in entry) {
               return (
                 <div key={i} className="pt-4 pb-1.5 px-1 flex items-center gap-2">
@@ -384,13 +424,15 @@ function MainSidebar({
 
 // ─── Sidebar boutique ─────────────────────────────────────────────────────────
 function BoutiqueSidebar({
-  pathname, boutiqueNom, boutiqueSlug, onRetour,
+  pathname, boutiqueNom, boutiqueSlug, onRetour, permissions,
 }: {
   pathname: string;
   boutiqueNom?: string;
   boutiqueSlug?: string;
   onRetour: () => void;
+  permissions?: Record<ModuleKey, Niveau>;
 }) {
+  const navItems = filterNavItems(BOUTIQUE_NAV, permissions);
   return (
     <>
       {/* Retour */}
@@ -441,7 +483,7 @@ function BoutiqueSidebar({
         className="flex-1 px-3 py-2 overflow-y-auto space-y-0.5"
         style={{ scrollbarWidth: "none" }}
       >
-        {BOUTIQUE_NAV.map(item => (
+        {navItems.map(item => (
           <NavLink
             key={item.href}
             item={item}
@@ -482,14 +524,16 @@ function BoutiqueSidebar({
 
 // ─── Sidebar point de vente ─────────────────────────────────────────────────────
 function PosSidebar({
-  pathname, boutiqueNom, onRetour,
+  pathname, boutiqueNom, onRetour, permissions,
 }: {
   pathname: string;
   boutiqueNom?: string;
   onRetour: () => void;
+  permissions?: Record<ModuleKey, Niveau>;
 }) {
   const searchParams = useSearchParams();
   const caisseActive = pathname === "/dashboard/logistique" && searchParams.get("tab") === "pos";
+  const navItems = filterNavItems(POS_NAV, permissions);
 
   return (
     <>
@@ -541,7 +585,7 @@ function PosSidebar({
         className="flex-1 px-3 py-2 overflow-y-auto space-y-0.5"
         style={{ scrollbarWidth: "none" }}
       >
-        {POS_NAV.map(item => (
+        {navItems.map(item => (
           <NavLink
             key={item.href}
             item={item}
@@ -574,7 +618,7 @@ function PosSidebar({
 }
 
 // ─── Export ───────────────────────────────────────────────────────────────────
-export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier }: SidebarProps) {
+export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier, permissions }: SidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [mode, setMode] = useState<"main" | "boutique" | "pos">("main");
@@ -601,12 +645,14 @@ export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier }: Sid
           boutiqueNom={boutiqueNom}
           boutiqueSlug={boutiqueSlug}
           onRetour={() => setMode("main")}
+          permissions={permissions}
         />
       ) : mode === "pos" ? (
         <PosSidebar
           pathname={pathname}
           boutiqueNom={boutiqueNom}
           onRetour={() => setMode("main")}
+          permissions={permissions}
         />
       ) : (
         <MainSidebar
@@ -616,6 +662,7 @@ export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier }: Sid
           onBoutique={() => setMode("boutique")}
           onPos={() => setMode("pos")}
           palier={palier}
+          permissions={permissions}
         />
       )}
     </aside>

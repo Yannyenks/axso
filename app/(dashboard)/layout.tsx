@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { NotificationSound } from "@/components/ui/NotificationSound";
 import { quotaCommandesAtteint, planActif } from "@/lib/abonnement";
+import { permissionsSession, estCaissierPur } from "@/lib/permissions-server";
 import { AbonnementOverlayProvider } from "@/components/dashboard/AbonnementOverlayProvider";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 
@@ -21,10 +22,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const quotaAtteint = tenantId ? await quotaCommandesAtteint(tenantId) : false;
   const { plan: palier } = tenantId ? await planActif(tenantId) : { plan: "palier0" as const };
+  const permissions = await permissionsSession(session);
+  const modeCaisse = await estCaissierPur(session);
 
   return (
     <AbonnementOverlayProvider>
-      <DashboardShell session={session} boutique={boutique} quotaAtteint={quotaAtteint} palier={palier}>
+      <DashboardShell session={session} boutique={boutique} quotaAtteint={quotaAtteint} palier={palier} permissions={permissions} modeCaisse={modeCaisse}>
         {children}
       </DashboardShell>
       {/* Son audio sur chaque notification toast */}

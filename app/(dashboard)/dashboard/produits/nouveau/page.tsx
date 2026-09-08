@@ -74,6 +74,7 @@ export default function NouveauProduitPage() {
     cout: "",
     stock: "0",
     sku: "",
+    codeBarres: "",
     categorie: "",
     tags: [] as string[],
     images: [] as string[],
@@ -195,6 +196,7 @@ export default function NouveauProduitPage() {
         prixCompare: form.prixCompare ? parseFloat(form.prixCompare) : undefined,
         stock: form.type === "digital" ? 99999 : parseInt(form.stock) || 0,
         sku: form.sku || undefined,
+        codeBarres: form.codeBarres || undefined,
         categorie: form.categorie || undefined,
         tags: form.tags,
         images: form.images,
@@ -369,6 +371,10 @@ export default function NouveauProduitPage() {
                   <div>
                     <label className="ax-label block mb-1.5">SKU / Référence</label>
                     <input value={form.sku} onChange={e => set("sku", e.target.value)} placeholder="SKU-001" className={inputClass} />
+                  </div>
+                  <div>
+                    <label className="ax-label block mb-1.5">Code-barres (EAN/UPC)</label>
+                    <input value={form.codeBarres} onChange={e => set("codeBarres", e.target.value)} placeholder="ex: 6001234567890" className={inputClass} />
                   </div>
                 </>
               )}

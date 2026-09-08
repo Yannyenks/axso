@@ -37,7 +37,7 @@ function formatTaille(octets: number) {
 
 type FormState = {
   nom: string; slug: string; description: string;
-  prix: string; prixCompare: string; cout: string; stock: string; sku: string;
+  prix: string; prixCompare: string; cout: string; stock: string; sku: string; codeBarres: string;
   categorie: string; tags: string[]; images: string[]; videos: string[];
   actif: boolean; featured: boolean; poids: string;
   metaTitle: string; metaDesc: string; ogImage: string;
@@ -74,7 +74,7 @@ export default function EditProduitPage() {
   const digitalFileRef = useRef<HTMLInputElement>(null);
 
   const [form, setFormState] = useState<FormState>({
-    nom: "", slug: "", description: "", prix: "", prixCompare: "", cout: "", stock: "0", sku: "",
+    nom: "", slug: "", description: "", prix: "", prixCompare: "", cout: "", stock: "0", sku: "", codeBarres: "",
     categorie: "", tags: [], images: [], videos: [],
     actif: true, featured: false, poids: "",
     metaTitle: "", metaDesc: "", ogImage: "",
@@ -106,6 +106,7 @@ export default function EditProduitPage() {
           cout: p.cout?.toString() ?? "",
           stock: p.stock?.toString() ?? "0",
           sku: p.sku ?? "",
+          codeBarres: p.codeBarres ?? "",
           categorie: p.categorie ?? "",
           tags: p.tags ?? [],
           images: p.images ?? [],
@@ -259,7 +260,7 @@ export default function EditProduitPage() {
         prix: parseFloat(form.prix),
         prixCompare: form.prixCompare ? parseFloat(form.prixCompare) : null,
         stock: form.type === "digital" ? 99999 : parseInt(form.stock) || 0,
-        sku: form.sku || null, categorie: form.categorie || null,
+        sku: form.sku || null, codeBarres: form.codeBarres || null, categorie: form.categorie || null,
         tags: form.tags, images: form.images, videos: form.videos,
         actif: form.actif, featured: form.featured, type: form.type,
         metaTitle: form.metaTitle || null, metaDesc: form.metaDesc || null,
@@ -447,6 +448,10 @@ export default function EditProduitPage() {
                   <div>
                     <label className="ax-label block mb-1.5">SKU / Référence</label>
                     <input value={form.sku} onChange={e => set("sku", e.target.value)} placeholder="SKU-001" className={inputClass} />
+                  </div>
+                  <div>
+                    <label className="ax-label block mb-1.5">Code-barres (EAN/UPC)</label>
+                    <input value={form.codeBarres} onChange={e => set("codeBarres", e.target.value)} placeholder="ex: 6001234567890" className={inputClass} />
                   </div>
                 </>
               )}

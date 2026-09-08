@@ -13,6 +13,7 @@ const schemaUpdate = z.object({
   cout: z.number().optional().nullable(),
   stock: z.number().int().min(0).optional(),
   sku: z.string().optional().nullable(),
+  codeBarres: z.string().optional().nullable(),
   images: z.array(z.string()).optional(),
   videos: z.array(z.string()).optional(),
   categorie: z.string().optional().nullable(),

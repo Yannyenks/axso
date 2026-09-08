@@ -5,7 +5,9 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Header } from "@/components/dashboard/Header";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { QuotaBanner } from "@/components/dashboard/QuotaBanner";
+import { CaisseKiosk } from "@/components/dashboard/CaisseKiosk";
 import type { Palier } from "@/lib/plans";
+import type { ModuleKey, Niveau } from "@/lib/permissions";
 
 const FULLBLEED_PREFIXES: string[] = ["/dashboard/builder", "/dashboard/themes"];
 
@@ -17,17 +19,31 @@ const FULLBLEED_PREFIXES: string[] = ["/dashboard/builder", "/dashboard/themes"]
 // tout premier chargement. usePathname() côté client, lui, se met à jour de
 // façon fiable à chaque navigation.
 export function DashboardShell({
-  children, session, boutique, quotaAtteint, palier,
+  children, session, boutique, quotaAtteint, palier, permissions, modeCaisse,
 }: {
   children: React.ReactNode;
   session: any;
   boutique: { slug: string; nomBoutique: string } | null;
   quotaAtteint: boolean;
   palier: Palier;
+  permissions?: Record<ModuleKey, Niveau>;
+  // Calculé une fois côté serveur dans layout.tsx (estCaissierPur), PAS
+  // re-dérivé du pathname côté client : contrairement à fullBleed ci-dessous,
+  // ce mode dépend du RÔLE de l'utilisateur, pas de la route visitée — un
+  // caissier pur doit voir le kiosque plein écran sur n'importe quelle route
+  // du dashboard, pas seulement /dashboard/logistique?tab=pos.
+  modeCaisse?: boolean;
 }) {
   const pathname = usePathname();
   const estAccueilAxia = pathname === "/dashboard";
   const fullBleed = estAccueilAxia || FULLBLEED_PREFIXES.some(r => pathname.startsWith(r));
+
+  // Mode Caisse : un caissier pur n'a jamais accès au chrome du dashboard
+  // (sidebar/header/bottom nav) — écran plein écran dédié à la place, sur
+  // desktop comme sur mobile.
+  if (modeCaisse) {
+    return <CaisseKiosk boutiqueNom={boutique?.nomBoutique} />;
+  }
 
   return (
     <>
@@ -36,7 +52,7 @@ export function DashboardShell({
         {/* Écran d'accueil AXIA = plein écran réel, la sidebar AXSO ne doit
             pas rester visible à côté — le retour au dashboard classique se
             fait via le bouton dédié dans la barre supérieure d'AXIA. */}
-        {!estAccueilAxia && <Sidebar boutiqueNom={boutique?.nomBoutique} boutiqueSlug={boutique?.slug} palier={palier} />}
+        {!estAccueilAxia && <Sidebar boutiqueNom={boutique?.nomBoutique} boutiqueSlug={boutique?.slug} palier={palier} permissions={permissions} />}
         <div className="flex flex-col flex-1 overflow-hidden">
           <main className={fullBleed ? "flex-1 overflow-hidden flex flex-col" : "flex-1 overflow-y-auto"}>
             {fullBleed ? children : (

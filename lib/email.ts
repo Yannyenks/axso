@@ -123,6 +123,35 @@ export async function envoyerConfirmationCommande(params: {
   });
 }
 
+// Invitation à rejoindre l'équipe d'une boutique
+export async function envoyerInvitationEquipe(params: {
+  email: string;
+  nom: string;
+  boutique: string;
+  role: string;
+  lien: string;
+}) {
+  const resend = getResendClient();
+  if (!resend) {
+    console.warn("Resend non configuré — invitation équipe non envoyée par email (lien affiché dans l'UI)");
+    return;
+  }
+  await resend.emails.send({
+    from: "Axso <noreply@axso.com>",
+    to: params.email,
+    subject: `Tu es invité·e à rejoindre l'équipe de ${params.boutique}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
+        <h2>Invitation à rejoindre l'équipe</h2>
+        <p>Bonjour ${params.nom},</p>
+        <p><strong>${params.boutique}</strong> t'invite à rejoindre son équipe sur Axso, avec le rôle <strong>${params.role}</strong>.</p>
+        <p><a href="${params.lien}" style="display:inline-block;padding:10px 20px;background:#F5A623;color:#111;border-radius:8px;text-decoration:none;font-weight:bold;">Rejoindre l'équipe</a></p>
+        <p style="color: #666; font-size: 13px;">Ce lien expire dans 7 jours. Si tu ne t'attendais pas à cette invitation, ignore cet email.</p>
+      </div>
+    `,
+  });
+}
+
 // Email de newsletter marketing
 export async function envoyerNewsletter(params: {
   emails: string[];
