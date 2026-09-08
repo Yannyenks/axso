@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { Search, Plus, Minus, Trash2, ShoppingCart, X, Check, Printer, Banknote, Smartphone, CreditCard, Building2, ShoppingBag, ScanLine } from "lucide-react";
+import { toast } from "sonner";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
 import { BarcodeScanner } from "@/components/dashboard/logistique/BarcodeScanner";
 
@@ -88,6 +89,33 @@ export function POSPanel() {
     ajouterAuCart(p);
   }
 
+  // Champ de recherche = aussi champ de scan : un scanner physique (ou une
+  // appli photo qui décode un code-barres directement en texte) "tape" le
+  // code dans le champ actif puis envoie Entrée — exactement comme en
+  // caisse supermarché. Sur Entrée, on tente une correspondance EXACTE
+  // (code-barres ou SKU) via /api/pos/scan avant de retomber sur le simple
+  // filtre flou existant, qui reste inchangé pour la recherche par nom.
+  const [scanEnCours, setScanEnCours] = useState(false);
+  async function tenterScanDirect() {
+    const code = recherche.trim();
+    if (!code || scanEnCours) return;
+    setScanEnCours(true);
+    try {
+      const res = await fetch(`/api/pos/scan?code=${encodeURIComponent(code)}`);
+      const data = await res.json();
+      if (res.ok && data.produit) {
+        handleProduitClick(data.produit);
+        setRecherche("");
+      } else if (code.length >= 4) {
+        toast.error(data.error || "Aucun produit pour ce code");
+      }
+    } catch {
+      /* pas de réseau — le filtre flou local reste affiché, pas d'erreur bruyante */
+    } finally {
+      setScanEnCours(false);
+    }
+  }
+
   function modifQte(idx: number, delta: number) {
     setCart(c => {
       const next = [...c];
@@ -171,9 +199,10 @@ export function POSPanel() {
               <input
                 ref={searchRef}
                 className="w-full border border-[#E8E8E8] rounded-xl pl-9 pr-4 py-2.5 text-[13px] outline-none focus:border-[#F5A623]/60"
-                placeholder="Rechercher par nom, SKU, catégorie..."
+                placeholder="Rechercher par nom, SKU, catégorie... ou scanner un code-barres"
                 value={recherche}
                 onChange={e => setRecherche(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); tenterScanDirect(); } }}
               />
             </div>
             <button
