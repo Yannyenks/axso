@@ -5,7 +5,7 @@ import {
   ArrowLeft, Save, Trash2, X, Plus, Sparkles, Loader2,
   Package, Image as ImageIcon, Tag, BarChart2, Globe,
   Upload, Video, FileText, Truck, Download, ExternalLink, Info, Zap,
-  HelpCircle, ListOrdered, Eye, EyeOff, ShoppingCart,
+  HelpCircle, ListOrdered, Eye, EyeOff, ShoppingCart, ScanLine,
 } from "lucide-react";
 import { VariantesPrixManager } from "@/components/dashboard/VariantesPrixManager";
 import ClesLicenceManager from "@/components/dashboard/ClesLicenceManager";
@@ -13,6 +13,7 @@ import FormationManager from "@/components/dashboard/FormationManager";
 import FaqManager, { type FaqItem } from "@/components/dashboard/FaqManager";
 import ChampsCommandeManager, { type ChampCommande } from "@/components/dashboard/ChampsCommandeManager";
 import PublicationAssistant from "@/components/dashboard/PublicationAssistant";
+import { BarcodeCaptureModal } from "@/components/dashboard/BarcodeCaptureModal";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -68,6 +69,7 @@ export default function EditProduitPage() {
   const [varianteForm, setVarianteForm] = useState({ nom: "Taille", valeur: "", sku: "", prix: "", stock: "0", image: "" });
   const [savingVariante, setSavingVariante] = useState(false);
   const [showPubAssistant, setShowPubAssistant] = useState(false);
+  const [scanBarcodeOuvert, setScanBarcodeOuvert] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -451,7 +453,18 @@ export default function EditProduitPage() {
                   </div>
                   <div>
                     <label className="ax-label block mb-1.5">Code-barres (EAN/UPC)</label>
-                    <input value={form.codeBarres} onChange={e => set("codeBarres", e.target.value)} placeholder="ex: 6001234567890" className={inputClass} />
+                    <div className="flex items-center gap-2">
+                      <input value={form.codeBarres} onChange={e => set("codeBarres", e.target.value)} placeholder="ex: 6001234567890" className={`${inputClass} flex-1`} />
+                      <button
+                        type="button"
+                        onClick={() => setScanBarcodeOuvert(true)}
+                        title="Scanner le code-barres avec la caméra"
+                        className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl font-semibold text-[12.5px] text-white shrink-0 transition-all hover:opacity-90"
+                        style={{ background: "#F5A623" }}
+                      >
+                        <ScanLine size={14} /> Scanner
+                      </button>
+                    </div>
                   </div>
                 </>
               )}
@@ -926,6 +939,12 @@ export default function EditProduitPage() {
         }}
       />
     )}
+
+    <BarcodeCaptureModal
+      open={scanBarcodeOuvert}
+      onClose={() => setScanBarcodeOuvert(false)}
+      onDetect={code => { set("codeBarres", code); toast.success("Code-barres scanné !"); }}
+    />
     </>
   );
 }
