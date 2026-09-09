@@ -70,7 +70,7 @@ Analyse la description du business et génère un plan de boutique complet en JS
 Règles strictes :
 - pays : code ISO 2 lettres (ex: SN, FR, US, MA, NG, DE, BR, AE, etc.) — détecte le pays depuis la description
 - devise : adapte à la devise locale du pays (EUR pour France, USD pour USA, XOF pour Sénégal, GBP pour UK, etc.)
-- themeId : choisis parmi — "terre-et-or" (artisanat/naturel/chaleureux), "noir-obsidien" (luxe/sombre), "noir-atelier" (mode/artisanat premium, éditorial sombre)
+- themeId : choisis parmi — "terre-et-or" (artisanat/naturel/chaleureux), "noir-obsidien" (luxe/sombre), "noir-atelier" (mode/artisanat premium, éditorial sombre), "pulse" (sport/sneakers, énergique et coloré)
 - slug : lettres minuscules, chiffres, tirets seulement (ex: mode-aminata, tech-paris, shop-dubai)
 - Propose 3 à 5 produits représentatifs avec des prix réalistes en devise locale
 - Si la boutique vend des produits digitaux (ebooks, formations, templates, musique, logiciels, NFT, etc.), mets "type": "digital" sur chaque produit et stock: 999

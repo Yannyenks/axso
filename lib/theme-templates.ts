@@ -95,14 +95,7 @@ export const TEMPLATE_DEFAULTS: Record<string, ThemeConfig> = {
       newsletter: { actif: false, titre: "Restez informé", texte: "Nos nouvelles pièces, sans spam.", placeholder: "votre@email.com", ctaTexte: "S'abonner", style: "centered" },
     },
   },
-};
 
-// ─── En attente de leurs composants de rendu (vague suivante) ────────────────
-// Définitions déjà prêtes mais pas encore actives : dès que
-// components/storefront/templates/<id>/ existe et que l'entrée est ajoutée
-// à TEMPLATE_COMPONENTS (components/storefront/templates/registry.tsx), il
-// suffit de déplacer l'entrée ci-dessous dans TEMPLATE_DEFAULTS plus haut.
-export const PENDING_TEMPLATE_DEFAULTS: Record<string, ThemeConfig> = {
   "pulse": {
     colors: {
       fond: "#F4F3EF",

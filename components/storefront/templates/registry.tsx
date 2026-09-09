@@ -9,6 +9,12 @@ import { NoirAtelierProductPage } from "./noir-atelier/ProductPage";
 import { NoirAtelierCollectionPage } from "./noir-atelier/CollectionPage";
 import { NoirAtelierAboutPage } from "./noir-atelier/AboutPage";
 import { NoirAtelierContactPage } from "./noir-atelier/ContactPage";
+import { PulseHomePage } from "./pulse/HomePage";
+import { PulseProductListPage } from "./pulse/ProductListPage";
+import { PulseProductPage } from "./pulse/ProductPage";
+import { PulseCollectionPage } from "./pulse/CollectionPage";
+import { PulseAboutPage } from "./pulse/AboutPage";
+import { PulseContactPage } from "./pulse/ContactPage";
 
 export interface TemplateComponents {
   HomePage: React.ComponentType<any>;
@@ -27,5 +33,13 @@ export const TEMPLATE_COMPONENTS: Record<string, TemplateComponents> = {
     CollectionPage: NoirAtelierCollectionPage,
     AboutPage: NoirAtelierAboutPage,
     ContactPage: NoirAtelierContactPage,
+  },
+  "pulse": {
+    HomePage: PulseHomePage,
+    ProductListPage: PulseProductListPage,
+    ProductPage: PulseProductPage,
+    CollectionPage: PulseCollectionPage,
+    AboutPage: PulseAboutPage,
+    ContactPage: PulseContactPage,
   },
 };
