@@ -57,6 +57,12 @@ import { ForgeProductPage } from "./forge/ProductPage";
 import { ForgeCollectionPage } from "./forge/CollectionPage";
 import { ForgeAboutPage } from "./forge/AboutPage";
 import { ForgeContactPage } from "./forge/ContactPage";
+import { MaisonVertHomePage } from "./maison-vert/HomePage";
+import { MaisonVertProductListPage } from "./maison-vert/ProductListPage";
+import { MaisonVertProductPage } from "./maison-vert/ProductPage";
+import { MaisonVertCollectionPage } from "./maison-vert/CollectionPage";
+import { MaisonVertAboutPage } from "./maison-vert/AboutPage";
+import { MaisonVertContactPage } from "./maison-vert/ContactPage";
 
 export interface TemplateComponents {
   HomePage: React.ComponentType<any>;
@@ -139,5 +145,13 @@ export const TEMPLATE_COMPONENTS: Record<string, TemplateComponents> = {
     CollectionPage: ForgeCollectionPage,
     AboutPage: ForgeAboutPage,
     ContactPage: ForgeContactPage,
+  },
+  "maison-vert": {
+    HomePage: MaisonVertHomePage,
+    ProductListPage: MaisonVertProductListPage,
+    ProductPage: MaisonVertProductPage,
+    CollectionPage: MaisonVertCollectionPage,
+    AboutPage: MaisonVertAboutPage,
+    ContactPage: MaisonVertContactPage,
   },
 };
