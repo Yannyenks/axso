@@ -39,6 +39,12 @@ import { AtlasProductPage } from "./atlas/ProductPage";
 import { AtlasCollectionPage } from "./atlas/CollectionPage";
 import { AtlasAboutPage } from "./atlas/AboutPage";
 import { AtlasContactPage } from "./atlas/ContactPage";
+import { VoltHomePage } from "./volt/HomePage";
+import { VoltProductListPage } from "./volt/ProductListPage";
+import { VoltProductPage } from "./volt/ProductPage";
+import { VoltCollectionPage } from "./volt/CollectionPage";
+import { VoltAboutPage } from "./volt/AboutPage";
+import { VoltContactPage } from "./volt/ContactPage";
 
 export interface TemplateComponents {
   HomePage: React.ComponentType<any>;
@@ -97,5 +103,13 @@ export const TEMPLATE_COMPONENTS: Record<string, TemplateComponents> = {
     CollectionPage: AtlasCollectionPage,
     AboutPage: AtlasAboutPage,
     ContactPage: AtlasContactPage,
+  },
+  "volt": {
+    HomePage: VoltHomePage,
+    ProductListPage: VoltProductListPage,
+    ProductPage: VoltProductPage,
+    CollectionPage: VoltCollectionPage,
+    AboutPage: VoltAboutPage,
+    ContactPage: VoltContactPage,
   },
 };

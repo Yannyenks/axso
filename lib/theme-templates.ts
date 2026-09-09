@@ -62,6 +62,12 @@ export const TEMPLATE_META: Record<string, TemplateMeta> = {
     categorie: "Mobilité",
     badge: "Nouveau",
   },
+  "orfevre": {
+    nom: "Orfèvre",
+    description: "Bijouterie fine — élégance sombre et dorée, façonnage à la main, ambiance atelier de joaillier.",
+    categorie: "Bijouterie",
+    badge: "Nouveau",
+  },
 };
 
 const DEFAULT_ANIM_BASE = {
@@ -424,6 +430,55 @@ export const TEMPLATE_DEFAULTS: Record<string, ThemeConfig> = {
       ] },
       avis: { actif: true, titre: "Avis clients", layout: "cards" },
       newsletter: { actif: false, titre: "Restez informé", texte: "Nos nouveautés, sans spam.", placeholder: "votre@email.com", ctaTexte: "S'abonner", style: "centered" },
+    },
+  },
+
+  "orfevre": {
+    colors: {
+      fond: "#0E1420",
+      accent: "#C9A24B",
+      accentSecondaire: "#7C859A",
+      texte: "#F5F1E6",
+      texteMuted: "#7C859A",
+      surface: "#161E2E",
+      bordure: "rgba(245,241,230,0.13)",
+    },
+    fonts: { titre: "cormorant", corps: "jost", poidsTitre: "400", transformTitre: "none", lettreEspacement: "normal", hauteurLigne: "relaxed" },
+    radius: "4px",
+    layout: { largeurContainer: "1280px", paddingSection: "xl", colonnesProduits: 3, colonnesMobile: 2, styleCarte: "flat", ombre: "none" },
+    boutons: { style: "outlined", taille: "md", hover: "darken", bordureWidth: "1px" },
+    navigationStyle: { type: "classic", style: "dark", sticky: true, hauteur: "74px", showSearch: true, showWishlist: false },
+    animations: { global: "fade-in", vitesse: "slow", preset: "luxury", ...DEFAULT_ANIM_BASE },
+    sections: {
+      annonce: { actif: false, texte: "Or recyclé certifié · Écrin offert", couleurFond: "#C9A24B", couleurTexte: "#0E1420" },
+      hero: {
+        actif: true, style: "split", titre: "Taillé pour durer une vie entière",
+        sousTitre: "Pierres tracées, or recyclé, façonnage à la main dans notre atelier. Chaque pièce est numérotée et certifiée.",
+        ctaTexte: "Voir la collection", ctaLien: "produits", overlay: 0, hauteur: "100vh", textPosition: "left",
+        badgeTexte: "Collection Solstice",
+      },
+      confiance: {
+        actif: true, layout: "marquee",
+        items: [
+          { icone: "◆", titre: "Or recyclé", texte: "Certifié" },
+          { icone: "◆", titre: "Écrin offert", texte: "Avec chaque commande" },
+          { icone: "◆", titre: "Assurance", texte: "Incluse 1 an" },
+        ],
+      },
+      vedettes: { actif: true, titre: "Ce que la lumière révèle", nombre: 6, triPar: "featured", colonnes: 3, layout: "grid", showRatings: false, showSoldCount: false },
+      collections: { actif: true, titre: "Pièces signature", layout: "grid" },
+      about: {
+        actif: false, layout: "image-left",
+        titre: "Un savoir-faire d'orfèvre", texte: "Chaque bijou est façonné à la main, sertissage compris, dans notre atelier.",
+        badgeTexte: "Notre atelier",
+      },
+      promo: { actif: true, titre: "Sur-mesure", texte: "Faites créer une pièce unique, à votre image.", ctaTexte: "En savoir plus", style: "solid" },
+      faq: { actif: false, titre: "Questions fréquentes", layout: "accordion", items: [
+        { question: "Puis-je faire redimensionner ma bague ?", reponse: "Oui, un ajustement gratuit est offert dans les 6 mois suivant l'achat." },
+        { question: "Les pierres sont-elles certifiées ?", reponse: "Toutes nos pierres de plus de 0,5 carat sont accompagnées d'un certificat de gemmologie." },
+      ] },
+      avis: { actif: true, titre: "Avis clients", layout: "cards" },
+      newsletter: { actif: false, titre: "Restez informé", texte: "Nos nouvelles pièces, sans spam.", placeholder: "votre@email.com", ctaTexte: "S'abonner", style: "centered" },
     },
   },
 };
