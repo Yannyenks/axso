@@ -9,6 +9,7 @@ import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { CustomSectionsRenderer } from "@/components/storefront/CustomSectionsRenderer";
 import { ContactForm } from "@/components/storefront/ContactForm";
+import { TEMPLATE_COMPONENTS } from "@/components/storefront/templates/registry";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -43,6 +44,11 @@ export default async function ContactPage({ params }: Props) {
 
   const contactPage = cfg.contactPage;
   const afficherFormulaire = contactPage?.afficherFormulaire ?? true;
+
+  const TemplateContact = TEMPLATE_COMPONENTS[tenant.themeId]?.ContactPage;
+  if (TemplateContact) {
+    return <TemplateContact tenant={tenant} cfg={cfg} slug={slug} />;
+  }
 
   const coordonnees = [
     tenant.telephone && { Icon: Phone, label: "Téléphone", value: tenant.telephone, href: `tel:${tenant.telephone.replace(/\s/g, "")}` },

@@ -1,3 +1,5 @@
+import { TEMPLATE_DEFAULTS } from "@/lib/theme-templates";
+
 // ─── Couleurs ────────────────────────────────────────────────────────────────
 export interface ThemeColors {
   fond: string;
@@ -540,7 +542,7 @@ export function mergeThemeConfig(base: ThemeConfig, overrides: Record<string, an
 }
 
 export function resolveThemeConfig(themeId: string, savedConfig: Record<string, any> = {}): ThemeConfig {
-  const base = DEFAULTS[themeId] || DEFAULTS["terre-et-or"];
+  const base = DEFAULTS[themeId] || TEMPLATE_DEFAULTS[themeId] || DEFAULTS["terre-et-or"];
   const hasCustom = savedConfig && Object.keys(savedConfig).filter(k => k !== "builderHtml" && k !== "builderCss").length > 0;
   if (!hasCustom) return base;
 

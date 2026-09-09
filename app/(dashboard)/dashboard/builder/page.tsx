@@ -16,7 +16,7 @@ import {
   ShoppingBag, Maximize2, Minimize2, ZoomIn, Package,
   ShoppingCart, Share2, Info, Phone, Undo2, Redo2,
 } from "lucide-react";
-import { THEME_DEFAULTS, resolveThemeConfig, type ThemeConfig, type CustomSection, DEFAULT_PRODUCT_SECTIONS, type ProductPageSection } from "@/lib/theme-config";
+import { resolveThemeConfig, type ThemeConfig, type CustomSection, DEFAULT_PRODUCT_SECTIONS, type ProductPageSection } from "@/lib/theme-config";
 import { FONTS, googleFontsHref, typographyCss } from "@/lib/theme-fonts";
 
 type Device = "desktop" | "tablet" | "mobile";
@@ -501,7 +501,7 @@ export default function BuilderPage() {
               {panel === "produit"    && <PanelProduit   config={config} setProductPage={setProductPage} />}
               {panel === "apropos"    && <PanelPageSections config={config} set={set} pageKey="aboutPage" titre="À propos" />}
               {panel === "contact"    && <PanelPageSections config={config} set={set} pageKey="contactPage" titre="Contact" />}
-              {panel === "avance"     && <PanelAvance    config={config} set={set} tenant={tenant} onReset={() => { const d = THEME_DEFAULTS[tenant.themeId] || THEME_DEFAULTS["terre-et-or"]; setConfig({ ...d }); }} />}
+              {panel === "avance"     && <PanelAvance    config={config} set={set} tenant={tenant} onReset={() => { setConfig({ ...resolveThemeConfig(tenant.themeId) }); }} />}
             </div>
           </div>
 

@@ -6,7 +6,8 @@ import {
   ArrowLeft, Save, Monitor, Tablet, Smartphone,
   Palette, Type, Layout, Sparkles, Eye, RefreshCw,
 } from "lucide-react";
-import { THEME_DEFAULTS, resolveThemeConfig, type ThemeConfig } from "@/lib/theme-config";
+import { resolveThemeConfig, type ThemeConfig } from "@/lib/theme-config";
+import { PRINCIPAL_THEME_IDS, TEMPLATE_META } from "@/lib/theme-templates";
 
 type Device = "desktop" | "tablet" | "mobile";
 type Panel = "couleurs" | "typographie" | "sections" | "effets";
@@ -42,16 +43,12 @@ const SECTIONS_LABELS: Record<string, string> = {
   newsletter: "Newsletter",
 };
 
-const BASES = Object.keys(THEME_DEFAULTS).map((k) => ({
+const BASES = PRINCIPAL_THEME_IDS.map((k) => ({
   id: k,
-  nom: {
+  nom: TEMPLATE_META[k]?.nom || ({
     "noir-obsidien": "Noir Obsidien",
-    "violet-cosmos": "Violet Cosmos",
     "terre-et-or": "Terre & Or",
-    "ocean-atlantique": "Océan Atlantique",
-    "kente-royal": "Kente Royal",
-    "bwiti-forest": "Bwiti Forest",
-  }[k] || k,
+  } as Record<string, string>)[k] || k,
 }));
 
 export default function CreerThemePage() {
@@ -245,7 +242,7 @@ export default function CreerThemePage() {
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Thème de base</p>
                   <div className="grid grid-cols-2 gap-2">
                     {BASES.map((b) => {
-                      const bc = THEME_DEFAULTS[b.id]?.colors;
+                      const bc = resolveThemeConfig(b.id)?.colors;
                       return (
                         <button key={b.id} onClick={() => changeBase(b.id)}
                           className={`p-2.5 rounded-xl border-2 text-left transition-all ${base === b.id ? "border-[#F5A623]" : "border-gray-100 hover:border-gray-200"}`}>

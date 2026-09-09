@@ -10,6 +10,7 @@ import { ViewContentTracker } from "@/components/storefront/ViewContentTracker";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { ProductPageClient } from "@/components/storefront/ProductPageClient";
+import { TEMPLATE_COMPONENTS } from "@/components/storefront/templates/registry";
 
 interface Props {
   params: Promise<{ slug: string; id: string }>;
@@ -98,6 +99,21 @@ export default async function ProduitPage({ params }: Props) {
     images: p.images,
     prixAffiche: prixClient(p.prix, taux),
   }));
+
+  const TemplateProductPage = TEMPLATE_COMPONENTS[tenant.themeId]?.ProductPage;
+  if (TemplateProductPage) {
+    return (
+      <TemplateProductPage
+        tenant={tenant}
+        cfg={cfg}
+        slug={slug}
+        produit={produit}
+        prixAffiche={prixAffiche}
+        prixCompareAffiche={prixCompareAffiche}
+        produitsSimilaires={produitsSimilaires}
+      />
+    );
+  }
 
   // Programme de la formation — affiché avant achat (aperçu gratuit pour les
   // leçons marquées "gratuite", verrouillé pour le reste) pour donner

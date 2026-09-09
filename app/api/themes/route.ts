@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { THEME_DEFAULTS } from "@/lib/theme-config";
+import { resolveThemeConfig } from "@/lib/theme-config";
+import { PRINCIPAL_THEME_IDS, TEMPLATE_IDS, TEMPLATE_META } from "@/lib/theme-templates";
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,23 +16,32 @@ export async function GET(req: NextRequest) {
         })
       : [];
 
-    const themesBuiltin = Object.entries(THEME_DEFAULTS).map(([slug, config]) => ({
-      id: slug,
-      slug,
-      nom: NOMS_BUILTIN[slug] || slug,
-      description: DESCS_BUILTIN[slug] || "",
-      badge: BADGES_BUILTIN[slug] || null,
-      config,
-      effetId: slug,
-      tenantId: null,
-      builtin: true,
-      actif: true,
-      premium: false,
-      ordre: ORDRE_BUILTIN[slug] || 99,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      apercu: null,
-    }));
+    // Gamme principale : quelques classiques historiques conservés
+    // (lib/theme-templates.ts → LEGACY_CLASSIC_IDS_KEPT) + tous les thèmes
+    // premium disponibles (structure propre, voir components/storefront/
+    // templates/). Les autres classiques restent résolus normalement pour
+    // les tenants qui les ont déjà, mais ne sont plus proposés ici.
+    const themesBuiltin = PRINCIPAL_THEME_IDS.map((slug) => {
+      const isTemplate = TEMPLATE_IDS.has(slug);
+      const meta = TEMPLATE_META[slug];
+      return {
+        id: slug,
+        slug,
+        nom: meta?.nom || NOMS_BUILTIN[slug] || slug,
+        description: meta?.description || DESCS_BUILTIN[slug] || "",
+        badge: meta?.badge || BADGES_BUILTIN[slug] || null,
+        config: resolveThemeConfig(slug),
+        effetId: slug,
+        tenantId: null,
+        builtin: true,
+        actif: true,
+        premium: isTemplate,
+        ordre: isTemplate ? 10 + Object.keys(TEMPLATE_META).indexOf(slug) : (ORDRE_BUILTIN[slug] || 99),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        apercu: null,
+      };
+    });
 
     const themesCustom = themesDB
       .filter((t) => t.tenantId !== null)

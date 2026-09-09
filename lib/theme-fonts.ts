@@ -21,6 +21,8 @@ export const FONTS = [
   { cat: "Display",    v: "cinzel",            label: "Cinzel",             gf: "Cinzel:wght@400;600;700" },
   { cat: "Display",    v: "abril-fatface",     label: "Abril Fatface",      gf: "Abril+Fatface" },
   { cat: "Display",    v: "fraunces",          label: "Fraunces",           gf: "Fraunces:wght@400;700;900" },
+  { cat: "Sans-serif", v: "archivo",           label: "Archivo",            gf: "Archivo:wght@400;500;600;700" },
+  { cat: "Sans-serif", v: "archivo-narrow",    label: "Archivo Narrow",     gf: "Archivo+Narrow:wght@400;500;600" },
 ] as const;
 
 export interface StorefrontFontsCfg {

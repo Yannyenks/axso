@@ -10,6 +10,7 @@ import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { WishlistHeartButton } from "@/components/storefront/WishlistHeartButton";
 import { Package, ArrowLeft } from "lucide-react";
+import { TEMPLATE_COMPONENTS } from "@/components/storefront/templates/registry";
 
 interface Props {
   params: Promise<{ slug: string; collectionSlug: string }>;
@@ -83,6 +84,11 @@ export default async function CollectionPage({ params }: Props) {
     orderBy: { createdAt: "desc" },
     take: 60,
   });
+
+  const TemplateCollection = TEMPLATE_COMPONENTS[tenant.themeId]?.CollectionPage;
+  if (TemplateCollection) {
+    return <TemplateCollection tenant={tenant} cfg={cfg} collection={collection} produits={produits} slug={slug} />;
+  }
 
   return (
     <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>

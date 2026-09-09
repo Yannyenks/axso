@@ -11,7 +11,8 @@ import {
   Bot, Send, CheckCircle2, Package, Truck, AlertCircle,
 } from "lucide-react";
 import type { PlanBoutique } from "@/lib/ai-agent";
-import { THEME_DEFAULTS } from "@/lib/theme-config";
+import { resolveThemeConfig } from "@/lib/theme-config";
+import { PRINCIPAL_THEME_IDS, TEMPLATE_META } from "@/lib/theme-templates";
 import { fontEntry } from "@/lib/theme-fonts";
 
 const ACCENT      = "#F5A623";
@@ -29,22 +30,25 @@ const inputCls =
   "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#111111] text-sm " +
   "placeholder:text-[#999999] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/15 focus:outline-none transition-all";
 
-const THEMES: Record<string, { nom: string; couleur: string }> = {
-  "noir-obsidien":    { nom: "Noir Obsidien",    couleur: "#F5A623" },
-  "violet-cosmos":    { nom: "Violet Cosmos",    couleur: "#7c3aed" },
-  "terre-et-or":      { nom: "Terre & Or",       couleur: "#c2622d" },
-  "kente-royal":      { nom: "Kente Royal",      couleur: "#D4AF37" },
-  "ocean-atlantique": { nom: "Océan Atlantique", couleur: "#0ea5e9" },
-  "bwiti-forest":     { nom: "Bwiti Forest",     couleur: "#16a34a" },
-  "epure-minimal":    { nom: "Épuré Minimal",    couleur: "#111111" },
+const NOMS_CLASSIQUES: Record<string, string> = {
+  "noir-obsidien": "Noir Obsidien",
+  "terre-et-or":   "Terre & Or",
 };
 
-// 3 styles "coup d'œil" mis en avant — chacun mappé sur un thème réel de
-// lib/theme-config.ts. Les 4 thèmes restants vivent dans "Plus de styles".
+// Gamme principale : classiques conservés + thèmes premium (lib/theme-templates.ts).
+const THEMES: Record<string, { nom: string; couleur: string }> = Object.fromEntries(
+  PRINCIPAL_THEME_IDS.map((id) => [
+    id,
+    { nom: TEMPLATE_META[id]?.nom || NOMS_CLASSIQUES[id] || id, couleur: resolveThemeConfig(id).colors.accent },
+  ])
+);
+
+// 3 styles "coup d'œil" mis en avant. Les autres thèmes de la gamme
+// principale vivent dans "Plus de styles".
 const STYLE_PICKS: { id: string; label: string; desc: string }[] = [
-  { id: "terre-et-or",   label: "Clair",  desc: "Chaleureux et lumineux" },
-  { id: "noir-obsidien", label: "Sombre", desc: "Élégant et contrasté" },
-  { id: "epure-minimal", label: "Épuré",  desc: "Minimaliste et sobre" },
+  { id: "terre-et-or",   label: "Clair",     desc: "Chaleureux et lumineux" },
+  { id: "noir-obsidien", label: "Sombre",    desc: "Élégant et contrasté" },
+  { id: "noir-atelier",  label: "Éditorial", desc: "Mode & artisanat premium" },
 ];
 const STYLE_PICK_IDS = new Set(STYLE_PICKS.map(s => s.id));
 const AUTRES_THEMES = Object.keys(THEMES).filter(id => !STYLE_PICK_IDS.has(id));
@@ -63,7 +67,7 @@ function mockupFontStack(fontId?: string): string {
 // police plutôt qu'un simple point de couleur, sans aller jusqu'à un aperçu
 // live (pas d'iframe) — juste assez pour donner une intuition visuelle.
 function ThemeMockup({ id, compact }: { id: string; compact?: boolean }) {
-  const t = THEME_DEFAULTS[id] || THEME_DEFAULTS["terre-et-or"];
+  const t = resolveThemeConfig(id);
   const c = t.colors;
   return (
     <div

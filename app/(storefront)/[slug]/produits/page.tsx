@@ -10,6 +10,7 @@ import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { WishlistHeartButton } from "@/components/storefront/WishlistHeartButton";
 import { Package, Search } from "lucide-react";
+import { TEMPLATE_COMPONENTS } from "@/components/storefront/templates/registry";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -105,6 +106,11 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
 
   const categories = Array.from(new Set(produits.map((p) => p.categorie).filter(Boolean))) as string[];
   const hasFilters = !!(q || tri || min || max || collection);
+
+  const TemplateProductList = TEMPLATE_COMPONENTS[tenant.themeId]?.ProductListPage;
+  if (TemplateProductList) {
+    return <TemplateProductList tenant={tenant} cfg={cfg} produits={produits} slug={slug} filtres={{ q, min, max, tri, collection }} />;
+  }
 
   return (
     <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
