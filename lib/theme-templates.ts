@@ -74,6 +74,12 @@ export const TEMPLATE_META: Record<string, TemplateMeta> = {
     categorie: "Plein air",
     badge: "Nouveau",
   },
+  "maison-vert": {
+    nom: "Maison Vert",
+    description: "Beauté & bien-être naturel — ambiance claire et douce, coins arrondis, esprit botanique.",
+    categorie: "Beauté",
+    badge: "Nouveau",
+  },
 };
 
 const DEFAULT_ANIM_BASE = {
@@ -531,6 +537,55 @@ export const TEMPLATE_DEFAULTS: Record<string, ThemeConfig> = {
       faq: { actif: false, titre: "Questions fréquentes", layout: "accordion", items: [
         { question: "Le matériel est-il vraiment testé en conditions réelles ?", reponse: "Oui, chaque référence est éprouvée sur le terrain avant sa mise en vente." },
         { question: "Proposez-vous un service de réparation ?", reponse: "Oui, nos pièces sont conçues pour être réparées plutôt que remplacées." },
+      ] },
+      avis: { actif: true, titre: "Avis clients", layout: "cards" },
+      newsletter: { actif: false, titre: "Restez informé", texte: "Nos nouveautés, sans spam.", placeholder: "votre@email.com", ctaTexte: "S'abonner", style: "centered" },
+    },
+  },
+
+  "maison-vert": {
+    colors: {
+      fond: "#F1F0E6",
+      accent: "#2F4A34",
+      accentSecondaire: "#7C8A63",
+      texte: "#22301F",
+      texteMuted: "#7C8074",
+      surface: "#E5E4D5",
+      bordure: "rgba(34,48,31,0.14)",
+    },
+    fonts: { titre: "lora", corps: "work-sans", poidsTitre: "500", transformTitre: "none", lettreEspacement: "normal", hauteurLigne: "relaxed" },
+    radius: "20px",
+    layout: { largeurContainer: "1280px", paddingSection: "lg", colonnesProduits: 3, colonnesMobile: 2, styleCarte: "shadow", ombre: "md" },
+    boutons: { style: "pill", taille: "md", hover: "darken", bordureWidth: "1px" },
+    navigationStyle: { type: "classic", style: "light", sticky: true, hauteur: "70px", showSearch: true, showWishlist: false },
+    animations: { global: "fade-in", vitesse: "normal", preset: "elegant", ...DEFAULT_ANIM_BASE },
+    sections: {
+      annonce: { actif: false, texte: "Sourcing traçable · Sans test animal", couleurFond: "#2F4A34", couleurTexte: "#F1F0E6" },
+      hero: {
+        actif: true, style: "split", titre: "Des plantes, pas des promesses",
+        sousTitre: "Formules à froid, ingrédients traçables jusqu'à la parcelle, emballages compostables.",
+        ctaTexte: "Découvrir la gamme", ctaLien: "produits", overlay: 0, hauteur: "80vh", textPosition: "left",
+        badgeTexte: "Récolte botanique",
+      },
+      confiance: {
+        actif: true, layout: "marquee",
+        items: [
+          { icone: "🌿", titre: "Sourcing traçable", texte: "Parcelle par parcelle" },
+          { icone: "🌿", titre: "Flacons consignés", texte: "Emballage réutilisable" },
+          { icone: "🌿", titre: "Sans test animal", texte: "Certifié" },
+        ],
+      },
+      vedettes: { actif: true, titre: "Nos essentiels", nombre: 6, triPar: "featured", colonnes: 3, layout: "grid", showRatings: false, showSoldCount: false },
+      collections: { actif: true, titre: "Nos rituels", layout: "grid" },
+      about: {
+        actif: false, layout: "image-left",
+        titre: "Une récolte responsable", texte: "Nos ingrédients sont sourcés directement auprès de producteurs partenaires.",
+        badgeTexte: "Notre engagement",
+      },
+      promo: { actif: true, titre: "Rituel du mois", texte: "Découvrez notre sélection saisonnière.", ctaTexte: "Découvrir", style: "solid" },
+      faq: { actif: false, titre: "Questions fréquentes", layout: "accordion", items: [
+        { question: "Vos produits sont-ils testés sur les animaux ?", reponse: "Non, aucun de nos produits n'est testé sur les animaux." },
+        { question: "Les flacons sont-ils consignés ?", reponse: "Oui, rapportez vos flacons vides pour une réduction sur votre prochaine commande." },
       ] },
       avis: { actif: true, titre: "Avis clients", layout: "cards" },
       newsletter: { actif: false, titre: "Restez informé", texte: "Nos nouveautés, sans spam.", placeholder: "votre@email.com", ctaTexte: "S'abonner", style: "centered" },

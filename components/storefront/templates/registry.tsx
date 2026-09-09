@@ -51,6 +51,12 @@ import { OrfevreProductPage } from "./orfevre/ProductPage";
 import { OrfevreCollectionPage } from "./orfevre/CollectionPage";
 import { OrfevreAboutPage } from "./orfevre/AboutPage";
 import { OrfevreContactPage } from "./orfevre/ContactPage";
+import { ForgeHomePage } from "./forge/HomePage";
+import { ForgeProductListPage } from "./forge/ProductListPage";
+import { ForgeProductPage } from "./forge/ProductPage";
+import { ForgeCollectionPage } from "./forge/CollectionPage";
+import { ForgeAboutPage } from "./forge/AboutPage";
+import { ForgeContactPage } from "./forge/ContactPage";
 
 export interface TemplateComponents {
   HomePage: React.ComponentType<any>;
@@ -125,5 +131,13 @@ export const TEMPLATE_COMPONENTS: Record<string, TemplateComponents> = {
     CollectionPage: OrfevreCollectionPage,
     AboutPage: OrfevreAboutPage,
     ContactPage: OrfevreContactPage,
+  },
+  "forge": {
+    HomePage: ForgeHomePage,
+    ProductListPage: ForgeProductListPage,
+    ProductPage: ForgeProductPage,
+    CollectionPage: ForgeCollectionPage,
+    AboutPage: ForgeAboutPage,
+    ContactPage: ForgeContactPage,
   },
 };
