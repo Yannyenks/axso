@@ -21,6 +21,12 @@ import { Archive01ProductPage } from "./archive01/ProductPage";
 import { Archive01CollectionPage } from "./archive01/CollectionPage";
 import { Archive01AboutPage } from "./archive01/AboutPage";
 import { Archive01ContactPage } from "./archive01/ContactPage";
+import { HaloHomePage } from "./halo/HomePage";
+import { HaloProductListPage } from "./halo/ProductListPage";
+import { HaloProductPage } from "./halo/ProductPage";
+import { HaloCollectionPage } from "./halo/CollectionPage";
+import { HaloAboutPage } from "./halo/AboutPage";
+import { HaloContactPage } from "./halo/ContactPage";
 
 export interface TemplateComponents {
   HomePage: React.ComponentType<any>;
@@ -55,5 +61,13 @@ export const TEMPLATE_COMPONENTS: Record<string, TemplateComponents> = {
     CollectionPage: Archive01CollectionPage,
     AboutPage: Archive01AboutPage,
     ContactPage: Archive01ContactPage,
+  },
+  "halo": {
+    HomePage: HaloHomePage,
+    ProductListPage: HaloProductListPage,
+    ProductPage: HaloProductPage,
+    CollectionPage: HaloCollectionPage,
+    AboutPage: HaloAboutPage,
+    ContactPage: HaloContactPage,
   },
 };

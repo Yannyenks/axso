@@ -44,6 +44,12 @@ export const TEMPLATE_META: Record<string, TemplateMeta> = {
     categorie: "Optique",
     badge: "Nouveau",
   },
+  "cru": {
+    nom: "Cru",
+    description: "Vins & spiritueux — élégance sombre, typographie italique, ambiance cave à vin.",
+    categorie: "Gastronomie",
+    badge: "Nouveau",
+  },
 };
 
 const DEFAULT_ANIM_BASE = {
@@ -253,6 +259,55 @@ export const TEMPLATE_DEFAULTS: Record<string, ThemeConfig> = {
       ] },
       avis: { actif: true, titre: "Avis clients", layout: "cards" },
       newsletter: { actif: false, titre: "Restez informé", texte: "Nos nouvelles montures, sans spam.", placeholder: "votre@email.com", ctaTexte: "S'abonner", style: "centered" },
+    },
+  },
+
+  "cru": {
+    colors: {
+      fond: "#1B0E12",
+      accent: "#B8935A",
+      accentSecondaire: "#7A1A32",
+      texte: "#F3EAE0",
+      texteMuted: "#8f7d78",
+      surface: "#28151B",
+      bordure: "rgba(243,234,224,0.13)",
+    },
+    fonts: { titre: "spectral", corps: "nunito-sans", poidsTitre: "400", transformTitre: "none", lettreEspacement: "normal", hauteurLigne: "relaxed" },
+    radius: "0px",
+    layout: { largeurContainer: "1280px", paddingSection: "xl", colonnesProduits: 3, colonnesMobile: 2, styleCarte: "flat", ombre: "none" },
+    boutons: { style: "outlined", taille: "md", hover: "darken", bordureWidth: "1px" },
+    navigationStyle: { type: "classic", style: "dark", sticky: true, hauteur: "72px", showSearch: true, showWishlist: false },
+    animations: { global: "fade-in", vitesse: "slow", preset: "luxury", ...DEFAULT_ANIM_BASE },
+    sections: {
+      annonce: { actif: false, texte: "Sélection vignerons indépendants · Livraison en caisse bois", couleurFond: "#7A1A32", couleurTexte: "#F3EAE0" },
+      hero: {
+        actif: true, style: "split", titre: "Le temps ne se falsifie pas",
+        sousTitre: "Sélection directe auprès de vignerons indépendants. Chaque bouteille est tracée du terroir jusqu'à votre cave.",
+        ctaTexte: "Voir la cave", ctaLien: "produits", overlay: 0, hauteur: "80vh", textPosition: "left",
+        badgeTexte: "Millésime 2021",
+      },
+      confiance: {
+        actif: true, layout: "marquee",
+        items: [
+          { icone: "◆", titre: "Vignerons indépendants", texte: "Sélection directe" },
+          { icone: "◆", titre: "Caisse bois", texte: "Livraison soignée" },
+          { icone: "◆", titre: "Dégustation", texte: "Sur rendez-vous" },
+        ],
+      },
+      vedettes: { actif: true, titre: "Ce que le temps a fait", nombre: 6, triPar: "featured", colonnes: 3, layout: "grid", showRatings: false, showSoldCount: false },
+      collections: { actif: true, titre: "La cave", layout: "grid" },
+      about: {
+        actif: false, layout: "image-left",
+        titre: "Un métier de patience", texte: "Élevage en fût de chêne, mise en bouteille au domaine, traçabilité complète.",
+        badgeTexte: "Notre sélection",
+      },
+      promo: { actif: true, titre: "Coffrets dégustation", texte: "Découvrez nos sélections en coffret, idéales pour offrir.", ctaTexte: "Découvrir", style: "solid" },
+      faq: { actif: false, titre: "Questions fréquentes", layout: "accordion", items: [
+        { question: "Comment conserver mes bouteilles ?", reponse: "À l'abri de la lumière, entre 12 et 16°C, couché pour les bouchons liège." },
+        { question: "Livrez-vous en caisse bois ?", reponse: "Oui, toutes nos commandes de 6 bouteilles ou plus sont expédiées en caisse bois protectrice." },
+      ] },
+      avis: { actif: true, titre: "Ce qu'ils en disent", layout: "cards" },
+      newsletter: { actif: false, titre: "Nouveaux arrivages", texte: "Soyez informé de nos nouvelles cuvées.", placeholder: "votre@email.com", ctaTexte: "S'abonner", style: "centered" },
     },
   },
 };

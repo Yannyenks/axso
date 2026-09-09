@@ -26,6 +26,8 @@ export const FONTS = [
   { cat: "Display",    v: "anton",             label: "Anton",              gf: "Anton" },
   { cat: "Serif",      v: "domine",            label: "Domine",             gf: "Domine:wght@400;500;600;700" },
   { cat: "Sans-serif", v: "sora",               label: "Sora",               gf: "Sora:wght@400;500;600" },
+  { cat: "Serif",      v: "spectral",           label: "Spectral",           gf: "Spectral:ital,wght@0,400;0,500;1,400" },
+  { cat: "Sans-serif", v: "nunito-sans",         label: "Nunito Sans",        gf: "Nunito+Sans:wght@400;500;600;700" },
 ] as const;
 
 export interface StorefrontFontsCfg {
