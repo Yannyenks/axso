@@ -23,6 +23,9 @@ export const FONTS = [
   { cat: "Display",    v: "fraunces",          label: "Fraunces",           gf: "Fraunces:wght@400;700;900" },
   { cat: "Sans-serif", v: "archivo",           label: "Archivo",            gf: "Archivo:wght@400;500;600;700" },
   { cat: "Sans-serif", v: "archivo-narrow",    label: "Archivo Narrow",     gf: "Archivo+Narrow:wght@400;500;600" },
+  { cat: "Display",    v: "anton",             label: "Anton",              gf: "Anton" },
+  { cat: "Serif",      v: "domine",            label: "Domine",             gf: "Domine:wght@400;500;600;700" },
+  { cat: "Sans-serif", v: "sora",               label: "Sora",               gf: "Sora:wght@400;500;600" },
 ] as const;
 
 export interface StorefrontFontsCfg {
