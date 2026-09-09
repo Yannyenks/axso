@@ -32,6 +32,8 @@ export const FONTS = [
   { cat: "Sans-serif", v: "space-mono",          label: "Space Mono",         gf: "Space+Mono:wght@400;700" },
   { cat: "Sans-serif", v: "roboto-mono",          label: "Roboto Mono",        gf: "Roboto+Mono:wght@400;500" },
   { cat: "Sans-serif", v: "jost",                 label: "Jost",               gf: "Jost:wght@400;500;600" },
+  { cat: "Display",    v: "big-shoulders-display", label: "Big Shoulders Display", gf: "Big+Shoulders+Display:wght@500;700;800" },
+  { cat: "Sans-serif", v: "ibm-plex-mono",         label: "IBM Plex Mono",      gf: "IBM+Plex+Mono:wght@400;500" },
 ] as const;
 
 export interface StorefrontFontsCfg {

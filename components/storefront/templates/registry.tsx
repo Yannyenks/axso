@@ -45,6 +45,12 @@ import { VoltProductPage } from "./volt/ProductPage";
 import { VoltCollectionPage } from "./volt/CollectionPage";
 import { VoltAboutPage } from "./volt/AboutPage";
 import { VoltContactPage } from "./volt/ContactPage";
+import { OrfevreHomePage } from "./orfevre/HomePage";
+import { OrfevreProductListPage } from "./orfevre/ProductListPage";
+import { OrfevreProductPage } from "./orfevre/ProductPage";
+import { OrfevreCollectionPage } from "./orfevre/CollectionPage";
+import { OrfevreAboutPage } from "./orfevre/AboutPage";
+import { OrfevreContactPage } from "./orfevre/ContactPage";
 
 export interface TemplateComponents {
   HomePage: React.ComponentType<any>;
@@ -111,5 +117,13 @@ export const TEMPLATE_COMPONENTS: Record<string, TemplateComponents> = {
     CollectionPage: VoltCollectionPage,
     AboutPage: VoltAboutPage,
     ContactPage: VoltContactPage,
+  },
+  "orfevre": {
+    HomePage: OrfevreHomePage,
+    ProductListPage: OrfevreProductListPage,
+    ProductPage: OrfevreProductPage,
+    CollectionPage: OrfevreCollectionPage,
+    AboutPage: OrfevreAboutPage,
+    ContactPage: OrfevreContactPage,
   },
 };

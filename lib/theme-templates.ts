@@ -68,6 +68,12 @@ export const TEMPLATE_META: Record<string, TemplateMeta> = {
     categorie: "Bijouterie",
     badge: "Nouveau",
   },
+  "forge": {
+    nom: "Forge",
+    description: "Équipement outdoor & technique — ambiance terrain, matériaux robustes, olive et rouille.",
+    categorie: "Plein air",
+    badge: "Nouveau",
+  },
 };
 
 const DEFAULT_ANIM_BASE = {
@@ -479,6 +485,55 @@ export const TEMPLATE_DEFAULTS: Record<string, ThemeConfig> = {
       ] },
       avis: { actif: true, titre: "Avis clients", layout: "cards" },
       newsletter: { actif: false, titre: "Restez informé", texte: "Nos nouvelles pièces, sans spam.", placeholder: "votre@email.com", ctaTexte: "S'abonner", style: "centered" },
+    },
+  },
+
+  "forge": {
+    colors: {
+      fond: "#1B1F19",
+      accent: "#B4552D",
+      accentSecondaire: "#5C6B4A",
+      texte: "#F1EEE4",
+      texteMuted: "#8E9284",
+      surface: "#242A20",
+      bordure: "rgba(241,238,228,0.14)",
+    },
+    fonts: { titre: "big-shoulders-display", corps: "ibm-plex-mono", poidsTitre: "800", transformTitre: "uppercase", lettreEspacement: "normal", hauteurLigne: "normal" },
+    radius: "0px",
+    layout: { largeurContainer: "1280px", paddingSection: "lg", colonnesProduits: 3, colonnesMobile: 2, styleCarte: "flat", ombre: "none" },
+    boutons: { style: "filled", taille: "md", hover: "darken", bordureWidth: "2px" },
+    navigationStyle: { type: "classic", style: "dark", sticky: true, hauteur: "68px", showSearch: true, showWishlist: false },
+    animations: { global: "fade-in", vitesse: "normal", preset: "dynamic", ...DEFAULT_ANIM_BASE },
+    sections: {
+      annonce: { actif: false, texte: "Testé en conditions réelles · Garantie 5 ans", couleurFond: "#B4552D", couleurTexte: "#F1EEE4" },
+      hero: {
+        actif: true, style: "split", titre: "Conçu pour le terrain, pas pour la vitrine",
+        sousTitre: "Matériaux techniques testés en conditions réelles. Chaque pièce porte ses coordonnées de conception.",
+        ctaTexte: "Voir l'équipement", ctaLien: "produits", overlay: 0, hauteur: "80vh", textPosition: "left",
+        badgeTexte: "Expédition 04.24",
+      },
+      confiance: {
+        actif: true, layout: "marquee",
+        items: [
+          { icone: "◆", titre: "Testé en conditions réelles", texte: "" },
+          { icone: "◆", titre: "Garantie", texte: "5 ans" },
+          { icone: "◆", titre: "Réparable", texte: "À vie" },
+        ],
+      },
+      vedettes: { actif: true, titre: "Équipement de terrain", nombre: 6, triPar: "recent", colonnes: 3, layout: "grid", showRatings: false, showSoldCount: false },
+      collections: { actif: true, titre: "Nos collections", layout: "grid" },
+      about: {
+        actif: false, layout: "image-left",
+        titre: "Testé sur le terrain", texte: "Chaque pièce est éprouvée en conditions réelles avant validation.",
+        badgeTexte: "Notre méthode",
+      },
+      promo: { actif: true, titre: "Garantie 5 ans", texte: "Toute pièce défectueuse est réparée ou remplacée.", ctaTexte: "En savoir plus", style: "solid" },
+      faq: { actif: false, titre: "Questions fréquentes", layout: "accordion", items: [
+        { question: "Le matériel est-il vraiment testé en conditions réelles ?", reponse: "Oui, chaque référence est éprouvée sur le terrain avant sa mise en vente." },
+        { question: "Proposez-vous un service de réparation ?", reponse: "Oui, nos pièces sont conçues pour être réparées plutôt que remplacées." },
+      ] },
+      avis: { actif: true, titre: "Avis clients", layout: "cards" },
+      newsletter: { actif: false, titre: "Restez informé", texte: "Nos nouveautés, sans spam.", placeholder: "votre@email.com", ctaTexte: "S'abonner", style: "centered" },
     },
   },
 };
