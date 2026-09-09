@@ -30,6 +30,7 @@ export const FONTS = [
   { cat: "Sans-serif", v: "nunito-sans",         label: "Nunito Sans",        gf: "Nunito+Sans:wght@400;500;600;700" },
   { cat: "Sans-serif", v: "public-sans",         label: "Public Sans",        gf: "Public+Sans:wght@400;500;600;700;800" },
   { cat: "Sans-serif", v: "space-mono",          label: "Space Mono",         gf: "Space+Mono:wght@400;700" },
+  { cat: "Sans-serif", v: "roboto-mono",          label: "Roboto Mono",        gf: "Roboto+Mono:wght@400;500" },
 ] as const;
 
 export interface StorefrontFontsCfg {

@@ -56,6 +56,12 @@ export const TEMPLATE_META: Record<string, TemplateMeta> = {
     categorie: "Voyage",
     badge: "Nouveau",
   },
+  "volt": {
+    nom: "Volt",
+    description: "Mobilité électrique — ambiance claire et technique, fiche technique mise en avant.",
+    categorie: "Mobilité",
+    badge: "Nouveau",
+  },
 };
 
 const DEFAULT_ANIM_BASE = {
@@ -360,6 +366,61 @@ export const TEMPLATE_DEFAULTS: Record<string, ThemeConfig> = {
       faq: { actif: false, titre: "Questions fréquentes", layout: "accordion", items: [
         { question: "Quelle est la politique de garantie ?", reponse: "10 ans sur la coque, toute casse couverte sans justificatif." },
         { question: "Le suivi GPS est-il inclus ?", reponse: "Il est proposé en option sur certains modèles, activable à la commande." },
+      ] },
+      avis: { actif: true, titre: "Avis clients", layout: "cards" },
+      newsletter: { actif: false, titre: "Restez informé", texte: "Nos nouveautés, sans spam.", placeholder: "votre@email.com", ctaTexte: "S'abonner", style: "centered" },
+    },
+  },
+
+  "volt": {
+    colors: {
+      fond: "#EEF2F0",
+      accent: "#00A896",
+      accentSecondaire: "#101414",
+      texte: "#101414",
+      texteMuted: "#6B7674",
+      surface: "#E1E8E4",
+      bordure: "rgba(16,20,20,0.13)",
+    },
+    fonts: { titre: "outfit", corps: "roboto-mono", poidsTitre: "800", transformTitre: "none", lettreEspacement: "tight", hauteurLigne: "normal" },
+    radius: "0px",
+    layout: { largeurContainer: "1280px", paddingSection: "lg", colonnesProduits: 3, colonnesMobile: 2, styleCarte: "flat", ombre: "none" },
+    boutons: { style: "filled", taille: "md", hover: "darken", bordureWidth: "2px" },
+    navigationStyle: { type: "classic", style: "light", sticky: true, hauteur: "68px", showSearch: true, showWishlist: false },
+    animations: { global: "slide-up", vitesse: "normal", preset: "dynamic", ...DEFAULT_ANIM_BASE },
+    sections: {
+      annonce: { actif: false, texte: "Réseau de recharge en ville · Garantie batterie 5 ans", couleurFond: "#101414", couleurTexte: "#EEF2F0" },
+      hero: {
+        actif: true, style: "split", titre: "La ville, sans effort ni bruit.",
+        sousTitre: "Moteur silencieux 250W, batterie amovible, cadre en aluminium aéronautique. Conçu pour durer 10 ans de trajets quotidiens.",
+        ctaTexte: "Découvrir la gamme", ctaLien: "produits", overlay: 0, hauteur: "80vh", textPosition: "left",
+        badgeTexte: "Disponible maintenant",
+      },
+      confiance: {
+        actif: true, layout: "marquee",
+        items: [
+          { icone: "◆", titre: "Réseau de recharge", texte: "En ville" },
+          { icone: "◆", titre: "Garantie batterie", texte: "5 ans" },
+          { icone: "◆", titre: "Assistance routière", texte: "Incluse" },
+        ],
+      },
+      vedettes: { actif: true, titre: "La gamme", nombre: 6, triPar: "recent", colonnes: 3, layout: "grid", showRatings: false, showSoldCount: false },
+      collections: { actif: true, titre: "Nos collections", layout: "grid" },
+      about: {
+        actif: true, layout: "image-left",
+        titre: "Fiche technique", texte: "Chaque modèle est testé en conditions réelles avant validation.",
+        badgeTexte: "Spécifications",
+        stats: [
+          { valeur: "250W", label: "Moteur silencieux" },
+          { valeur: "36V/10AH", label: "Batterie amovible" },
+          { valeur: "18.5 KG", label: "Poids" },
+          { valeur: "120 KG", label: "Charge max" },
+        ],
+      },
+      promo: { actif: true, titre: "Essai gratuit 7 jours", texte: "Testez votre Volt chez vous, sans engagement.", ctaTexte: "En savoir plus", style: "solid" },
+      faq: { actif: false, titre: "Questions fréquentes", layout: "accordion", items: [
+        { question: "Quelle est l'autonomie réelle ?", reponse: "Jusqu'à 42km selon le mode d'assistance et le profil du trajet." },
+        { question: "La batterie est-elle amovible ?", reponse: "Oui, elle se retire en un geste pour être rechargée où vous voulez." },
       ] },
       avis: { actif: true, titre: "Avis clients", layout: "cards" },
       newsletter: { actif: false, titre: "Restez informé", texte: "Nos nouveautés, sans spam.", placeholder: "votre@email.com", ctaTexte: "S'abonner", style: "centered" },

@@ -33,6 +33,12 @@ import { CruProductPage } from "./cru/ProductPage";
 import { CruCollectionPage } from "./cru/CollectionPage";
 import { CruAboutPage } from "./cru/AboutPage";
 import { CruContactPage } from "./cru/ContactPage";
+import { AtlasHomePage } from "./atlas/HomePage";
+import { AtlasProductListPage } from "./atlas/ProductListPage";
+import { AtlasProductPage } from "./atlas/ProductPage";
+import { AtlasCollectionPage } from "./atlas/CollectionPage";
+import { AtlasAboutPage } from "./atlas/AboutPage";
+import { AtlasContactPage } from "./atlas/ContactPage";
 
 export interface TemplateComponents {
   HomePage: React.ComponentType<any>;
@@ -83,5 +89,13 @@ export const TEMPLATE_COMPONENTS: Record<string, TemplateComponents> = {
     CollectionPage: CruCollectionPage,
     AboutPage: CruAboutPage,
     ContactPage: CruContactPage,
+  },
+  "atlas": {
+    HomePage: AtlasHomePage,
+    ProductListPage: AtlasProductListPage,
+    ProductPage: AtlasProductPage,
+    CollectionPage: AtlasCollectionPage,
+    AboutPage: AtlasAboutPage,
+    ContactPage: AtlasContactPage,
   },
 };
