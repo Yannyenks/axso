@@ -28,6 +28,8 @@ export const FONTS = [
   { cat: "Sans-serif", v: "sora",               label: "Sora",               gf: "Sora:wght@400;500;600" },
   { cat: "Serif",      v: "spectral",           label: "Spectral",           gf: "Spectral:ital,wght@0,400;0,500;1,400" },
   { cat: "Sans-serif", v: "nunito-sans",         label: "Nunito Sans",        gf: "Nunito+Sans:wght@400;500;600;700" },
+  { cat: "Sans-serif", v: "public-sans",         label: "Public Sans",        gf: "Public+Sans:wght@400;500;600;700;800" },
+  { cat: "Sans-serif", v: "space-mono",          label: "Space Mono",         gf: "Space+Mono:wght@400;700" },
 ] as const;
 
 export interface StorefrontFontsCfg {

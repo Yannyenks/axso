@@ -27,6 +27,12 @@ import { HaloProductPage } from "./halo/ProductPage";
 import { HaloCollectionPage } from "./halo/CollectionPage";
 import { HaloAboutPage } from "./halo/AboutPage";
 import { HaloContactPage } from "./halo/ContactPage";
+import { CruHomePage } from "./cru/HomePage";
+import { CruProductListPage } from "./cru/ProductListPage";
+import { CruProductPage } from "./cru/ProductPage";
+import { CruCollectionPage } from "./cru/CollectionPage";
+import { CruAboutPage } from "./cru/AboutPage";
+import { CruContactPage } from "./cru/ContactPage";
 
 export interface TemplateComponents {
   HomePage: React.ComponentType<any>;
@@ -69,5 +75,13 @@ export const TEMPLATE_COMPONENTS: Record<string, TemplateComponents> = {
     CollectionPage: HaloCollectionPage,
     AboutPage: HaloAboutPage,
     ContactPage: HaloContactPage,
+  },
+  "cru": {
+    HomePage: CruHomePage,
+    ProductListPage: CruProductListPage,
+    ProductPage: CruProductPage,
+    CollectionPage: CruCollectionPage,
+    AboutPage: CruAboutPage,
+    ContactPage: CruContactPage,
   },
 };

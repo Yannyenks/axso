@@ -50,6 +50,12 @@ export const TEMPLATE_META: Record<string, TemplateMeta> = {
     categorie: "Gastronomie",
     badge: "Nouveau",
   },
+  "atlas": {
+    nom: "Atlas",
+    description: "Bagagerie & accessoires de voyage — ambiance claire et technique, esprit ingénierie.",
+    categorie: "Voyage",
+    badge: "Nouveau",
+  },
 };
 
 const DEFAULT_ANIM_BASE = {
@@ -308,6 +314,55 @@ export const TEMPLATE_DEFAULTS: Record<string, ThemeConfig> = {
       ] },
       avis: { actif: true, titre: "Ce qu'ils en disent", layout: "cards" },
       newsletter: { actif: false, titre: "Nouveaux arrivages", texte: "Soyez informé de nos nouvelles cuvées.", placeholder: "votre@email.com", ctaTexte: "S'abonner", style: "centered" },
+    },
+  },
+
+  "atlas": {
+    colors: {
+      fond: "#EDEDEA",
+      accent: "#D9622B",
+      accentSecondaire: "#B8B8B4",
+      texte: "#1B1B1E",
+      texteMuted: "#83837E",
+      surface: "#E0E0DB",
+      bordure: "rgba(27,27,30,0.14)",
+    },
+    fonts: { titre: "public-sans", corps: "space-mono", poidsTitre: "800", transformTitre: "none", lettreEspacement: "tight", hauteurLigne: "normal" },
+    radius: "0px",
+    layout: { largeurContainer: "1280px", paddingSection: "lg", colonnesProduits: 3, colonnesMobile: 2, styleCarte: "flat", ombre: "none" },
+    boutons: { style: "filled", taille: "md", hover: "darken", bordureWidth: "2px" },
+    navigationStyle: { type: "classic", style: "light", sticky: true, hauteur: "68px", showSearch: true, showWishlist: false },
+    animations: { global: "slide-up", vitesse: "normal", preset: "dynamic", ...DEFAULT_ANIM_BASE },
+    sections: {
+      annonce: { actif: false, texte: "Garantie 10 ans · Suivi GPS en option", couleurFond: "#1B1B1E", couleurTexte: "#EDEDEA" },
+      hero: {
+        actif: true, style: "split", titre: "Bâtie pour l'usure, pas pour la vitrine",
+        sousTitre: "Coque polycarbonate 100% recyclé, roues à 360° testées sur 40 000 km de tapis roulants réels.",
+        ctaTexte: "Voir la gamme", ctaLien: "produits", overlay: 0, hauteur: "80vh", textPosition: "left",
+        badgeTexte: "Route 004",
+      },
+      confiance: {
+        actif: true, layout: "marquee",
+        items: [
+          { icone: "◆", titre: "Garantie 10 ans", texte: "Toute casse couverte" },
+          { icone: "◆", titre: "Suivi GPS", texte: "En option" },
+          { icone: "◆", titre: "Livraison", texte: "Sous 48h" },
+        ],
+      },
+      vedettes: { actif: true, titre: "La gamme Atlas", nombre: 6, triPar: "recent", colonnes: 3, layout: "grid", showRatings: false, showSoldCount: false },
+      collections: { actif: true, titre: "Nos collections", layout: "grid" },
+      about: {
+        actif: false, layout: "image-left",
+        titre: "Conçu pour durer", texte: "Chaque pièce est testée en conditions réelles avant validation.",
+        badgeTexte: "Notre ingénierie",
+      },
+      promo: { actif: true, titre: "Garantie 10 ans", texte: "Toute casse de coque est couverte, sans condition.", ctaTexte: "En savoir plus", style: "solid" },
+      faq: { actif: false, titre: "Questions fréquentes", layout: "accordion", items: [
+        { question: "Quelle est la politique de garantie ?", reponse: "10 ans sur la coque, toute casse couverte sans justificatif." },
+        { question: "Le suivi GPS est-il inclus ?", reponse: "Il est proposé en option sur certains modèles, activable à la commande." },
+      ] },
+      avis: { actif: true, titre: "Avis clients", layout: "cards" },
+      newsletter: { actif: false, titre: "Restez informé", texte: "Nos nouveautés, sans spam.", placeholder: "votre@email.com", ctaTexte: "S'abonner", style: "centered" },
     },
   },
 };
