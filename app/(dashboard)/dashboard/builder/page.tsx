@@ -14,7 +14,7 @@ import {
   ArrowUpDown, Megaphone, Shield, FolderOpen, BookOpen, HelpCircle,
   MessageCircle, Mail, Wrench, Award, LucideIcon,
   ShoppingBag, Maximize2, Minimize2, ZoomIn, Package,
-  ShoppingCart, Share2, Info, Phone,
+  ShoppingCart, Share2, Info, Phone, Undo2, Redo2,
 } from "lucide-react";
 import { THEME_DEFAULTS, resolveThemeConfig, type ThemeConfig, type CustomSection, DEFAULT_PRODUCT_SECTIONS, type ProductPageSection } from "@/lib/theme-config";
 import { FONTS, googleFontsHref, typographyCss } from "@/lib/theme-fonts";
@@ -70,8 +70,10 @@ const SECTION_META: Record<SectionId, { label: string; Icon: any; desc: string }
 };
 
 const BUILDER_TUTORIAL_STEPS = [
-  { Icon: LayoutGrid, titre: "Personnalise tes sections",       description: "Réordonne, active ou désactive les sections de ta page (héro, produits vedettes, avis, FAQ...) et ajoute des blocs personnalisés — vidéo, compte à rebours, galerie..." },
+  { Icon: MousePointer2, titre: "Clique directement sur l'aperçu", description: "Survole ou clique une section dans l'aperçu à droite : elle s'ouvre automatiquement dans le panneau pour être modifiée — plus besoin de la chercher dans une liste." },
+  { Icon: LayoutGrid, titre: "Personnalise tes sections",       description: "Réordonne par glisser-déposer, active/désactive ou duplique tes sections (héro, produits vedettes, avis, FAQ...) et ajoute des blocs personnalisés — vidéo, compte à rebours, galerie..." },
   { Icon: Palette,    titre: "Couleurs, typo et mise en page",  description: "Ajuste ta palette, tes polices Google Fonts et ta mise en page en un clic — l'aperçu se met à jour en direct." },
+  { Icon: Undo2,      titre: "Annule sans crainte",              description: "Ctrl+Z pour annuler, Ctrl+Y pour rétablir — expérimente librement, chaque changement peut être défait à tout moment." },
   { Icon: Monitor,    titre: "Prévisualise sur tous les écrans", description: "Bascule entre les vues Desktop, Tablette et Mobile pour vérifier le rendu avant de publier." },
   { Icon: Save,       titre: "Sauvegarde tes changements",      description: "Rien n'est publié tant que tu n'as pas cliqué \"Sauvegarder\" — teste librement, tes visiteurs ne voient que la version en ligne." },
 ];
@@ -163,6 +165,43 @@ export default function BuilderPage() {
     });
   }, []);
 
+  // ─── Sélection visuelle dans l'aperçu (clic direct sur une section) ─────────
+  const bindSelection = useCallback((doc: Document) => {
+    try {
+      const w = doc.defaultView as any;
+      if (!w || w.__axsBound) return;
+      w.__axsBound = true;
+      let hoverEl: HTMLElement | null = null;
+      const clearHover = () => {
+        if (hoverEl && !hoverEl.hasAttribute("data-axs-selected")) { hoverEl.style.outline = ""; hoverEl.style.outlineOffset = ""; hoverEl.style.cursor = ""; }
+        hoverEl = null;
+      };
+      doc.addEventListener("mouseover", (e: any) => {
+        const target = (e.target as HTMLElement)?.closest?.("[data-axs-id]") as HTMLElement | null;
+        if (target === hoverEl) return;
+        clearHover();
+        if (target && !target.hasAttribute("data-axs-selected")) {
+          target.style.outline = "2px dashed #F5A623";
+          target.style.outlineOffset = "-2px";
+          target.style.cursor = "pointer";
+        }
+        hoverEl = target;
+      }, true);
+      doc.addEventListener("mouseout", (e: any) => {
+        const related = e.relatedTarget as HTMLElement | null;
+        if (hoverEl && (!related || !hoverEl.contains(related))) clearHover();
+      }, true);
+      doc.addEventListener("click", (e: any) => {
+        const target = (e.target as HTMLElement)?.closest?.("[data-axs-id]") as HTMLElement | null;
+        if (!target) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const id = target.getAttribute("data-axs-id");
+        if (id) { setPanel("sections"); setActiveSection(id); }
+      }, true);
+    } catch { /* cross-origin guard */ }
+  }, []);
+
   const injectLive = useCallback(() => {
     if (!iframeRef.current || !config) return;
     try {
@@ -175,10 +214,94 @@ export default function BuilderPage() {
       const fontCss = typographyCss(config.fonts);
       const animCss = generateAnimationCss(config.animations);
       st.textContent = `${fontImport}${fontCss}${animCss}${config.customCss || ""}`;
+      bindSelection(doc);
     } catch { /* cross-origin guard */ }
-  }, [config]);
+  }, [config, bindSelection]);
 
   useEffect(() => { injectLive(); }, [injectLive]);
+
+  // Sélection faite dans la sidebar → surlignage + scroll direct dans l'aperçu
+  useEffect(() => {
+    if (!iframeRef.current) return;
+    try {
+      const doc = iframeRef.current.contentDocument;
+      if (!doc) return;
+      doc.querySelectorAll("[data-axs-selected]").forEach((el: any) => {
+        el.removeAttribute("data-axs-selected");
+        el.style.outline = "";
+        el.style.outlineOffset = "";
+      });
+      if (activeSection) {
+        const target = doc.querySelector(`[data-axs-id="${CSS.escape(activeSection)}"]`) as HTMLElement | null;
+        if (target) {
+          target.setAttribute("data-axs-selected", "1");
+          target.style.outline = `2px solid #F5A623`;
+          target.style.outlineOffset = "-2px";
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+    } catch { /* cross-origin guard */ }
+  }, [activeSection]);
+
+  // ─── Historique annuler / rétablir ──────────────────────────────────────────
+  const undoStack   = useRef<ThemeConfig[]>([]);
+  const redoStack   = useRef<ThemeConfig[]>([]);
+  const skipHistory = useRef(false);
+  const lastSnapshot = useRef<ThemeConfig | null>(null);
+  const historyTimer = useRef<NodeJS.Timeout | null>(null);
+  const [historyTick, setHistoryTick] = useState(0);
+
+  useEffect(() => {
+    if (!config) return;
+    if (lastSnapshot.current === null) { lastSnapshot.current = config; return; }
+    if (skipHistory.current) { skipHistory.current = false; lastSnapshot.current = config; return; }
+    if (historyTimer.current) clearTimeout(historyTimer.current);
+    const prev = lastSnapshot.current;
+    historyTimer.current = setTimeout(() => {
+      if (prev && JSON.stringify(prev) !== JSON.stringify(config)) {
+        undoStack.current.push(prev);
+        if (undoStack.current.length > 60) undoStack.current.shift();
+        redoStack.current = [];
+        setHistoryTick(t => t + 1);
+      }
+      lastSnapshot.current = config;
+    }, 500);
+    return () => { if (historyTimer.current) clearTimeout(historyTimer.current); };
+  }, [config]);
+
+  const undo = useCallback(() => {
+    setConfig(current => {
+      if (!undoStack.current.length || !current) return current;
+      const prev = undoStack.current.pop()!;
+      redoStack.current.push(current);
+      skipHistory.current = true;
+      lastSnapshot.current = prev;
+      setHistoryTick(t => t + 1);
+      return prev;
+    });
+  }, []);
+
+  const redo = useCallback(() => {
+    setConfig(current => {
+      if (!redoStack.current.length || !current) return current;
+      const next = redoStack.current.pop()!;
+      undoStack.current.push(current);
+      skipHistory.current = true;
+      lastSnapshot.current = next;
+      setHistoryTick(t => t + 1);
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      if (e.key.toLowerCase() === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
+      else if (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey)) { e.preventDefault(); redo(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [undo, redo]);
 
   const set = useCallback((u: (p: ThemeConfig) => ThemeConfig) => setConfig(p => p ? u(p) : p), []);
   const setSection  = useCallback((id: string, patch: any) => set(p => ({ ...p, sections: { ...p.sections, [id]: { ...(p.sections as any)[id], ...patch } } })), [set]);
@@ -224,6 +347,21 @@ export default function BuilderPage() {
   const removeCustomSection = useCallback((id: string) => {
     set(p => ({ ...p, customSections: (p.customSections || []).filter(s => s.id !== id) }));
     setActiveSection(null);
+  }, [set]);
+
+  const duplicateCustomSection = useCallback((id: string) => {
+    const newId = `custom_${Date.now()}`;
+    set(p => {
+      const list = p.customSections || [];
+      const src = list.find(s => s.id === id);
+      if (!src) return p;
+      const idx = list.findIndex(s => s.id === id);
+      const copy: CustomSection = { ...src, id: newId, label: `${src.label} (copie)`, config: JSON.parse(JSON.stringify(src.config)) };
+      const next = [...list];
+      next.splice(idx + 1, 0, copy);
+      return { ...p, customSections: next.map((s, i) => ({ ...s, ordre: i })) };
+    });
+    setActiveSection(newId);
   }, [set]);
 
   const updateCustomSection = useCallback((id: string, patch: any) => {
@@ -294,6 +432,17 @@ export default function BuilderPage() {
 
         <div className="flex items-center gap-2">
           <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+            <button onClick={undo} disabled={!undoStack.current.length} title="Annuler (Ctrl+Z)"
+              className="w-7 h-7 rounded flex items-center justify-center transition-all text-gray-600 hover:text-gray-400 disabled:opacity-30 disabled:hover:text-gray-600">
+              <Undo2 size={13} />
+            </button>
+            <button onClick={redo} disabled={!redoStack.current.length} title="Rétablir (Ctrl+Y)"
+              className="w-7 h-7 rounded flex items-center justify-center transition-all text-gray-600 hover:text-gray-400 disabled:opacity-30 disabled:hover:text-gray-600">
+              <Redo2 size={13} />
+            </button>
+          </div>
+          <div className="h-4 w-px bg-gray-100" />
+          <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
             {([["desktop",Monitor],["tablet",Tablet],["mobile",Smartphone]] as [Device, any][]).map(([d,Icon]) => (
               <button key={d} onClick={() => setDevice(d)} className={`w-7 h-7 rounded flex items-center justify-center transition-all ${device===d?"bg-[#F5A623]/20 text-[#F5A623]":"text-gray-600 hover:text-gray-400"}`}>
                 <Icon size={13} />
@@ -342,7 +491,7 @@ export default function BuilderPage() {
               {showLibrary && panel === "sections" && (
                 <SectionLibrary onAdd={addCustomSection} onClose={() => setShowLibrary(false)} />
               )}
-              {!showLibrary && panel === "sections"   && <PanelSections config={config} set={set} activeSection={activeSection} setActiveSection={setActiveSection} setSection={setSection} sectionOrder={sectionOrder as SectionId[]} updateCustomSection={updateCustomSection} removeCustomSection={removeCustomSection} />}
+              {!showLibrary && panel === "sections"   && <PanelSections config={config} set={set} activeSection={activeSection} setActiveSection={setActiveSection} setSection={setSection} sectionOrder={sectionOrder as SectionId[]} updateCustomSection={updateCustomSection} removeCustomSection={removeCustomSection} duplicateCustomSection={duplicateCustomSection} />}
               {panel === "couleurs"   && <PanelCouleurs  config={config} setColors={setColors} />}
               {panel === "typo"       && <PanelTypo      config={config} setFonts={setFonts} />}
               {panel === "layout"     && <PanelLayout    config={config} setLayout={setLayout} set={set} />}
@@ -365,6 +514,9 @@ export default function BuilderPage() {
                 <div className="flex-1 bg-gray-100 rounded px-3 py-0.5 text-[9px] text-gray-600 text-center truncate">
                   {typeof window!=="undefined" ? window.location.origin : "http://localhost:3000"}/{tenant.slug}
                 </div>
+                <span className="hidden md:flex items-center gap-1 text-[9px] text-gray-500 flex-shrink-0" title="Clique une section de l'aperçu pour la modifier directement">
+                  <MousePointer2 size={9} style={{ color: "#F5A623" }} /> Clic direct sur l'aperçu
+                </span>
                 <button onClick={() => setIframeKey(k=>k+1)} className="text-gray-600 hover:text-gray-400" title="Rafraîchir">
                   <RefreshCw size={10} />
                 </button>
@@ -418,7 +570,7 @@ function SectionLibrary({ onAdd, onClose }: { onAdd: (t: CustomSection["type"]) 
 // boutique publiée, les sections custom s'affichent toujours après toutes
 // les sections intégrées (voir CustomSectionsRenderer) : les mélanger dans
 // une seule liste glissable donnerait une réorganisation trompeuse.
-function PanelSections({ config, set, activeSection, setActiveSection, setSection, sectionOrder, updateCustomSection, removeCustomSection }: any) {
+function PanelSections({ config, set, activeSection, setActiveSection, setSection, sectionOrder, updateCustomSection, removeCustomSection, duplicateCustomSection }: any) {
   const sec = config.sections as any;
   const custom: CustomSection[] = [...(config.customSections || [])].sort((a, b) => a.ordre - b.ordre);
   const sousBlocsMap: Record<string, any[]> = config.sectionSousBlocs || {};
@@ -481,7 +633,10 @@ function PanelSections({ config, set, activeSection, setActiveSection, setSectio
               {item.actif ? <ToggleRight size={16} style={{ color:"#F5A623" }} /> : <ToggleLeft size={16} className="text-gray-700" />}
             </button>
             {item.isCustom && (
-              <button onClick={() => removeCustomSection(item.id)} className="text-red-500/40 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
+              <button onClick={() => duplicateCustomSection(item.id)} title="Dupliquer" className="text-gray-600 hover:text-gray-400 transition-colors"><Copy size={12} /></button>
+            )}
+            {item.isCustom && (
+              <button onClick={() => removeCustomSection(item.id)} title="Supprimer" className="text-red-500/40 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
             )}
             {isOpen ? <ChevronDown size={10} className="text-gray-500" /> : <ChevronRight size={10} className="text-gray-700" />}
           </div>
@@ -1626,6 +1781,17 @@ function PanelPageSections({ config, set, pageKey, titre }: { config: ThemeConfi
     setActiveSection(id);
   };
   const removeSection = (id: string) => { setSections(sections.filter(s => s.id !== id)); if (activeSection === id) setActiveSection(null); };
+  const duplicateSection = (id: string) => {
+    const idx = sections.findIndex(s => s.id === id);
+    if (idx === -1) return;
+    const src = sections[idx];
+    const newId = `custom_${Date.now()}`;
+    const copy: CustomSection = { ...src, id: newId, label: `${src.label} (copie)`, config: JSON.parse(JSON.stringify(src.config)) };
+    const next = [...sections];
+    next.splice(idx + 1, 0, copy);
+    setSections(next.map((s, i) => ({ ...s, ordre: i })));
+    setActiveSection(newId);
+  };
   const toggleSection = (id: string) => setSections(sections.map(s => s.id === id ? { ...s, actif: !s.actif } : s));
   const updateSection = (id: string, patch: any) => setSections(sections.map(s => s.id === id ? { ...s, config: { ...s.config, ...patch } } : s));
   const reorderSection = (from: number, to: number) => {
@@ -1696,7 +1862,8 @@ function PanelPageSections({ config, set, pageKey, titre }: { config: ThemeConfi
                   <button onClick={() => toggleSection(sec.id)}>
                     {sec.actif ? <ToggleRight size={15} style={{ color: "#F5A623" }} /> : <ToggleLeft size={15} className="text-gray-400" />}
                   </button>
-                  <button onClick={() => removeSection(sec.id)} className="text-red-500/40 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
+                  <button onClick={() => duplicateSection(sec.id)} title="Dupliquer" className="text-gray-600 hover:text-gray-400 transition-colors"><Copy size={12} /></button>
+                  <button onClick={() => removeSection(sec.id)} title="Supprimer" className="text-red-500/40 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
                   {isOpen ? <ChevronDown size={10} className="text-gray-500" /> : <ChevronRight size={10} className="text-gray-400" />}
                 </div>
               </div>

@@ -23,7 +23,7 @@ export function CustomSectionsRenderer({ sections, slug, colors: c, container: C
       {(sections ?? []).filter((s: any) => s.actif !== false).sort((a: any, b: any) => (a.ordre ?? 99) - (b.ordre ?? 99)).map((section: any) => {
         if (section.type === "features") {
           return (
-            <section key={section.id} className="py-16 sm:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <section key={section.id} data-axs-id={section.id} className="py-16 sm:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               {section.config?.titre && (
                 <h2 className="text-3xl font-bold font-playfair text-center mb-12" style={{ color: c.texte }}>{section.config.titre}</h2>
               )}
@@ -43,7 +43,7 @@ export function CustomSectionsRenderer({ sections, slug, colors: c, container: C
           const images: string[] = section.config?.images ?? [];
           if (!images.length) return null;
           return (
-            <section key={section.id} className={SECTION_PY}>
+            <section key={section.id} data-axs-id={section.id} className={SECTION_PY}>
               <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8`}>
                 {section.config?.titre && (
                   <h2 className="text-3xl font-bold font-playfair text-center mb-10" style={{ color: c.texte }}>{section.config.titre}</h2>
@@ -61,7 +61,7 @@ export function CustomSectionsRenderer({ sections, slug, colors: c, container: C
         }
         if (section.type === "stats") {
           return (
-            <section key={section.id} className="py-14 sm:py-20" style={{ background: `${c.accent}08` }}>
+            <section key={section.id} data-axs-id={section.id} className="py-14 sm:py-20" style={{ background: `${c.accent}08` }}>
               <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8`}>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
                   {(section.config?.items ?? []).map((stat: any, i: number) => (
@@ -77,7 +77,7 @@ export function CustomSectionsRenderer({ sections, slug, colors: c, container: C
         }
         if (section.type === "cta-band") {
           return (
-            <section key={section.id} className="py-16" style={{ background: c.accent }}>
+            <section key={section.id} data-axs-id={section.id} className="py-16" style={{ background: c.accent }}>
               <div className="max-w-4xl mx-auto px-4 text-center">
                 <h2 className="text-3xl font-bold font-playfair mb-4" style={{ color: c.fond }}>{section.config?.titre}</h2>
                 {section.config?.texte && <p className="text-lg mb-8" style={{ color: c.fond, opacity: 0.85 }}>{section.config.texte}</p>}
@@ -94,7 +94,7 @@ export function CustomSectionsRenderer({ sections, slug, colors: c, container: C
         }
         if (section.type === "richtext") {
           return (
-            <section key={section.id} className="py-16 max-w-3xl mx-auto px-4">
+            <section key={section.id} data-axs-id={section.id} className="py-16 max-w-3xl mx-auto px-4">
               {section.config?.titre && <h2 className="text-2xl font-bold font-playfair mb-6" style={{ color: c.texte }}>{section.config.titre}</h2>}
               {section.config?.texte && <div className="prose prose-sm max-w-none" style={{ color: c.texte, opacity: 0.75 }}>{section.config.texte}</div>}
             </section>
@@ -102,7 +102,7 @@ export function CustomSectionsRenderer({ sections, slug, colors: c, container: C
         }
         if (section.type === "countdown") {
           return (
-            <SectionCountdown key={section.id} slug={slug} accent={c.accent} texte={c.texte}
+            <SectionCountdown key={section.id} data-axs-id={section.id} slug={slug} accent={c.accent} texte={c.texte}
               titre={section.config?.titre} texteDesc={section.config?.texte}
               dateFin={section.config?.dateFin} ctaTexte={section.config?.ctaTexte} />
           );
@@ -111,7 +111,7 @@ export function CustomSectionsRenderer({ sections, slug, colors: c, container: C
           const logos: string[] = (section.config?.logos ?? []).filter(Boolean);
           if (!logos.length) return null;
           return (
-            <section key={section.id} className="py-14">
+            <section key={section.id} data-axs-id={section.id} className="py-14">
               <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 {section.config?.titre && (
                   <p className="text-center text-sm font-bold uppercase tracking-widest mb-8" style={{ color: c.texte, opacity: 0.4 }}>{section.config.titre}</p>
@@ -129,7 +129,7 @@ export function CustomSectionsRenderer({ sections, slug, colors: c, container: C
           if (!section.config?.videoUrl) return null;
           const isEmbed = /youtube|vimeo/.test(section.config.videoUrl);
           return (
-            <section key={section.id} className={SECTION_PY}>
+            <section key={section.id} data-axs-id={section.id} className={SECTION_PY}>
               <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${section.config.style === "fullwidth" ? "max-w-full" : "max-w-4xl"}`}>
                 {section.config?.titre && (
                   <h2 className="text-3xl font-bold font-playfair text-center mb-10" style={{ color: c.texte }}>{section.config.titre}</h2>
@@ -148,7 +148,7 @@ export function CustomSectionsRenderer({ sections, slug, colors: c, container: C
         if (section.type === "social-proof") {
           const certs: string[] = section.config?.certifications ?? [];
           return (
-            <section key={section.id} className="py-10" style={{ background: `${c.accent}06` }}>
+            <section key={section.id} data-axs-id={section.id} className="py-10" style={{ background: `${c.accent}06` }}>
               <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-center gap-8 text-center">
                 {section.config?.note && (
                   <div className="flex items-center gap-1.5">
@@ -164,17 +164,17 @@ export function CustomSectionsRenderer({ sections, slug, colors: c, container: C
           );
         }
         if (section.type === "spacer") {
-          return <div key={section.id} style={{ height: section.config?.hauteur || "80px" }} />;
+          return <div key={section.id} data-axs-id={section.id} style={{ height: section.config?.hauteur || "80px" }} />;
         }
         if (section.type === "tabs") {
-          return <SectionTabs key={section.id} titre={section.config?.titre} onglets={section.config?.onglets ?? []} accent={c.accent} texte={c.texte} />;
+          return <SectionTabs key={section.id} data-axs-id={section.id} titre={section.config?.titre} onglets={section.config?.onglets ?? []} accent={c.accent} texte={c.texte} />;
         }
         if (section.type === "columns") {
           const colonnes: any[] = section.config?.colonnes ?? [];
           if (!colonnes.length) return null;
           const nb = section.config?.nombreColonnes || colonnes.length;
           return (
-            <section key={section.id} className="py-16 sm:py-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <section key={section.id} data-axs-id={section.id} className="py-16 sm:py-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
               {section.config?.titre && <h2 className="text-3xl font-bold font-playfair text-center mb-12" style={{ color: c.texte }}>{section.config.titre}</h2>}
               <div className="grid gap-8" style={{ gridTemplateColumns: `repeat(${Math.min(nb, colonnes.length)}, minmax(0, 1fr))` }}>
                 {colonnes.map((col) => (

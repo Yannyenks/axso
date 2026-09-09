@@ -1,6 +1,5 @@
 export const dynamic = "force-dynamic";
 
-import { Fragment } from "react";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { formatMontant } from "@/lib/utils";
@@ -683,6 +682,7 @@ export default async function StorefrontPage({ params }: Props) {
       {/* ─── BARRE D'ANNONCE ─── */}
       {sec.annonce.actif && (
         <div
+          data-axs-id="annonce"
           className="py-2.5 text-center text-xs font-semibold tracking-wide overflow-hidden"
           style={{ backgroundColor: sec.annonce.couleurFond, color: sec.annonce.couleurTexte }}
         >
@@ -707,7 +707,7 @@ export default async function StorefrontPage({ params }: Props) {
         showContact={cfg.contactPage?.actif}
       />
 
-      {ordre.map((id) => <Fragment key={id}>{SECTION_NODES[id]}</Fragment>)}
+      {ordre.map((id) => SECTION_NODES[id] ? <div key={id} data-axs-id={id}>{SECTION_NODES[id]}</div> : null)}
 
       {/* ─── SECTIONS CUSTOM (générées par l'IA ou builder) ─── */}
       <CustomSectionsRenderer sections={cfg.customSections ?? []} slug={slug} colors={c} container={CONTAINER} sectionPy={SECTION_PY} />
