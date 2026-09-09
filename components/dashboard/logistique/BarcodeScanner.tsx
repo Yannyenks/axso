@@ -65,7 +65,12 @@ export function BarcodeScanner({ open, onClose, onProduitScanne }: Props) {
       setPret(false);
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
+          // Résolution bridée : une caméra arrière moderne capture souvent en
+          // 3000px+ de large par défaut, que zxing doit ensuite décoder image
+          // par image en JS pur — beaucoup plus lent et pas plus fiable pour
+          // lire un code-barres qu'une résolution modeste. 1280×720 accélère
+          // nettement le décodage sans perdre en netteté utile.
+          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
           audio: false,
         });
         if (annule) {
@@ -83,12 +88,23 @@ export function BarcodeScanner({ open, onClose, onProduitScanne }: Props) {
         // que le BarcodeDetector natif : sur Android Chrome, cette API
         // dépend d'un modèle ML Kit téléchargé en arrière-plan par Google
         // Play Services — tant qu'il n'est pas prêt (ou absent), detect()
-        // renvoie silencieusement un tableau vide indéfiniment : la caméra
-        // s'ouvre normalement mais rien ne se passe jamais au scan. zxing
-        // décode lui-même chaque frame, sans dépendance native ni modèle à
-        // télécharger — un peu plus lourd en CPU, mais fiable partout.
-        const { BrowserMultiFormatReader } = await import("@zxing/browser");
-        const reader = new BrowserMultiFormatReader();
+        // renvoie silencieusement un tableau vide indéfiniment. zxing décode
+        // lui-même chaque frame, sans dépendance native ni modèle à télécharger.
+        const [{ BrowserMultiFormatReader }, { DecodeHintType, BarcodeFormat }] = await Promise.all([
+          import("@zxing/browser"),
+          import("@zxing/library"),
+        ]);
+        // Restreindre les formats testés aux seuls formats retail utiles :
+        // zxing essaie par défaut TOUTES les symbologies (Aztec, PDF417, Data
+        // Matrix, RSS...) sur chaque image, ce qui ralentit inutilement le
+        // décodage et peut faire manquer des lectures sur les appareils
+        // modestes — un des symptômes du scan "lent et parfois raté".
+        const hints = new Map();
+        hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+          BarcodeFormat.EAN_13, BarcodeFormat.EAN_8, BarcodeFormat.UPC_A, BarcodeFormat.UPC_E,
+          BarcodeFormat.CODE_128, BarcodeFormat.CODE_39, BarcodeFormat.ITF, BarcodeFormat.QR_CODE,
+        ]);
+        const reader = new BrowserMultiFormatReader(hints);
         if (annule || !videoRef.current) return;
         const controls = await reader.decodeFromVideoElement(videoRef.current, (result) => {
           if (result) traiterCode(result.getText());
@@ -151,7 +167,7 @@ export function BarcodeScanner({ open, onClose, onProduitScanne }: Props) {
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-      style={{ background: "rgba(6,10,20,0.85)", backdropFilter: "blur(6px)" }}
+      style={{ background: "rgba(6,10,20,0.85)", backdropFilter: "blur(6px)", animation: "axsFadeIn 0.25s ease" }}
     >
       <div
         className="relative w-full max-w-md rounded-3xl overflow-hidden"
@@ -160,6 +176,7 @@ export function BarcodeScanner({ open, onClose, onProduitScanne }: Props) {
           border: "1px solid rgba(255,255,255,0.1)",
           boxShadow: "0 40px 100px rgba(0,0,0,0.55), 0 0 0 1px rgba(245,166,35,0.08)",
           fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif",
+          animation: "axsPopIn 0.4s cubic-bezier(0.34,1.56,0.64,1)",
         }}
       >
         {/* Header */}
@@ -196,13 +213,23 @@ export function BarcodeScanner({ open, onClose, onProduitScanne }: Props) {
 
           {pret && !erreur && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div
-                className="w-[78%] h-[38%] rounded-2xl"
-                style={{
-                  border: "2px solid #F5A623",
-                  boxShadow: "0 0 0 9999px rgba(0,0,0,0.35)",
-                }}
-              />
+              <div className="relative w-[80%] h-[36%]" style={{ boxShadow: "0 0 0 9999px rgba(0,0,0,0.4)" }}>
+                {/* Coins viseur — style scanner premium */}
+                {[
+                  { top: -2, left: -2, borderWidth: "3px 0 0 3px", borderRadius: "14px 0 0 0" },
+                  { top: -2, right: -2, borderWidth: "3px 3px 0 0", borderRadius: "0 14px 0 0" },
+                  { bottom: -2, left: -2, borderWidth: "0 0 3px 3px", borderRadius: "0 0 0 14px" },
+                  { bottom: -2, right: -2, borderWidth: "0 3px 3px 0", borderRadius: "0 0 14px 0" },
+                ].map((c, i) => (
+                  <div key={i} className="absolute w-7 h-7" style={{ ...c, borderStyle: "solid", borderColor: "#F5A623" }} />
+                ))}
+                {/* Ligne de scan animée */}
+                <div className="absolute left-0 right-0 h-[2px] rounded-full" style={{
+                  background: "linear-gradient(90deg, transparent, #F5A623 25%, #F5A623 75%, transparent)",
+                  boxShadow: "0 0 10px 1px rgba(245,166,35,0.7)",
+                  animation: "axsScanLine 1.8s ease-in-out infinite",
+                }} />
+              </div>
             </div>
           )}
         </div>
@@ -212,6 +239,12 @@ export function BarcodeScanner({ open, onClose, onProduitScanne }: Props) {
           chaque produit reconnu est ajouté automatiquement au panier.
         </p>
       </div>
+
+      <style>{`
+        @keyframes axsFadeIn { from { opacity:0 } to { opacity:1 } }
+        @keyframes axsPopIn { from { opacity:0; transform:scale(0.94) translateY(10px) } to { opacity:1; transform:scale(1) translateY(0) } }
+        @keyframes axsScanLine { 0% { top: 4%; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { top: 92%; opacity: 0; } }
+      `}</style>
     </div>
   );
 }

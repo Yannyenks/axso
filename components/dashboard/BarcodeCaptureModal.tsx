@@ -31,8 +31,8 @@ function jouerBip() {
  * Capture caméra en un seul coup — utilisé pour remplir un champ (ex: le
  * code-barres d'une fiche produit) plutôt que pour ajouter au panier. Même
  * moteur de décodage que components/dashboard/logistique/BarcodeScanner.tsx
- * (BarcodeDetector natif avec repli @zxing/browser), mais se referme dès la
- * première détection au lieu de rester ouvert en boucle.
+ * (@zxing/browser, formats restreints, résolution bridée pour la vitesse),
+ * mais se referme dès la première détection au lieu de rester ouvert en boucle.
  */
 export function BarcodeCaptureModal({ open, onClose, onDetect }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -52,7 +52,9 @@ export function BarcodeCaptureModal({ open, onClose, onDetect }: Props) {
       setPret(false);
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
+          // Résolution bridée : décode plus vite en JS pur sans perdre en
+          // netteté utile pour un code-barres (voir BarcodeScanner.tsx).
+          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
           audio: false,
         });
         if (annule) { stream.getTracks().forEach(t => t.stop()); return; }
@@ -69,8 +71,18 @@ export function BarcodeCaptureModal({ open, onClose, onDetect }: Props) {
         // arrière-plan par Google Play Services sur Android, silencieusement
         // non fonctionnel tant qu'il n'est pas prêt (caméra visible, aucune
         // détection). zxing décode lui-même chaque frame, sans dépendance.
-        const { BrowserMultiFormatReader } = await import("@zxing/browser");
-        const reader = new BrowserMultiFormatReader();
+        const [{ BrowserMultiFormatReader }, { DecodeHintType, BarcodeFormat }] = await Promise.all([
+          import("@zxing/browser"),
+          import("@zxing/library"),
+        ]);
+        // Restreindre les formats testés = décodage nettement plus rapide
+        // (zxing essaie sinon toutes les symbologies sur chaque image).
+        const hints = new Map();
+        hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+          BarcodeFormat.EAN_13, BarcodeFormat.EAN_8, BarcodeFormat.UPC_A, BarcodeFormat.UPC_E,
+          BarcodeFormat.CODE_128, BarcodeFormat.CODE_39, BarcodeFormat.ITF, BarcodeFormat.QR_CODE,
+        ]);
+        const reader = new BrowserMultiFormatReader(hints);
         if (annule || !videoRef.current) return;
         const controls = await reader.decodeFromVideoElement(videoRef.current, (result) => {
           if (result && !detecte.current) traiterCode(result.getText());
@@ -111,7 +123,7 @@ export function BarcodeCaptureModal({ open, onClose, onDetect }: Props) {
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-      style={{ background: "rgba(6,10,20,0.85)", backdropFilter: "blur(6px)" }}
+      style={{ background: "rgba(6,10,20,0.85)", backdropFilter: "blur(6px)", animation: "axsFadeIn 0.25s ease" }}
     >
       <div
         className="relative w-full max-w-md rounded-3xl overflow-hidden"
@@ -120,6 +132,7 @@ export function BarcodeCaptureModal({ open, onClose, onDetect }: Props) {
           border: "1px solid rgba(255,255,255,0.1)",
           boxShadow: "0 40px 100px rgba(0,0,0,0.55), 0 0 0 1px rgba(245,166,35,0.08)",
           fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif",
+          animation: "axsPopIn 0.4s cubic-bezier(0.34,1.56,0.64,1)",
         }}
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
@@ -148,7 +161,23 @@ export function BarcodeCaptureModal({ open, onClose, onDetect }: Props) {
 
           {pret && !erreur && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-[78%] h-[38%] rounded-2xl" style={{ border: "2px solid #F5A623", boxShadow: "0 0 0 9999px rgba(0,0,0,0.35)" }} />
+              <div className="relative w-[80%] h-[36%]" style={{ boxShadow: "0 0 0 9999px rgba(0,0,0,0.4)" }}>
+                {/* Coins viseur — style scanner premium */}
+                {[
+                  { top: -2, left: -2, borderWidth: "3px 0 0 3px", borderRadius: "14px 0 0 0" },
+                  { top: -2, right: -2, borderWidth: "3px 3px 0 0", borderRadius: "0 14px 0 0" },
+                  { bottom: -2, left: -2, borderWidth: "0 0 3px 3px", borderRadius: "0 0 0 14px" },
+                  { bottom: -2, right: -2, borderWidth: "0 3px 3px 0", borderRadius: "0 0 14px 0" },
+                ].map((c, i) => (
+                  <div key={i} className="absolute w-7 h-7" style={{ ...c, borderStyle: "solid", borderColor: "#F5A623" }} />
+                ))}
+                {/* Ligne de scan animée */}
+                <div className="absolute left-0 right-0 h-[2px] rounded-full" style={{
+                  background: "linear-gradient(90deg, transparent, #F5A623 25%, #F5A623 75%, transparent)",
+                  boxShadow: "0 0 10px 1px rgba(245,166,35,0.7)",
+                  animation: "axsScanLine 1.8s ease-in-out infinite",
+                }} />
+              </div>
             </div>
           )}
         </div>
@@ -157,6 +186,12 @@ export function BarcodeCaptureModal({ open, onClose, onDetect }: Props) {
           Placez le code-barres du produit dans le cadre — le champ se remplit automatiquement dès qu'il est reconnu.
         </p>
       </div>
+
+      <style>{`
+        @keyframes axsFadeIn { from { opacity:0 } to { opacity:1 } }
+        @keyframes axsPopIn { from { opacity:0; transform:scale(0.94) translateY(10px) } to { opacity:1; transform:scale(1) translateY(0) } }
+        @keyframes axsScanLine { 0% { top: 4%; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { top: 92%; opacity: 0; } }
+      `}</style>
     </div>
   );
 }
