@@ -202,6 +202,8 @@ export default async function ProduitPage({ params }: Props) {
         collections={tenant.collections}
         certifie={tenant.certifie}
         navStyle={cfg.navigationStyle}
+        showAbout={cfg.aboutPage?.actif}
+        showContact={cfg.contactPage?.actif}
       />
       <ProductPageClient
         produit={produitProps}

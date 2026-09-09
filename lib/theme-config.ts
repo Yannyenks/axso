@@ -155,7 +155,7 @@ export interface ThemeSectionNewsletter {
 
 export interface ThemeSectionConfiance {
   actif: boolean;
-  layout?: "icons" | "cards" | "bar";
+  layout?: "icons" | "cards" | "bar" | "marquee";
   items: Array<{ icone: string; titre: string; texte: string }>;
 }
 
@@ -216,6 +216,21 @@ export interface ThemeProductPageConfig {
   sections?: ProductPageSection[];
 }
 
+// ─── Pages À propos & Contact — même patron que la fiche produit ci-dessus :
+// une liste de sections indépendante de la home, composée avec la même
+// bibliothèque CustomSection (richtext, stats, galerie...).
+export interface ThemeAboutPageConfig {
+  actif: boolean;
+  sections: CustomSection[];
+}
+
+export interface ThemeContactPageConfig {
+  actif: boolean;
+  intro?: string;
+  afficherFormulaire: boolean;
+  sections?: CustomSection[];
+}
+
 export const DEFAULT_PRODUCT_SECTIONS: ProductPageSection[] = [
   { id: "gallery",     type: "gallery",     actif: true, config: { style: "vertical-thumbs", zoom: true, sticky: true } },
   { id: "info",        type: "info",        actif: true, config: { breadcrumbs: true, badges: true, stock: true } },
@@ -244,6 +259,8 @@ export interface ThemeConfig {
   customCss?: string;
   sections: ThemeSections;
   productPage?: ThemeProductPageConfig;
+  aboutPage?: ThemeAboutPageConfig;
+  contactPage?: ThemeContactPageConfig;
   builderHtml?: string;
   builderCss?: string;
 }
@@ -251,7 +268,7 @@ export interface ThemeConfig {
 // ─── Defaults ────────────────────────────────────────────────────────────────
 const DEFAULT_CONFIANCE: ThemeSectionConfiance = {
   actif: true,
-  layout: "icons",
+  layout: "marquee",
   items: [
     { icone: "📦", titre: "Livraison rapide", texte: "Expédiée sous 24h-48h" },
     { icone: "🔒", titre: "Paiement sécurisé", texte: "Transactions protégées" },
@@ -283,6 +300,22 @@ const DEFAULT_FAQ: ThemeSectionFaq = {
   ],
 };
 
+// Variété sobre par défaut, section par section — le système ScrollReveal
+// est déjà câblé partout (voir components/storefront/ScrollReveal.tsx),
+// il ne manquait que ces préréglages pour qu'une boutique neuve soit animée
+// de façon professionnelle sans que le marchand ait à toucher au builder.
+const DEFAULT_SECTION_ANIMATIONS: Record<string, string> = {
+  hero: "fade-in",
+  confiance: "fade-in",
+  vedettes: "slide-up",
+  collections: "zoom-in",
+  about: "slide-left",
+  promo: "fade-in",
+  faq: "fade-in",
+  avis: "slide-up",
+  newsletter: "fade-in",
+};
+
 const DEFAULT_ANIMATIONS: ThemeAnimations = {
   global: "slide-up",
   vitesse: "normal",
@@ -290,7 +323,7 @@ const DEFAULT_ANIMATIONS: ThemeAnimations = {
   smoothScroll: true,
   stagger: true,
   preset: "elegant",
-  sectionAnimations: {},
+  sectionAnimations: { ...DEFAULT_SECTION_ANIMATIONS },
 };
 
 const DEFAULT_NAV: ThemeNavigationCfg = {
@@ -445,6 +478,27 @@ const DEFAULTS: Record<string, ThemeConfig> = {
       newsletter: { actif: true, titre: "Entrez dans la forêt", texte: "Recevez nos rituels naturels et secrets directement dans votre boîte", placeholder: "votre@email.com", ctaTexte: "Entrer dans la forêt", style: "centered" },
     },
   },
+  "epure-minimal": {
+    colors: { fond: "#ffffff", accent: "#111111", texte: "#1a1a1a", surface: "#fafafa", texteMuted: "#8a8a8a", bordure: "#ececec" },
+    fonts: { titre: "inter", corps: "inter", poidsTitre: "600" },
+    radius: "6px",
+    layout: { ...DEFAULT_LAYOUT, styleCarte: "bordered", ombre: "sm" },
+    boutons: { ...DEFAULT_BOUTONS, style: "outline", hover: "darken" },
+    navigationStyle: { ...DEFAULT_NAV, style: "light" },
+    animations: { ...DEFAULT_ANIMATIONS, preset: "none", global: "fade-in" },
+    sections: {
+      annonce: { actif: false, texte: "Livraison sous 48h · Paiement sécurisé · Retours sous 14 jours", couleurFond: "#111111", couleurTexte: "#ffffff" },
+      hero: { actif: true, style: "minimal", titre: "L'essentiel, bien fait", sousTitre: "Une sélection épurée, pensée pour durer", ctaTexte: "Découvrir", ctaLien: "produits", overlay: 0, hauteur: "70vh", textPosition: "left" },
+      confiance: { ...DEFAULT_CONFIANCE, layout: "bar" },
+      vedettes: { actif: true, titre: "Sélection", nombre: 8, triPar: "ventes", colonnes: 4, layout: "grid" },
+      collections: { actif: true, titre: "Collections", layout: "grid" },
+      about: { ...DEFAULT_ABOUT },
+      promo: { actif: false, titre: "Nouveautés", texte: "Les dernières arrivées, sélectionnées avec soin", ctaTexte: "Voir", style: "solid" },
+      faq: { ...DEFAULT_FAQ },
+      avis: { actif: true, titre: "Avis clients", layout: "list" },
+      newsletter: { actif: false, titre: "Restez informé", texte: "Les nouveautés, sans spam", placeholder: "votre@email.com", ctaTexte: "S'abonner", style: "centered" },
+    },
+  },
 };
 
 // Fusionne une couche de surcharges (overrides — venant soit d'un thème custom
@@ -478,6 +532,8 @@ export function mergeThemeConfig(base: ThemeConfig, overrides: Record<string, an
       faq: overrides.sections?.faq ?? base.sections.faq ?? DEFAULT_FAQ,
     },
     productPage: overrides.productPage ?? base.productPage,
+    aboutPage: overrides.aboutPage ?? base.aboutPage,
+    contactPage: overrides.contactPage ?? base.contactPage,
     builderHtml: overrides.builderHtml ?? base.builderHtml,
     builderCss: overrides.builderCss ?? base.builderCss,
   };

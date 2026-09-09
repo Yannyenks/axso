@@ -84,6 +84,8 @@ export default async function WishlistPage({ params }: Props) {
         collections={tenant.collections}
         certifie={tenant.certifie}
         navStyle={cfg.navigationStyle}
+        showAbout={cfg.aboutPage?.actif}
+        showContact={cfg.contactPage?.actif}
       />
 
       <WishlistGrid

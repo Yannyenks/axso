@@ -14,13 +14,13 @@ import {
   ArrowUpDown, Megaphone, Shield, FolderOpen, BookOpen, HelpCircle,
   MessageCircle, Mail, Wrench, Award, LucideIcon,
   ShoppingBag, Maximize2, Minimize2, ZoomIn, Package,
-  ShoppingCart, Share2,
+  ShoppingCart, Share2, Info, Phone,
 } from "lucide-react";
 import { THEME_DEFAULTS, resolveThemeConfig, type ThemeConfig, type CustomSection, DEFAULT_PRODUCT_SECTIONS, type ProductPageSection } from "@/lib/theme-config";
 import { FONTS, googleFontsHref, typographyCss } from "@/lib/theme-fonts";
 
 type Device = "desktop" | "tablet" | "mobile";
-type Panel = "sections" | "couleurs" | "typo" | "layout" | "medias" | "animations" | "boutons" | "avance" | "produit";
+type Panel = "sections" | "couleurs" | "typo" | "layout" | "medias" | "animations" | "boutons" | "avance" | "produit" | "apropos" | "contact";
 type SectionId = "annonce" | "hero" | "confiance" | "vedettes" | "collections" | "about" | "promo" | "faq" | "avis" | "newsletter";
 
 // ─── Section library types ────────────────────────────────────────────────────
@@ -85,6 +85,8 @@ const NAV_TABS: Array<{ id: Panel; icon: React.ReactNode; tooltip: string }> = [
   { id: "animations", icon: <Sparkles size={17} />,      tooltip: "Animations" },
   { id: "boutons",    icon: <MousePointer2 size={17} />, tooltip: "Boutons & Nav" },
   { id: "produit",    icon: <ShoppingBag size={17} />,   tooltip: "Fiche produit" },
+  { id: "apropos",    icon: <Info size={17} />,          tooltip: "À propos" },
+  { id: "contact",    icon: <Phone size={17} />,         tooltip: "Contact" },
   { id: "avance",     icon: <Code2 size={17} />,         tooltip: "Avancé" },
 ];
 
@@ -356,6 +358,8 @@ export default function BuilderPage() {
               {panel === "animations" && <PanelAnimations config={config} setAnim={setAnim} />}
               {panel === "boutons"    && <PanelBoutons   config={config} setBoutons={setBoutons} setNavStyle={setNavStyle} />}
               {panel === "produit"    && <PanelProduit   config={config} setProductPage={setProductPage} />}
+              {panel === "apropos"    && <PanelPageSections config={config} set={set} pageKey="aboutPage" titre="À propos" />}
+              {panel === "contact"    && <PanelPageSections config={config} set={set} pageKey="contactPage" titre="Contact" />}
               {panel === "avance"     && <PanelAvance    config={config} set={set} tenant={tenant} onReset={() => { const d = THEME_DEFAULTS[tenant.themeId] || THEME_DEFAULTS["terre-et-or"]; setConfig({ ...d }); }} />}
             </div>
           </div>
@@ -1547,6 +1551,111 @@ function SectionTypeSettings({ section, update }: { section: ProductPageSection;
   );
 
   return null;
+}
+
+// ─── Panel pages À propos / Contact ───────────────────────────────────────────
+// Générique : édite soit config.aboutPage soit config.contactPage, qui ont
+// tous les deux une liste `sections: CustomSection[]` — même bibliothèque de
+// blocs que la home (SectionLibrary/CustomSectionControls déjà génériques),
+// juste reciblée sur ce tableau au lieu de config.customSections.
+const PAGE_SECTION_DEFAULTS: Record<string, any> = {
+  richtext:     { titre: "Notre histoire", texte: "Racontez ici l'histoire de votre boutique.", ctaTexte: "", ctaLien: "" },
+  features:     { titre: "Nos valeurs", items: [{ icone: "★", titre: "Valeur 1", texte: "Description" }, { icone: "→", titre: "Valeur 2", texte: "Description" }, { icone: "✓", titre: "Valeur 3", texte: "Description" }], colonnes: 3 },
+  stats:        { titre: "En chiffres", items: [{ valeur: "10K+", label: "Clients" }, { valeur: "500+", label: "Produits" }, { valeur: "4.9★", label: "Note" }, { valeur: "48h", label: "Livraison" }] },
+  gallery:      { titre: "Notre galerie", images: ["", "", "", "", "", ""], layout: "masonry" },
+  video:        { titre: "Découvrez notre monde", videoUrl: "", style: "centered", autoplay: false },
+  "cta-band":   { titre: "Une question ?", texte: "Contactez-nous, on vous répond vite", ctaTexte: "Nous écrire", ctaLien: "contact", style: "gradient" },
+  brands:       { titre: "Ils nous font confiance", logos: ["", "", "", ""], style: "carousel" },
+  "social-proof": { note: "4.9/5", nbClients: "12 000+", nbCommandes: "30 000+", certifications: ["✓ Paiement sécurisé", "✓ Livraison garantie"] },
+  countdown:    { titre: "Offre limitée", texte: "Ne manquez pas cette opportunité unique !", dateFin: new Date(Date.now() + 7*24*3600*1000).toISOString().slice(0,16), ctaTexte: "Profiter maintenant" },
+  spacer:       { hauteur: "80px" },
+  tabs:         { titre: "Découvrez-en plus", onglets: [{ id: `tab_${Date.now()}_1`, label: "Photos", blocs: [] }, { id: `tab_${Date.now()}_2`, label: "Témoignages", blocs: [] }] },
+  columns:      { titre: "", nombreColonnes: 3, colonnes: [{ id: `col_${Date.now()}_1`, blocs: [] }, { id: `col_${Date.now()}_2`, blocs: [] }, { id: `col_${Date.now()}_3`, blocs: [] }] },
+};
+
+function PanelPageSections({ config, set, pageKey, titre }: { config: ThemeConfig; set: any; pageKey: "aboutPage" | "contactPage"; titre: string }) {
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [showLibrary, setShowLibrary] = useState(false);
+
+  const page: any = (config as any)[pageKey] || {};
+  const sections: CustomSection[] = page.sections || [];
+
+  const setPage = (patch: any) => set((p: ThemeConfig) => ({ ...p, [pageKey]: { ...(p as any)[pageKey], actif: (p as any)[pageKey]?.actif ?? false, sections: (p as any)[pageKey]?.sections || [], ...patch } }));
+  const setSections = (next: CustomSection[]) => setPage({ sections: next });
+
+  const addSection = (type: CustomSection["type"]) => {
+    const id = `custom_${Date.now()}`;
+    const label = CUSTOM_SECTION_TYPES.find(t => t.type === type)?.label || type;
+    setSections([...sections, { id, type, actif: true, label, ordre: sections.length, config: PAGE_SECTION_DEFAULTS[type] || {} }]);
+    setShowLibrary(false);
+    setActiveSection(id);
+  };
+  const removeSection = (id: string) => { setSections(sections.filter(s => s.id !== id)); if (activeSection === id) setActiveSection(null); };
+  const toggleSection = (id: string) => setSections(sections.map(s => s.id === id ? { ...s, actif: !s.actif } : s));
+  const updateSection = (id: string, patch: any) => setSections(sections.map(s => s.id === id ? { ...s, config: { ...s.config, ...patch } } : s));
+
+  if (showLibrary) return <SectionLibrary onAdd={addSection} onClose={() => setShowLibrary(false)} />;
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="p-4 border-b border-gray-200 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] font-semibold text-gray-700">Afficher la page {titre}</p>
+          <button onClick={() => setPage({ actif: !page.actif })}>
+            {page.actif ?? true ? <ToggleRight size={18} style={{ color: "#F5A623" }} /> : <ToggleLeft size={18} className="text-gray-400" />}
+          </button>
+        </div>
+        {pageKey === "contactPage" && (
+          <>
+            <FInp label="Texte d'introduction" value={page.intro || ""} onChange={v => setPage({ intro: v })} multiline />
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-semibold text-gray-700">Formulaire de contact</p>
+              <button onClick={() => setPage({ afficherFormulaire: !(page.afficherFormulaire ?? true) })}>
+                {(page.afficherFormulaire ?? true) ? <ToggleRight size={18} style={{ color: "#F5A623" }} /> : <ToggleLeft size={18} className="text-gray-400" />}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200">
+        <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.18em]">Blocs de contenu</p>
+        <button onClick={() => setShowLibrary(true)} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all" style={{ backgroundColor: "#F5A623", color: "#050508" }}>
+          <Plus size={9} /> Ajouter
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+        {sections.length === 0 && (
+          <p className="p-4 text-[11px] text-gray-500 leading-relaxed">Aucun bloc pour l'instant — clique sur "Ajouter" pour composer cette page (texte, chiffres clés, galerie...).</p>
+        )}
+        {sections.map(sec => {
+          const isOpen = activeSection === sec.id;
+          return (
+            <div key={sec.id} className={isOpen ? "bg-gray-50/80" : ""}>
+              <div className="flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-gray-50 select-none" onClick={() => setActiveSection(isOpen ? null : sec.id)}>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-semibold text-gray-700 truncate">{sec.label}</p>
+                </div>
+                <div className="flex items-center gap-1.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                  <button onClick={() => toggleSection(sec.id)}>
+                    {sec.actif ? <ToggleRight size={15} style={{ color: "#F5A623" }} /> : <ToggleLeft size={15} className="text-gray-400" />}
+                  </button>
+                  <button onClick={() => removeSection(sec.id)} className="text-red-500/40 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
+                  {isOpen ? <ChevronDown size={10} className="text-gray-500" /> : <ChevronRight size={10} className="text-gray-400" />}
+                </div>
+              </div>
+              {isOpen && (
+                <div className="px-3 pb-4">
+                  <CustomSectionControls section={sec} update={updateSection} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 function PanelProduit({ config, setProductPage }: any) {

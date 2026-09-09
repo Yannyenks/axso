@@ -5,6 +5,7 @@ import { analyserBusinessEtCreerPlan, type PlanBoutique } from "@/lib/ai-agent";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
 import { generateStoreConfig } from "@/lib/generate-store-config";
+import { genererAvisDemo } from "@/lib/gemini";
 
 const schemaAnalyser = z.object({
   phase: z.literal("analyser"),
@@ -168,6 +169,50 @@ export async function POST(request: Request) {
 
         return { tenant, produitsCreees };
       });
+
+      // Avis clients IA de démonstration — pour qu'une boutique fraîchement
+      // générée par l'IA n'affiche jamais une section "Avis" vide. Ne bloque
+      // jamais la création de la boutique : erreurs (Gemini, DB) avalées et
+      // journalisées. Un Avis exige un produitId réel — on ne les génère que
+      // si des produits ont bien été créés.
+      try {
+        const produitsPourAvis = await prisma.produit.findMany({
+          where: { tenantId: tenant.id },
+          select: { id: true, nom: true },
+        });
+        if (produitsPourAvis.length > 0) {
+          const avisGeneres = await genererAvisDemo(
+            plan.nomBoutique,
+            plan.categorie,
+            produitsPourAvis.map((p) => p.nom)
+          );
+          for (let i = 0; i < avisGeneres.length; i++) {
+            const a = avisGeneres[i];
+            const client = await prisma.client.create({
+              data: {
+                tenantId: tenant.id,
+                nom: a.clientNom,
+                email: `demo+${tenant.id}-${i}@axso-avis.local`,
+              },
+            });
+            const produit = produitsPourAvis[i % produitsPourAvis.length];
+            await prisma.avis.create({
+              data: {
+                tenantId: tenant.id,
+                produitId: produit.id,
+                clientId: client.id,
+                note: a.note,
+                titre: a.titre,
+                commentaire: a.commentaire,
+                verifie: false,
+                approuve: true,
+              },
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("[API/AI/ONBOARDING] Génération avis démo échouée (non bloquant):", err);
+      }
 
       return NextResponse.json({
         success: true,

@@ -11,6 +11,8 @@ import {
   Bot, Send, CheckCircle2, Package, Truck, AlertCircle,
 } from "lucide-react";
 import type { PlanBoutique } from "@/lib/ai-agent";
+import { THEME_DEFAULTS } from "@/lib/theme-config";
+import { fontEntry } from "@/lib/theme-fonts";
 
 const ACCENT      = "#F5A623";
 const ACCENT_DARK = "#d4880d";
@@ -34,7 +36,56 @@ const THEMES: Record<string, { nom: string; couleur: string }> = {
   "kente-royal":      { nom: "Kente Royal",      couleur: "#D4AF37" },
   "ocean-atlantique": { nom: "Océan Atlantique", couleur: "#0ea5e9" },
   "bwiti-forest":     { nom: "Bwiti Forest",     couleur: "#16a34a" },
+  "epure-minimal":    { nom: "Épuré Minimal",    couleur: "#111111" },
 };
+
+// 3 styles "coup d'œil" mis en avant — chacun mappé sur un thème réel de
+// lib/theme-config.ts. Les 4 thèmes restants vivent dans "Plus de styles".
+const STYLE_PICKS: { id: string; label: string; desc: string }[] = [
+  { id: "terre-et-or",   label: "Clair",  desc: "Chaleureux et lumineux" },
+  { id: "noir-obsidien", label: "Sombre", desc: "Élégant et contrasté" },
+  { id: "epure-minimal", label: "Épuré",  desc: "Minimaliste et sobre" },
+];
+const STYLE_PICK_IDS = new Set(STYLE_PICKS.map(s => s.id));
+const AUTRES_THEMES = Object.keys(THEMES).filter(id => !STYLE_PICK_IDS.has(id));
+
+// Retourne une pile de polices CSS "safe" (sans charger de Google Font) qui
+// illustre la famille du thème (serif / display / sans) — suffisant pour un
+// mini-mockup, sans alourdir la page avec des chargements de polices.
+function mockupFontStack(fontId?: string): string {
+  const cat = fontEntry(fontId)?.cat;
+  if (cat === "Serif") return "Georgia, 'Times New Roman', serif";
+  if (cat === "Display") return "'Trebuchet MS', Impact, sans-serif";
+  return "system-ui, -apple-system, sans-serif";
+}
+
+// Mini-mockup illustratif d'un thème : reproduit ses vraies couleurs/rayon/
+// police plutôt qu'un simple point de couleur, sans aller jusqu'à un aperçu
+// live (pas d'iframe) — juste assez pour donner une intuition visuelle.
+function ThemeMockup({ id, compact }: { id: string; compact?: boolean }) {
+  const t = THEME_DEFAULTS[id] || THEME_DEFAULTS["terre-et-or"];
+  const c = t.colors;
+  return (
+    <div
+      className={"w-full flex flex-col justify-center overflow-hidden " + (compact ? "gap-1 px-2.5 py-2" : "gap-1.5 px-3.5 py-3")}
+      style={{
+        height: compact ? 56 : 92,
+        background: c.fond,
+        border: `1px solid ${c.bordure || "rgba(0,0,0,0.1)"}`,
+        borderRadius: t.radius,
+      }}>
+      <p className="truncate"
+        style={{ color: c.texte, fontFamily: mockupFontStack(t.fonts?.titre), fontWeight: (t.fonts?.poidsTitre as any) || 700, fontSize: compact ? 10 : 12, lineHeight: 1 }}>
+        Ma boutique
+      </p>
+      <div style={{ width: "70%", height: compact ? 3 : 4, borderRadius: 2, background: c.texteMuted || c.texte, opacity: 0.4 }} />
+      <div className="self-start"
+        style={{ marginTop: compact ? 2 : 5, background: c.accent, color: c.fond, fontSize: compact ? 8 : 9, fontWeight: 700, padding: compact ? "2px 7px" : "3px 10px", borderRadius: 999 }}>
+        Voir
+      </div>
+    </div>
+  );
+}
 
 function PlanPreviewCard({ plan, messageIA, onConfirmer, onModifier, onChangeTheme, loading }: {
   plan: PlanBoutique & { messageIA?: string };
@@ -121,21 +172,20 @@ function PlanPreviewCard({ plan, messageIA, onConfirmer, onModifier, onChangeThe
               Axia recommande <strong>{THEMES[aiThemeId]?.nom ?? aiThemeId}</strong>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            {Object.entries(THEMES).map(([id, t]) => {
-              const selected = plan.themeId === id;
+          {/* 3 styles en avant — mini-maquette illustrative (vraies couleurs/rayon/police du thème) */}
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {STYLE_PICKS.map((s) => {
+              const selected = plan.themeId === s.id;
+              const t = THEMES[s.id];
               return (
-                <button key={id} onClick={() => onChangeTheme(id)} disabled={loading}
-                  className="relative p-2.5 rounded-xl border-2 transition-all text-left hover:scale-[1.02]"
-                  style={{
-                    borderColor: selected ? t.couleur : "rgba(0,0,0,0.08)",
-                    background: selected ? `${t.couleur}0a` : "white",
-                  }}>
-                  <div className="w-5 h-5 rounded-full mb-1.5 flex-shrink-0 shadow-sm"
-                    style={{ background: t.couleur }} />
-                  <p className="text-[11px] font-semibold text-[#111111] leading-tight">{t.nom}</p>
+                <button key={s.id} onClick={() => onChangeTheme(s.id)} disabled={loading}
+                  className="relative p-1.5 rounded-2xl border-2 transition-all text-left hover:scale-[1.02]"
+                  style={{ borderColor: selected ? t.couleur : "rgba(0,0,0,0.08)", background: selected ? `${t.couleur}0a` : "white" }}>
+                  <ThemeMockup id={s.id} />
+                  <p className="text-[11px] font-semibold text-[#111111] leading-tight mt-1.5 px-0.5">{s.label}</p>
+                  <p className="text-[9.5px] text-[#999999] leading-tight px-0.5">{s.desc}</p>
                   {selected && (
-                    <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center"
+                    <div className="absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center"
                       style={{ background: t.couleur }}>
                       <Check size={9} color="white" />
                     </div>
@@ -144,6 +194,34 @@ function PlanPreviewCard({ plan, messageIA, onConfirmer, onModifier, onChangeThe
               );
             })}
           </div>
+
+          {/* Plus de styles — mêmes maquettes, format compact */}
+          <details className="group">
+            <summary className="text-[11px] font-semibold text-[#999999] cursor-pointer hover:text-[#666666] transition-colors list-none flex items-center gap-1">
+              <span className="group-open:hidden">Plus de styles ({AUTRES_THEMES.length})</span>
+              <span className="hidden group-open:inline">Masquer les autres styles</span>
+            </summary>
+            <div className="grid grid-cols-4 gap-2 mt-2.5">
+              {AUTRES_THEMES.map((id) => {
+                const t = THEMES[id];
+                const selected = plan.themeId === id;
+                return (
+                  <button key={id} onClick={() => onChangeTheme(id)} disabled={loading}
+                    className="relative p-1 rounded-xl border-2 transition-all text-left hover:scale-[1.02]"
+                    style={{ borderColor: selected ? t.couleur : "rgba(0,0,0,0.08)", background: selected ? `${t.couleur}0a` : "white" }}>
+                    <ThemeMockup id={id} compact />
+                    <p className="text-[9.5px] font-semibold text-[#111111] leading-tight mt-1 px-0.5 truncate">{t.nom}</p>
+                    {selected && (
+                      <div className="absolute top-1.5 right-1.5 w-3.5 h-3.5 rounded-full flex items-center justify-center"
+                        style={{ background: t.couleur }}>
+                        <Check size={7} color="white" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </details>
         </div>
       )}
 

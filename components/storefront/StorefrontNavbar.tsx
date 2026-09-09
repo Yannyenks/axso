@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
-import { ShoppingBag, Menu, X, Search, BadgeCheck, Heart, ChevronDown } from "lucide-react";
+import { ShoppingBag, Menu, X, Search, BadgeCheck, Heart, ChevronDown, Package } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ThemeNavigationCfg } from "@/lib/theme-config";
+import { formatMontant } from "@/lib/utils";
 
 interface Props {
   slug: string;
@@ -18,11 +19,20 @@ interface Props {
   collections: Array<{ slug: string; nom: string }>;
   certifie?: boolean;
   navStyle?: ThemeNavigationCfg;
+  showAbout?: boolean;
+  showContact?: boolean;
+}
+
+interface RechercheProduit {
+  id: string;
+  nom: string;
+  prix: number;
+  image: string | null;
 }
 
 const HAUTEUR_PX: Record<string, number> = { "48px": 48, "64px": 64, "80px": 80 };
 
-export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, texte, radius, collections, certifie, navStyle }: Props) {
+export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, texte, radius, collections, certifie, navStyle, showAbout, showContact }: Props) {
   const totalItems = useCartStore((s) => s.totalItems());
   const wishlistCount = useWishlistStore((s) => s.produitIds.length);
   const [menuOuvert, setMenuOuvert] = useState(false);
@@ -30,6 +40,52 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
   const [megaOuvert, setMegaOuvert] = useState(false);
   const [scroll, setScroll] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  // ─── Recherche live (suggestions pendant la frappe) ────────────────────────
+  // Complète le formulaire GET existant (Entrée → /produits?q=... conservé
+  // tel quel) sans le remplacer : un menu de suggestions apparaît en plus.
+  const [query, setQuery] = useState("");
+  const [resultats, setResultats] = useState<RechercheProduit[]>([]);
+  const [dropdownOuvert, setDropdownOuvert] = useState(false);
+  const [mobileQuery, setMobileQuery] = useState("");
+  const [mobileResultats, setMobileResultats] = useState<RechercheProduit[]>([]);
+  const [devise, setDevise] = useState("XAF");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchBoxRef = useRef<HTMLDivElement>(null);
+  const mobileSearchBoxRef = useRef<HTMLDivElement>(null);
+
+  async function chercher(q: string, cible: "desktop" | "mobile") {
+    if (q.trim().length < 2) {
+      if (cible === "desktop") { setResultats([]); setDropdownOuvert(false); } else setMobileResultats([]);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/storefront/${slug}/recherche?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      const produits = data.produits || [];
+      if (data.devise) setDevise(data.devise);
+      if (cible === "desktop") { setResultats(produits); setDropdownOuvert(true); } else setMobileResultats(produits);
+    } catch { /* recherche live optionnelle — la soumission classique reste le repli */ }
+  }
+
+  function onQueryChange(v: string, cible: "desktop" | "mobile") {
+    if (cible === "desktop") setQuery(v); else setMobileQuery(v);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => chercher(v, cible), 250);
+  }
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target as Node)) {
+        setDropdownOuvert(false);
+        if (!query.trim()) setRechercheOuverte(false); // referme l'icône si le champ est vide
+      }
+    }
+    function onEscape(e: KeyboardEvent) { if (e.key === "Escape") { setDropdownOuvert(false); setRechercheOuverte(false); } }
+    document.addEventListener("mousedown", onClickOutside);
+    document.addEventListener("keydown", onEscape);
+    return () => { document.removeEventListener("mousedown", onClickOutside); document.removeEventListener("keydown", onEscape); };
+  }, [query]);
 
   const type = navStyle?.type || "classic";
   const style = navStyle?.style || "light";
@@ -126,6 +182,16 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
       <Link href={`/${slug}/produits`} className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity tracking-wide" style={{ color: txt }}>
         Produits
       </Link>
+      {showAbout && (
+        <Link href={`/${slug}/a-propos`} className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity tracking-wide" style={{ color: txt }}>
+          À propos
+        </Link>
+      )}
+      {showContact && (
+        <Link href={`/${slug}/contact`} className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity tracking-wide" style={{ color: txt }}>
+          Contact
+        </Link>
+      )}
       {type === "mega" && collections.length > 0 ? (
         <div className="relative" onMouseEnter={() => setMegaOuvert(true)} onMouseLeave={() => setMegaOuvert(false)}>
           <button className="flex items-center gap-1 text-sm font-medium opacity-70 hover:opacity-100 transition-opacity tracking-wide" style={{ color: txt }}>
@@ -157,16 +223,36 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
   const actionsNode = (
     <div className="flex items-center gap-2 flex-shrink-0">
       {showSearch && !minimal && (
-        <div className="hidden sm:flex items-center">
+        <div className="hidden sm:flex items-center relative" ref={searchBoxRef}>
           {rechercheOuverte ? (
-            <form action={`/${slug}/produits`} method="GET" className="flex items-center" onBlur={() => setRechercheOuverte(false)}>
+            <form action={`/${slug}/produits`} method="GET" className="flex items-center">
               <input
                 ref={searchRef}
                 name="q"
+                value={query}
+                onChange={e => onQueryChange(e.target.value, "desktop")}
+                onFocus={() => { if (resultats.length) setDropdownOuvert(true); }}
                 placeholder="Rechercher…"
+                autoComplete="off"
                 className="w-40 px-3 py-1.5 text-sm rounded-lg outline-none"
                 style={{ backgroundColor: `${accent}12`, color: txt, border: `1px solid ${accent}25` }}
               />
+              {dropdownOuvert && resultats.length > 0 && (
+                <div className="absolute top-full right-0 mt-2 w-72 rounded-2xl overflow-hidden z-50" style={{ backgroundColor: fond, border: `1px solid ${accent}20`, boxShadow: "0 20px 50px rgba(0,0,0,0.18)" }}>
+                  {resultats.map(p => (
+                    <Link key={p.id} href={`/${slug}/produits/${p.id}`} onClick={() => setDropdownOuvert(false)}
+                      className="flex items-center gap-3 px-3 py-2.5 hover:opacity-80 transition-opacity" style={{ borderBottom: `1px solid ${accent}10` }}>
+                      <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0" style={{ backgroundColor: `${accent}12` }}>
+                        {p.image ? <img src={p.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Package size={14} style={{ color: accent }} /></div>}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[12.5px] font-medium truncate" style={{ color: texte }}>{p.nom}</p>
+                        <p className="text-[11.5px] font-semibold" style={{ color: accent }}>{formatMontant(p.prix, devise)}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </form>
           ) : (
             <button
@@ -229,18 +315,49 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
     >
       <div className="px-4 py-4 space-y-1">
         {showSearch && (
-          <form action={`/${slug}/produits`} method="GET" className="pb-2">
-            <input
-              name="q"
-              placeholder="Rechercher un produit…"
-              className="w-full px-3 py-2.5 text-sm rounded-xl outline-none"
-              style={{ backgroundColor: `${accent}0f`, color: texte, border: `1px solid ${accent}20` }}
-            />
-          </form>
+          <div className="pb-2 relative" ref={mobileSearchBoxRef}>
+            <form action={`/${slug}/produits`} method="GET">
+              <input
+                name="q"
+                value={mobileQuery}
+                onChange={e => onQueryChange(e.target.value, "mobile")}
+                placeholder="Rechercher un produit…"
+                autoComplete="off"
+                className="w-full px-3 py-2.5 text-sm rounded-xl outline-none"
+                style={{ backgroundColor: `${accent}0f`, color: texte, border: `1px solid ${accent}20` }}
+              />
+            </form>
+            {mobileResultats.length > 0 && (
+              <div className="mt-1.5 rounded-xl overflow-hidden" style={{ backgroundColor: fond, border: `1px solid ${accent}20` }}>
+                {mobileResultats.map(p => (
+                  <Link key={p.id} href={`/${slug}/produits/${p.id}`} onClick={() => { setMenuOuvert(false); setMobileQuery(""); setMobileResultats([]); }}
+                    className="flex items-center gap-3 px-3 py-2.5 hover:opacity-80 transition-opacity" style={{ borderBottom: `1px solid ${accent}10` }}>
+                    <div className="w-9 h-9 rounded-lg overflow-hidden flex-shrink-0" style={{ backgroundColor: `${accent}12` }}>
+                      {p.image ? <img src={p.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Package size={13} style={{ color: accent }} /></div>}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[12px] font-medium truncate" style={{ color: texte }}>{p.nom}</p>
+                      <p className="text-[11px] font-semibold" style={{ color: accent }}>{formatMontant(p.prix, devise)}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         )}
         <Link href={`/${slug}/produits`} onClick={() => setMenuOuvert(false)} className="block px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
           Tous les produits
         </Link>
+        {showAbout && (
+          <Link href={`/${slug}/a-propos`} onClick={() => setMenuOuvert(false)} className="block px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
+            À propos
+          </Link>
+        )}
+        {showContact && (
+          <Link href={`/${slug}/contact`} onClick={() => setMenuOuvert(false)} className="block px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
+            Contact
+          </Link>
+        )}
         {showWishlist && (
           <Link href={`/${slug}/wishlist`} onClick={() => setMenuOuvert(false)} className="flex items-center gap-2 px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
             <Heart size={14} /> Liste de souhaits {wishlistCount > 0 && `(${wishlistCount})`}

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
 import { z } from "zod";
 import { generateStoreConfig } from "@/lib/generate-store-config";
+import { genererAvisDemo } from "@/lib/gemini";
 
 const schemaCreation = z.object({
   name: z.string().min(2),
@@ -82,6 +83,49 @@ export async function POST(request: Request) {
 
       return { tenant, user };
     });
+
+    // Avis clients IA de démonstration — pour qu'une boutique neuve inspire
+    // confiance dès le premier jour. Ne bloque jamais la création du tenant :
+    // toute erreur (Gemini, DB) est avalée et journalisée. Sans produit créé
+    // à l'inscription simple, un Avis n'a pas de produitId valide — on saute.
+    try {
+      const produits = await prisma.produit.findMany({
+        where: { tenantId: tenant.id },
+        select: { id: true, nom: true },
+      });
+      if (produits.length > 0) {
+        const avisGeneres = await genererAvisDemo(
+          data.nomBoutique,
+          data.categorie,
+          produits.map((p) => p.nom)
+        );
+        for (let i = 0; i < avisGeneres.length; i++) {
+          const a = avisGeneres[i];
+          const client = await prisma.client.create({
+            data: {
+              tenantId: tenant.id,
+              nom: a.clientNom,
+              email: `demo+${tenant.id}-${i}@axso-avis.local`,
+            },
+          });
+          const produit = produits[i % produits.length];
+          await prisma.avis.create({
+            data: {
+              tenantId: tenant.id,
+              produitId: produit.id,
+              clientId: client.id,
+              note: a.note,
+              titre: a.titre,
+              commentaire: a.commentaire,
+              verifie: false,
+              approuve: true,
+            },
+          });
+        }
+      }
+    } catch (err) {
+      console.warn("[API/TENANTS] Génération avis démo échouée (non bloquant):", err);
+    }
 
     return NextResponse.json(
       {

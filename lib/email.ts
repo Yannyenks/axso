@@ -152,6 +152,37 @@ export async function envoyerInvitationEquipe(params: {
   });
 }
 
+// Message envoyé depuis le formulaire de contact d'une boutique — transmis
+// au marchand par email. Le client final n'a pas de compte, donc aucune
+// authentification ici (route publique) — voir le honeypot anti-spam côté route.
+export async function envoyerMessageContact(params: {
+  emailMarchand: string;
+  boutique: string;
+  nom: string;
+  emailClient: string;
+  message: string;
+}) {
+  const resend = getResendClient();
+  if (!resend) {
+    console.warn("Resend non configuré — message de contact non transmis par email");
+    return;
+  }
+  await resend.emails.send({
+    from: "Axso <noreply@axso.com>",
+    to: params.emailMarchand,
+    replyTo: params.emailClient,
+    subject: `Nouveau message via la page Contact — ${params.boutique}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
+        <h2>Nouveau message client</h2>
+        <p><strong>${params.nom}</strong> (${params.emailClient}) a écrit depuis la page Contact de <strong>${params.boutique}</strong> :</p>
+        <p style="background:#f5f5f5;border-radius:8px;padding:14px;white-space:pre-wrap;">${params.message}</p>
+        <p style="color:#666;font-size:13px;">Tu peux répondre directement à cet email — la réponse ira à ${params.emailClient}.</p>
+      </div>
+    `,
+  });
+}
+
 // Email de newsletter marketing
 export async function envoyerNewsletter(params: {
   emails: string[];

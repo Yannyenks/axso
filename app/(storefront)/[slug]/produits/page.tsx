@@ -120,6 +120,8 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
         collections={tenant.collections}
         certifie={tenant.certifie}
         navStyle={cfg.navigationStyle}
+        showAbout={cfg.aboutPage?.actif}
+        showContact={cfg.contactPage?.actif}
       />
 
       <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 py-10`}>

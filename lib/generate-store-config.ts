@@ -2,7 +2,7 @@
  * Génère un themeConfig complet et optimisé à partir du profil business du marchand.
  * Chaque boutique créée démarre avec un setup premium calibré pour sa catégorie.
  */
-import type { ThemeConfig, ProductPageSection } from "./theme-config";
+import type { ThemeConfig, ProductPageSection, CustomSection, ThemeAboutPageConfig, ThemeContactPageConfig } from "./theme-config";
 
 // ─── Détection de catégorie ───────────────────────────────────────────────────
 type CategoryType =
@@ -460,6 +460,173 @@ function buildHomeSections(type: CategoryType, nom: string, langue: Langue = "fr
   return configs[type] || configs.general;
 }
 
+// ─── Pages À propos & Contact par catégorie ───────────────────────────────────
+// Contenu tenant en 2-3 blocs CustomSection réutilisant la même bibliothèque
+// que la home (richtext/stats/features) — pour qu'une boutique neuve n'affiche
+// jamais un "À propos" vide. Bespoke pour les catégories les plus fréquentes
+// (fashion, food, tech, services), générique de bonne qualité pour le reste.
+export function buildAboutContactPages(type: CategoryType, nom: string, langue: Langue = "fr"): {
+  aboutPage: ThemeAboutPageConfig;
+  contactPage: ThemeContactPageConfig;
+} {
+  const nomCourt = nom.split(/[\s-]/)[0];
+  const en = langue === "en";
+
+  const section = (
+    id: string,
+    sectionType: CustomSection["type"],
+    label: string,
+    ordre: number,
+    config: Record<string, any>
+  ): CustomSection => ({ id, type: sectionType, actif: true, label, ordre, config });
+
+  const richtext = (id: string, ordre: number, titre: string, texte: string): CustomSection =>
+    section(id, "richtext", en ? "Our Story" : "Notre histoire", ordre, { titre, texte });
+
+  const stats = (id: string, ordre: number, items: Array<{ valeur: string; label: string }>): CustomSection =>
+    section(id, "stats", en ? "Stats" : "Statistiques", ordre, { items });
+
+  const features = (
+    id: string,
+    ordre: number,
+    titre: string,
+    items: Array<{ icone: string; titre: string; texte: string }>
+  ): CustomSection => section(id, "features", en ? "Why us" : "Points forts", ordre, { titre, items });
+
+  let aboutSections: CustomSection[];
+  let contactIntro: string;
+
+  switch (type) {
+    case "fashion":
+      aboutSections = [
+        richtext(
+          "about_histoire",
+          1,
+          en ? "Our Story" : "Notre histoire",
+          en
+            ? `${nomCourt} was born from a passion for fashion that tells a story. We hand-pick every piece so it stays with you well beyond a single season. Today, thousands of customers trust us to express their style.`
+            : `${nomCourt} est né d'une passion pour la mode qui raconte une histoire. Nous sélectionnons chaque pièce avec exigence pour qu'elle vous accompagne bien au-delà d'une saison. Aujourd'hui, des milliers de clientes nous font confiance pour affirmer leur style.`
+        ),
+        stats("about_stats", 2, [
+          { valeur: "10 000+", label: en ? "Happy customers" : "Clientes satisfaites" },
+          { valeur: "500+", label: en ? "Available pieces" : "Pièces disponibles" },
+          { valeur: "4.9★", label: en ? "Average rating" : "Note moyenne" },
+          { valeur: "48h", label: en ? "Express delivery" : "Livraison express" },
+        ]),
+        features("about_features", 3, en ? "Why choose us" : "Pourquoi nous faire confiance", [
+          { icone: "✦", titre: en ? "Premium quality" : "Qualité premium", texte: en ? "Materials carefully selected for lasting comfort." : "Des matières soigneusement sélectionnées pour un confort durable." },
+          { icone: "🚀", titre: en ? "Fast delivery" : "Livraison rapide", texte: en ? "Shipped within 24h, tracked in real time." : "Expédiée sous 24h, suivi en temps réel." },
+          { icone: "↩️", titre: en ? "Easy returns" : "Retours faciles", texte: en ? "Exchange or refund within 14 days." : "Échange ou remboursement sous 14 jours." },
+        ]),
+      ];
+      contactIntro = en
+        ? `A question about an order or a piece? The ${nomCourt} team is here to help you find your style.`
+        : `Une question sur une commande ou une pièce ? L'équipe ${nomCourt} est là pour vous aider à trouver votre style.`;
+      break;
+
+    case "food":
+      aboutSections = [
+        richtext(
+          "about_histoire",
+          1,
+          en ? "Our Story" : "Notre histoire",
+          en
+            ? `${nomCourt} works hand in hand with local producers to bring fresh, authentic products to your table. Every item is chosen for its quality and its origin. Our commitment: full traceability from farm to doorstep.`
+            : `${nomCourt} travaille main dans la main avec des producteurs locaux pour vous apporter des produits frais et authentiques. Chaque article est choisi pour sa qualité et son origine. Notre engagement : une traçabilité totale, du producteur jusqu'à votre porte.`
+        ),
+        stats("about_stats", 2, [
+          { valeur: "50+", label: en ? "Partner producers" : "Producteurs partenaires" },
+          { valeur: "200+", label: en ? "Products available" : "Produits disponibles" },
+          { valeur: "4.8★", label: en ? "Customer satisfaction" : "Satisfaction client" },
+          { valeur: "24h", label: en ? "Freshly delivered" : "Livraison fraîcheur" },
+        ]),
+      ];
+      contactIntro = en
+        ? `A question about a product or a delivery? Write to us — the ${nomCourt} team replies quickly, every day.`
+        : `Une question sur un produit ou une livraison ? Écrivez-nous — l'équipe ${nomCourt} répond vite, tous les jours.`;
+      break;
+
+    case "tech":
+      aboutSections = [
+        richtext(
+          "about_histoire",
+          1,
+          en ? "Our Story" : "Notre histoire",
+          en
+            ? `${nomCourt} was founded to make quality tech accessible, with a guarantee of authenticity on every product. We rigorously test our catalogue and back it with responsive after-sales support. Your trust is our best warranty.`
+            : `${nomCourt} a été fondée pour rendre la tech de qualité accessible, avec une garantie d'authenticité sur chaque produit. Nous testons rigoureusement notre catalogue et l'accompagnons d'un SAV réactif. Votre confiance est notre meilleure garantie.`
+        ),
+        stats("about_stats", 2, [
+          { valeur: "5000+", label: en ? "Happy customers" : "Clients satisfaits" },
+          { valeur: "100%", label: en ? "Genuine products" : "Produits authentiques" },
+          { valeur: "12 mois", label: en ? "Warranty" : "Garantie" },
+          { valeur: "48h", label: en ? "Responsive support" : "SAV réactif" },
+        ]),
+        features("about_features", 3, en ? "Buy with confidence" : "Acheter en toute confiance", [
+          { icone: "✅", titre: en ? "Authenticity guaranteed" : "Authenticité garantie", texte: en ? "Verifiable serial number and certificate on every unit." : "Numéro de série vérifiable et certificat sur chaque appareil." },
+          { icone: "🛡️", titre: en ? "12-month warranty" : "Garantie 12 mois", texte: en ? "Parts and labour covered, responsive support." : "Pièces et main-d'œuvre couvertes, SAV réactif." },
+          { icone: "📦", titre: en ? "Secure shipping" : "Livraison sécurisée", texte: en ? "Reinforced packaging, insured transport." : "Emballage renforcé, transport assuré." },
+        ]),
+      ];
+      contactIntro = en
+        ? `A question about a spec sheet or the warranty? The ${nomCourt} support team answers fast.`
+        : `Une question sur une fiche technique ou la garantie ? Le support ${nomCourt} vous répond rapidement.`;
+      break;
+
+    case "services":
+      aboutSections = [
+        richtext(
+          "about_histoire",
+          1,
+          en ? "Who We Are" : "Qui sommes-nous",
+          en
+            ? `${nomCourt} is a team of qualified professionals dedicated to your success. Our approach: understand your challenges, propose the right solution, deliver measurable results. Every engagement is unique.`
+            : `${nomCourt} est une équipe de professionnels qualifiés dédiés à votre réussite. Notre approche : comprendre vos enjeux, proposer la solution adaptée, livrer des résultats mesurables. Chaque mission est unique.`
+        ),
+        stats("about_stats", 2, [
+          { valeur: "200+", label: en ? "Projects delivered" : "Missions réalisées" },
+          { valeur: "98%", label: en ? "Happy clients" : "Clients satisfaits" },
+          { valeur: "48h", label: en ? "Kickoff time" : "Délai de démarrage" },
+        ]),
+        features("about_features", 3, en ? "What you get" : "Ce que vous obtenez", [
+          { icone: "✅", titre: en ? "End-to-end delivery" : "Prestation complète", texte: en ? "A turnkey service, no hidden fees." : "Un service clé en main, sans frais cachés." },
+          { icone: "🤝", titre: en ? "Dedicated support" : "Accompagnement dédié", texte: en ? "One expert available throughout your project." : "Un expert à votre disposition tout au long de la mission." },
+          { icone: "🔒", titre: en ? "Confidentiality" : "Confidentialité", texte: en ? "Your data and projects stay strictly confidential." : "Vos données et projets restent strictement confidentiels." },
+        ]),
+      ];
+      contactIntro = en
+        ? `A project in mind? Tell the ${nomCourt} team about it — we get back to you within 24h.`
+        : `Un projet en tête ? Parlez-en à l'équipe ${nomCourt} — nous revenons vers vous sous 24h.`;
+      break;
+
+    default:
+      aboutSections = [
+        richtext(
+          "about_histoire",
+          1,
+          en ? "Our Story" : "Notre histoire",
+          en
+            ? `${nomCourt} was founded with one ambition: offer you the best value for money on every product. We rigorously select our catalogue and stand behind it with attentive customer service. Thank you for being part of our story.`
+            : `${nomCourt} a été fondée avec l'ambition de vous offrir le meilleur rapport qualité-prix sur chaque produit. Nous sélectionnons rigoureusement notre catalogue et l'accompagnons d'un service client attentif. Merci de faire partie de notre histoire.`
+        ),
+        stats("about_stats", 2, [
+          { valeur: "1000+", label: en ? "Happy customers" : "Clients satisfaits" },
+          { valeur: "500+", label: en ? "Products available" : "Produits disponibles" },
+          { valeur: "4.8★", label: en ? "Average rating" : "Note moyenne" },
+        ]),
+      ];
+      contactIntro = en
+        ? `A question about an order or a product? The ${nomCourt} team replies quickly, every day.`
+        : `Une question sur une commande ou un produit ? L'équipe ${nomCourt} vous répond rapidement, tous les jours.`;
+      break;
+  }
+
+  return {
+    aboutPage: { actif: true, sections: aboutSections },
+    contactPage: { actif: true, intro: contactIntro, afficherFormulaire: true, sections: [] },
+  };
+}
+
 // ─── Sélection du thème par catégorie ────────────────────────────────────────
 function selectThemeId(type: CategoryType): string {
   const map: Record<CategoryType, string> = {
@@ -503,6 +670,7 @@ export function generateStoreConfig(opts: {
   const { sections, sectionOrder, customSections } = buildHomeSections(type, nomBoutique, langue);
   const productSections = buildProductSections(type);
   const productLayout = selectProductLayout(type);
+  const { aboutPage, contactPage } = buildAboutContactPages(type, nomBoutique, langue);
 
   const themeConfig: Record<string, any> = {
     sections,
@@ -512,6 +680,8 @@ export function generateStoreConfig(opts: {
       layout: productLayout,
       sections: productSections,
     },
+    aboutPage,
+    contactPage,
   };
 
   return { themeId, themeConfig };
