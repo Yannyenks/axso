@@ -230,14 +230,6 @@ export default function BuilderPage() {
     set(p => ({ ...p, customSections: (p.customSections || []).map(s => s.id === id ? { ...s, config: { ...s.config, ...patch } } : s) }));
   }, [set]);
 
-  const moveSection = useCallback((order: string[], idx: number, dir: -1 | 1) => {
-    const newOrder = [...order];
-    const tmp = newOrder[idx];
-    newOrder[idx] = newOrder[idx + dir];
-    newOrder[idx + dir] = tmp;
-    set(p => ({ ...p, sectionOrder: newOrder }));
-  }, [set]);
-
   const handleSave = useCallback(async () => {
     if (!config || !tenant) return;
     setSaving(true);
@@ -350,7 +342,7 @@ export default function BuilderPage() {
               {showLibrary && panel === "sections" && (
                 <SectionLibrary onAdd={addCustomSection} onClose={() => setShowLibrary(false)} />
               )}
-              {!showLibrary && panel === "sections"   && <PanelSections config={config} set={set} activeSection={activeSection} setActiveSection={setActiveSection} setSection={setSection} sectionOrder={sectionOrder as SectionId[]} moveSection={moveSection} updateCustomSection={updateCustomSection} removeCustomSection={removeCustomSection} />}
+              {!showLibrary && panel === "sections"   && <PanelSections config={config} set={set} activeSection={activeSection} setActiveSection={setActiveSection} setSection={setSection} sectionOrder={sectionOrder as SectionId[]} updateCustomSection={updateCustomSection} removeCustomSection={removeCustomSection} />}
               {panel === "couleurs"   && <PanelCouleurs  config={config} setColors={setColors} />}
               {panel === "typo"       && <PanelTypo      config={config} setFonts={setFonts} />}
               {panel === "layout"     && <PanelLayout    config={config} setLayout={setLayout} set={set} />}
@@ -419,67 +411,110 @@ function SectionLibrary({ onAdd, onClose }: { onAdd: (t: CustomSection["type"]) 
 }
 
 // ─── Panel Sections ───────────────────────────────────────────────────────────
-function PanelSections({ config, set, activeSection, setActiveSection, setSection, sectionOrder, moveSection, updateCustomSection, removeCustomSection }: any) {
+// Réordonnancement 100% glisser-déposer (plus de flèches) — même mécanique
+// que PanelProduit (dragIdx/overIdx + reorder), appliquée à deux groupes
+// indépendants : sections intégrées (sectionOrder) et sections personnalisées
+// (customSections, ordre). Elles restent deux groupes séparés — sur la
+// boutique publiée, les sections custom s'affichent toujours après toutes
+// les sections intégrées (voir CustomSectionsRenderer) : les mélanger dans
+// une seule liste glissable donnerait une réorganisation trompeuse.
+function PanelSections({ config, set, activeSection, setActiveSection, setSection, sectionOrder, updateCustomSection, removeCustomSection }: any) {
   const sec = config.sections as any;
-  const custom: CustomSection[] = config.customSections || [];
+  const custom: CustomSection[] = [...(config.customSections || [])].sort((a, b) => a.ordre - b.ordre);
   const sousBlocsMap: Record<string, any[]> = config.sectionSousBlocs || {};
   const setSousBlocs = (sectionId: string, blocs: any[]) => set((p: any) => ({ ...p, sectionSousBlocs: { ...(p.sectionSousBlocs || {}), [sectionId]: blocs } }));
 
-  const allSections: Array<{ id: string; label: string; Icon: any; isCustom: boolean; actif: boolean }> = [
-    ...sectionOrder.map((id: SectionId) => ({ id, label: SECTION_META[id].label, Icon: SECTION_META[id].Icon, isCustom: false, actif: sec[id]?.actif ?? true })),
-    ...custom.sort((a,b) => a.ordre - b.ordre).map(s => ({ id: s.id, label: s.label, Icon: CUSTOM_SECTION_TYPES.find(t=>t.type===s.type)?.Icon || Wrench, isCustom: true, actif: s.actif })),
-  ];
+  const [dragBuiltin, setDragBuiltin] = useState<number | null>(null);
+  const [overBuiltin, setOverBuiltin] = useState<number | null>(null);
+  const [dragCustom, setDragCustom] = useState<number | null>(null);
+  const [overCustom, setOverCustom] = useState<number | null>(null);
+
+  function reorderBuiltin(from: number, to: number) {
+    if (from === to) return;
+    const arr = [...sectionOrder];
+    const [moved] = arr.splice(from, 1);
+    arr.splice(to, 0, moved);
+    set((p: ThemeConfig) => ({ ...p, sectionOrder: arr }));
+  }
+  function reorderCustom(from: number, to: number) {
+    if (from === to) return;
+    const arr = [...custom];
+    const [moved] = arr.splice(from, 1);
+    arr.splice(to, 0, moved);
+    set((p: ThemeConfig) => ({ ...p, customSections: arr.map((s, i) => ({ ...s, ordre: i })) }));
+  }
+  function toggleCustom(id: string, actif: boolean) {
+    set((p: ThemeConfig) => ({ ...p, customSections: (p.customSections || []).map(s => s.id === id ? { ...s, actif } : s) }));
+  }
+
+  function renderItem(item: { id: string; label: string; Icon: any; isCustom: boolean; actif: boolean }, idx: number, group: "builtin" | "custom") {
+    const isOpen = activeSection === item.id;
+    const builtinSec = !item.isCustom ? sec[item.id] : null;
+    const customSec  = item.isCustom ? custom.find(c => c.id === item.id) : null;
+    const dragIdx = group === "builtin" ? dragBuiltin : dragCustom;
+    const overIdx = group === "builtin" ? overBuiltin : overCustom;
+    const setDrag = group === "builtin" ? setDragBuiltin : setDragCustom;
+    const setOver = group === "builtin" ? setOverBuiltin : setOverCustom;
+    const reorder = group === "builtin" ? reorderBuiltin : reorderCustom;
+
+    return (
+      <div key={item.id}
+        draggable
+        onDragStart={() => setDrag(idx)}
+        onDragOver={e => { e.preventDefault(); if (overIdx !== idx) setOver(idx); }}
+        onDragLeave={() => setOver((o: number | null) => o === idx ? null : o)}
+        onDrop={e => { e.preventDefault(); if (dragIdx !== null) reorder(dragIdx, idx); setDrag(null); setOver(null); }}
+        onDragEnd={() => { setDrag(null); setOver(null); }}
+        className={`${isOpen ? "bg-gray-50/80" : ""} transition-all ${dragIdx === idx ? "opacity-40" : ""} ${overIdx === idx && dragIdx !== null && dragIdx !== idx ? "ring-2 ring-inset ring-[#F5A623]/50" : ""}`}>
+        <div className="flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-gray-50 select-none"
+          onClick={() => setActiveSection(isOpen ? null : item.id)}>
+          <div className="cursor-grab active:cursor-grabbing text-gray-600 hover:text-gray-400 flex-shrink-0" title="Glisser pour réordonner" onClick={e => e.stopPropagation()}>
+            <GripVertical size={12} />
+          </div>
+          <item.Icon size={13} className="flex-shrink-0 text-gray-400" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-semibold text-gray-700 truncate">{item.label}</p>
+            {item.isCustom && <span className="text-[8px] text-[#F5A623]/70 uppercase tracking-wider">Section custom</span>}
+          </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0" onClick={e=>e.stopPropagation()}>
+            <button onClick={() => item.isCustom ? toggleCustom(item.id, !item.actif) : setSection(item.id, { actif: !item.actif })}>
+              {item.actif ? <ToggleRight size={16} style={{ color:"#F5A623" }} /> : <ToggleLeft size={16} className="text-gray-700" />}
+            </button>
+            {item.isCustom && (
+              <button onClick={() => removeCustomSection(item.id)} className="text-red-500/40 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
+            )}
+            {isOpen ? <ChevronDown size={10} className="text-gray-500" /> : <ChevronRight size={10} className="text-gray-700" />}
+          </div>
+        </div>
+
+        {isOpen && (
+          <div className="px-3 pb-4 space-y-2.5">
+            {!item.isCustom && <BuiltinSectionControls id={item.id as SectionId} sec={builtinSec} setSection={setSection} />}
+            {item.isCustom && customSec && <CustomSectionControls section={customSec} update={updateCustomSection} />}
+
+            {/* Sous-sections personnalisées — disponibles dans TOUTE section, built-in ou custom */}
+            <div className="pt-3 mt-1 border-t border-gray-200">
+              <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.15em] mb-2">Sous-sections</p>
+              <SousBlocsEditor blocs={sousBlocsMap[item.id] || []} onChange={(blocs: any[]) => setSousBlocs(item.id, blocs)} />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const builtinItems = sectionOrder.map((id: SectionId) => ({ id, label: SECTION_META[id].label, Icon: SECTION_META[id].Icon, isCustom: false, actif: sec[id]?.actif ?? true }));
+  const customItems = custom.map(s => ({ id: s.id, label: s.label, Icon: CUSTOM_SECTION_TYPES.find(t=>t.type===s.type)?.Icon || Wrench, isCustom: true, actif: s.actif }));
 
   return (
     <div className="divide-y divide-white/5">
-      {allSections.map((item, idx) => {
-        const isOpen = activeSection === item.id;
-        const builtinSec = !item.isCustom ? sec[item.id] : null;
-        const customSec  = item.isCustom ? custom.find(c=>c.id===item.id) : null;
-
-        return (
-          <div key={item.id} className={isOpen ? "bg-gray-50/80" : ""}>
-            <div className="flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-gray-50 select-none"
-              onClick={() => setActiveSection(isOpen ? null : item.id)}>
-              {/* Reorder */}
-              {!item.isCustom && (
-                <div className="flex flex-col gap-0.5" onClick={e => e.stopPropagation()}>
-                  <button disabled={idx === 0} onClick={() => moveSection(sectionOrder, idx, -1)} className="text-gray-700 hover:text-gray-400 disabled:opacity-20"><ChevronUp size={9} /></button>
-                  <button disabled={idx >= sectionOrder.length - 1} onClick={() => moveSection(sectionOrder, idx, 1)} className="text-gray-700 hover:text-gray-400 disabled:opacity-20"><ChevronDown size={9} /></button>
-                </div>
-              )}
-              <item.Icon size={13} className="flex-shrink-0 text-gray-400" />
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-semibold text-gray-700 truncate">{item.label}</p>
-                {item.isCustom && <span className="text-[8px] text-[#F5A623]/70 uppercase tracking-wider">Section custom</span>}
-              </div>
-              <div className="flex items-center gap-1.5 flex-shrink-0" onClick={e=>e.stopPropagation()}>
-                {item.isCustom ? (
-                  <button onClick={() => removeCustomSection(item.id)} className="text-red-500/40 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
-                ) : (
-                  <button onClick={() => setSection(item.id, { actif: !item.actif })}>
-                    {item.actif ? <ToggleRight size={16} style={{ color:"#F5A623" }} /> : <ToggleLeft size={16} className="text-gray-700" />}
-                  </button>
-                )}
-                {isOpen ? <ChevronDown size={10} className="text-gray-500" /> : <ChevronRight size={10} className="text-gray-700" />}
-              </div>
-            </div>
-
-            {isOpen && (
-              <div className="px-3 pb-4 space-y-2.5">
-                {!item.isCustom && <BuiltinSectionControls id={item.id as SectionId} sec={builtinSec} setSection={setSection} />}
-                {item.isCustom && customSec && <CustomSectionControls section={customSec} update={updateCustomSection} />}
-
-                {/* Sous-sections personnalisées — disponibles dans TOUTE section, built-in ou custom */}
-                <div className="pt-3 mt-1 border-t border-gray-200">
-                  <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.15em] mb-2">Sous-sections</p>
-                  <SousBlocsEditor blocs={sousBlocsMap[item.id] || []} onChange={(blocs: any[]) => setSousBlocs(item.id, blocs)} />
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      })}
+      {builtinItems.map((item: any, idx: number) => renderItem(item, idx, "builtin"))}
+      {customItems.length > 0 && (
+        <div className="px-3 py-1.5 bg-gray-50/60">
+          <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.15em]">Sections personnalisées</p>
+        </div>
+      )}
+      {customItems.map((item, idx) => renderItem(item, idx, "custom"))}
     </div>
   );
 }
@@ -1593,6 +1628,16 @@ function PanelPageSections({ config, set, pageKey, titre }: { config: ThemeConfi
   const removeSection = (id: string) => { setSections(sections.filter(s => s.id !== id)); if (activeSection === id) setActiveSection(null); };
   const toggleSection = (id: string) => setSections(sections.map(s => s.id === id ? { ...s, actif: !s.actif } : s));
   const updateSection = (id: string, patch: any) => setSections(sections.map(s => s.id === id ? { ...s, config: { ...s.config, ...patch } } : s));
+  const reorderSection = (from: number, to: number) => {
+    if (from === to) return;
+    const arr = [...sections];
+    const [moved] = arr.splice(from, 1);
+    arr.splice(to, 0, moved);
+    setSections(arr.map((s, i) => ({ ...s, ordre: i })));
+  };
+
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [overIdx, setOverIdx] = useState<number | null>(null);
 
   if (showLibrary) return <SectionLibrary onAdd={addSection} onClose={() => setShowLibrary(false)} />;
 
@@ -1629,11 +1674,21 @@ function PanelPageSections({ config, set, pageKey, titre }: { config: ThemeConfi
         {sections.length === 0 && (
           <p className="p-4 text-[11px] text-gray-500 leading-relaxed">Aucun bloc pour l'instant — clique sur "Ajouter" pour composer cette page (texte, chiffres clés, galerie...).</p>
         )}
-        {sections.map(sec => {
+        {sections.map((sec, idx) => {
           const isOpen = activeSection === sec.id;
           return (
-            <div key={sec.id} className={isOpen ? "bg-gray-50/80" : ""}>
+            <div key={sec.id}
+              draggable
+              onDragStart={() => setDragIdx(idx)}
+              onDragOver={e => { e.preventDefault(); if (overIdx !== idx) setOverIdx(idx); }}
+              onDragLeave={() => setOverIdx(o => o === idx ? null : o)}
+              onDrop={e => { e.preventDefault(); if (dragIdx !== null) reorderSection(dragIdx, idx); setDragIdx(null); setOverIdx(null); }}
+              onDragEnd={() => { setDragIdx(null); setOverIdx(null); }}
+              className={`${isOpen ? "bg-gray-50/80" : ""} transition-all ${dragIdx === idx ? "opacity-40" : ""} ${overIdx === idx && dragIdx !== null && dragIdx !== idx ? "ring-2 ring-inset ring-[#F5A623]/50" : ""}`}>
               <div className="flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-gray-50 select-none" onClick={() => setActiveSection(isOpen ? null : sec.id)}>
+                <div className="cursor-grab active:cursor-grabbing text-gray-600 hover:text-gray-400 flex-shrink-0" title="Glisser pour réordonner" onClick={e => e.stopPropagation()}>
+                  <GripVertical size={12} />
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-semibold text-gray-700 truncate">{sec.label}</p>
                 </div>
@@ -1669,12 +1724,6 @@ function PanelProduit({ config, setProductPage }: any) {
   const sections: ProductPageSection[] = pp.sections?.length ? pp.sections : DEFAULT_PRODUCT_SECTIONS;
 
   const setSections = (newSections: ProductPageSection[]) => setProductPage({ sections: newSections });
-
-  const moveSection = (idx: number, dir: -1 | 1) => {
-    const next = [...sections];
-    [next[idx], next[idx + dir]] = [next[idx + dir], next[idx]];
-    setSections(next);
-  };
 
   const reorderSection = (from: number, to: number) => {
     if (from === to) return;
@@ -1798,14 +1847,7 @@ function PanelProduit({ config, setProductPage }: any) {
                   <div className="flex items-center gap-1.5 px-2 py-2">
                     {/* Drag handle */}
                     <div className="cursor-grab active:cursor-grabbing text-gray-600 hover:text-gray-400 flex-shrink-0" title="Glisser pour réordonner">
-                      <GripVertical size={12} />
-                    </div>
-                    {/* Reorder */}
-                    <div className="flex flex-col gap-0.5 flex-shrink-0">
-                      <button onClick={() => idx > 0 && moveSection(idx, -1)} disabled={idx === 0}
-                        className="w-4 h-3 flex items-center justify-center text-gray-700 hover:text-gray-400 disabled:opacity-20 transition-colors"><ChevronUp size={10} /></button>
-                      <button onClick={() => idx < sections.length - 1 && moveSection(idx, 1)} disabled={idx === sections.length - 1}
-                        className="w-4 h-3 flex items-center justify-center text-gray-700 hover:text-gray-400 disabled:opacity-20 transition-colors"><ChevronDown size={10} /></button>
+                      <GripVertical size={13} />
                     </div>
                     {/* Icon */}
                     <div className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
