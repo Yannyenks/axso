@@ -5,7 +5,7 @@ import {
   ArrowLeft, Save, Trash2, X, Plus, Sparkles, Loader2,
   Package, Image as ImageIcon, Tag, BarChart2, Globe,
   Upload, Video, FileText, Truck, Download, ExternalLink, Info, Zap,
-  HelpCircle, ListOrdered, Eye, EyeOff, ShoppingCart, ScanLine,
+  HelpCircle, ListOrdered, Eye, EyeOff, ShoppingCart, ScanLine, RefreshCw,
 } from "lucide-react";
 import { VariantesPrixManager } from "@/components/dashboard/VariantesPrixManager";
 import ClesLicenceManager from "@/components/dashboard/ClesLicenceManager";
@@ -14,6 +14,8 @@ import FaqManager, { type FaqItem } from "@/components/dashboard/FaqManager";
 import ChampsCommandeManager, { type ChampCommande } from "@/components/dashboard/ChampsCommandeManager";
 import PublicationAssistant from "@/components/dashboard/PublicationAssistant";
 import { BarcodeCaptureModal } from "@/components/dashboard/BarcodeCaptureModal";
+import { BarcodeLabelPreview } from "@/components/dashboard/produits/BarcodeLabelPreview";
+import { genererEAN13 } from "@/lib/barcode";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -464,7 +466,17 @@ export default function EditProduitPage() {
                       >
                         <ScanLine size={14} /> Scanner
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => { set("codeBarres", genererEAN13()); toast.success("Code-barres généré — pense à enregistrer, puis imprime l'étiquette ci-dessous"); }}
+                        title="Générer un code-barres pour ce produit"
+                        className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl font-semibold text-[12.5px] text-gray-700 border border-gray-200 shrink-0 transition-all hover:bg-gray-50"
+                      >
+                        <RefreshCw size={14} /> Générer
+                      </button>
                     </div>
+                    <p className="text-[11px] text-gray-400 mt-1.5">Pas de code d'origine ? Génère-en un, imprime l'étiquette et colle-la sur le produit.</p>
+                    <BarcodeLabelPreview value={form.codeBarres} nom={form.nom || "Produit"} prix={form.prix ? `${form.prix} FCFA` : undefined} />
                   </div>
                 </>
               )}

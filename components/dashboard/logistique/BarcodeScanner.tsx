@@ -144,6 +144,7 @@ export function BarcodeScanner({ open, onClose, onProduitScanne }: Props) {
         jouerBip();
         toast.success(`✓ ${data.produit.nom} ajouté`);
         onProduitScanne(data.produit);
+        onClose(); // scan réussi — referme la fenêtre au lieu de rester ouverte en boucle
       } catch {
         toast.error("Erreur réseau — nouvelle tentative possible");
       } finally {
