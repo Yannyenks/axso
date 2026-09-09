@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { X, ArrowRight, ArrowLeft, Check, Crown, LayoutDashboard } from "lucide-react";
 
@@ -10,7 +11,7 @@ export interface TutorialStep {
 }
 
 interface Props {
-  /** Identifiant unique et stable du module — clé de persistance localStorage. */
+  /** Identifiant unique et stable du module — nom d'événement pour la réouverture manuelle (bouton "?"). */
   moduleKey: string;
   titre: string;
   sousTitre?: string;
@@ -22,28 +23,47 @@ interface Props {
    * contenu du tutoriel, ne bloque jamais l'accès au module lui-même.
    */
   offrePalier?: { label: string; href: string };
+  /**
+   * true UNIQUEMENT pour le tutoriel d'accueil combiné (un seul par
+   * boutique, à la première connexion) — tous les tutoriels par module
+   * restent purement à la demande (bouton "?"), jamais auto-affichés, pour
+   * éviter la fenêtre récurrente à chaque nouveau module visité.
+   */
+  autoOpen?: boolean;
+  /** Clé de persistance localStorage — par défaut moduleKey, mais peut être surchargée (ex: scoper par tenantId pour le tutoriel d'accueil). */
+  storageKey?: string;
 }
 
-function cleVue(moduleKey: string) { return `axso-tutoriel-vu:${moduleKey}`; }
+function cleVue(key: string) { return `axso-tutoriel-vu:${key}`; }
 
-// Fenêtre tutoriel "gaming" — s'affiche une seule fois à la première visite
-// d'un module (façon tutoriel de jeu vidéo au premier lancement), mémorisée
-// en localStorage. Peut être rouverte manuellement via le bouton "?" que
-// chaque page insère à côté de son titre (voir useModuleTutorial ci-dessous).
-export function ModuleTutorial({ moduleKey, titre, sousTitre, steps, offrePalier }: Props) {
+// Fenêtre tutoriel "gaming" — rendue via portail (document.body) pour ne
+// jamais dépendre du positionnement d'un ancêtre : une page dont le wrapper
+// a une animation CSS avec transform (.ax-page-enter, présent sur TOUTES les
+// pages du dashboard) devient le containing block d'un position:fixed et
+// pousse la fenêtre bien en dessous du pli visible sur une page longue —
+// même bug déjà corrigé une fois pour PCOnlyGate.
+// Auto-affichage réservé au tutoriel d'accueil combiné (autoOpen=true, un
+// seul par boutique) ; tous les autres restent silencieux et ne s'ouvrent
+// que via le bouton "?" (BoutonRevoirTutoriel) — voir les props ci-dessus.
+export function ModuleTutorial({ moduleKey, titre, sousTitre, steps, offrePalier, autoOpen, storageKey }: Props) {
   const [ouvert, setOuvert] = useState(false);
   const [step, setStep] = useState(0);
+  const [monte, setMonte] = useState(false);
   const totalSteps = steps.length + (offrePalier ? 1 : 0);
   const surEtapePalier = offrePalier && step === steps.length;
+  const key = storageKey ?? moduleKey;
+
+  useEffect(() => { setMonte(true); }, []);
 
   useEffect(() => {
+    if (!autoOpen) return;
     try {
-      if (!window.localStorage.getItem(cleVue(moduleKey))) {
+      if (!window.localStorage.getItem(cleVue(key))) {
         const t = setTimeout(() => setOuvert(true), 450);
         return () => clearTimeout(t);
       }
     } catch { /* localStorage indisponible — pas de tutoriel plutôt que planter */ }
-  }, [moduleKey]);
+  }, [autoOpen, key]);
 
   useEffect(() => {
     const handler = (e: Event) => { if ((e as CustomEvent).detail === moduleKey) { setStep(0); setOuvert(true); } };
@@ -53,14 +73,14 @@ export function ModuleTutorial({ moduleKey, titre, sousTitre, steps, offrePalier
 
   function fermer() {
     setOuvert(false);
-    try { window.localStorage.setItem(cleVue(moduleKey), "1"); } catch {}
+    try { window.localStorage.setItem(cleVue(key), "1"); } catch {}
   }
 
-  if (!ouvert) return null;
+  if (!ouvert || !monte) return null;
 
   const s = !surEtapePalier ? steps[step] : null;
 
-  return (
+  return createPortal((
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
       style={{ background: "rgba(6,10,20,0.72)", backdropFilter: "blur(6px)", animation: "axtFadeIn 0.3s ease" }}>
       <div className="relative w-full max-w-md rounded-3xl overflow-hidden"
@@ -151,7 +171,7 @@ export function ModuleTutorial({ moduleKey, titre, sousTitre, steps, offrePalier
         @keyframes axtStepIn { from { opacity:0; transform:scale(0.7) rotate(-8deg) } to { opacity:1; transform:scale(1) rotate(0) } }
       `}</style>
     </div>
-  );
+  ), document.body);
 }
 
 /** Bouton "?" compact à poser à côté du titre d'une page pour rouvrir son tutoriel à la demande. */

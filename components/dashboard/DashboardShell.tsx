@@ -1,15 +1,29 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { Sparkles, ShoppingCart, Store, Users } from "lucide-react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Header } from "@/components/dashboard/Header";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { QuotaBanner } from "@/components/dashboard/QuotaBanner";
 import { CaisseKiosk } from "@/components/dashboard/CaisseKiosk";
+import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
 import type { Palier } from "@/lib/plans";
 import type { ModuleKey, Niveau } from "@/lib/permissions";
 
 const FULLBLEED_PREFIXES: string[] = ["/dashboard/builder", "/dashboard/themes"];
+
+// Tour d'accueil combiné — UN SEUL tutoriel, affiché une seule fois à la
+// toute première connexion sur une boutique donnée (clé localStorage
+// scopée par tenantId), plutôt qu'un pop-up séparé à chaque nouveau module
+// visité. Les tutoriels par module restent disponibles à la demande via
+// leur bouton "?", mais ne s'auto-affichent plus jamais (voir ModuleTutorial.tsx).
+const BIENVENUE_STEPS = [
+  { Icon: Sparkles,      titre: "AXIA, ton assistant boutique", description: "Pose-lui n'importe quelle question ou demande-lui d'agir directement : créer un produit, lancer une promo, relancer un client." },
+  { Icon: ShoppingCart,  titre: "Commandes & Produits",          description: "Gère tes ventes et ton catalogue depuis la sidebar — chaque module a son propre bouton \"?\" pour revoir son mode d'emploi à tout moment." },
+  { Icon: Store,         titre: "Ma boutique & Point de vente",  description: "Personnalise ta boutique en ligne, ou bascule vers le module Point de vente pour encaisser directement en magasin." },
+  { Icon: Users,         titre: "Ton équipe",                     description: "Invite des collaborateurs (gérant, caissier, comptable...) avec des accès précis depuis Paramètres > Équipe." },
+];
 
 // Toute la logique dépendant de la route vit ici, dans un composant client,
 // plutôt que dans le layout serveur : les layouts Next.js ne se ré-exécutent
@@ -47,6 +61,15 @@ export function DashboardShell({
 
   return (
     <>
+      <ModuleTutorial
+        moduleKey="bienvenue"
+        storageKey={`bienvenue:${session?.user?.tenantId ?? "defaut"}`}
+        autoOpen
+        titre="Bienvenue sur AXSO"
+        sousTitre="Un tour rapide pour démarrer"
+        steps={BIENVENUE_STEPS}
+      />
+
       {/* ─── Desktop : sidebar latérale ─────────────────────────── */}
       <div className="hidden md:flex h-screen bg-[#f0f2f8] text-gray-900 overflow-hidden" style={{ fontFamily: "'Poppins', 'Century Gothic', system-ui, sans-serif" }}>
         {/* Écran d'accueil AXIA = plein écran réel, la sidebar AXSO ne doit

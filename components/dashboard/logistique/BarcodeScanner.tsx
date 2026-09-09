@@ -22,12 +22,6 @@ interface Props {
   onProduitScanne: (p: Produit) => void;
 }
 
-// Formats de code-barres retail les plus courants (EAN/UPC pour la grande
-// distribution, Code128/Code39 pour les étiquettes internes, QR au cas où).
-const FORMATS_BARCODE_DETECTOR = [
-  "ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "itf", "qr_code",
-];
-
 const DELAI_ANTI_REBOND_MS = 1500;
 
 /** Bip court ~880Hz via Web Audio API — pas de fichier audio nécessaire. */
@@ -57,7 +51,6 @@ export function BarcodeScanner({ open, onClose, onProduitScanne }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const zxingControlsRef = useRef<{ stop: () => void } | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const dernierCode = useRef<{ code: string; ts: number } | null>(null);
   const enTraitement = useRef(false);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -86,31 +79,21 @@ export function BarcodeScanner({ open, onClose, onProduitScanne }: Props) {
         await video.play().catch(() => {});
         setPret(true);
 
-        if ("BarcodeDetector" in window) {
-          // Chemin natif — Chrome/Edge/Android, zéro dépendance, accéléré matériel
-          const BarcodeDetectorCtor = (window as any).BarcodeDetector;
-          const detector = new BarcodeDetectorCtor({ formats: FORMATS_BARCODE_DETECTOR });
-          intervalRef.current = setInterval(async () => {
-            if (annule || !videoRef.current || enTraitement.current) return;
-            try {
-              const barcodes = await detector.detect(videoRef.current);
-              if (barcodes?.length) {
-                await traiterCode(barcodes[0].rawValue);
-              }
-            } catch {
-              /* frame non décodable — on retente à la prochaine capture */
-            }
-          }, 300);
-        } else {
-          // Repli — Safari/iOS notamment : décodage JS pur via @zxing/browser
-          const { BrowserMultiFormatReader } = await import("@zxing/browser");
-          const reader = new BrowserMultiFormatReader();
-          if (annule || !videoRef.current) return;
-          const controls = await reader.decodeFromVideoElement(videoRef.current, (result) => {
-            if (result) traiterCode(result.getText());
-          });
-          zxingControlsRef.current = controls;
-        }
+        // Décodage toujours via @zxing/browser (JS pur, déterministe) plutôt
+        // que le BarcodeDetector natif : sur Android Chrome, cette API
+        // dépend d'un modèle ML Kit téléchargé en arrière-plan par Google
+        // Play Services — tant qu'il n'est pas prêt (ou absent), detect()
+        // renvoie silencieusement un tableau vide indéfiniment : la caméra
+        // s'ouvre normalement mais rien ne se passe jamais au scan. zxing
+        // décode lui-même chaque frame, sans dépendance native ni modèle à
+        // télécharger — un peu plus lourd en CPU, mais fiable partout.
+        const { BrowserMultiFormatReader } = await import("@zxing/browser");
+        const reader = new BrowserMultiFormatReader();
+        if (annule || !videoRef.current) return;
+        const controls = await reader.decodeFromVideoElement(videoRef.current, (result) => {
+          if (result) traiterCode(result.getText());
+        });
+        zxingControlsRef.current = controls;
       } catch (e: any) {
         setErreur(
           e?.name === "NotAllowedError"
@@ -156,7 +139,6 @@ export function BarcodeScanner({ open, onClose, onProduitScanne }: Props) {
 
     return () => {
       annule = true;
-      if (intervalRef.current) clearInterval(intervalRef.current);
       zxingControlsRef.current?.stop();
       zxingControlsRef.current = null;
       streamRef.current?.getTracks().forEach(t => t.stop());

@@ -9,12 +9,6 @@ interface Props {
   onDetect: (code: string) => void;
 }
 
-// Formats retail les plus courants (EAN/UPC pour la grande distribution,
-// Code128/Code39 pour les étiquettes internes, QR au cas où).
-const FORMATS_BARCODE_DETECTOR = [
-  "ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "itf", "qr_code",
-];
-
 /** Bip court ~880Hz via Web Audio API — pas de fichier audio nécessaire. */
 function jouerBip() {
   try {
@@ -44,7 +38,6 @@ export function BarcodeCaptureModal({ open, onClose, onDetect }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const zxingControlsRef = useRef<{ stop: () => void } | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const detecte = useRef(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [pret, setPret] = useState(false);
@@ -70,25 +63,19 @@ export function BarcodeCaptureModal({ open, onClose, onDetect }: Props) {
         await video.play().catch(() => {});
         setPret(true);
 
-        if ("BarcodeDetector" in window) {
-          const BarcodeDetectorCtor = (window as any).BarcodeDetector;
-          const detector = new BarcodeDetectorCtor({ formats: FORMATS_BARCODE_DETECTOR });
-          intervalRef.current = setInterval(async () => {
-            if (annule || !videoRef.current || detecte.current) return;
-            try {
-              const barcodes = await detector.detect(videoRef.current);
-              if (barcodes?.length) traiterCode(barcodes[0].rawValue);
-            } catch { /* frame non décodable — on retente à la prochaine capture */ }
-          }, 300);
-        } else {
-          const { BrowserMultiFormatReader } = await import("@zxing/browser");
-          const reader = new BrowserMultiFormatReader();
-          if (annule || !videoRef.current) return;
-          const controls = await reader.decodeFromVideoElement(videoRef.current, (result) => {
-            if (result && !detecte.current) traiterCode(result.getText());
-          });
-          zxingControlsRef.current = controls;
-        }
+        // @zxing/browser toujours — voir le commentaire équivalent dans
+        // components/dashboard/logistique/BarcodeScanner.tsx : le
+        // BarcodeDetector natif dépend d'un modèle ML Kit téléchargé en
+        // arrière-plan par Google Play Services sur Android, silencieusement
+        // non fonctionnel tant qu'il n'est pas prêt (caméra visible, aucune
+        // détection). zxing décode lui-même chaque frame, sans dépendance.
+        const { BrowserMultiFormatReader } = await import("@zxing/browser");
+        const reader = new BrowserMultiFormatReader();
+        if (annule || !videoRef.current) return;
+        const controls = await reader.decodeFromVideoElement(videoRef.current, (result) => {
+          if (result && !detecte.current) traiterCode(result.getText());
+        });
+        zxingControlsRef.current = controls;
       } catch (e: any) {
         setErreur(
           e?.name === "NotAllowedError"
@@ -112,7 +99,6 @@ export function BarcodeCaptureModal({ open, onClose, onDetect }: Props) {
 
     return () => {
       annule = true;
-      if (intervalRef.current) clearInterval(intervalRef.current);
       zxingControlsRef.current?.stop();
       zxingControlsRef.current = null;
       streamRef.current?.getTracks().forEach(t => t.stop());
