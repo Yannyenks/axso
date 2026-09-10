@@ -1,0 +1,60 @@
+import {
+  LayoutGrid, Rows3, Columns3, Zap, BarChart3, Timer, Building2, Video,
+  Image as ImageIcon, Star, Target, FileText, ArrowUpDown, LayoutTemplate, LucideIcon,
+} from "lucide-react";
+import type { BlockNode, BlockNodeType } from "@/lib/theme-config";
+import { genBlockId } from "@/lib/block-tree";
+
+// Bibliothèque du canevas libre — structurels (section/row/column) + les 12
+// types de blocs réutilisés de CustomSection. Indépendant de la liste dans
+// builder/page.tsx (constructeur classique) pour ne rien coupler entre les
+// deux modes.
+export const BLOCK_LIBRARY_ITEMS: Array<{ type: BlockNodeType; label: string; Icon: LucideIcon; desc: string; categorie: "structure" | "widget" }> = [
+  { type: "section", label: "Section", Icon: LayoutGrid, desc: "Bloc racine, pleine largeur", categorie: "structure" },
+  { type: "row", label: "Ligne", Icon: Rows3, desc: "Conteneur horizontal", categorie: "structure" },
+  { type: "column", label: "Colonne", Icon: Columns3, desc: "Conteneur vertical dans une ligne", categorie: "structure" },
+  { type: "features", label: "Avantages", Icon: Zap, desc: "Grille de caractéristiques", categorie: "widget" },
+  { type: "stats", label: "Statistiques", Icon: BarChart3, desc: "Chiffres clés animés", categorie: "widget" },
+  { type: "countdown", label: "Compte à rebours", Icon: Timer, desc: "Timer vente flash", categorie: "widget" },
+  { type: "brands", label: "Logos partenaires", Icon: Building2, desc: "Défilement de logos", categorie: "widget" },
+  { type: "video", label: "Vidéo", Icon: Video, desc: "Vidéo showcase", categorie: "widget" },
+  { type: "gallery", label: "Galerie photos", Icon: ImageIcon, desc: "Mosaïque de photos", categorie: "widget" },
+  { type: "social-proof", label: "Preuve sociale", Icon: Star, desc: "Notes, certifications", categorie: "widget" },
+  { type: "cta-band", label: "Bande CTA", Icon: Target, desc: "Bandeau appel à l'action", categorie: "widget" },
+  { type: "richtext", label: "Texte riche", Icon: FileText, desc: "Titre + texte + bouton", categorie: "widget" },
+  { type: "spacer", label: "Espacement", Icon: ArrowUpDown, desc: "Espace vertical", categorie: "widget" },
+  { type: "tabs", label: "Onglets", Icon: LayoutTemplate, desc: "Contenu en onglets", categorie: "widget" },
+  { type: "columns", label: "Colonnes de contenu", Icon: Columns3, desc: "Photos/témoignage/promo/texte", categorie: "widget" },
+];
+
+const DEFAULT_CONFIG: Record<string, Record<string, any>> = {
+  features: { titre: "Nos avantages", items: [{ icone: "★", titre: "Avantage 1", texte: "Description" }, { icone: "→", titre: "Avantage 2", texte: "Description" }, { icone: "✓", titre: "Avantage 3", texte: "Description" }], colonnes: 3 },
+  stats: { titre: "En chiffres", items: [{ valeur: "10K+", label: "Clients" }, { valeur: "500+", label: "Produits" }, { valeur: "4.9★", label: "Note" }, { valeur: "48h", label: "Livraison" }] },
+  countdown: { titre: "Offre limitée", texte: "Ne manquez pas cette opportunité unique !", dateFin: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().slice(0, 16), ctaTexte: "Profiter maintenant" },
+  brands: { titre: "Ils nous font confiance", logos: ["", "", "", ""], style: "carousel" },
+  video: { titre: "Découvrez notre monde", videoUrl: "", style: "centered", autoplay: false },
+  gallery: { titre: "Notre lookbook", images: ["", "", "", "", "", ""], layout: "masonry" },
+  "social-proof": { note: "4.9/5", nbClients: "12 000+", nbCommandes: "30 000+", certifications: ["✓ Paiement sécurisé", "✓ Livraison garantie"] },
+  "cta-band": { titre: "Prêt à découvrir ?", texte: "Rejoignez des milliers de clients satisfaits", ctaTexte: "Commencer maintenant", ctaLien: "produits", style: "gradient" },
+  richtext: { titre: "Notre engagement", texte: "Nous sommes passionnés par la qualité et l'authenticité.", ctaTexte: "", ctaLien: "" },
+  spacer: { hauteur: "80px" },
+  tabs: { titre: "Découvrez-en plus", onglets: [{ id: genBlockId("tab"), label: "Photos", blocs: [] }, { id: genBlockId("tab"), label: "Témoignages", blocs: [] }] },
+  columns: { titre: "", nombreColonnes: 3, colonnes: [{ id: genBlockId("col"), blocs: [] }, { id: genBlockId("col"), blocs: [] }, { id: genBlockId("col"), blocs: [] }] },
+};
+
+export function createDefaultNode(type: BlockNodeType): BlockNode {
+  if (type === "section") return { id: genBlockId("section"), type, children: [] };
+  if (type === "row") return { id: genBlockId("row"), type, children: [] };
+  if (type === "column") return { id: genBlockId("col"), type, children: [] };
+  return { id: genBlockId(type), type, config: JSON.parse(JSON.stringify(DEFAULT_CONFIG[type] || {})) };
+}
+
+// Composition de départ proposée quand le canevas est vide — une section
+// avec une ligne à une colonne, prête à recevoir des blocs.
+export function createStarterSection(): BlockNode {
+  return {
+    id: genBlockId("section"),
+    type: "section",
+    children: [{ id: genBlockId("row"), type: "row", children: [{ id: genBlockId("col"), type: "column", children: [] }] }],
+  };
+}

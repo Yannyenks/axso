@@ -460,6 +460,21 @@ main > section, main > div > section {
   box-shadow: 0 0 22px 4px var(--ax-accent-glow, rgba(245,166,35,0.4));
 }
 
+/* ── Constructeur libre — survol/sélection d'un bloc du canevas ── */
+.ax-libre-hoverable {
+  cursor: pointer;
+  outline: 1px dashed transparent;
+  outline-offset: -1px;
+  transition: outline-color 0.15s ease;
+}
+.ax-libre-hoverable:hover {
+  outline-color: rgba(245, 166, 35, 0.5);
+}
+.ax-libre-selected {
+  outline: 2px solid #F5A623 !important;
+  outline-offset: -2px;
+}
+
 .ax-skeleton {
   background: linear-gradient(110deg, var(--bg) 8%, #ECECEC 18%, var(--bg) 33%);
   background-size: 200% 100%;

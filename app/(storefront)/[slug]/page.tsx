@@ -18,6 +18,7 @@ import { CustomSectionsRenderer } from "@/components/storefront/CustomSectionsRe
 import { Package, Lock, RotateCcw, MessageCircle, Star } from "lucide-react";
 import { TEMPLATE_COMPONENTS } from "@/components/storefront/templates/registry";
 import { ImportedLiteralHomePage } from "@/components/storefront/templates/ImportedLiteralHomePage";
+import { BlockTreeRenderer } from "@/components/storefront/blocks/BlockTreeRenderer";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -68,15 +69,6 @@ export default async function StorefrontPage({ params }: Props) {
     take: sec.vedettes.nombre || 8,
   });
 
-  if (cfg.builderHtml) {
-    return <ImportedLiteralHomePage cfg={cfg} />;
-  }
-
-  const TemplateHome = TEMPLATE_COMPONENTS[tenant.themeId]?.HomePage;
-  if (TemplateHome) {
-    return <TemplateHome tenant={tenant} cfg={cfg} vedettes={vedettes} slug={slug} />;
-  }
-
   // Determine if theme background is dark by checking luminance of fond color
   const fondHex = cfg.colors.fond.replace("#", "");
   const r = parseInt(fondHex.slice(0, 2), 16);
@@ -107,6 +99,25 @@ export default async function StorefrontPage({ params }: Props) {
   const CONTAINER = layoutCfg.largeurContainer === "100%" ? "max-w-full" : `max-w-[${layoutCfg.largeurContainer || "1280px"}]`;
   const SECTION_PY_MAP: Record<string, string> = { sm: "py-8 sm:py-10", md: "py-12 sm:py-16", lg: "py-16 sm:py-20", xl: "py-20 sm:py-28" };
   const SECTION_PY = SECTION_PY_MAP[layoutCfg.paddingSection || "lg"];
+
+  if (cfg.builderTree?.length) {
+    return (
+      <BlockTreeRenderer
+        nodes={cfg.builderTree}
+        ctx={{ slug, colors: c, container: CONTAINER, sectionPy: SECTION_PY, editable: false }}
+      />
+    );
+  }
+
+  if (cfg.builderHtml) {
+    return <ImportedLiteralHomePage cfg={cfg} />;
+  }
+
+  const TemplateHome = TEMPLATE_COMPONENTS[tenant.themeId]?.HomePage;
+  if (TemplateHome) {
+    return <TemplateHome tenant={tenant} cfg={cfg} vedettes={vedettes} slug={slug} />;
+  }
+
   const colonnesDesktop = layoutCfg.colonnesProduits || 4;
   const colonnesMobile = layoutCfg.colonnesMobile || 2;
   const GRID_PRODUITS = `grid-cols-${colonnesMobile} sm:grid-cols-3 lg:grid-cols-${colonnesDesktop}`;

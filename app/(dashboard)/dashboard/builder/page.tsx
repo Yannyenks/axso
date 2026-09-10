@@ -16,8 +16,10 @@ import {
   ShoppingBag, Maximize2, Minimize2, ZoomIn, Package,
   ShoppingCart, Share2, Info, Phone, Undo2, Redo2,
 } from "lucide-react";
-import { resolveThemeConfig, type ThemeConfig, type CustomSection, DEFAULT_PRODUCT_SECTIONS, type ProductPageSection } from "@/lib/theme-config";
+import { resolveThemeConfig, type ThemeConfig, type CustomSection, DEFAULT_PRODUCT_SECTIONS, type ProductPageSection, THEMES_LIBRE_ELIGIBLES } from "@/lib/theme-config";
 import { FONTS, googleFontsHref, typographyCss } from "@/lib/theme-fonts";
+import { BuilderCanvas } from "./canvas/BuilderCanvas";
+import { Wand2 } from "lucide-react";
 
 type Device = "desktop" | "tablet" | "mobile";
 type Panel = "sections" | "couleurs" | "typo" | "layout" | "medias" | "animations" | "boutons" | "avance" | "produit" | "apropos" | "contact";
@@ -151,6 +153,7 @@ export default function BuilderPage() {
   const [saved, setSaved]             = useState(false);
   const [iframeKey, setIframeKey]     = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(true);
+  const [builderMode, setBuilderMode] = useState<"classique" | "libre">("classique");
   const iframeRef   = useRef<HTMLIFrameElement>(null);
 
   const debounce    = useRef<NodeJS.Timeout | null>(null);
@@ -430,6 +433,17 @@ export default function BuilderPage() {
           <BoutonRevoirTutoriel moduleKey="builder" dark />
         </div>
 
+        {(THEMES_LIBRE_ELIGIBLES as readonly string[]).includes(tenant.themeId) && (
+          <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+            <button onClick={() => setBuilderMode("classique")} className={`px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all ${builderMode === "classique" ? "bg-white text-gray-800 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+              Constructeur classique
+            </button>
+            <button onClick={() => setBuilderMode("libre")} className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all ${builderMode === "libre" ? "bg-[#F5A623] text-black shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+              <Wand2 size={10} /> Constructeur libre (bêta)
+            </button>
+          </div>
+        )}
+
         <div className="flex items-center gap-2">
           <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
             <button onClick={undo} disabled={!undoStack.current.length} title="Annuler (Ctrl+Z)"
@@ -467,6 +481,10 @@ export default function BuilderPage() {
 
       {/* MAIN */}
       <div className="flex-1 flex overflow-hidden">
+        {builderMode === "libre" ? (
+          <BuilderCanvas config={config} set={set} slug={tenant.slug} />
+        ) : (
+        <>
         {/* Icon sidebar */}
         <div className="w-11 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col items-center py-3 gap-1">
             {NAV_TABS.map(t => (
@@ -532,6 +550,8 @@ export default function BuilderPage() {
                 </div>
               </div>
             </div>
+        </>
+        )}
       </div>
     </div>
   );

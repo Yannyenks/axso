@@ -244,6 +244,45 @@ export const DEFAULT_PRODUCT_SECTIONS: ProductPageSection[] = [
   { id: "similar",     type: "similar",     actif: true, config: { count: 4, titre: "Vous aimerez aussi" } },
 ];
 
+// ─── Constructeur libre — arbre de blocs (Elementor-like) ─────────────────────
+// Additif : n'existe que si le marchand a activé le "Constructeur libre",
+// sinon `undefined` pour 100% des boutiques (rendu classique inchangé — voir
+// dispatch dans app/(storefront)/[slug]/page.tsx). Contrairement à
+// `sections`/`customSections` (schéma fixe, une seule liste plate), ceci est
+// un vrai arbre : section → ligne(s) → colonne(s) → widget(s), déposable et
+// réordonnable à n'importe quel endroit via glisser-déposer (dnd-kit).
+export type BlockNodeType =
+  | "section" | "row" | "column" // conteneurs structurels
+  | "features" | "stats" | "countdown" | "brands" | "video" | "gallery"
+  | "social-proof" | "spacer" | "richtext" | "cta-band" | "tabs" | "columns" // réutilisés de CustomSection (voir components/storefront/blocks/registry.tsx)
+  | "heading" | "text" | "image" | "button" | "products"; // atomes (vague 2)
+
+export interface BlockStyleOverrides {
+  spacing?: { pt?: string; pb?: string; pl?: string; pr?: string; mt?: string; mb?: string };
+  background?: { color?: string; image?: string; gradient?: string };
+  typography?: { color?: string; taille?: string; poids?: string; align?: "left" | "center" | "right" };
+  border?: { radius?: string; width?: string; color?: string };
+  visibility?: { desktop?: boolean; tablet?: boolean; mobile?: boolean };
+  width?: string;
+  customClass?: string;
+}
+
+export interface BlockNode {
+  id: string; // stable, sert aussi de data-axs-id pour la sélection visuelle
+  type: BlockNodeType;
+  actif?: boolean;
+  children?: BlockNode[]; // uniquement pour section/row/column
+  config?: Record<string, any>; // même forme que CustomSection.config pour les 12 types réutilisés
+  style?: BlockStyleOverrides;
+}
+
+// Thèmes dont le rendu storefront est encore piloté par `sections`/JSX
+// partagé (pas un arbre React écrit à la main comme les 10 thèmes premium) —
+// seuls ceux-ci peuvent activer le Constructeur libre pour l'instant.
+export const THEMES_LIBRE_ELIGIBLES = [
+  "terre-et-or", "noir-obsidien", "violet-cosmos", "ocean-atlantique", "kente-royal", "bwiti-forest",
+] as const;
+
 // ─── Config principale ───────────────────────────────────────────────────────
 export interface ThemeConfig {
   colors: ThemeColors;
@@ -265,6 +304,7 @@ export interface ThemeConfig {
   contactPage?: ThemeContactPageConfig;
   builderHtml?: string;
   builderCss?: string;
+  builderTree?: BlockNode[];
 }
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -538,6 +578,7 @@ export function mergeThemeConfig(base: ThemeConfig, overrides: Record<string, an
     contactPage: overrides.contactPage ?? base.contactPage,
     builderHtml: overrides.builderHtml ?? base.builderHtml,
     builderCss: overrides.builderCss ?? base.builderCss,
+    builderTree: overrides.builderTree ?? base.builderTree,
   };
 }
 
@@ -599,6 +640,7 @@ export function appliquerNouveauTheme(ancienConfig: ThemeConfig, nouveauThemeBas
     productPage: ancienConfig.productPage,
     aboutPage: ancienConfig.aboutPage,
     contactPage: ancienConfig.contactPage,
+    builderTree: ancienConfig.builderTree,
   };
 }
 

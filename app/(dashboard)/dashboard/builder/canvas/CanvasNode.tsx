@@ -1,0 +1,120 @@
+"use client";
+
+import { useDraggable } from "@dnd-kit/core";
+import { GripVertical, Copy, Trash2, EyeOff, Eye } from "lucide-react";
+import type { BlockNode } from "@/lib/theme-config";
+import { BLOCK_REGISTRY } from "@/components/storefront/blocks/registry";
+import { blockStyleToCss } from "@/components/storefront/blocks/styleUtils";
+import type { TreeRenderCtx } from "@/components/storefront/blocks/context";
+import { DropIndicator } from "./DropIndicator";
+
+const LABELS: Record<string, string> = {
+  section: "Section", row: "Ligne", column: "Colonne",
+  features: "Avantages", stats: "Statistiques", countdown: "Compte à rebours", brands: "Logos",
+  video: "Vidéo", gallery: "Galerie", "social-proof": "Preuve sociale", "cta-band": "Bande CTA",
+  richtext: "Texte riche", spacer: "Espacement", tabs: "Onglets", columns: "Colonnes",
+};
+
+interface CanvasNodeProps {
+  node: BlockNode;
+  parentId: string | null;
+  ctx: TreeRenderCtx;
+  selectedNodeId: string | null;
+  onSelect: (id: string) => void;
+  onDuplicate: (id: string) => void;
+  onDelete: (id: string) => void;
+  onToggleActif: (id: string) => void;
+}
+
+// Rendu récursif du canevas — variante « éditeur » des conteneurs
+// storefront/blocks/containers/*.tsx : mêmes widgets (BLOCK_REGISTRY), même
+// blockStyleToCss, mais avec poignée de glisser-déposer (dnd-kit) et barre
+// d'outils au survol. Volontairement un fichier séparé plutôt qu'une
+// extension des conteneurs partagés : ceux-ci restent de purs composants
+// serveur, sans hooks, réutilisables tels quels par le SSR storefront.
+export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDuplicate, onDelete, onToggleActif }: CanvasNodeProps) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `node:${node.id}`,
+    data: { kind: "node", nodeId: node.id, currentParentId: parentId, type: node.type },
+  });
+
+  const selectionne = selectedNodeId === node.id;
+  const estConteneur = node.type === "section" || node.type === "row" || node.type === "column";
+  const desactive = node.actif === false;
+
+  const toolbar = (
+    <div
+      className={`absolute -top-3 right-1.5 z-20 flex items-center gap-0.5 rounded-md border border-gray-200 bg-white shadow-sm px-0.5 py-0.5 transition-opacity ${
+        selectionne ? "opacity-100" : "opacity-0 group-hover/node:opacity-100"
+      }`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <span {...attributes} {...listeners} className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700 cursor-grab active:cursor-grabbing" title="Déplacer">
+        <GripVertical size={12} />
+      </span>
+      <button onClick={() => onToggleActif(node.id)} className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700" title={desactive ? "Afficher" : "Masquer"}>
+        {desactive ? <EyeOff size={12} /> : <Eye size={12} />}
+      </button>
+      <button onClick={() => onDuplicate(node.id)} className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700" title="Dupliquer">
+        <Copy size={12} />
+      </button>
+      <button onClick={() => onDelete(node.id)} className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-red-500" title="Supprimer">
+        <Trash2 size={12} />
+      </button>
+    </div>
+  );
+
+  const label = (
+    <span className={`absolute -top-2.5 left-1.5 z-20 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded transition-opacity ${
+      selectionne ? "bg-[#F5A623] text-black opacity-100" : "bg-gray-700 text-white opacity-0 group-hover/node:opacity-100"
+    }`}>
+      {LABELS[node.type] || node.type}
+    </span>
+  );
+
+  const baseClass = `group/node relative outline-offset-[-2px] transition-all cursor-pointer ${
+    selectionne ? "outline outline-2 outline-[#F5A623]" : "outline outline-1 outline-transparent hover:outline-dashed hover:outline-gray-300"
+  } ${isDragging ? "opacity-30" : ""} ${desactive ? "opacity-40" : ""}`;
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onSelect(node.id);
+  };
+
+  if (estConteneur) {
+    const children = node.children ?? [];
+    const Tag = node.type === "section" ? "section" : "div";
+    const flexClass = node.type === "row" ? "flex flex-col sm:flex-row gap-6" : node.type === "column" ? "flex-1 flex flex-col gap-4 min-w-0" : "";
+    return (
+      <Tag ref={setNodeRef as any} data-axs-id={node.id} onClick={handleClick} style={blockStyleToCss(node.style)} className={`${baseClass} ${flexClass} ${node.style?.customClass || ""} ${children.length === 0 ? "min-h-[64px] p-2" : ""}`}>
+        {label}
+        {toolbar}
+        {children.length === 0 ? (
+          <DropIndicator parentId={node.id} index={0} empty />
+        ) : (
+          <>
+            <DropIndicator parentId={node.id} index={0} />
+            {children.map((child, i) => (
+              <div key={child.id}>
+                <CanvasNode node={child} parentId={node.id} ctx={ctx} selectedNodeId={selectedNodeId} onSelect={onSelect} onDuplicate={onDuplicate} onDelete={onDelete} onToggleActif={onToggleActif} />
+                <DropIndicator parentId={node.id} index={i + 1} />
+              </div>
+            ))}
+          </>
+        )}
+      </Tag>
+    );
+  }
+
+  const Widget = BLOCK_REGISTRY[node.type];
+  if (!Widget) return null;
+  return (
+    <div ref={setNodeRef} data-axs-id={node.id} onClick={handleClick} style={blockStyleToCss(node.style)} className={`${baseClass} ${node.style?.customClass || ""}`}>
+      {label}
+      {toolbar}
+      <div className="pointer-events-none">
+        <Widget id={node.id} config={node.config ?? {}} colors={ctx.colors} slug={ctx.slug} container={ctx.container} sectionPy={ctx.sectionPy} />
+      </div>
+    </div>
+  );
+}
