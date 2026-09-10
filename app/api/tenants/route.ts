@@ -5,6 +5,8 @@ import { hash } from "bcryptjs";
 import { z } from "zod";
 import { generateStoreConfig } from "@/lib/generate-store-config";
 import { genererAvisDemo } from "@/lib/gemini";
+import { mergeThemeConfig, appliquerNouveauTheme } from "@/lib/theme-config";
+import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 
 const schemaCreation = z.object({
   name: z.string().min(2),
@@ -175,13 +177,33 @@ export async function PATCH(request: Request) {
     }
     if (body.domainePropre !== undefined) champs.customDomain = body.domainePropre || null;
 
+    const actuel = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { statut: true, themeId: true, themeConfig: true },
+    });
+
     // Le marchand ne peut basculer sa boutique qu'entre "active" et "pause" —
     // jamais écraser un statut administratif (ex: suspendu par Axso).
-    if (body.statut === "active" || body.statut === "pause") {
-      const actuel = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { statut: true } });
-      if (actuel && (actuel.statut === "active" || actuel.statut === "pause")) {
+    if ((body.statut === "active" || body.statut === "pause") && actuel) {
+      if (actuel.statut === "active" || actuel.statut === "pause") {
         champs.statut = body.statut;
       }
+    }
+
+    // Changement de thème : le texte déjà écrit par le marchand (titres,
+    // accroches, badges de confiance, blocs personnalisés, page À propos/
+    // Contact, customCss...) ne doit jamais être remplacé par le texte par
+    // défaut du nouveau thème — seule l'identité visuelle change. Un
+    // éventuel `themeConfig` fourni en même temps (ex: variante Clair/Sombre/
+    // Concentré) s'applique par-dessus ce résultat.
+    if (body.themeId !== undefined && actuel && body.themeId !== actuel.themeId) {
+      const ancienConfig = await resolveThemeConfigAsync(actuel.themeId, tenantId, (actuel.themeConfig as any) || {});
+      const nouveauBase = await resolveThemeConfigAsync(body.themeId, tenantId, {});
+      let fusion = appliquerNouveauTheme(ancienConfig, nouveauBase);
+      if (body.themeConfig && typeof body.themeConfig === "object") {
+        fusion = mergeThemeConfig(fusion, body.themeConfig);
+      }
+      champs.themeConfig = fusion;
     }
 
     const tenant = await prisma.tenant.update({ where: { id: tenantId }, data: champs });

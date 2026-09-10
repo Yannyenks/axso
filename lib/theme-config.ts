@@ -549,4 +549,57 @@ export function resolveThemeConfig(themeId: string, savedConfig: Record<string, 
   return mergeThemeConfig(base, savedConfig);
 }
 
+// ─── Changement de thème sans perdre le texte du marchand ────────────────────
+// Chaque thème a ses propres textes par défaut (titres, accroches, badges de
+// confiance...), mais un marchand qui a déjà écrit/gardé le sien ne doit
+// jamais le voir disparaître au profit du texte par défaut du thème choisi —
+// seule l'identité visuelle (couleurs, polices, rayon, boutons, animations,
+// mise en page) doit changer avec le thème. Liste des champs "copywriting"
+// par section, conservés depuis l'ancienne config ; tout le reste de la
+// section vient des défauts du nouveau thème.
+const CHAMPS_COPY_PAR_SECTION: Record<string, string[]> = {
+  annonce: ["texte"],
+  hero: ["titre", "sousTitre", "ctaTexte", "ctaLien", "badgeTexte", "showSecondCta", "secondCtaTexte", "secondCtaLien", "videoUrl", "slideshowImages", "slideshowInterval"],
+  vedettes: ["titre"],
+  collections: ["titre"],
+  promo: ["titre", "texte", "ctaTexte", "imageUrl"],
+  avis: ["titre"],
+  newsletter: ["titre", "texte", "placeholder", "ctaTexte"],
+  confiance: ["items"],
+  about: ["titre", "texte", "badgeTexte", "stats", "imageUrl"],
+  faq: ["titre", "items"],
+};
+
+// `ancienConfig` : config actuellement active du tenant (déjà résolue,
+// fusionnée avec ses propres édits). `nouveauThemeBase` : défauts du thème
+// vers lequel il bascule (résolu SANS les overrides du tenant — juste le
+// thème lui-même). Retourne la nouvelle config à sauvegarder.
+export function appliquerNouveauTheme(ancienConfig: ThemeConfig, nouveauThemeBase: ThemeConfig): ThemeConfig {
+  const sections: Record<string, any> = {};
+  for (const [id, base] of Object.entries(nouveauThemeBase.sections)) {
+    const ancienneSec = (ancienConfig.sections as any)?.[id];
+    const champsCopy = CHAMPS_COPY_PAR_SECTION[id] || [];
+    const fusion: any = { ...(base as any) };
+    if (ancienneSec) {
+      for (const champ of champsCopy) {
+        if (ancienneSec[champ] !== undefined) fusion[champ] = ancienneSec[champ];
+      }
+    }
+    sections[id] = fusion;
+  }
+  return {
+    ...nouveauThemeBase,
+    sections: sections as ThemeSections,
+    // Contenu piloté par le marchand, jamais lié à l'identité visuelle d'un
+    // thème — ne doit jamais être perdu en changeant de thème.
+    customSections: ancienConfig.customSections,
+    sectionOrder: ancienConfig.sectionOrder,
+    sectionSousBlocs: ancienConfig.sectionSousBlocs,
+    customCss: ancienConfig.customCss,
+    productPage: ancienConfig.productPage,
+    aboutPage: ancienConfig.aboutPage,
+    contactPage: ancienConfig.contactPage,
+  };
+}
+
 export { DEFAULTS as THEME_DEFAULTS };
