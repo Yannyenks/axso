@@ -1,6 +1,7 @@
 import {
   LayoutGrid, Rows3, Columns3, Zap, BarChart3, Timer, Building2, Video,
   Image as ImageIcon, Star, Target, FileText, ArrowUpDown, LayoutTemplate, LucideIcon,
+  Heading, Type, MousePointerClick, ShoppingBag,
 } from "lucide-react";
 import type { BlockNode, BlockNodeType } from "@/lib/theme-config";
 import { genBlockId } from "@/lib/block-tree";
@@ -25,6 +26,11 @@ export const BLOCK_LIBRARY_ITEMS: Array<{ type: BlockNodeType; label: string; Ic
   { type: "spacer", label: "Espacement", Icon: ArrowUpDown, desc: "Espace vertical", categorie: "widget" },
   { type: "tabs", label: "Onglets", Icon: LayoutTemplate, desc: "Contenu en onglets", categorie: "widget" },
   { type: "columns", label: "Colonnes de contenu", Icon: Columns3, desc: "Photos/témoignage/promo/texte", categorie: "widget" },
+  { type: "heading", label: "Titre", Icon: Heading, desc: "Titre éditable directement sur le canevas", categorie: "widget" },
+  { type: "text", label: "Texte", Icon: Type, desc: "Paragraphe éditable directement sur le canevas", categorie: "widget" },
+  { type: "image", label: "Image", Icon: ImageIcon, desc: "Image unique, avec lien optionnel", categorie: "widget" },
+  { type: "button", label: "Bouton", Icon: MousePointerClick, desc: "Bouton d'appel à l'action", categorie: "widget" },
+  { type: "products", label: "Produits", Icon: ShoppingBag, desc: "Grille de produits de la boutique", categorie: "widget" },
 ];
 
 const DEFAULT_CONFIG: Record<string, Record<string, any>> = {
@@ -40,6 +46,11 @@ const DEFAULT_CONFIG: Record<string, Record<string, any>> = {
   spacer: { hauteur: "80px" },
   tabs: { titre: "Découvrez-en plus", onglets: [{ id: genBlockId("tab"), label: "Photos", blocs: [] }, { id: genBlockId("tab"), label: "Témoignages", blocs: [] }] },
   columns: { titre: "", nombreColonnes: 3, colonnes: [{ id: genBlockId("col"), blocs: [] }, { id: genBlockId("col"), blocs: [] }, { id: genBlockId("col"), blocs: [] }] },
+  heading: { texte: "Votre titre", niveau: "h2", align: "left" },
+  text: { texte: "Votre texte ici — cliquez pour modifier directement sur le canevas.", align: "left" },
+  image: { url: "", alt: "", lien: "", ratio: "auto" },
+  button: { texte: "En savoir plus", lien: "produits", style: "primary", taille: "md", align: "left" },
+  products: { titre: "Nos produits", nombre: 8, colonnes: 4, tri: "recent" },
 };
 
 export function createDefaultNode(type: BlockNodeType): BlockNode {

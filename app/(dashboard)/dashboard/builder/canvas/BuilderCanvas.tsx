@@ -96,6 +96,7 @@ export function BuilderCanvas({ config, set, slug }: Props) {
                     onDuplicate={(id) => setTree((t) => duplicateNode(t, id))}
                     onDelete={(id) => { setTree((t) => removeNode(t, id)); setSelectedNodeId((cur) => (cur === id ? null : cur)); }}
                     onToggleActif={(id) => setTree((t) => toggleNodeActif(t, id))}
+                    onChangeConfig={(id, patch) => setTree((t) => updateNodeConfig(t, id, patch))}
                   />
                   <DropIndicator parentId={null} index={i + 1} />
                 </div>

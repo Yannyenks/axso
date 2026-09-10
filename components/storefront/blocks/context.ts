@@ -10,6 +10,8 @@ export interface TreeRenderCtx {
   colors: Pick<ThemeColors, "accent" | "texte" | "fond">;
   container: string;
   sectionPy: string;
+  // Nécessaire côté SSR pour que le widget ProductsBlock interroge Prisma.
+  tenantId?: string;
   editable?: boolean;
   selectedId?: string | null;
   onSelect?: (id: string) => void;

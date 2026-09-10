@@ -12,4 +12,11 @@ export interface BlockRenderProps {
   slug: string;
   container: string;
   sectionPy: string;
+  // Ajoutés pour les atomes (vague 2). `tenantId` : nécessaire côté SSR pour
+  // que ProductsBlock interroge Prisma (absent côté canevas, qui affiche un
+  // aperçu statique — voir BuilderCanvas). `editable`/`onEditText` : édition
+  // de texte inline, actifs uniquement dans le canevas, jamais côté SSR.
+  tenantId?: string;
+  editable?: boolean;
+  onEditText?: (patch: Record<string, any>) => void;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useDraggable } from "@dnd-kit/core";
-import { GripVertical, Copy, Trash2, EyeOff, Eye } from "lucide-react";
+import { GripVertical, Copy, Trash2, EyeOff, Eye, Package } from "lucide-react";
 import type { BlockNode } from "@/lib/theme-config";
 import { BLOCK_REGISTRY } from "@/components/storefront/blocks/registry";
 import { blockStyleToCss } from "@/components/storefront/blocks/styleUtils";
@@ -13,7 +13,36 @@ const LABELS: Record<string, string> = {
   features: "Avantages", stats: "Statistiques", countdown: "Compte à rebours", brands: "Logos",
   video: "Vidéo", gallery: "Galerie", "social-proof": "Preuve sociale", "cta-band": "Bande CTA",
   richtext: "Texte riche", spacer: "Espacement", tabs: "Onglets", columns: "Colonnes",
+  heading: "Titre", text: "Texte", image: "Image", button: "Bouton", products: "Produits",
 };
+
+// Rendu directement dans le canevas côté client — le widget « Produits »
+// interroge Prisma (voir components/storefront/blocks/widgets/ProductsBlock.tsx),
+// ce qui n'est possible que côté SSR storefront. Un aperçu statique
+// représentatif (piloté par nombre/colonnes) le remplace ici.
+function ProductsCanvasPreview({ config }: { config: Record<string, any> }) {
+  const nombre = Math.min(Math.max(Number(config.nombre) || 8, 1), 8);
+  const colonnes = Number(config.colonnes) || 4;
+  return (
+    <div className="py-2">
+      {config.titre && <h2 className="text-2xl font-bold font-playfair mb-4">{config.titre}</h2>}
+      <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${colonnes}, minmax(0, 1fr))` }}>
+        {Array.from({ length: nombre }).map((_, i) => (
+          <div key={i} className="rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+            <div className="aspect-square flex items-center justify-center bg-gray-100"><Package size={24} className="text-gray-300" /></div>
+            <div className="p-2 space-y-1">
+              <div className="h-2 bg-gray-200 rounded w-4/5" />
+              <div className="h-2 bg-gray-200 rounded w-1/3" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="text-[10px] text-gray-400 mt-2">Aperçu — les vrais produits s'affichent sur la boutique en ligne.</p>
+    </div>
+  );
+}
+
+const TYPES_EDITABLE_INLINE = new Set(["heading", "text", "button"]);
 
 interface CanvasNodeProps {
   node: BlockNode;
@@ -24,6 +53,7 @@ interface CanvasNodeProps {
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
   onToggleActif: (id: string) => void;
+  onChangeConfig: (id: string, patch: Record<string, any>) => void;
 }
 
 // Rendu récursif du canevas — variante « éditeur » des conteneurs
@@ -32,7 +62,7 @@ interface CanvasNodeProps {
 // d'outils au survol. Volontairement un fichier séparé plutôt qu'une
 // extension des conteneurs partagés : ceux-ci restent de purs composants
 // serveur, sans hooks, réutilisables tels quels par le SSR storefront.
-export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDuplicate, onDelete, onToggleActif }: CanvasNodeProps) {
+export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDuplicate, onDelete, onToggleActif, onChangeConfig }: CanvasNodeProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `node:${node.id}`,
     data: { kind: "node", nodeId: node.id, currentParentId: parentId, type: node.type },
@@ -96,7 +126,7 @@ export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDu
             <DropIndicator parentId={node.id} index={0} />
             {children.map((child, i) => (
               <div key={child.id}>
-                <CanvasNode node={child} parentId={node.id} ctx={ctx} selectedNodeId={selectedNodeId} onSelect={onSelect} onDuplicate={onDuplicate} onDelete={onDelete} onToggleActif={onToggleActif} />
+                <CanvasNode node={child} parentId={node.id} ctx={ctx} selectedNodeId={selectedNodeId} onSelect={onSelect} onDuplicate={onDuplicate} onDelete={onDelete} onToggleActif={onToggleActif} onChangeConfig={onChangeConfig} />
                 <DropIndicator parentId={node.id} index={i + 1} />
               </div>
             ))}
@@ -106,14 +136,34 @@ export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDu
     );
   }
 
+  if (node.type === "products") {
+    return (
+      <div ref={setNodeRef} data-axs-id={node.id} onClick={handleClick} style={blockStyleToCss(node.style)} className={`${baseClass} ${node.style?.customClass || ""}`}>
+        {label}
+        {toolbar}
+        <ProductsCanvasPreview config={node.config ?? {}} />
+      </div>
+    );
+  }
+
   const Widget = BLOCK_REGISTRY[node.type];
   if (!Widget) return null;
+  const editableInline = TYPES_EDITABLE_INLINE.has(node.type);
   return (
     <div ref={setNodeRef} data-axs-id={node.id} onClick={handleClick} style={blockStyleToCss(node.style)} className={`${baseClass} ${node.style?.customClass || ""}`}>
       {label}
       {toolbar}
-      <div className="pointer-events-none">
-        <Widget id={node.id} config={node.config ?? {}} colors={ctx.colors} slug={ctx.slug} container={ctx.container} sectionPy={ctx.sectionPy} />
+      <div className={editableInline ? "" : "pointer-events-none"}>
+        <Widget
+          id={node.id}
+          config={node.config ?? {}}
+          colors={ctx.colors}
+          slug={ctx.slug}
+          container={ctx.container}
+          sectionPy={ctx.sectionPy}
+          editable={editableInline}
+          onEditText={editableInline ? (patch) => onChangeConfig(node.id, patch) : undefined}
+        />
       </div>
     </div>
   );

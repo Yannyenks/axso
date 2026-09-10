@@ -12,6 +12,19 @@ import { RichtextBlock } from "./widgets/RichtextBlock";
 import { CtaBandBlock } from "./widgets/CtaBandBlock";
 import { TabsBlock } from "./widgets/TabsBlock";
 import { ColumnsBlock } from "./widgets/ColumnsBlock";
+import { HeadingBlock } from "./widgets/HeadingBlock";
+import { TextBlock } from "./widgets/TextBlock";
+import { ImageBlock } from "./widgets/ImageBlock";
+import { ButtonBlock } from "./widgets/ButtonBlock";
+// "products" (ProductsBlock) est DÉLIBÉRÉMENT absent de ce registre : ce
+// widget interroge Prisma directement (voir widgets/ProductsBlock.tsx) et ce
+// fichier est importé aussi bien côté SSR (BlockTreeRenderer,
+// CustomSectionsRenderer) que côté client par le canevas du constructeur
+// (CanvasNode.tsx, "use client"). Un import statique de Prisma ici ferait
+// échouer le build client (modules Node comme "tls" introuvables dans le
+// bundle navigateur). BlockTreeRenderer importe et rend ProductsBlock
+// directement, en le court-circuitant avant ce registre ; CanvasNode le
+// remplace par un aperçu statique (ProductsCanvasPreview).
 
 // Registre partagé — les 12 types de blocs existants (CustomSection),
 // extraits de CustomSectionsRenderer.tsx en composants autonomes pour être
@@ -31,4 +44,9 @@ export const BLOCK_REGISTRY: Record<string, ComponentType<BlockRenderProps>> = {
   "cta-band": CtaBandBlock,
   tabs: TabsBlock,
   columns: ColumnsBlock,
+  // Atomes (vague 2) — voir la note en tête de fichier pour "products".
+  heading: HeadingBlock,
+  text: TextBlock,
+  image: ImageBlock,
+  button: ButtonBlock,
 };

@@ -104,7 +104,7 @@ export default async function StorefrontPage({ params }: Props) {
     return (
       <BlockTreeRenderer
         nodes={cfg.builderTree}
-        ctx={{ slug, colors: c, container: CONTAINER, sectionPy: SECTION_PY, editable: false }}
+        ctx={{ slug, colors: c, container: CONTAINER, sectionPy: SECTION_PY, tenantId: tenant.id, editable: false }}
       />
     );
   }
