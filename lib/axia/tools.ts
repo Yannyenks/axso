@@ -10,6 +10,9 @@ import { generateSpeechGemini, startVideoGemini, GEMINI_TTS_VOICES } from "@/lib
 import { slugify } from "@/lib/utils";
 import { filtrerOutilsParPalier, type Palier } from "@/lib/plans";
 import { planActif } from "@/lib/abonnement";
+import { THEMES_LIBRE_ELIGIBLES } from "@/lib/theme-config";
+import { agentConstructeurLibre } from "@/lib/gemini";
+import { validerActions, applyAgentActions } from "@/lib/agent-actions";
 
 // tier absent = disponible dès le Palier 0. "palier1"/"palier2" = outil
 // réservé, filtré par lib/plans.ts::filtrerOutilsParPalier avant chaque appel
@@ -142,6 +145,18 @@ export const AXIA_TOOLS: AxiaToolDef[] = [
         metaDescription: { type: "string" },
       },
       required: [],
+    },
+  },
+  {
+    name: "personnaliser_page_boutique",
+    tier: "palier1",
+    description: "Modifie la page d'accueil de la boutique construite avec le Constructeur libre : ajoute, supprime, déplace, duplique ou masque un bloc (section, titre, texte, image, bouton, grille de produits, avantages, statistiques, compte à rebours, logos, vidéo, galerie, preuve sociale, bande CTA, texte riche, espacement, onglets, colonnes), ou change son style (couleur, espacement, police, alignement, largeur de colonne, visibilité par appareil). Utilise cet outil pour TOUTE demande de personnalisation visuelle de la page d'accueil — jamais modifier_boutique pour ça (réservé au thème/description globale).",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        instruction: { type: "string", description: "La demande du marchand reformulée clairement, avec tout le contexte utile (ex: \"mets le titre principal en plus grand et centré\", \"ajoute une section avec 3 avantages : livraison rapide, paiement sécurisé, support 24/7\")" },
+      },
+      required: ["instruction"],
     },
   },
   // ─── MARKETING ────────────────────────────────────────────────────────────
@@ -825,6 +840,28 @@ export const executeAxiaTool: ToolExecutor = async (nom, args, tenantId) => {
         if (args.metaDescription) data.metaDescription = args.metaDescription;
         await prisma.tenant.update({ where: { id: tenantId }, data });
         return { succes: true, resultat: `✅ Boutique mise à jour : ${Object.keys(data).join(", ")}` };
+      }
+
+      case "personnaliser_page_boutique": {
+        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true, categorie: true, themeId: true, themeConfig: true } });
+        if (!tenant) return { succes: false, resultat: "Boutique introuvable" };
+        if (!(THEMES_LIBRE_ELIGIBLES as readonly string[]).includes(tenant.themeId)) {
+          return { succes: false, resultat: "Le Constructeur libre n'est disponible que sur un thème classique (Terre & Or, Noir Obsidien, Violet Cosmos, Océan Atlantique, Kente Royal, Bwiti Forest). Change de thème d'abord, ou demande-moi de le faire." };
+        }
+        const config = (tenant.themeConfig as any) || {};
+        const arbreActuel = config.builderTree ?? [];
+        const { actions, resume } = await agentConstructeurLibre({
+          instruction: args.instruction,
+          tree: arbreActuel,
+          boutique: { nom: tenant.nomBoutique, categorie: tenant.categorie || "", couleurs: config.colors },
+        });
+        const actionsValidees = validerActions(actions);
+        if (!actionsValidees.length) {
+          return { succes: false, resultat: resume || "Je n'ai pas identifié de changement concret à appliquer sur la page — peux-tu préciser ta demande ?" };
+        }
+        const nouvelArbre = applyAgentActions(arbreActuel, actionsValidees);
+        await prisma.tenant.update({ where: { id: tenantId }, data: { themeConfig: { ...config, builderTree: nouvelArbre } } });
+        return { succes: true, resultat: `✅ ${resume}` };
       }
 
       case "creer_code_promo": {

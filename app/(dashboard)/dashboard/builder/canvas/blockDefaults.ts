@@ -5,6 +5,9 @@ import {
 } from "lucide-react";
 import type { BlockNode, BlockNodeType } from "@/lib/theme-config";
 import { genBlockId } from "@/lib/block-tree";
+import { createDefaultNode } from "@/lib/block-catalog";
+
+export { createDefaultNode };
 
 // Bibliothèque du canevas libre — structurels (section/row/column) + les 12
 // types de blocs réutilisés de CustomSection. Indépendant de la liste dans
@@ -32,33 +35,6 @@ export const BLOCK_LIBRARY_ITEMS: Array<{ type: BlockNodeType; label: string; Ic
   { type: "button", label: "Bouton", Icon: MousePointerClick, desc: "Bouton d'appel à l'action", categorie: "widget" },
   { type: "products", label: "Produits", Icon: ShoppingBag, desc: "Grille de produits de la boutique", categorie: "widget" },
 ];
-
-const DEFAULT_CONFIG: Record<string, Record<string, any>> = {
-  features: { titre: "Nos avantages", items: [{ icone: "★", titre: "Avantage 1", texte: "Description" }, { icone: "→", titre: "Avantage 2", texte: "Description" }, { icone: "✓", titre: "Avantage 3", texte: "Description" }], colonnes: 3 },
-  stats: { titre: "En chiffres", items: [{ valeur: "10K+", label: "Clients" }, { valeur: "500+", label: "Produits" }, { valeur: "4.9★", label: "Note" }, { valeur: "48h", label: "Livraison" }] },
-  countdown: { titre: "Offre limitée", texte: "Ne manquez pas cette opportunité unique !", dateFin: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().slice(0, 16), ctaTexte: "Profiter maintenant" },
-  brands: { titre: "Ils nous font confiance", logos: ["", "", "", ""], style: "carousel" },
-  video: { titre: "Découvrez notre monde", videoUrl: "", style: "centered", autoplay: false },
-  gallery: { titre: "Notre lookbook", images: ["", "", "", "", "", ""], layout: "masonry" },
-  "social-proof": { note: "4.9/5", nbClients: "12 000+", nbCommandes: "30 000+", certifications: ["✓ Paiement sécurisé", "✓ Livraison garantie"] },
-  "cta-band": { titre: "Prêt à découvrir ?", texte: "Rejoignez des milliers de clients satisfaits", ctaTexte: "Commencer maintenant", ctaLien: "produits", style: "gradient" },
-  richtext: { titre: "Notre engagement", texte: "Nous sommes passionnés par la qualité et l'authenticité.", ctaTexte: "", ctaLien: "" },
-  spacer: { hauteur: "80px" },
-  tabs: { titre: "Découvrez-en plus", onglets: [{ id: genBlockId("tab"), label: "Photos", blocs: [] }, { id: genBlockId("tab"), label: "Témoignages", blocs: [] }] },
-  columns: { titre: "", nombreColonnes: 3, colonnes: [{ id: genBlockId("col"), blocs: [] }, { id: genBlockId("col"), blocs: [] }, { id: genBlockId("col"), blocs: [] }] },
-  heading: { texte: "Votre titre", niveau: "h2", align: "left" },
-  text: { texte: "Votre texte ici — cliquez pour modifier directement sur le canevas.", align: "left" },
-  image: { url: "", alt: "", lien: "", ratio: "auto" },
-  button: { texte: "En savoir plus", lien: "produits", style: "primary", taille: "md", align: "left" },
-  products: { titre: "Nos produits", nombre: 8, colonnes: 4, tri: "recent" },
-};
-
-export function createDefaultNode(type: BlockNodeType): BlockNode {
-  if (type === "section") return { id: genBlockId("section"), type, children: [] };
-  if (type === "row") return { id: genBlockId("row"), type, children: [] };
-  if (type === "column") return { id: genBlockId("col"), type, children: [] };
-  return { id: genBlockId(type), type, config: JSON.parse(JSON.stringify(DEFAULT_CONFIG[type] || {})) };
-}
 
 // Composition de départ proposée quand le canevas est vide — une section
 // avec une ligne à une colonne, prête à recevoir des blocs.

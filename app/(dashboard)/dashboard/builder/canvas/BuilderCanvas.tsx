@@ -10,6 +10,7 @@ import { BlockStylePanel } from "./BlockStylePanel";
 import { CanvasNode } from "./CanvasNode";
 import { DropIndicator } from "./DropIndicator";
 import { createDefaultNode, createStarterSection, BLOCK_LIBRARY_ITEMS } from "./blockDefaults";
+import { AxiaBuilderPanel } from "./AxiaBuilderPanel";
 
 type Device = "desktop" | "tablet" | "mobile";
 
@@ -18,6 +19,7 @@ interface Props {
   set: (updater: (p: ThemeConfig) => ThemeConfig) => void;
   slug: string;
   device: Device;
+  onSyncWithServer: () => Promise<void>;
 }
 
 // Largeurs miroir de l'aperçu iframe du constructeur classique — même
@@ -33,7 +35,7 @@ const SECTION_PY_MAP: Record<string, string> = { sm: "py-8 sm:py-10", md: "py-12
 // dans le tableau de bord (pas d'iframe, voir décision d'architecture du
 // plan). Bibliothèque à gauche, canevas au centre, panneau de style à
 // droite ; toute mutation passe par lib/block-tree.ts.
-export function BuilderCanvas({ config, set, slug, device }: Props) {
+export function BuilderCanvas({ config, set, slug, device, onSyncWithServer }: Props) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [draggedLabel, setDraggedLabel] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -133,6 +135,8 @@ export function BuilderCanvas({ config, set, slug, device }: Props) {
           onClose={() => setSelectedNodeId(null)}
         />
       )}
+
+      <AxiaBuilderPanel onSyncWithServer={onSyncWithServer} />
 
       <DragOverlay>
         {draggedLabel && (

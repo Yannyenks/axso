@@ -158,15 +158,16 @@ export default function BuilderPage() {
 
   const debounce    = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    fetch("/api/tenants/moi-complet").then(r => r.json()).then(data => {
-      if (data.error) return;
-      setTenant(data);
-      const resolved = resolveThemeConfig(data.themeId, (data.themeConfig as any) || {});
-      setConfig(resolved);
-      setOriginalConfig(resolved);
-    });
+  const refetchTenant = useCallback(async () => {
+    const data = await fetch("/api/tenants/moi-complet").then((r) => r.json());
+    if (data.error) return;
+    setTenant(data);
+    const resolved = resolveThemeConfig(data.themeId, (data.themeConfig as any) || {});
+    setConfig(resolved);
+    setOriginalConfig(resolved);
   }, []);
+
+  useEffect(() => { refetchTenant(); }, [refetchTenant]);
 
   // ─── Sélection visuelle dans l'aperçu (clic direct sur une section) ─────────
   const bindSelection = useCallback((doc: Document) => {
@@ -400,6 +401,15 @@ export default function BuilderPage() {
 
   const hasChanges = config && originalConfig && JSON.stringify(config) !== JSON.stringify(originalConfig);
 
+  // Passé à AXIA (constructeur libre) : sauvegarde d'abord tout changement
+  // local en cours (AXIA écrit directement en base, un changement non
+  // sauvegardé serait sinon écrasé au rechargement), puis recharge après sa
+  // réponse pour que ses changements apparaissent immédiatement.
+  const syncWithServer = async () => {
+    if (hasChanges) await handleSave();
+    await refetchTenant();
+  };
+
   if (!config || !tenant) return (
     <div className="h-screen bg-white flex items-center justify-center">
       <div className="text-center">
@@ -482,7 +492,7 @@ export default function BuilderPage() {
       {/* MAIN */}
       <div className="flex-1 flex overflow-hidden">
         {builderMode === "libre" ? (
-          <BuilderCanvas config={config} set={set} slug={tenant.slug} device={device} />
+          <BuilderCanvas config={config} set={set} slug={tenant.slug} device={device} onSyncWithServer={syncWithServer} />
         ) : (
         <>
         {/* Icon sidebar */}

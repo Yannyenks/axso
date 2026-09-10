@@ -2,6 +2,7 @@
 import { completionAuto, type ChatMessage } from "./llm-client";
 import { FONTS } from "./theme-fonts";
 import { TEMPLATE_META } from "./theme-templates";
+import { BLOCK_CATALOG } from "./block-catalog";
 
 const SYSTEME_PROMPT = `Tu es l'assistant IA d'Axso, la plateforme e-commerce premium de l'Afrique.
 Tu parles français, avec un ton chaleureux et encourageant, comme un vrai conseiller business africain.
@@ -292,4 +293,88 @@ export async function chatAvecIA(
     [{ role: "system", content: SYSTEME_PROMPT }, ...messages],
     1000
   );
+}
+
+// ─── Agent AXIA du constructeur libre ──────────────────────────────────────
+// Traduit une demande en français libre ("mets le titre en plus grand et
+// centré", "ajoute une section avec nos avantages") en une liste d'actions
+// structurées (voir lib/agent-actions.ts) appliquées à l'arbre du
+// constructeur — jamais de génération de JSX/HTML libre : l'agent ne
+// connaît que le catalogue de blocs existants (lib/block-catalog.ts) et les
+// 8 opérations de lib/block-tree.ts, exactement comme un marchand qui
+// utiliserait la souris.
+export interface ReponseAgentConstructeur {
+  actions: any[]; // validé/typé ensuite par lib/agent-actions.ts::validerActions
+  resume: string;
+}
+
+function resumerArbrePourPrompt(tree: any[]): string {
+  // Retire les configs volumineuses (listes d'items/images longues) pour
+  // garder le prompt court — l'agent a besoin des id/type/imbrication pour
+  // cibler ses actions, rarement du contenu détaillé de chaque bloc.
+  const alleger = (n: any): any => ({
+    id: n.id,
+    type: n.type,
+    ...(n.actif === false ? { actif: false } : {}),
+    ...(n.config ? { config: JSON.stringify(n.config).slice(0, 300) } : {}),
+    ...(n.style ? { style: n.style } : {}),
+    ...(n.children?.length ? { children: n.children.map(alleger) } : {}),
+  });
+  return JSON.stringify((tree || []).map(alleger));
+}
+
+export async function agentConstructeurLibre(params: {
+  instruction: string;
+  tree: any[];
+  boutique: { nom: string; categorie: string; couleurs?: { accent?: string; fond?: string; texte?: string } };
+}): Promise<ReponseAgentConstructeur> {
+  const catalogue = BLOCK_CATALOG.map((e) => `- "${e.type}" (${e.categorie === "structure" ? "structurel" : "widget"}) : ${e.champs}`).join("\n");
+
+  const prompt = `Tu es AXIA, l'agent IA intégré au constructeur libre d'Axso. Le marchand te décrit en français ce qu'il veut changer sur sa page, et tu traduis sa demande en une liste d'actions structurées — tu ne génères JAMAIS de HTML/CSS/JS libre, uniquement des actions parmi celles listées ci-dessous, portant sur les types de blocs du catalogue.
+
+BOUTIQUE : ${params.boutique.nom} (${params.boutique.categorie})${params.boutique.couleurs ? ` — couleurs actuelles : accent ${params.boutique.couleurs.accent}, fond ${params.boutique.couleurs.fond}, texte ${params.boutique.couleurs.texte}` : ""}
+
+RÈGLE D'IMBRICATION (stricte) : section → ligne (row) → colonne (column) → widget. Une colonne peut aussi contenir une autre ligne (imbrication). Un widget ne va jamais directement dans une section ou une ligne.
+
+CATALOGUE DES TYPES DE BLOCS (uniquement ceux-ci, aucun autre) :
+${catalogue}
+
+ARBRE ACTUEL DE LA PAGE (id/type/config résumé/style/enfants) :
+${resumerArbrePourPrompt(params.tree)}
+
+ACTIONS DISPONIBLES — réponds avec un tableau d'actions parmi EXACTEMENT ces formes :
+1. {"op":"insert","parentId":"<id existant ou null pour la racine>","index":<position>,"node":{"type":"...","config":{...},"style":{...},"children":[...même forme récursive...]}}
+   → Pour ajouter du contenu neuf. "node" peut décrire toute une sous-arborescence (ex: section avec une ligne à 2 colonnes) en une seule action, avec des enfants imbriqués — tu ne peux pas connaître les id générés donc ne construis JAMAIS plusieurs actions "insert" qui dépendent les unes des autres, mets tout dans un seul "node" avec "children".
+2. {"op":"move","nodeId":"<id>","newParentId":"<id ou null>","newIndex":<position>} → déplacer/réordonner un bloc existant.
+3. {"op":"remove","nodeId":"<id>"} → supprimer un bloc.
+4. {"op":"duplicate","nodeId":"<id>"} → dupliquer un bloc.
+5. {"op":"updateStyle","nodeId":"<id>","style":{"spacing":{...},"background":{...},"typography":{...},"border":{...},"width":"...","customClass":"..."}} → changer l'apparence desktop (couleur de fond, padding, taille de texte, alignement, largeur de colonne...). Ne renvoie que les champs à changer.
+6. {"op":"updateResponsiveStyle","nodeId":"<id>","breakpoint":"tablet"|"mobile","style":{...même forme que style...}} → changer l'apparence UNIQUEMENT sur tablette ou mobile (le marchand a explicitement demandé "sur mobile"/"sur tablette").
+7. {"op":"updateConfig","nodeId":"<id>","config":{...champs du type concerné...}} → changer le CONTENU d'un widget (texte, titre, items, lien du bouton...). Ne renvoie que les champs à changer.
+8. {"op":"toggleActif","nodeId":"<id>"} → afficher/masquer un bloc.
+
+RÈGLES :
+- Cible toujours des "nodeId" qui existent réellement dans l'arbre actuel ci-dessus — jamais un id inventé.
+- Pour "products", ne mets JAMAIS de faux produits dans "config" : les vrais produits de la boutique s'affichent automatiquement.
+- Les couleurs sont des hex (#RRGGBB). Les espacements/tailles sont du CSS (ex "24px", "2rem", "50%").
+- "ctaLien"/"lien" sont des chemins relatifs de la boutique (ex "produits", "a-propos", "contact"), jamais une URL complète.
+- Si la demande est ambiguë ou déjà satisfaite, renvoie un tableau d'actions vide plutôt que d'inventer un changement non demandé.
+- Reste dans la limite de ~15 actions par réponse.
+
+Réponds UNIQUEMENT en JSON strict, cette forme exacte :
+{"actions":[...],"resume":"une phrase courte en français expliquant ce que tu as fait, au passé, pour le marchand"}
+
+DEMANDE DU MARCHAND : "${params.instruction}"`;
+
+  try {
+    const texte = await completion([{ role: "system", content: SYSTEME_PROMPT }, { role: "user", content: prompt }], 3000);
+    const json = texte.match(/\{[\s\S]*\}/)?.[0];
+    const parsed = JSON.parse(json || "{}");
+    return {
+      actions: Array.isArray(parsed.actions) ? parsed.actions : [],
+      resume: typeof parsed.resume === "string" ? parsed.resume : "C'est fait.",
+    };
+  } catch {
+    return { actions: [], resume: "Désolé, je n'ai pas réussi à traiter cette demande — reformule ou essaie une action plus simple." };
+  }
 }
