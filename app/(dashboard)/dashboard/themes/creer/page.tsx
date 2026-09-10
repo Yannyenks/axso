@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Save, Monitor, Tablet, Smartphone,
   Palette, Type, Layout, Sparkles, Eye, RefreshCw,
-  Upload, FileCode, Loader2, Wand2,
+  Upload, FileCode, Loader2, Wand2, Maximize2, Minimize2,
 } from "lucide-react";
 import { resolveThemeConfig, type ThemeConfig } from "@/lib/theme-config";
 import { PRINCIPAL_THEME_IDS, TEMPLATE_META } from "@/lib/theme-templates";
@@ -66,6 +66,7 @@ export default function CreerThemePage() {
   const [config, setConfig] = useState<ThemeConfig>(() => resolveThemeConfig(baseId));
   const [panel, setPanel] = useState<Panel>("couleurs");
   const [device, setDevice] = useState<Device>("desktop");
+  const [isFullscreen, setIsFullscreen] = useState(true);
   const [saving, setSaving] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const [tenant, setTenant] = useState<any>(null);
@@ -213,7 +214,7 @@ export default function CreerThemePage() {
   const deviceWidth = device === "desktop" ? "100%" : device === "tablet" ? "768px" : "390px";
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden -m-6">
+    <div className={`flex flex-col bg-gray-50 overflow-hidden ${isFullscreen ? "fixed inset-0 z-[9999]" : "h-screen -m-6"}`}>
       {/* Header */}
       <header className="h-14 flex items-center justify-between px-4 bg-white border-b border-gray-200 flex-shrink-0 gap-3 z-10">
         <div className="flex items-center gap-3 min-w-0">
@@ -241,6 +242,11 @@ export default function CreerThemePage() {
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
+          <button onClick={() => setIsFullscreen((v) => !v)}
+            title={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
+            className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all ${isFullscreen ? "border-[#F5A623]/50 bg-[#F5A623]/15 text-[#F5A623]" : "border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}>
+            {isFullscreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+          </button>
           <button onClick={() => setIframeKey((k) => k + 1)}
             className="flex items-center gap-1.5 text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:border-gray-300 transition-all">
             <RefreshCw size={11} /> Actualiser
