@@ -102,10 +102,17 @@ export default async function StorefrontPage({ params }: Props) {
 
   if (cfg.builderTree?.length) {
     return (
-      <BlockTreeRenderer
-        nodes={cfg.builderTree}
-        ctx={{ slug, colors: c, container: CONTAINER, sectionPy: SECTION_PY, tenantId: tenant.id, editable: false }}
-      />
+      // container-type:inline-size — les surcharges responsives (vague 3)
+      // sont des @container, pas des @media : ce wrapper fait toute la
+      // largeur de la page ici (≈ @media classique), mais le MÊME CSS
+      // fonctionne aussi dans l'aperçu rétréci du canevas du tableau de
+      // bord (voir components/storefront/blocks/styleUtils.ts).
+      <div style={{ containerType: "inline-size" }}>
+        <BlockTreeRenderer
+          nodes={cfg.builderTree}
+          ctx={{ slug, colors: c, container: CONTAINER, sectionPy: SECTION_PY, tenantId: tenant.id, editable: false }}
+        />
+      </div>
     );
   }
 

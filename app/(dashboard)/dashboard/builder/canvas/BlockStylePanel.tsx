@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Trash2, X } from "lucide-react";
+import { Copy, Trash2, X, Monitor, Tablet, Smartphone } from "lucide-react";
 import type { BlockNode, BlockStyleOverrides } from "@/lib/theme-config";
 
 type Tab = "contenu" | "style" | "avance";
+type Device = "desktop" | "tablet" | "mobile";
+
+const DEVICE_LABEL: Record<Device, string> = { desktop: "Desktop", tablet: "Tablette", mobile: "Mobile" };
 
 const LABELS: Record<string, string> = {
   section: "Section", row: "Ligne", column: "Colonne",
@@ -35,17 +38,30 @@ const CHAMPS_ENUM: Record<string, Array<{ value: string; label: string }>> = {
 
 interface Props {
   node: BlockNode;
+  device: Device;
   onChangeStyle: (patch: Partial<BlockStyleOverrides>) => void;
+  onChangeResponsiveStyle: (breakpoint: "tablet" | "mobile", patch: Partial<BlockStyleOverrides>) => void;
   onChangeConfig: (patch: Record<string, any>) => void;
   onDuplicate: () => void;
   onDelete: () => void;
   onClose: () => void;
 }
 
-export function BlockStylePanel({ node, onChangeStyle, onChangeConfig, onDuplicate, onDelete, onClose }: Props) {
+export function BlockStylePanel({ node, device, onChangeStyle, onChangeResponsiveStyle, onChangeConfig, onDuplicate, onDelete, onClose }: Props) {
   const [tab, setTab] = useState<Tab>(node.type === "section" || node.type === "row" || node.type === "column" ? "style" : "contenu");
   const estConteneur = node.type === "section" || node.type === "row" || node.type === "column";
   const style = node.style || {};
+  const visibility = style.visibility || {};
+
+  // Vague 3 — le panneau Style édite toujours l'appareil actuellement
+  // affiché dans le canevas (barre d'outils Desktop/Tablette/Mobile déjà
+  // existante) : en Desktop on modifie node.style directement (la base),
+  // en Tablette/Mobile on modifie une surcharge qui hérite du reste.
+  const styleAppareil: BlockStyleOverrides = device === "desktop" ? style : (style.responsive?.[device] ?? {});
+  const handleStyleChange = (patch: Partial<BlockStyleOverrides>) => {
+    if (device === "desktop") onChangeStyle(patch);
+    else onChangeResponsiveStyle(device, patch);
+  };
 
   return (
     <div className="w-[300px] flex-shrink-0 bg-white border-l border-gray-200 flex flex-col overflow-hidden">
@@ -67,12 +83,38 @@ export function BlockStylePanel({ node, onChangeStyle, onChangeConfig, onDuplica
 
       <div className="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-4">
         {tab === "contenu" && !estConteneur && <ContentEditor nodeType={node.type} config={node.config || {}} onChange={onChangeConfig} />}
-        {tab === "style" && <StyleEditor style={style} onChange={onChangeStyle} />}
+        {tab === "style" && (
+          <>
+            {device !== "desktop" && (
+              <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1.5">
+                Modification pour <strong>{DEVICE_LABEL[device]}</strong> uniquement — hérite du style Desktop pour tout ce qui n'est pas changé ici. Bascule l'aperçu en Desktop pour éditer le style de base.
+              </p>
+            )}
+            <StyleEditor style={styleAppareil} onChange={handleStyleChange} />
+          </>
+        )}
         {tab === "avance" && (
           <div className="space-y-3">
             <Field label="Classe CSS personnalisée">
               <input type="text" value={style.customClass || ""} onChange={(e) => onChangeStyle({ customClass: e.target.value })}
                 className="w-full px-2 py-1.5 text-xs rounded-md border border-gray-200 focus:border-[#F5A623] outline-none" placeholder="ma-classe" />
+            </Field>
+            <Field label="Visibilité par appareil">
+              <div className="flex gap-1.5">
+                {([["desktop", Monitor], ["tablet", Tablet], ["mobile", Smartphone]] as [keyof typeof visibility, any][]).map(([bp, Icon]) => {
+                  const visible = visibility[bp] !== false;
+                  return (
+                    <button
+                      key={bp}
+                      onClick={() => onChangeStyle({ visibility: { ...visibility, [bp]: !visible } })}
+                      title={visible ? `Visible sur ${DEVICE_LABEL[bp as Device]} — clique pour masquer` : `Masqué sur ${DEVICE_LABEL[bp as Device]} — clique pour afficher`}
+                      className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md border text-[10px] font-medium transition-colors ${visible ? "border-gray-200 text-gray-600 hover:border-gray-300" : "border-red-200 bg-red-50 text-red-500"}`}
+                    >
+                      <Icon size={12} />
+                    </button>
+                  );
+                })}
+              </div>
             </Field>
             <div className="flex gap-2 pt-2">
               <button onClick={onDuplicate} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:border-gray-300">

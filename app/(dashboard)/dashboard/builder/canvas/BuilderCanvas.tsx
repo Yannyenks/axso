@@ -4,18 +4,28 @@ import { useMemo, useState } from "react";
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestCenter, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { Sparkles } from "lucide-react";
 import type { ThemeConfig, BlockNode, BlockStyleOverrides } from "@/lib/theme-config";
-import { insertNode, moveNode, removeNode, duplicateNode, updateNodeStyle, updateNodeConfig, toggleNodeActif, findNode } from "@/lib/block-tree";
+import { insertNode, moveNode, removeNode, duplicateNode, updateNodeStyle, updateNodeResponsiveStyle, updateNodeConfig, toggleNodeActif, findNode } from "@/lib/block-tree";
 import { BlockLibraryPanel } from "./BlockLibraryPanel";
 import { BlockStylePanel } from "./BlockStylePanel";
 import { CanvasNode } from "./CanvasNode";
 import { DropIndicator } from "./DropIndicator";
 import { createDefaultNode, createStarterSection, BLOCK_LIBRARY_ITEMS } from "./blockDefaults";
 
+type Device = "desktop" | "tablet" | "mobile";
+
 interface Props {
   config: ThemeConfig;
   set: (updater: (p: ThemeConfig) => ThemeConfig) => void;
   slug: string;
+  device: Device;
 }
+
+// Largeurs miroir de l'aperçu iframe du constructeur classique — même
+// convention visuelle pour les deux modes. container-type:inline-size fait
+// de cette boîte le point de référence des @container émis par
+// blockResponsiveCss (vague 3) : la rétrécir ici suffit à activer en direct
+// les surcharges tablette/mobile, sans iframe ni détection d'appareil.
+const DEVICE_WIDTH: Record<Device, string> = { desktop: "100%", tablet: "768px", mobile: "390px" };
 
 const SECTION_PY_MAP: Record<string, string> = { sm: "py-8 sm:py-10", md: "py-12 sm:py-16", lg: "py-16 sm:py-20", xl: "py-20 sm:py-28" };
 
@@ -23,7 +33,7 @@ const SECTION_PY_MAP: Record<string, string> = { sm: "py-8 sm:py-10", md: "py-12
 // dans le tableau de bord (pas d'iframe, voir décision d'architecture du
 // plan). Bibliothèque à gauche, canevas au centre, panneau de style à
 // droite ; toute mutation passe par lib/block-tree.ts.
-export function BuilderCanvas({ config, set, slug }: Props) {
+export function BuilderCanvas({ config, set, slug, device }: Props) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [draggedLabel, setDraggedLabel] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -68,10 +78,14 @@ export function BuilderCanvas({ config, set, slug }: Props) {
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <BlockLibraryPanel />
+      <BlockLibraryPanel onInsertTemplate={(templateNode) => { setTree((t) => insertNode(t, null, t.length, templateNode)); setSelectedNodeId(templateNode.id); }} />
 
       <div className="flex-1 bg-[#EEF0F6] overflow-y-auto scrollbar-thin p-6" onClick={() => setSelectedNodeId(null)}>
-        <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-sm min-h-[70vh] overflow-hidden" style={{ backgroundColor: config.colors.fond, color: config.colors.texte }} onClick={(e) => e.stopPropagation()}>
+        <div
+          className="mx-auto bg-white rounded-xl shadow-sm min-h-[70vh] overflow-hidden transition-all duration-300"
+          style={{ backgroundColor: config.colors.fond, color: config.colors.texte, width: DEVICE_WIDTH[device], maxWidth: "100%", containerType: "inline-size" }}
+          onClick={(e) => e.stopPropagation()}
+        >
           {tree.length === 0 ? (
             <div className="p-10 flex flex-col items-center gap-4">
               <DropIndicator parentId={null} index={0} empty />
@@ -97,6 +111,7 @@ export function BuilderCanvas({ config, set, slug }: Props) {
                     onDelete={(id) => { setTree((t) => removeNode(t, id)); setSelectedNodeId((cur) => (cur === id ? null : cur)); }}
                     onToggleActif={(id) => setTree((t) => toggleNodeActif(t, id))}
                     onChangeConfig={(id, patch) => setTree((t) => updateNodeConfig(t, id, patch))}
+                    onResizeColumns={(leftId, rightId, leftPct, rightPct) => setTree((t) => updateNodeStyle(updateNodeStyle(t, leftId, { width: `${leftPct}%` }), rightId, { width: `${rightPct}%` }))}
                   />
                   <DropIndicator parentId={null} index={i + 1} />
                 </div>
@@ -109,7 +124,9 @@ export function BuilderCanvas({ config, set, slug }: Props) {
       {selectedNode && (
         <BlockStylePanel
           node={selectedNode}
+          device={device}
           onChangeStyle={(patch) => setTree((t) => updateNodeStyle(t, selectedNode.id, patch))}
+          onChangeResponsiveStyle={(breakpoint, patch) => setTree((t) => updateNodeResponsiveStyle(t, selectedNode.id, breakpoint, patch))}
           onChangeConfig={(patch) => setTree((t) => updateNodeConfig(t, selectedNode.id, patch))}
           onDuplicate={() => setTree((t) => duplicateNode(t, selectedNode.id))}
           onDelete={() => { setTree((t) => removeNode(t, selectedNode.id)); setSelectedNodeId(null); }}

@@ -6,6 +6,7 @@ import { SectionContainer } from "./containers/SectionContainer";
 import { RowContainer } from "./containers/RowContainer";
 import { ColumnContainer } from "./containers/ColumnContainer";
 import { ProductsBlock } from "./widgets/ProductsBlock";
+import { ResponsiveStyleTag } from "./ResponsiveStyleTag";
 
 // Rendu récursif de l'arbre du constructeur libre, SSR uniquement — rendu
 // côté storefront public (app/(storefront)/[slug]/page.tsx, ctx.editable
@@ -24,6 +25,7 @@ export function BlockTreeRenderer({ nodes, ctx }: { nodes: BlockNode[]; ctx: Tre
         if (node.type === "products") {
           return (
             <div key={node.id} data-axs-id={node.id} style={blockStyleToCss(node.style)} className={node.style?.customClass || ""}>
+              <ResponsiveStyleTag nodeId={node.id} style={node.style} />
               <ProductsBlock id={node.id} config={node.config ?? {}} colors={ctx.colors} slug={ctx.slug} container={ctx.container} sectionPy={ctx.sectionPy} tenantId={ctx.tenantId} />
             </div>
           );
@@ -40,6 +42,7 @@ export function BlockTreeRenderer({ nodes, ctx }: { nodes: BlockNode[]; ctx: Tre
             className={[node.style?.customClass, selectionne ? "ax-libre-selected" : "", ctx.editable ? "ax-libre-hoverable" : ""].filter(Boolean).join(" ")}
             onClick={ctx.editable ? (e) => { e.stopPropagation(); ctx.onSelect?.(node.id); } : undefined}
           >
+            <ResponsiveStyleTag nodeId={node.id} style={node.style} />
             <Widget id={node.id} config={node.config ?? {}} colors={ctx.colors} slug={ctx.slug} container={ctx.container} sectionPy={ctx.sectionPy} tenantId={ctx.tenantId} />
           </div>
         );

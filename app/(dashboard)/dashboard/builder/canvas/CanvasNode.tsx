@@ -5,8 +5,10 @@ import { GripVertical, Copy, Trash2, EyeOff, Eye, Package } from "lucide-react";
 import type { BlockNode } from "@/lib/theme-config";
 import { BLOCK_REGISTRY } from "@/components/storefront/blocks/registry";
 import { blockStyleToCss } from "@/components/storefront/blocks/styleUtils";
+import { ResponsiveStyleTag } from "@/components/storefront/blocks/ResponsiveStyleTag";
 import type { TreeRenderCtx } from "@/components/storefront/blocks/context";
 import { DropIndicator } from "./DropIndicator";
+import { ColumnResizeHandle } from "./ColumnResizeHandle";
 
 const LABELS: Record<string, string> = {
   section: "Section", row: "Ligne", column: "Colonne",
@@ -54,6 +56,7 @@ interface CanvasNodeProps {
   onDelete: (id: string) => void;
   onToggleActif: (id: string) => void;
   onChangeConfig: (id: string, patch: Record<string, any>) => void;
+  onResizeColumns: (leftId: string, rightId: string, leftPct: number, rightPct: number) => void;
 }
 
 // Rendu récursif du canevas — variante « éditeur » des conteneurs
@@ -62,7 +65,7 @@ interface CanvasNodeProps {
 // d'outils au survol. Volontairement un fichier séparé plutôt qu'une
 // extension des conteneurs partagés : ceux-ci restent de purs composants
 // serveur, sans hooks, réutilisables tels quels par le SSR storefront.
-export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDuplicate, onDelete, onToggleActif, onChangeConfig }: CanvasNodeProps) {
+export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDuplicate, onDelete, onToggleActif, onChangeConfig, onResizeColumns }: CanvasNodeProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `node:${node.id}`,
     data: { kind: "node", nodeId: node.id, currentParentId: parentId, type: node.type },
@@ -117,6 +120,7 @@ export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDu
     const flexClass = node.type === "row" ? "flex flex-col sm:flex-row gap-6" : node.type === "column" ? "flex-1 flex flex-col gap-4 min-w-0" : "";
     return (
       <Tag ref={setNodeRef as any} data-axs-id={node.id} onClick={handleClick} style={blockStyleToCss(node.style)} className={`${baseClass} ${flexClass} ${node.style?.customClass || ""} ${children.length === 0 ? "min-h-[64px] p-2" : ""}`}>
+        <ResponsiveStyleTag nodeId={node.id} style={node.style} />
         {label}
         {toolbar}
         {children.length === 0 ? (
@@ -125,9 +129,14 @@ export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDu
           <>
             <DropIndicator parentId={node.id} index={0} />
             {children.map((child, i) => (
-              <div key={child.id}>
-                <CanvasNode node={child} parentId={node.id} ctx={ctx} selectedNodeId={selectedNodeId} onSelect={onSelect} onDuplicate={onDuplicate} onDelete={onDelete} onToggleActif={onToggleActif} onChangeConfig={onChangeConfig} />
-                <DropIndicator parentId={node.id} index={i + 1} />
+              <div key={child.id} className="contents">
+                <div>
+                  <CanvasNode node={child} parentId={node.id} ctx={ctx} selectedNodeId={selectedNodeId} onSelect={onSelect} onDuplicate={onDuplicate} onDelete={onDelete} onToggleActif={onToggleActif} onChangeConfig={onChangeConfig} onResizeColumns={onResizeColumns} />
+                  <DropIndicator parentId={node.id} index={i + 1} />
+                </div>
+                {node.type === "row" && i < children.length - 1 && (
+                  <ColumnResizeHandle leftId={child.id} rightId={children[i + 1].id} onResize={(l, r) => onResizeColumns(child.id, children[i + 1].id, l, r)} />
+                )}
               </div>
             ))}
           </>
@@ -139,6 +148,7 @@ export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDu
   if (node.type === "products") {
     return (
       <div ref={setNodeRef} data-axs-id={node.id} onClick={handleClick} style={blockStyleToCss(node.style)} className={`${baseClass} ${node.style?.customClass || ""}`}>
+        <ResponsiveStyleTag nodeId={node.id} style={node.style} />
         {label}
         {toolbar}
         <ProductsCanvasPreview config={node.config ?? {}} />
@@ -151,6 +161,7 @@ export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDu
   const editableInline = TYPES_EDITABLE_INLINE.has(node.type);
   return (
     <div ref={setNodeRef} data-axs-id={node.id} onClick={handleClick} style={blockStyleToCss(node.style)} className={`${baseClass} ${node.style?.customClass || ""}`}>
+      <ResponsiveStyleTag nodeId={node.id} style={node.style} />
       {label}
       {toolbar}
       <div className={editableInline ? "" : "pointer-events-none"}>

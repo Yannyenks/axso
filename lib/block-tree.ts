@@ -183,6 +183,23 @@ export function updateNodeStyle(tree: BlockNode[], nodeId: string, patch: Partia
   return arbre;
 }
 
+// Vague 3 — même principe que updateNodeStyle mais pour une surcharge
+// tablette/mobile (node.style.responsive.<breakpoint>), fusionnée en
+// épargnant les autres champs déjà définis pour cet appareil.
+export function updateNodeResponsiveStyle(
+  tree: BlockNode[],
+  nodeId: string,
+  breakpoint: "tablet" | "mobile",
+  patch: Partial<BlockStyleOverrides>
+): BlockNode[] {
+  const arbre = cloneProfond(tree);
+  const node = findNode(arbre, nodeId);
+  if (!node) return tree;
+  const responsive = node.style?.responsive || {};
+  node.style = { ...node.style, responsive: { ...responsive, [breakpoint]: { ...responsive[breakpoint], ...patch } } };
+  return arbre;
+}
+
 export function updateNodeConfig(tree: BlockNode[], nodeId: string, patch: Record<string, any>): BlockNode[] {
   const arbre = cloneProfond(tree);
   const node = findNode(arbre, nodeId);

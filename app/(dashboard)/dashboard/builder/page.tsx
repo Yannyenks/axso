@@ -482,7 +482,7 @@ export default function BuilderPage() {
       {/* MAIN */}
       <div className="flex-1 flex overflow-hidden">
         {builderMode === "libre" ? (
-          <BuilderCanvas config={config} set={set} slug={tenant.slug} />
+          <BuilderCanvas config={config} set={set} slug={tenant.slug} device={device} />
         ) : (
         <>
         {/* Icon sidebar */}

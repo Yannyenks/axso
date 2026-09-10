@@ -1,7 +1,7 @@
 import {
   LayoutGrid, Rows3, Columns3, Zap, BarChart3, Timer, Building2, Video,
   Image as ImageIcon, Star, Target, FileText, ArrowUpDown, LayoutTemplate, LucideIcon,
-  Heading, Type, MousePointerClick, ShoppingBag,
+  Heading, Type, MousePointerClick, ShoppingBag, Layers,
 } from "lucide-react";
 import type { BlockNode, BlockNodeType } from "@/lib/theme-config";
 import { genBlockId } from "@/lib/block-tree";
@@ -69,3 +69,79 @@ export function createStarterSection(): BlockNode {
     children: [{ id: genBlockId("row"), type: "row", children: [{ id: genBlockId("col"), type: "column", children: [] }] }],
   };
 }
+
+function colonne(children: BlockNode[], style?: BlockNode["style"]): BlockNode {
+  return { id: genBlockId("col"), type: "column", children, style };
+}
+function ligne(children: BlockNode[]): BlockNode {
+  return { id: genBlockId("row"), type: "row", children };
+}
+function section(children: BlockNode[]): BlockNode {
+  return { id: genBlockId("section"), type: "section", children };
+}
+function widget(type: BlockNodeType, config: Record<string, any>): BlockNode {
+  return { id: genBlockId(type), type, config };
+}
+
+// Petite bibliothèque de modèles de départ (vague 3) — des sections déjà
+// composées avec un contenu réaliste, à insérer d'un clic (pas de
+// glisser-déposer : ce sont des sous-arbres entiers, pas un seul bloc). Le
+// marchand personnalise ensuite le texte/style comme n'importe quel bloc.
+export const STARTER_TEMPLATES: Array<{ id: string; label: string; Icon: LucideIcon; desc: string; build: () => BlockNode }> = [
+  {
+    id: "hero-centre",
+    label: "Hero centré",
+    Icon: Layers,
+    desc: "Grand titre, texte et bouton, centrés",
+    build: () => section([
+      ligne([colonne([
+        widget("heading", { texte: "Une boutique pensée pour vous", niveau: "h1", align: "center" }),
+        widget("text", { texte: "Décrivez ici ce qui rend votre boutique unique, en une ou deux phrases.", align: "center" }),
+        widget("button", { texte: "Découvrir la boutique", lien: "produits", style: "primary", taille: "lg", align: "center" }),
+      ])]),
+    ]),
+  },
+  {
+    id: "texte-image",
+    label: "Texte + Image",
+    Icon: ImageIcon,
+    desc: "Deux colonnes : présentation à gauche, image à droite",
+    build: () => section([
+      ligne([
+        colonne([
+          widget("heading", { texte: "Notre histoire", niveau: "h2", align: "left" }),
+          widget("text", { texte: "Racontez votre histoire, vos valeurs, ce qui vous distingue.", align: "left" }),
+          widget("button", { texte: "En savoir plus", lien: "a-propos", style: "outline", taille: "md", align: "left" }),
+        ], { width: "50%" }),
+        colonne([widget("image", { url: "", alt: "", ratio: "square" })], { width: "50%" }),
+      ]),
+    ]),
+  },
+  {
+    id: "grille-avantages",
+    label: "Grille 3 avantages",
+    Icon: Zap,
+    desc: "Trois points forts avec icône et texte",
+    build: () => section([ligne([colonne([widget("features", { titre: "Pourquoi nous choisir", items: [
+      { icone: "🚚", titre: "Livraison rapide", texte: "Expédition sous 48h" },
+      { icone: "🔒", titre: "Paiement sécurisé", texte: "Transactions protégées" },
+      { icone: "💬", titre: "Support réactif", texte: "Une question ? On répond vite" },
+    ], colonnes: 3 })])])]),
+  },
+  {
+    id: "bandeau-cta",
+    label: "Bandeau CTA",
+    Icon: Target,
+    desc: "Bandeau pleine largeur avec appel à l'action",
+    build: () => section([ligne([colonne([widget("cta-band", {
+      titre: "Prêt à commander ?", texte: "Rejoignez nos clients satisfaits dès aujourd'hui", ctaTexte: "Voir les produits", ctaLien: "produits", style: "gradient",
+    })])])]),
+  },
+  {
+    id: "galerie-produits",
+    label: "Galerie de produits",
+    Icon: ShoppingBag,
+    desc: "Grille de vos produits, prête à afficher",
+    build: () => section([ligne([colonne([widget("products", { titre: "Nos produits", nombre: 8, colonnes: 4, tri: "recent" })])])]),
+  },
+];

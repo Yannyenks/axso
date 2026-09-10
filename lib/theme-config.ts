@@ -265,6 +265,15 @@ export interface BlockStyleOverrides {
   visibility?: { desktop?: boolean; tablet?: boolean; mobile?: boolean };
   width?: string;
   customClass?: string;
+  // Vague 3 — surcharges par appareil (branché sur le sélecteur Device déjà
+  // existant du constructeur). Chaque appareil ne redéfinit que les champs
+  // qu'il change ; tout champ absent hérite de la valeur desktop ci-dessus.
+  // Appliqué via de vraies media queries CSS (voir styleUtils.ts) — jamais
+  // en JS, un style inline ne peut pas réagir à la taille d'écran.
+  responsive?: {
+    tablet?: Omit<BlockStyleOverrides, "responsive" | "customClass" | "visibility">;
+    mobile?: Omit<BlockStyleOverrides, "responsive" | "customClass" | "visibility">;
+  };
 }
 
 export interface BlockNode {
