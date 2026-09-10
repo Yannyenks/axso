@@ -1,5 +1,7 @@
 // Client IA — Axso tourne exclusivement sur Google Gemini (SDK officiel @google/genai)
 import { completionAuto, type ChatMessage } from "./llm-client";
+import { FONTS } from "./theme-fonts";
+import { TEMPLATE_META } from "./theme-templates";
 
 const SYSTEME_PROMPT = `Tu es l'assistant IA d'Axso, la plateforme e-commerce premium de l'Afrique.
 Tu parles français, avec un ton chaleureux et encourageant, comme un vrai conseiller business africain.
@@ -160,6 +162,79 @@ Réponds uniquement en JSON : [{"note":5,"titre":"...","commentaire":"...","clie
       { note: 5, titre: "Excellent service", commentaire: "Livraison rapide et bon accueil. Je repasserai commande.", clientNom: "Kwame O." },
       { note: 4, titre: "Bonne expérience", commentaire: "Produit de qualité, un peu de retard à la livraison mais rien de grave.", clientNom: "Fatou S." },
     ];
+  }
+}
+
+// ─── Import de template — extraction de style (jamais d'exécution du fichier) ──
+// Analyse un fichier HTML envoyé par le marchand pour en extraire l'identité
+// visuelle (couleurs, polices, ambiance) et le thème premium existant dont la
+// structure se rapproche le plus. Le fichier lui-même n'est jamais rendu ni
+// exécuté — seul ce résumé JSON sert à construire un ThemeConfig normal
+// (voir app/api/themes/importer/route.ts), rendu par les composants AXSO.
+export interface AnalyseTemplateImporte {
+  couleurs: { fond?: string; accent?: string; texte?: string; surface?: string };
+  polices: { titre?: string; corps?: string };
+  ambiance: string[];
+  rayonAngles: "anguleux" | "arrondi";
+  styleBouton: "filled" | "outlined" | "pill";
+  familleProche: string;
+}
+
+const FALLBACK_ANALYSE: AnalyseTemplateImporte = {
+  couleurs: {},
+  polices: {},
+  ambiance: ["moderne"],
+  rayonAngles: "anguleux",
+  styleBouton: "filled",
+  familleProche: "terre-et-or",
+};
+
+export async function analyserTemplateImporte(html: string): Promise<AnalyseTemplateImporte> {
+  const fontIds = FONTS.map((f) => f.v).join(", ");
+  const familleIds = Object.keys(TEMPLATE_META).join(", ");
+  try {
+    const texte = await completion(
+      [
+        { role: "system", content: SYSTEME_PROMPT },
+        {
+          role: "user",
+          content: `Voici le code HTML/CSS d'un site que le marchand souhaite utiliser comme inspiration visuelle pour sa boutique AXSO. Analyse UNIQUEMENT son style (couleurs, polices, ambiance) — n'exécute ni ne reproduis son code, ne cite aucun texte du site.
+
+Réponds uniquement en JSON strict avec cette forme exacte :
+{
+  "couleurs": {"fond":"#RRGGBB","accent":"#RRGGBB","texte":"#RRGGBB","surface":"#RRGGBB"},
+  "polices": {"titre":"<un id parmi: ${fontIds}>","corps":"<un id parmi: ${fontIds}>"},
+  "ambiance": ["adjectif1","adjectif2"],
+  "rayonAngles": "anguleux" ou "arrondi",
+  "styleBouton": "filled" ou "outlined" ou "pill",
+  "familleProche": "<l'id parmi: ${familleIds} dont la structure ressemble le plus à ce site>"
+}
+
+Règles :
+- Les couleurs doivent être des hex à 6 chiffres tirés réellement des variables CSS du fichier (:root, --bg, --ink, --accent, etc.) — n'invente pas de couleurs si tu n'en trouves pas.
+- "polices" doit être choisi STRICTEMENT dans la liste donnée, jamais un nom de police libre.
+- "familleProche" doit être choisi STRICTEMENT dans la liste donnée.
+
+Fichier à analyser :
+\`\`\`html
+${html.slice(0, 60000)}
+\`\`\``,
+        },
+      ],
+      700
+    );
+    const json = texte.match(/\{[\s\S]*\}/)?.[0];
+    const parsed = JSON.parse(json || "{}");
+    return {
+      couleurs: typeof parsed.couleurs === "object" && parsed.couleurs ? parsed.couleurs : {},
+      polices: typeof parsed.polices === "object" && parsed.polices ? parsed.polices : {},
+      ambiance: Array.isArray(parsed.ambiance) ? parsed.ambiance.slice(0, 6) : FALLBACK_ANALYSE.ambiance,
+      rayonAngles: parsed.rayonAngles === "arrondi" ? "arrondi" : "anguleux",
+      styleBouton: ["filled", "outlined", "pill"].includes(parsed.styleBouton) ? parsed.styleBouton : "filled",
+      familleProche: typeof parsed.familleProche === "string" ? parsed.familleProche : FALLBACK_ANALYSE.familleProche,
+    };
+  } catch {
+    return FALLBACK_ANALYSE;
   }
 }
 

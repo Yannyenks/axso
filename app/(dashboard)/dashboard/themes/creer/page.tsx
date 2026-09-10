@@ -5,12 +5,14 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Save, Monitor, Tablet, Smartphone,
   Palette, Type, Layout, Sparkles, Eye, RefreshCw,
+  Upload, FileCode, Loader2, Wand2,
 } from "lucide-react";
 import { resolveThemeConfig, type ThemeConfig } from "@/lib/theme-config";
 import { PRINCIPAL_THEME_IDS, TEMPLATE_META } from "@/lib/theme-templates";
 
 type Device = "desktop" | "tablet" | "mobile";
 type Panel = "couleurs" | "typographie" | "sections" | "effets";
+type Mode = "base" | "import";
 
 const EFFETS = [
   { id: "", label: "Aucun" },
@@ -69,6 +71,43 @@ export default function CreerThemePage() {
   const [tenant, setTenant] = useState<any>(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const debounceRef = useRef<any>(null);
+
+  // ─── Import de template — extraction de style par l'IA ────────────────────
+  const [mode, setMode] = useState<Mode>("base");
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+
+  async function importerDepuisFichier() {
+    if (!importFile) { toast.error("Choisissez un fichier .html à analyser"); return; }
+    setImporting(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", importFile);
+      const upRes = await fetch("/api/upload", { method: "POST", body: fd });
+      const upData = await upRes.json();
+      if (!upRes.ok) throw new Error(upData.error || "Échec de l'envoi du fichier");
+
+      const res = await fetch("/api/themes/importer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: upData.url }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Échec de l'analyse du fichier");
+
+      await fetch("/api/tenants", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ themeId: data.theme.id }),
+      });
+      toast.success("Thème créé à partir de votre design !");
+      router.push("/dashboard/themes");
+    } catch (e: any) {
+      toast.error(e?.message || "Erreur lors de l'import");
+    } finally {
+      setImporting(false);
+    }
+  }
 
   useEffect(() => {
     fetch("/api/tenants/moi").then((r) => r.json()).then((d) => {
@@ -214,6 +253,52 @@ export default function CreerThemePage() {
         </div>
       </header>
 
+      {/* Mode : partir d'un thème existant, ou importer son propre design */}
+      <div className="flex items-center gap-1 px-4 py-2 bg-white border-b border-gray-100 flex-shrink-0">
+        {([["base", "Partir d'un thème"], ["import", "Importer mon design"]] as [Mode, string][]).map(([m, label]) => (
+          <button key={m} onClick={() => setMode(m)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${mode === m ? "bg-[#F5A623]/15 text-[#F5A623]" : "text-gray-500 hover:text-gray-700"}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {mode === "import" ? (
+        <div className="flex-1 flex items-center justify-center bg-gray-50 p-6">
+          <div className="w-full max-w-md bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Wand2 size={16} className="text-[#F5A623]" />
+              <p className="text-sm font-semibold text-gray-900">Importer votre propre design</p>
+            </div>
+            <p className="text-xs text-gray-500 leading-relaxed mb-5">
+              Envoyez un fichier HTML de référence (une maquette, un site qui vous plaît).
+              Notre IA analyse uniquement son style — couleurs, polices, ambiance — pour créer
+              un thème AXSO personnalisé. Le fichier n'est jamais exécuté ni publié tel quel.
+            </p>
+
+            <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl py-8 cursor-pointer hover:border-[#F5A623]/50 transition-all">
+              <input type="file" accept=".html,text/html" className="hidden"
+                onChange={(e) => setImportFile(e.target.files?.[0] || null)} />
+              {importFile ? (
+                <>
+                  <FileCode size={22} className="text-[#F5A623]" />
+                  <span className="text-xs font-medium text-gray-700">{importFile.name}</span>
+                </>
+              ) : (
+                <>
+                  <Upload size={22} className="text-gray-400" />
+                  <span className="text-xs text-gray-500">Cliquez pour choisir un fichier .html</span>
+                </>
+              )}
+            </label>
+
+            <button onClick={importerDepuisFichier} disabled={importing || !importFile}
+              className="w-full mt-5 flex items-center justify-center gap-2 bg-[#F5A623] text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#d4820a] disabled:opacity-50 transition-all">
+              {importing ? <><Loader2 size={14} className="animate-spin" /> Analyse en cours…</> : "Analyser & créer mon thème"}
+            </button>
+          </div>
+        </div>
+      ) : (
       <div className="flex flex-1 overflow-hidden">
         {/* Panel gauche */}
         <aside className="w-80 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
@@ -436,6 +521,7 @@ export default function CreerThemePage() {
           </div>
         </main>
       </div>
+      )}
     </div>
   );
 }
