@@ -17,6 +17,7 @@ import { HomeFaqSection } from "@/components/storefront/HomeFaqSection";
 import { CustomSectionsRenderer } from "@/components/storefront/CustomSectionsRenderer";
 import { Package, Lock, RotateCcw, MessageCircle, Star } from "lucide-react";
 import { TEMPLATE_COMPONENTS } from "@/components/storefront/templates/registry";
+import { ImportedLiteralHomePage } from "@/components/storefront/templates/ImportedLiteralHomePage";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -66,6 +67,10 @@ export default async function StorefrontPage({ params }: Props) {
     orderBy: vedettesOrderBy,
     take: sec.vedettes.nombre || 8,
   });
+
+  if (cfg.builderHtml) {
+    return <ImportedLiteralHomePage cfg={cfg} />;
+  }
 
   const TemplateHome = TEMPLATE_COMPONENTS[tenant.themeId]?.HomePage;
   if (TemplateHome) {

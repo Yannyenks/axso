@@ -2,18 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { analyserTemplateImporte } from "@/lib/gemini";
+import { analyserTemplateImporte, identifierStructureTemplate } from "@/lib/gemini";
 import { resolveThemeConfig, type ThemeConfig } from "@/lib/theme-config";
-import { TEMPLATE_IDS } from "@/lib/theme-templates";
 import { fontEntry } from "@/lib/theme-fonts";
+import { prixClient } from "@/lib/pricing";
+import { formatMontant } from "@/lib/utils";
+import { construireTemplateBoutique } from "@/lib/theme-import-clone";
 
-// Import de template — extraction de style par l'IA, jamais exécution du
-// fichier envoyé. Le HTML est lu une seule fois côté serveur comme texte
-// d'entrée du prompt d'analyse puis jeté ; la boutique obtenue est un
-// ThemeConfig AXSO normal (mêmes composants React que les autres thèmes),
-// habillé avec les couleurs/polices/ambiance extraites. Voir lib/gemini.ts
-// (analyserTemplateImporte) pour le détail de ce que ça évite (XSS stocké,
-// sandbox, nouveau moteur de rendu) par rapport à un clonage structurel complet.
+// Import de template — clone visuel exact. Le marchand envoie son propre
+// fichier HTML ; on garde SON copywriting et SON design tels quels, et on y
+// branche uniquement ce qu'il faut pour que ça fonctionne comme une vraie
+// boutique AXSO (vrais produits, panier, navigation). Le fichier n'est
+// jamais exécuté : tout <script> est retiré avant stockage (voir
+// lib/theme-import-clone.ts pour le détail de la sanitisation). Le résultat
+// est stocké dans les champs ThemeConfig.builderHtml / builderCss, rendus
+// par components/storefront/templates/ImportedLiteralHomePage.tsx.
 
 const TAILLE_MAX_HTML = 300_000; // 300 Ko — au-delà, prompt trop volumineux
 const HEX_REGEX = /^#[0-9a-fA-F]{6}$/;
@@ -32,40 +35,83 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "URL de fichier invalide" }, { status: 400 });
     }
 
+    const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant) return NextResponse.json({ error: "Tenant introuvable" }, { status: 404 });
+
     const fichierRes = await fetch(parsedBody.data.url);
     if (!fichierRes.ok) {
       return NextResponse.json({ error: "Impossible de récupérer le fichier envoyé" }, { status: 400 });
     }
-    let html = await fichierRes.text();
-    if (html.length > TAILLE_MAX_HTML) {
+    const htmlBrut = await fichierRes.text();
+    if (htmlBrut.length > TAILLE_MAX_HTML) {
       return NextResponse.json({ error: "Ce fichier est trop volumineux pour être analysé (max 300 Ko)." }, { status: 400 });
     }
-    // Le contenu des scripts n'apporte rien à l'analyse de style et n'est de
-    // toute façon jamais exécuté — on l'enlève pour alléger le prompt.
-    html = html.replace(/<script[\s\S]*?<\/script>/gi, "");
 
-    const titreMatch = html.match(/<title>([^<]*)<\/title>/i);
+    const titreMatch = htmlBrut.match(/<title>([^<]*)<\/title>/i);
     const nomDetecte = titreMatch?.[1]?.trim().slice(0, 60) || "Mon thème importé";
 
-    const analyse = await analyserTemplateImporte(html);
+    // Deux appels IA indépendants et à faible risque d'échec : l'un cherche
+    // juste deux sélecteurs CSS courts (grille + carte produit), l'autre
+    // n'est utilisé que pour peupler les métadonnées couleurs/polices du
+    // thème (aperçu dans la galerie /dashboard/themes) — jamais pour
+    // modifier le HTML/CSS conservé tel quel.
+    const htmlPourAnalyse = htmlBrut.replace(/<script[\s\S]*?<\/script>/gi, "").slice(0, 60000);
+    const [structure, analyseStyle] = await Promise.all([
+      identifierStructureTemplate(htmlPourAnalyse),
+      analyserTemplateImporte(htmlPourAnalyse),
+    ]);
 
-    const familleProche = TEMPLATE_IDS.has(analyse.familleProche) ? analyse.familleProche : "terre-et-or";
-    const base = resolveThemeConfig(familleProche);
+    const produitsBruts = await prisma.produit.findMany({
+      where: { tenantId, actif: true },
+      orderBy: { createdAt: "desc" },
+      take: 24,
+    });
+    const taux = tenant.commissionRate ?? 0.06;
+    const produitsPourClone = produitsBruts.map((p) => ({
+      id: p.id,
+      nom: p.nom,
+      prixAffiche: formatMontant(prixClient(p.prix, taux), tenant.devise),
+      image: p.images[0] ?? null,
+    }));
 
+    const { html: builderHtml, css: cssExtrait, conteneurTrouve } = construireTemplateBoutique({
+      htmlBrut,
+      selecteurConteneurProduits: structure.selecteurConteneurProduits,
+      selecteurCarteProduit: structure.selecteurCarteProduit,
+      slug: tenant.slug,
+      produits: produitsPourClone,
+    });
+
+    // Polices Google Fonts éventuellement chargées par le fichier d'origine —
+    // conservées telles quelles pour un rendu fidèle (les balises <link> du
+    // <head> ne survivent pas à l'extraction du seul <body>).
+    const importsPolices = [...htmlBrut.matchAll(/<link[^>]+href=["'](https:\/\/fonts\.googleapis\.com[^"']+)["'][^>]*>/gi)]
+      .map((m) => `@import url('${m[1]}');`)
+      .join("\n");
+    const builderCss = `${importsPolices}\n${cssExtrait}`;
+
+    // Base classique (terre-et-or) juste pour les champs structurels que le
+    // ThemeConfig exige (sections, animations...) — non utilisée pour le
+    // rendu de ce thème (voir builderHtml/builderCss), seulement pour que
+    // les couleurs/polices ci-dessous s'affichent correctement dans la
+    // galerie de thèmes et que le reste du constructeur reste cohérent.
+    const base = resolveThemeConfig("terre-et-or");
     const colors = { ...base.colors };
     for (const cle of ["fond", "accent", "texte", "surface"] as const) {
-      const val = analyse.couleurs?.[cle];
+      const val = analyseStyle.couleurs?.[cle];
       if (typeof val === "string" && HEX_REGEX.test(val)) colors[cle] = val;
     }
-
     const fonts = { ...base.fonts };
-    if (analyse.polices?.titre && fontEntry(analyse.polices.titre)) fonts.titre = analyse.polices.titre;
-    if (analyse.polices?.corps && fontEntry(analyse.polices.corps)) fonts.corps = analyse.polices.corps;
+    if (analyseStyle.polices?.titre && fontEntry(analyseStyle.polices.titre)) fonts.titre = analyseStyle.polices.titre;
+    if (analyseStyle.polices?.corps && fontEntry(analyseStyle.polices.corps)) fonts.corps = analyseStyle.polices.corps;
 
-    const boutons = { ...base.boutons, style: analyse.styleBouton };
-    const radius = analyse.rayonAngles === "arrondi" ? "16px" : "0px";
-
-    const config: ThemeConfig = { ...base, colors, fonts, boutons, radius };
+    const config: ThemeConfig = {
+      ...base,
+      colors,
+      fonts,
+      builderHtml,
+      builderCss,
+    };
 
     const slugBase = nomDetecte.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 40) || "importe";
     const slug = `custom-${slugBase}-${Date.now()}`;
@@ -75,7 +121,9 @@ export async function POST(req: NextRequest) {
         tenantId,
         nom: nomDetecte,
         slug,
-        description: `Thème généré à partir de votre design importé — ambiance ${analyse.ambiance.join(", ") || "personnalisée"}.`,
+        description: conteneurTrouve
+          ? "Thème importé — design conservé tel quel, vos vrais produits y sont déjà branchés."
+          : "Thème importé — design conservé tel quel. Aucune grille de produits n'a été détectée automatiquement dans le fichier envoyé.",
         badge: "✦ Importé",
         config: config as any,
         actif: true,

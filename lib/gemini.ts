@@ -189,6 +189,52 @@ const FALLBACK_ANALYSE: AnalyseTemplateImporte = {
   familleProche: "terre-et-or",
 };
 
+export interface StructureTemplateImporte {
+  selecteurConteneurProduits: string | null;
+  selecteurCarteProduit: string | null;
+}
+
+// Identifie UNIQUEMENT les deux sélecteurs CSS nécessaires pour brancher les
+// vrais produits sur la grille du template envoyé (voir
+// lib/theme-import-clone.ts) — jamais de reproduction de HTML par l'IA
+// (peu fiable pour du HTML exact), juste deux sélecteurs courts et simples
+// à vérifier/valider mécaniquement (querySelector doit les retrouver).
+export async function identifierStructureTemplate(html: string): Promise<StructureTemplateImporte> {
+  try {
+    const texte = await completion(
+      [
+        { role: "system", content: SYSTEME_PROMPT },
+        {
+          role: "user",
+          content: `Voici le HTML d'une boutique en ligne. Identifie UNIQUEMENT deux sélecteurs CSS simples (classe ou balise) :
+1. Le conteneur qui entoure la grille des cartes produit (ex: la div avec la classe de la grille).
+2. La carte produit individuelle répétée à l'intérieur (ex: la classe de chaque carte).
+
+Réponds uniquement en JSON strict :
+{"selecteurConteneurProduits":".ma-grille","selecteurCarteProduit":".ma-carte"}
+
+Si tu ne trouves pas de grille de produits clairement répétée, réponds {"selecteurConteneurProduits":null,"selecteurCarteProduit":null}.
+Les sélecteurs doivent être courts (une seule classe ou balise), jamais un chemin complexe.
+
+Fichier :
+\`\`\`html
+${html.slice(0, 60000)}
+\`\`\``,
+        },
+      ],
+      200
+    );
+    const json = texte.match(/\{[\s\S]*\}/)?.[0];
+    const parsed = JSON.parse(json || "{}");
+    return {
+      selecteurConteneurProduits: typeof parsed.selecteurConteneurProduits === "string" ? parsed.selecteurConteneurProduits : null,
+      selecteurCarteProduit: typeof parsed.selecteurCarteProduit === "string" ? parsed.selecteurCarteProduit : null,
+    };
+  } catch {
+    return { selecteurConteneurProduits: null, selecteurCarteProduit: null };
+  }
+}
+
 export async function analyserTemplateImporte(html: string): Promise<AnalyseTemplateImporte> {
   const fontIds = FONTS.map((f) => f.v).join(", ");
   const familleIds = Object.keys(TEMPLATE_META).join(", ");
