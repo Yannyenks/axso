@@ -5,12 +5,12 @@
 import type { ThemeConfig, ProductPageSection, CustomSection, ThemeAboutPageConfig, ThemeContactPageConfig } from "./theme-config";
 
 // ─── Détection de catégorie ───────────────────────────────────────────────────
-type CategoryType =
+export type CategoryType =
   | "fashion" | "beauty" | "food" | "tech" | "home" | "jewelry"
   | "kids"    | "health" | "sport" | "services" | "agriculture"
   | "artisan" | "books"  | "auto"  | "general";
 
-function detectCategory(cat: string): CategoryType {
+export function detectCategory(cat: string): CategoryType {
   const c = cat.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
   if (/mode|vetement|habit|fashion|lingerie|sac|chaussure|maroquinerie|pret.a.porter|textile|couture/.test(c)) return "fashion";
   if (/beaut|cosmet|soin|maquillage|parfum|coiffure|hair|skin|manucure|esthetique/.test(c)) return "beauty";

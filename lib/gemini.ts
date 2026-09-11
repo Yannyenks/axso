@@ -270,6 +270,60 @@ ${html.slice(0, 60000)}
   }
 }
 
+// ─── Bibliothèque AXSO Design (Templates/*.html) ──────────────────────────────
+// Ces fichiers suivent une convention figée (mêmes ids fonctionnels partout :
+// #plpGrid/#homeGrid vides, remplis en JS jamais exécuté — voir
+// lib/theme-import-clone.ts::extraireVuesLibrairie) — un seul point reste
+// bespoke par design : la carte produit visuelle, générée par une fonction
+// JS (`cardHTML` ou équivalent) jamais exécutée. Appelé UNE FOIS par fichier
+// (pas par boutique) lors de la construction du manifeste de la
+// bibliothèque — jamais à l'exécution normale.
+export interface GabaritsLibrairie {
+  carteTemplate: string | null; // HTML statique tokenisé {{ID}}/{{NOM}}/{{PRIX}}/{{IMAGE}}/{{LIEN}}
+  selecteurVisuelPdp: string | null; // conteneur du visuel principal dans #view-produit
+}
+
+export async function extraireGabaritsLibrairie(html: string): Promise<GabaritsLibrairie> {
+  try {
+    const texte = await completion(
+      [
+        { role: "system", content: SYSTEME_PROMPT },
+        {
+          role: "user",
+          content: `Voici le code d'une page de boutique en ligne (HTML + CSS + JavaScript). La grille de produits (#plpGrid ou #homeGrid) est vide dans le HTML : elle est normalement remplie par une fonction JavaScript qui génère une carte produit par un template de chaîne (ex: une fonction "cardHTML" ou similaire qui retourne un \`...\` avec des \${...}). Ce script ne sera JAMAIS exécuté.
+
+Tâche 1 — Retrouve cette fonction et convertis son template en HTML STATIQUE, en remplaçant chaque donnée produit par EXACTEMENT un de ces jetons (aucun autre) :
+- {{ID}} → l'identifiant du produit
+- {{NOM}} → le nom du produit
+- {{PRIX}} → le prix déjà formaté à afficher
+- {{IMAGE}} → l'URL de la photo produit
+- {{LIEN}} → l'URL de la fiche produit
+Simplifie toute logique conditionnelle (ex: prix barré, liste de souhaits) pour ne garder que l'affichage simple prix/nom. Si la carte n'a pas de \`<img>\` mais un visuel décoratif (SVG, dégradé de fond...), REMPLACE ce visuel par \`<img src="{{IMAGE}}" alt="{{NOM}}" style="width:100%;height:100%;object-fit:cover;">\` à la même place. Retire tout gestionnaire d'événement (onclick...) du HTML retourné. Le résultat doit être UN seul élément racine.
+
+Tâche 2 — Dans la zone #view-produit (fiche produit), identifie le sélecteur CSS (classe ou id, court) du conteneur qui affiche le visuel PRINCIPAL du produit (photo, ou zone décorative équivalente) — celui qu'il faudrait remplacer par une vraie photo produit.
+
+Réponds UNIQUEMENT en JSON strict : {"carteTemplate":"<a class=\"...\">...</a>","selecteurVisuelPdp":"#pdpFrame"}
+Si tu ne trouves pas la fonction de carte ou le visuel PDP, mets la valeur correspondante à null.
+
+Fichier :
+\`\`\`html
+${html.slice(0, 60000)}
+\`\`\``,
+        },
+      ],
+      2000
+    );
+    const json = texte.match(/\{[\s\S]*\}/)?.[0];
+    const parsed = JSON.parse(json || "{}");
+    return {
+      carteTemplate: typeof parsed.carteTemplate === "string" ? parsed.carteTemplate : null,
+      selecteurVisuelPdp: typeof parsed.selecteurVisuelPdp === "string" ? parsed.selecteurVisuelPdp : null,
+    };
+  } catch {
+    return { carteTemplate: null, selecteurVisuelPdp: null };
+  }
+}
+
 export async function analyserTemplateImporte(html: string): Promise<AnalyseTemplateImporte> {
   const fontIds = FONTS.map((f) => f.v).join(", ");
   const familleIds = Object.keys(TEMPLATE_META).join(", ");

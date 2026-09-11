@@ -31,6 +31,7 @@ export interface ProduitPourClone {
   nom: string;
   prixAffiche: string; // déjà formaté (formatMontant + prixClient) par l'appelant
   image: string | null;
+  description?: string | null;
 }
 
 export interface CloneTemplateResult {
@@ -279,4 +280,169 @@ export function extraireChrome(params: {
 
   const html = finaliser(root, slug);
   return { html, css, conteneurTrouve: zoneTrouvee };
+}
+
+// ─── Bibliothèque AXSO Design (Templates/*.html) ──────────────────────────────
+// Ces fichiers suivent une convention figée par le prompt système qui les a
+// produits — mêmes ids fonctionnels quel que soit le design visuel :
+// #view-home/#view-boutique/#view-produit/#view-panier/#view-commande/
+// #view-confirmation, #homeGrid/#plpGrid (grilles vides, remplies en JS par
+// le fichier d'origine — jamais exécuté), #pdpName/#pdpDesc/#pdpPriceRow/
+// #pdpAddBtn (fiche produit), navigation via onclick="go('page')" plutôt que
+// des href. Ça permet un branchement 100% déterministe par id — SEULE la
+// carte produit (visuelle, bespoke par design, générée par une fonction JS
+// jamais exécutée) demande une extraction ponctuelle par IA, une fois par
+// fichier (lib/gemini.ts::extraireGabaritsLibrairie), jamais par boutique.
+function echapperHtml(s: string): string {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function remplacerTokensCarte(gabarit: string, p: ProduitPourClone, slug: string): string {
+  return gabarit
+    .replaceAll("{{ID}}", echapperHtml(p.id))
+    .replaceAll("{{NOM}}", echapperHtml(p.nom))
+    .replaceAll("{{PRIX}}", echapperHtml(p.prixAffiche))
+    .replaceAll("{{IMAGE}}", echapperHtml(p.image || ""))
+    .replaceAll("{{LIEN}}", echapperHtml(`/${slug}/produits/${p.id}`));
+}
+
+// Réécrit la navigation SPA (onclick="go('boutique')") vers de vraies routes
+// AXSO — plus fiable que reecrireLiensNav (basée sur le texte du lien) sur
+// ces fichiers puisque l'argument de go() est explicite et sans ambiguïté.
+function reecrireLiensGo(root: ParsedElement, slug: string) {
+  const cibles: Record<string, string> = {
+    home: `/${slug}`,
+    boutique: `/${slug}/produits`,
+    panier: `/${slug}/panier`,
+    commande: `/${slug}/checkout`,
+  };
+  root.querySelectorAll("[onclick]").forEach((el) => {
+    const onclick = el.getAttribute("onclick") || "";
+    const m = onclick.match(/^go\('(\w+)'\)$/);
+    if (!m) return;
+    const cible = cibles[m[1]];
+    if (cible) el.setAttribute("href", cible);
+  });
+}
+
+export interface VuesLibrairie {
+  chromeAvant: string; // défs SVG partagées + en-tête/nav (une fois, avant la 1ère vue)
+  chromeApres: string; // pied de page + reste (une fois, après la dernière vue)
+  home: string;
+  boutique: string;
+  produit: string; // gabarit NON lié à un produit — voir lierProduitLibrairieAuGabarit
+  panier: string; // déjà réduit à un seul marqueur d'enchâssement (MARQUEUR_SLOT)
+  commande: string;
+  confirmation: string;
+  css: string;
+}
+
+// Découpe un fichier de la bibliothèque en chrome partagé + 6 vues, réécrit
+// la nav SPA vers de vraies routes, assainit, et force chaque vue visible
+// individuellement (le CSS d'origine masque .view par défaut et ne montre
+// que .view.active — chaque route AXSO ne rend qu'une seule vue à la fois).
+// Retourne null si le fichier ne suit pas la convention à 6 vues attendue.
+export function extraireVuesLibrairie(params: { htmlBrut: string; slug: string }): VuesLibrairie | null {
+  const { htmlBrut, slug } = params;
+  const { root, css } = parserEtExtraireCss(htmlBrut);
+  const body = root.querySelector("body");
+  if (!body) return null;
+
+  const enfants = body.childNodes.filter((n) => (n as ParsedElement).tagName) as ParsedElement[];
+  const idxVues = enfants.map((el, i) => (el.classList?.contains("view") ? i : -1)).filter((i) => i >= 0);
+  if (idxVues.length === 0) return null;
+
+  const ids = ["home", "boutique", "produit", "panier", "commande", "confirmation"] as const;
+  const vues: Partial<Record<(typeof ids)[number], ParsedElement>> = {};
+  for (const id of ids) {
+    const el = root.querySelector(`#view-${id}`);
+    if (el) vues[id] = el;
+  }
+  if (ids.some((id) => !vues[id])) return null;
+
+  reecrireLiensGo(root, slug);
+  nettoyerElement(root);
+  for (const id of ids) vues[id]!.setAttribute("class", "view active");
+
+  // Pour panier/commande/confirmation : le contenu propre à la vue (faux
+  // panier/formulaire/récap JS) est entièrement remplacé par le vrai
+  // composant AXSO (CartContent/CheckoutForm/confirmation) — voir
+  // ImportedLiteral*Shell.tsx. On ne garde que l'enveloppe .view (padding/
+  // largeur cohérents avec le reste du design).
+  vues.panier!.set_content(MARQUEUR_SLOT);
+  vues.commande!.set_content(MARQUEUR_SLOT);
+  vues.confirmation!.set_content(MARQUEUR_SLOT);
+
+  const premier = idxVues[0];
+  const dernier = idxVues[idxVues.length - 1];
+  const chromeAvant = enfants.slice(0, premier).map((el) => el.outerHTML).join("");
+  const chromeApres = enfants.slice(dernier + 1).map((el) => el.outerHTML).join("");
+
+  return {
+    chromeAvant,
+    chromeApres,
+    home: vues.home!.outerHTML,
+    boutique: vues.boutique!.outerHTML,
+    produit: vues.produit!.outerHTML,
+    panier: vues.panier!.outerHTML,
+    commande: vues.commande!.outerHTML,
+    confirmation: vues.confirmation!.outerHTML,
+    css,
+  };
+}
+
+// Injecte une grille de produits réels dans le conteneur connu (#homeGrid ou
+// #plpGrid, vide dans le HTML d'origine — rempli en JS par le fichier
+// source, jamais exécuté ici) à partir du gabarit de carte tokenisé
+// ({{ID}}/{{NOM}}/{{PRIX}}/{{IMAGE}}/{{LIEN}}, extrait une fois par
+// lib/gemini.ts::extraireGabaritsLibrairie). `vueHtml` doit être une des
+// vues renvoyées par extraireVuesLibrairie (déjà assainie).
+export function injecterGrilleLibrairie(params: {
+  vueHtml: string;
+  idConteneur: "homeGrid" | "plpGrid";
+  carteTemplate: string | null;
+  produits: ProduitPourClone[];
+  slug: string;
+}): string {
+  const { vueHtml, idConteneur, carteTemplate, produits, slug } = params;
+  if (!carteTemplate || produits.length === 0) return vueHtml;
+  const racine = parse(vueHtml).firstChild as ParsedElement;
+  const conteneur = racine?.querySelector(`#${idConteneur}`);
+  if (!racine || !conteneur) return vueHtml;
+  const cartesHtml = produits.slice(0, 24).map((p) => remplacerTokensCarte(carteTemplate, p, slug)).join("");
+  conteneur.set_content(cartesHtml);
+  nettoyerElement(racine); // défense en profondeur si le gabarit IA a laissé un attribut indésirable
+  return racine.outerHTML;
+}
+
+// Lie le produit réellement demandé au gabarit de fiche produit — appelé à
+// CHAQUE requête storefront (contrairement à l'accueil/la liste boutique,
+// une fiche produit affiche un produit différent par URL, impossible à
+// figer une fois pour toutes). 100% par id (#pdpName/#pdpDesc/#pdpPriceRow/
+// #pdpAddBtn), aucune heuristique de texte nécessaire — la convention de la
+// bibliothèque garantit ces ids. `selecteurVisuelPdp` (trouvé une fois par
+// IA, voir extraireGabaritsLibrairie) désigne le conteneur du visuel
+// principal, remplacé par une vraie photo produit.
+export function lierProduitLibrairieAuGabarit(params: {
+  gabaritPage: string;
+  selecteurVisuelPdp: string | null;
+  produit: ProduitPourClone;
+}): string {
+  const { gabaritPage, selecteurVisuelPdp, produit } = params;
+  const racine = parse(gabaritPage).firstChild as ParsedElement;
+  if (!racine) return gabaritPage;
+
+  racine.querySelector("#pdpName")?.set_content(echapperHtml(produit.nom));
+  racine.querySelector("#pdpDesc")?.set_content(echapperHtml(produit.description || ""));
+  racine.querySelector("#pdpPriceRow")?.set_content(echapperHtml(produit.prixAffiche));
+
+  const visuel = selecteurVisuelPdp ? racine.querySelector(selecteurVisuelPdp) : null;
+  if (visuel && produit.image) {
+    visuel.set_content(`<img src="${echapperHtml(produit.image)}" alt="${echapperHtml(produit.nom)}" style="width:100%;height:100%;object-fit:cover;">`);
+  }
+
+  racine.querySelector("#pdpAddBtn")?.setAttribute(ATTR_AJOUTER_PANIER, "1");
+
+  nettoyerElement(racine);
+  return racine.outerHTML;
 }
