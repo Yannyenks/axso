@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { CartContent } from "@/components/storefront/CartContent";
+import { ImportedLiteralCartShell } from "@/components/storefront/templates/ImportedLiteralCartShell";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
 
@@ -19,6 +20,10 @@ export default async function PanierPage({ params }: Props) {
 
   const cfg = await resolveThemeConfigAsync(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
   const theme = cfg.colors;
+
+  if (cfg.builderHtmlPanierChrome) {
+    return <ImportedLiteralCartShell cfg={cfg} slug={slug} devise={tenant.devise} />;
+  }
 
   return (
     <div style={{ backgroundColor: theme.fond, color: theme.texte, minHeight: "100vh" }}>

@@ -15,7 +15,7 @@ import { trackPixelEvent } from "./MetaPixel";
 import { trackTikTokEvent } from "./TikTokPixel";
 import { trackSnapchatEvent } from "./SnapchatPixel";
 
-interface ParametresCommande {
+export interface ParametresCommande {
   demanderEmail?: boolean;
   demanderGps?: boolean;
   champPersonnalise?: { actif: boolean; label: string };

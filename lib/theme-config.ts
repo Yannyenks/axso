@@ -314,6 +314,15 @@ export interface ThemeConfig {
   builderHtml?: string;
   builderCss?: string;
   builderTree?: BlockNode[];
+  // Clone/habillage multi-pages (AXSO Design + import manuel étendu) — même
+  // convention que builderHtml (chaîne brute, jamais exécutée) mais une par
+  // page storefront. builderCss ci-dessus reste partagé entre toutes (un
+  // seul fichier source, un seul <style>). Voir lib/theme-import-clone.ts.
+  builderHtmlProduits?: string; // liste boutique (PLP)
+  builderHtmlProduit?: string; // fiche produit (PDP) — gabarit à un seul produit
+  builderHtmlPanierChrome?: string; // habillage panier — enchâsse <CartContent>
+  builderHtmlCheckoutChrome?: string; // habillage commande — enchâsse <CheckoutForm>
+  builderHtmlConfirmationChrome?: string; // habillage confirmation
 }
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -588,12 +597,18 @@ export function mergeThemeConfig(base: ThemeConfig, overrides: Record<string, an
     builderHtml: overrides.builderHtml ?? base.builderHtml,
     builderCss: overrides.builderCss ?? base.builderCss,
     builderTree: overrides.builderTree ?? base.builderTree,
+    builderHtmlProduits: overrides.builderHtmlProduits ?? base.builderHtmlProduits,
+    builderHtmlProduit: overrides.builderHtmlProduit ?? base.builderHtmlProduit,
+    builderHtmlPanierChrome: overrides.builderHtmlPanierChrome ?? base.builderHtmlPanierChrome,
+    builderHtmlCheckoutChrome: overrides.builderHtmlCheckoutChrome ?? base.builderHtmlCheckoutChrome,
+    builderHtmlConfirmationChrome: overrides.builderHtmlConfirmationChrome ?? base.builderHtmlConfirmationChrome,
   };
 }
 
 export function resolveThemeConfig(themeId: string, savedConfig: Record<string, any> = {}): ThemeConfig {
   const base = DEFAULTS[themeId] || TEMPLATE_DEFAULTS[themeId] || DEFAULTS["terre-et-or"];
-  const hasCustom = savedConfig && Object.keys(savedConfig).filter(k => k !== "builderHtml" && k !== "builderCss").length > 0;
+  const CHAMPS_CLONE = new Set(["builderHtml", "builderCss", "builderHtmlProduits", "builderHtmlProduit", "builderHtmlPanierChrome", "builderHtmlCheckoutChrome", "builderHtmlConfirmationChrome"]);
+  const hasCustom = savedConfig && Object.keys(savedConfig).filter(k => !CHAMPS_CLONE.has(k)).length > 0;
   if (!hasCustom) return base;
 
   return mergeThemeConfig(base, savedConfig);

@@ -11,6 +11,7 @@ import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { WishlistHeartButton } from "@/components/storefront/WishlistHeartButton";
 import { Package, Search } from "lucide-react";
 import { TEMPLATE_COMPONENTS } from "@/components/storefront/templates/registry";
+import { ImportedLiteralProductListPage } from "@/components/storefront/templates/ImportedLiteralProductListPage";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -106,6 +107,10 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
 
   const categories = Array.from(new Set(produits.map((p) => p.categorie).filter(Boolean))) as string[];
   const hasFilters = !!(q || tri || min || max || collection);
+
+  if (cfg.builderHtmlProduits) {
+    return <ImportedLiteralProductListPage cfg={cfg} />;
+  }
 
   const TemplateProductList = TEMPLATE_COMPONENTS[tenant.themeId]?.ProductListPage;
   if (TemplateProductList) {

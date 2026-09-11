@@ -236,6 +236,40 @@ ${html.slice(0, 60000)}
   }
 }
 
+// Généralisation d'identifierStructureTemplate pour les autres pages
+// clonées/habillées (vague A du clonage multi-pages) : fiche produit,
+// panier, commande, confirmation — un seul sélecteur à chaque fois, jamais
+// de reproduction de HTML. `description` cadre en une phrase ce qu'il faut
+// retrouver (ex: "la zone qui affiche le produit unique, image+nom+prix+
+// bouton d'achat", "le formulaire de commande avec les champs livraison").
+export async function identifierZoneUnique(html: string, description: string): Promise<string | null> {
+  try {
+    const texte = await completion(
+      [
+        { role: "system", content: SYSTEME_PROMPT },
+        {
+          role: "user",
+          content: `Voici le HTML d'une page de boutique en ligne. Identifie UN SEUL sélecteur CSS simple (classe ou balise, jamais un chemin complexe) pour cette zone : ${description}
+
+Réponds uniquement en JSON strict : {"selecteur":".ma-zone"}
+Si tu ne trouves pas cette zone clairement, réponds {"selecteur":null}.
+
+Fichier :
+\`\`\`html
+${html.slice(0, 60000)}
+\`\`\``,
+        },
+      ],
+      150
+    );
+    const json = texte.match(/\{[\s\S]*\}/)?.[0];
+    const parsed = JSON.parse(json || "{}");
+    return typeof parsed.selecteur === "string" ? parsed.selecteur : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function analyserTemplateImporte(html: string): Promise<AnalyseTemplateImporte> {
   const fontIds = FONTS.map((f) => f.v).join(", ");
   const familleIds = Object.keys(TEMPLATE_META).join(", ");

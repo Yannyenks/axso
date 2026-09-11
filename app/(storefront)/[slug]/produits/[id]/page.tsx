@@ -11,6 +11,9 @@ import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { ProductPageClient } from "@/components/storefront/ProductPageClient";
 import { TEMPLATE_COMPONENTS } from "@/components/storefront/templates/registry";
+import { ImportedLiteralProductPage } from "@/components/storefront/templates/ImportedLiteralProductPage";
+import { lierProduitAuGabarit } from "@/lib/theme-import-clone";
+import { formatMontant } from "@/lib/utils";
 
 interface Props {
   params: Promise<{ slug: string; id: string }>;
@@ -99,6 +102,31 @@ export default async function ProduitPage({ params }: Props) {
     images: p.images,
     prixAffiche: prixClient(p.prix, taux),
   }));
+
+  if (cfg.builderHtmlProduit) {
+    const htmlLie = lierProduitAuGabarit(
+      cfg.builderHtmlProduit,
+      slug,
+      { id: produit.id, nom: produit.nom, prixAffiche: formatMontant(prixAffiche, tenant.devise), image: produit.images[0] ?? null }
+    );
+    return (
+      <ImportedLiteralProductPage
+        css={cfg.builderCss || ""}
+        htmlLie={htmlLie}
+        slug={slug}
+        produit={{
+          id: produit.id,
+          nom: produit.nom,
+          prix: prixAffiche,
+          images: produit.images,
+          stock: produit.stock,
+          type: produit.type,
+          fichierUrl: produit.fichierUrl,
+          fichierNom: produit.fichierNom,
+        }}
+      />
+    );
+  }
 
   const TemplateProductPage = TEMPLATE_COMPONENTS[tenant.themeId]?.ProductPage;
   if (TemplateProductPage) {

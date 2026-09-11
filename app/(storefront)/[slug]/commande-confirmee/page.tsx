@@ -7,6 +7,7 @@ import Link from "next/link";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { CommandeConfirmeeClient } from "./CommandeConfirmeeClient";
+import { ImportedLiteralConfirmationShell } from "@/components/storefront/templates/ImportedLiteralConfirmationShell";
 import { Lock } from "lucide-react";
 
 interface Props {
@@ -36,6 +37,35 @@ export default async function CommandeConfirmeePage({ params, searchParams }: Pr
   );
   const theme = cfg.colors;
 
+  const contenuConfirmation = (
+    <CommandeConfirmeeClient
+      commande={{
+        id: commande.id,
+        numero: commande.numero,
+        montantTotal: commande.montantTotal,
+        devise: commande.devise,
+        clientNom: commande.clientNom,
+        clientEmail: commande.clientEmail,
+        lignes: commande.lignes.map((l) => ({
+          id: l.id,
+          nom: l.nom,
+          quantite: l.quantite,
+          prix: l.prix,
+          imageUrl: l.imageUrl,
+          variante: l.variante,
+        })),
+      }}
+      theme={theme}
+      slug={slug}
+      nomBoutique={tenant.nomBoutique}
+      tenantDevise={tenant.devise}
+    />
+  );
+
+  if (cfg.builderHtmlConfirmationChrome) {
+    return <ImportedLiteralConfirmationShell cfg={cfg}>{contenuConfirmation}</ImportedLiteralConfirmationShell>;
+  }
+
   return (
     <div style={{ backgroundColor: theme.fond, color: theme.texte, minHeight: "100vh" }}>
       <ThemeEffect themeId={tenant.themeId} />
@@ -56,28 +86,7 @@ export default async function CommandeConfirmeePage({ params, searchParams }: Pr
       </nav>
 
       <div className="max-w-2xl mx-auto px-4 py-12">
-        <CommandeConfirmeeClient
-          commande={{
-            id: commande.id,
-            numero: commande.numero,
-            montantTotal: commande.montantTotal,
-            devise: commande.devise,
-            clientNom: commande.clientNom,
-            clientEmail: commande.clientEmail,
-            lignes: commande.lignes.map((l) => ({
-              id: l.id,
-              nom: l.nom,
-              quantite: l.quantite,
-              prix: l.prix,
-              imageUrl: l.imageUrl,
-              variante: l.variante,
-            })),
-          }}
-          theme={theme}
-          slug={slug}
-          nomBoutique={tenant.nomBoutique}
-          tenantDevise={tenant.devise}
-        />
+        {contenuConfirmation}
       </div>
 
       <footer
