@@ -12,7 +12,7 @@ import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { ProductPageClient } from "@/components/storefront/ProductPageClient";
 import { TEMPLATE_COMPONENTS } from "@/components/storefront/templates/registry";
 import { ImportedLiteralProductPage } from "@/components/storefront/templates/ImportedLiteralProductPage";
-import { lierProduitAuGabarit } from "@/lib/theme-import-clone";
+import { lierProduitAuGabarit, lierProduitLibrairieAuGabarit } from "@/lib/theme-import-clone";
 import { formatMontant } from "@/lib/utils";
 
 interface Props {
@@ -104,11 +104,13 @@ export default async function ProduitPage({ params }: Props) {
   }));
 
   if (cfg.builderHtmlProduit) {
-    const htmlLie = lierProduitAuGabarit(
-      cfg.builderHtmlProduit,
-      slug,
-      { id: produit.id, nom: produit.nom, prixAffiche: formatMontant(prixAffiche, tenant.devise), image: produit.images[0] ?? null }
-    );
+    const produitPourClone = { id: produit.id, nom: produit.nom, prixAffiche: formatMontant(prixAffiche, tenant.devise), image: produit.images[0] ?? null, description: produit.description };
+    // Bibliothèque AXSO Design (lib/axso-design-library.ts) : liaison 100%
+    // par id, jamais l'heuristique de texte (réservée à l'import manuel
+    // d'un fichier arbitraire, qui n'a pas ces ids garantis).
+    const htmlLie = cfg.axsoDesignSelecteurVisuelPdp
+      ? lierProduitLibrairieAuGabarit({ gabaritPage: cfg.builderHtmlProduit, selecteurVisuelPdp: cfg.axsoDesignSelecteurVisuelPdp, produit: produitPourClone })
+      : lierProduitAuGabarit(cfg.builderHtmlProduit, slug, produitPourClone);
     return (
       <ImportedLiteralProductPage
         css={cfg.builderCss || ""}

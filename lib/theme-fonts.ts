@@ -35,6 +35,12 @@ export const FONTS = [
   { cat: "Display",    v: "big-shoulders-display", label: "Big Shoulders Display", gf: "Big+Shoulders+Display:wght@500;700;800" },
   { cat: "Sans-serif", v: "ibm-plex-mono",         label: "IBM Plex Mono",      gf: "IBM+Plex+Mono:wght@400;500" },
   { cat: "Sans-serif", v: "work-sans",             label: "Work Sans",          gf: "Work+Sans:wght@400;500;600;700" },
+  { cat: "Display",    v: "oswald",                 label: "Oswald",             gf: "Oswald:wght@400;500;600;700" },
+  { cat: "Display",    v: "teko",                   label: "Teko",               gf: "Teko:wght@400;500;600;700" },
+  { cat: "Display",    v: "rajdhani",               label: "Rajdhani",           gf: "Rajdhani:wght@400;500;600;700" },
+  { cat: "Sans-serif", v: "manrope",                label: "Manrope",            gf: "Manrope:wght@400;500;600;700;800" },
+  { cat: "Display",    v: "baloo-2",                label: "Baloo 2",            gf: "Baloo+2:wght@400;500;600;700;800" },
+  { cat: "Sans-serif", v: "chivo",                  label: "Chivo",              gf: "Chivo:wght@400;500;600;700" },
 ] as const;
 
 export interface StorefrontFontsCfg {

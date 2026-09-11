@@ -323,6 +323,10 @@ export interface ThemeConfig {
   builderHtmlPanierChrome?: string; // habillage panier — enchâsse <CartContent>
   builderHtmlCheckoutChrome?: string; // habillage commande — enchâsse <CheckoutForm>
   builderHtmlConfirmationChrome?: string; // habillage confirmation
+  // Métadonnée nécessaire pour lier une fiche produit à chaque requête
+  // (lierProduitLibrairieAuGabarit) — le sélecteur du visuel PDP est propre
+  // au design d'origine (lib/axso-design-library.ts), pas au produit.
+  axsoDesignSelecteurVisuelPdp?: string;
 }
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -602,12 +606,13 @@ export function mergeThemeConfig(base: ThemeConfig, overrides: Record<string, an
     builderHtmlPanierChrome: overrides.builderHtmlPanierChrome ?? base.builderHtmlPanierChrome,
     builderHtmlCheckoutChrome: overrides.builderHtmlCheckoutChrome ?? base.builderHtmlCheckoutChrome,
     builderHtmlConfirmationChrome: overrides.builderHtmlConfirmationChrome ?? base.builderHtmlConfirmationChrome,
+    axsoDesignSelecteurVisuelPdp: overrides.axsoDesignSelecteurVisuelPdp ?? base.axsoDesignSelecteurVisuelPdp,
   };
 }
 
 export function resolveThemeConfig(themeId: string, savedConfig: Record<string, any> = {}): ThemeConfig {
   const base = DEFAULTS[themeId] || TEMPLATE_DEFAULTS[themeId] || DEFAULTS["terre-et-or"];
-  const CHAMPS_CLONE = new Set(["builderHtml", "builderCss", "builderHtmlProduits", "builderHtmlProduit", "builderHtmlPanierChrome", "builderHtmlCheckoutChrome", "builderHtmlConfirmationChrome"]);
+  const CHAMPS_CLONE = new Set(["builderHtml", "builderCss", "builderHtmlProduits", "builderHtmlProduit", "builderHtmlPanierChrome", "builderHtmlCheckoutChrome", "builderHtmlConfirmationChrome", "axsoDesignSelecteurVisuelPdp"]);
   const hasCustom = savedConfig && Object.keys(savedConfig).filter(k => !CHAMPS_CLONE.has(k)).length > 0;
   if (!hasCustom) return base;
 
