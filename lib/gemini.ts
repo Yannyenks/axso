@@ -348,12 +348,13 @@ ACTIONS DISPONIBLES — réponds avec un tableau d'actions parmi EXACTEMENT ces 
 2. {"op":"move","nodeId":"<id>","newParentId":"<id ou null>","newIndex":<position>} → déplacer/réordonner un bloc existant.
 3. {"op":"remove","nodeId":"<id>"} → supprimer un bloc.
 4. {"op":"duplicate","nodeId":"<id>"} → dupliquer un bloc.
-5. {"op":"updateStyle","nodeId":"<id>","style":{"spacing":{...},"background":{...},"typography":{...},"border":{...},"width":"...","customClass":"..."}} → changer l'apparence desktop (couleur de fond, padding, taille de texte, alignement, largeur de colonne...). Ne renvoie que les champs à changer.
-6. {"op":"updateResponsiveStyle","nodeId":"<id>","breakpoint":"tablet"|"mobile","style":{...même forme que style...}} → changer l'apparence UNIQUEMENT sur tablette ou mobile (le marchand a explicitement demandé "sur mobile"/"sur tablette").
+5. {"op":"updateStyle","nodeId":"<id>","style":{"spacing":{"pt":"...","pb":"...","pl":"...","pr":"...","mt":"...","mb":"..."},"background":{"color":"#RRGGBB","image":"url","gradient":"linear-gradient(...)"},"typography":{"color":"#RRGGBB","taille":"...","poids":"...","align":"left"|"center"|"right"},"border":{"radius":"...","width":"...","color":"#RRGGBB"},"width":"...","customClass":"...","visibility":{"desktop":true|false,"tablet":true|false,"mobile":true|false}}} → changer l'apparence desktop du bloc (couleur de fond, padding, taille de texte, alignement, largeur de colonne...) ET/OU sa visibilité par appareil. Ne renvoie que les champs à changer.
+6. {"op":"updateResponsiveStyle","nodeId":"<id>","breakpoint":"tablet"|"mobile","style":{"spacing":{...},"background":{...},"typography":{...},"border":{...},"width":"..."}} → changer UNIQUEMENT spacing/background/typography/border/width sur tablette ou mobile (le marchand a explicitement demandé "sur mobile"/"sur tablette", ex: "le titre plus petit sur mobile"). PAS de "visibility" ni "customClass" ici — pour masquer un bloc sur un appareil précis, utilise TOUJOURS updateStyle avec le champ "visibility" (action 5), jamais "customClass":"hidden" ni updateResponsiveStyle.
 7. {"op":"updateConfig","nodeId":"<id>","config":{...champs du type concerné...}} → changer le CONTENU d'un widget (texte, titre, items, lien du bouton...). Ne renvoie que les champs à changer.
-8. {"op":"toggleActif","nodeId":"<id>"} → afficher/masquer un bloc.
+8. {"op":"toggleActif","nodeId":"<id>"} → afficher/masquer un bloc sur TOUS les appareils à la fois (équivalent à décocher "actif") — pour masquer sur un seul appareil (ex: "cache ce bloc sur mobile"), utilise plutôt updateStyle → visibility (action 5).
 
 RÈGLES :
+- Pour masquer un bloc sur un appareil précis ("masque X sur mobile/tablette/desktop"), utilise EXCLUSIVEMENT {"op":"updateStyle","nodeId":"...","style":{"visibility":{"mobile":false}}} (ou "tablet"/"desktop") — jamais "customClass", jamais updateResponsiveStyle.
 - Cible toujours des "nodeId" qui existent réellement dans l'arbre actuel ci-dessus — jamais un id inventé.
 - Pour "products", ne mets JAMAIS de faux produits dans "config" : les vrais produits de la boutique s'affichent automatiquement.
 - Les couleurs sont des hex (#RRGGBB). Les espacements/tailles sont du CSS (ex "24px", "2rem", "50%").
