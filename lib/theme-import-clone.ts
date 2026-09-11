@@ -41,6 +41,11 @@ export interface CloneTemplateResult {
 
 const ATTRS_DANGEREUX = /^on/i;
 const PROTOCOLE_DANGEREUX = /^\s*javascript:/i;
+// Texte de bouton d'action (achat, ajout panier...) — jamais un candidat nom
+// de produit : un CTA comme "Ajouter au panier" a souvent plus de lettres
+// qu'un titre court, et gagnerait sinon à tort l'heuristique "texte non-
+// numérique le plus long".
+const REGEX_TEXTE_BOUTON_ACTION = /ajouter|acheter|commander|add to cart|buy|panier|cart/i;
 // Élément (pas un commentaire HTML : node-html-parser ne les préserve pas de
 // façon fiable au ré-encodage) — recherché tel quel comme simple chaîne dans
 // le HTML final pour couper avant/après (voir ImportedLiteral*Shell.tsx).
@@ -151,7 +156,7 @@ function clonerGrilleProduits(
       /^[\d][\d\s.,]*\s*(FCFA|CFA|XOF|XAF|F|€|EUR|\$|USD)?$/i.test((el.textContent || "").trim())
     );
     const candidatNom = candidats
-      .filter((el) => el !== candidatPrix)
+      .filter((el) => el !== candidatPrix && !REGEX_TEXTE_BOUTON_ACTION.test((el.textContent || "").trim()))
       .sort((a, b) =>
         (b.textContent || "").replace(/[^a-zA-ZÀ-ÿ]/g, "").length -
         (a.textContent || "").replace(/[^a-zA-ZÀ-ÿ]/g, "").length
@@ -233,7 +238,7 @@ export function lierProduitAuGabarit(gabarit: string, slug: string, produit: Pro
     /^[\d][\d\s.,]*\s*(FCFA|CFA|XOF|XAF|F|€|EUR|\$|USD)?$/i.test((el.textContent || "").trim())
   );
   const candidatNom = candidats
-    .filter((el) => el !== candidatPrix)
+    .filter((el) => el !== candidatPrix && !REGEX_TEXTE_BOUTON_ACTION.test((el.textContent || "").trim()))
     .sort((a, b) =>
       (b.textContent || "").replace(/[^a-zA-ZÀ-ÿ]/g, "").length -
       (a.textContent || "").replace(/[^a-zA-ZÀ-ÿ]/g, "").length
@@ -244,7 +249,7 @@ export function lierProduitAuGabarit(gabarit: string, slug: string, produit: Pro
   // Bouton d'achat retrouvé par texte visible — jamais par classe (trop
   // spécifique à un template précis).
   const boutonAchat = zone.querySelectorAll("button, a").find((el) =>
-    /ajouter|acheter|commander|add to cart|buy/i.test((el.textContent || "").trim())
+    REGEX_TEXTE_BOUTON_ACTION.test((el.textContent || "").trim())
   );
   boutonAchat?.setAttribute(ATTR_AJOUTER_PANIER, "1");
 
