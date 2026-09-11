@@ -311,7 +311,7 @@ ${html.slice(0, 60000)}
 \`\`\``,
         },
       ],
-      2000
+      4000
     );
     const json = texte.match(/\{[\s\S]*\}/)?.[0];
     const parsed = JSON.parse(json || "{}");
