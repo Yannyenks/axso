@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -7,547 +8,828 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  ArrowRight, ArrowLeft, Check, Loader2, Store, Sparkles,
-  Bot, Send, CheckCircle2, Package, Truck, AlertCircle,
+  ArrowRight, Check, Loader2, Sparkles, Send, CheckCircle2,
+  Store, Globe, Palette, User, Lock, Phone, Mail,
 } from "lucide-react";
 import type { PlanBoutique } from "@/lib/ai-agent";
 import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
-import { fontEntry } from "@/lib/theme-fonts";
 
-const ACCENT      = "#F5A623";
-const ACCENT_DARK = "#d4880d";
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const ACCENT = "#F5A623";
+const ACCENT_D = "#C8760A";
+const BG = "#06090F";
+const SURFACE = "#0C1018";
+const CARD = "#101520";
+const BORDER = "rgba(255,255,255,0.07)";
+const BORDER_ACCENT = "rgba(245,166,35,0.25)";
+const TEXT = "#F0F0F0";
+const MUTED = "#6B7280";
 
+// ─── Pays ─────────────────────────────────────────────────────────────────────
+const PAYS_LIST = [
+  { code: "SN", nom: "Sénégal",       flag: "🇸🇳" },
+  { code: "CI", nom: "Côte d'Ivoire", flag: "🇨🇮" },
+  { code: "CM", nom: "Cameroun",      flag: "🇨🇲" },
+  { code: "MA", nom: "Maroc",         flag: "🇲🇦" },
+  { code: "NG", nom: "Nigeria",       flag: "🇳🇬" },
+  { code: "GH", nom: "Ghana",         flag: "🇬🇭" },
+  { code: "TG", nom: "Togo",          flag: "🇹🇬" },
+  { code: "BJ", nom: "Bénin",         flag: "🇧🇯" },
+  { code: "ML", nom: "Mali",          flag: "🇲🇱" },
+  { code: "KE", nom: "Kenya",         flag: "🇰🇪" },
+  { code: "FR", nom: "France",        flag: "🇫🇷" },
+  { code: "BE", nom: "Belgique",      flag: "🇧🇪" },
+  { code: "CA", nom: "Canada",        flag: "🇨🇦" },
+  { code: "US", nom: "États-Unis",    flag: "🇺🇸" },
+  { code: "AE", nom: "Émirats",       flag: "🇦🇪" },
+  { code: "GB", nom: "Royaume-Uni",   flag: "🇬🇧" },
+];
+
+// ─── Templates from AXSO Design Library ──────────────────────────────────────
+const THEMES = MANIFESTE_LIBRAIRIE.map((e) => ({
+  id: e.fichier,
+  nom: e.nom,
+  couleurs: e.couleurs,
+  ambiance: e.ambiance,
+}));
+
+// ─── Schema compte ────────────────────────────────────────────────────────────
 const schemaCompte = z.object({
-  name:      z.string().min(2, "Minimum 2 caractères"),
-  email:     z.string().email("Email invalide"),
-  password:  z.string().min(6, "Minimum 6 caractères"),
-  whatsapp:  z.string().min(8, "Numéro WhatsApp requis"),
+  name:     z.string().min(2, "Minimum 2 caractères"),
+  email:    z.string().email("Email invalide"),
+  password: z.string().min(6, "Minimum 6 caractères"),
+  whatsapp: z.string().min(8, "Numéro requis"),
 });
 type CompteData = z.infer<typeof schemaCompte>;
 
-const inputCls =
-  "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#111111] text-sm " +
-  "placeholder:text-[#999999] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/15 focus:outline-none transition-all";
+// ─── Phase machine ────────────────────────────────────────────────────────────
+type Phase =
+  | "welcome"
+  | "q-vente"
+  | "q-pays"
+  | "q-theme"
+  | "analyse"
+  | "plan"
+  | "q-compte"
+  | "creation"
+  | "succes";
 
-// Bibliothèque AXSO Design (Templates/*.html) — plan.themeId (voir
-// lib/ai-agent.ts) est désormais un `fichier` de ce manifeste, pas un des
-// 16 anciens ids classiques/premium.
-const THEMES: Record<string, { nom: string; couleur: string; couleurs: Record<string, string | undefined>; polices: Record<string, string | undefined> }> = Object.fromEntries(
-  MANIFESTE_LIBRAIRIE.map((e) => [
-    e.fichier,
-    { nom: e.nom, couleur: e.couleurs.accent || ACCENT, couleurs: e.couleurs, polices: e.polices },
-  ])
-);
+// ─── CSS animations (injected once) ──────────────────────────────────────────
+const ANIMATION_CSS = `
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes dotBlink {
+  0%,80%,100% { opacity: 0.2; transform: scale(0.85); }
+  40%         { opacity: 1;   transform: scale(1); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+@keyframes pulse-ring {
+  0%   { transform: scale(1);    opacity: 0.6; }
+  50%  { transform: scale(1.15); opacity: 0.2; }
+  100% { transform: scale(1);    opacity: 0.6; }
+}
+.msg-in { animation: msgIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.dot-blink { animation: dotBlink 1.2s ease-in-out infinite; }
+`;
 
-// 3 styles "coup d'œil" mis en avant. Les autres designs de la bibliothèque
-// vivent dans "Plus de styles".
-const STYLE_PICKS: { id: string; label: string; desc: string }[] = MANIFESTE_LIBRAIRIE.slice(0, 3).map((e) => ({
-  id: e.fichier, label: e.nom, desc: e.ambiance.join(" · "),
-}));
-const STYLE_PICK_IDS = new Set(STYLE_PICKS.map(s => s.id));
-const AUTRES_THEMES = Object.keys(THEMES).filter(id => !STYLE_PICK_IDS.has(id));
+// ─── Components ───────────────────────────────────────────────────────────────
 
-// Retourne une pile de polices CSS "safe" (sans charger de Google Font) qui
-// illustre la famille du thème (serif / display / sans) — suffisant pour un
-// mini-mockup, sans alourdir la page avec des chargements de polices.
-function mockupFontStack(fontId?: string): string {
-  const cat = fontEntry(fontId)?.cat;
-  if (cat === "Serif") return "Georgia, 'Times New Roman', serif";
-  if (cat === "Display") return "'Trebuchet MS', Impact, sans-serif";
-  return "system-ui, -apple-system, sans-serif";
+function AxiaAvatar({ size = 36 }: { size?: number }) {
+  return (
+    <div className="flex-shrink-0 relative" style={{ width: size, height: size }}>
+      <div
+        style={{
+          width: size, height: size, borderRadius: "30%",
+          background: `linear-gradient(135deg, #1B2A4A, #2d4270)`,
+          border: `1.5px solid ${BORDER_ACCENT}`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: `0 0 ${size * 0.5}px rgba(245,166,35,0.15)`,
+        }}
+      >
+        <img src="/axia-icon.png" alt="Axia" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }}
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+      </div>
+      <div style={{
+        position: "absolute", bottom: -2, right: -2,
+        width: size * 0.32, height: size * 0.32,
+        borderRadius: "50%", background: "#22C55E",
+        border: `1.5px solid ${BG}`,
+      }} />
+    </div>
+  );
 }
 
-// Mini-mockup illustratif d'un design : reproduit ses vraies couleurs/police
-// plutôt qu'un simple point de couleur, sans aller jusqu'à un aperçu live
-// (pas d'iframe) — juste assez pour donner une intuition visuelle.
-function ThemeMockup({ id, compact }: { id: string; compact?: boolean }) {
-  const t = THEMES[id];
-  const c = t?.couleurs || {};
+function AxiaThinking() {
   return (
-    <div
-      className={"w-full flex flex-col justify-center overflow-hidden " + (compact ? "gap-1 px-2.5 py-2" : "gap-1.5 px-3.5 py-3")}
-      style={{
-        height: compact ? 56 : 92,
-        background: c.fond || "#fff",
-        border: `1px solid rgba(0,0,0,0.1)`,
-        borderRadius: 12,
+    <div className="flex items-center gap-3">
+      <AxiaAvatar size={32} />
+      <div style={{
+        background: CARD, border: `1px solid ${BORDER}`,
+        borderRadius: "0 16px 16px 16px", padding: "12px 16px",
+        display: "flex", gap: 5, alignItems: "center",
       }}>
-      <p className="truncate"
-        style={{ color: c.texte || "#111", fontFamily: mockupFontStack(t?.polices?.titre), fontWeight: 700, fontSize: compact ? 10 : 12, lineHeight: 1 }}>
-        Ma boutique
-      </p>
-      <div style={{ width: "70%", height: compact ? 3 : 4, borderRadius: 2, background: c.texte || "#111", opacity: 0.4 }} />
-      <div className="self-start"
-        style={{ marginTop: compact ? 2 : 5, background: c.accent || ACCENT, color: c.fond || "#fff", fontSize: compact ? 8 : 9, fontWeight: 700, padding: compact ? "2px 7px" : "3px 10px", borderRadius: 999 }}>
-        Voir
+        {[0, 1, 2].map(i => (
+          <div key={i} className="dot-blink" style={{
+            width: 6, height: 6, borderRadius: "50%",
+            background: ACCENT, animationDelay: `${i * 0.2}s`,
+          }} />
+        ))}
       </div>
     </div>
   );
 }
 
-function PlanPreviewCard({ plan, messageIA, onConfirmer, onModifier, onChangeTheme, loading }: {
+function AxiaMsg({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  return (
+    <div className="msg-in flex items-start gap-3" style={{ animationDelay: `${delay}ms` }}>
+      <AxiaAvatar size={32} />
+      <div style={{
+        background: CARD, border: `1px solid ${BORDER}`,
+        borderRadius: "0 16px 16px 16px",
+        padding: "13px 16px", maxWidth: "82%",
+        color: TEXT, fontSize: 14, lineHeight: 1.6,
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function UserMsg({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="msg-in flex justify-end">
+      <div style={{
+        background: `linear-gradient(135deg, ${ACCENT}22, ${ACCENT}14)`,
+        border: `1px solid ${BORDER_ACCENT}`,
+        borderRadius: "16px 0 16px 16px",
+        padding: "12px 16px", maxWidth: "75%",
+        color: TEXT, fontSize: 14, lineHeight: 1.6,
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ── Pays selector ──────────────────────────────────────────────────────────────
+function PaysSelector({ onSelect }: { onSelect: (code: string, nom: string) => void }) {
+  const [selected, setSelected] = useState("");
+  return (
+    <div className="msg-in">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, maxWidth: 420 }}>
+        {PAYS_LIST.map(p => (
+          <button key={p.code}
+            onClick={() => { setSelected(p.code); onSelect(p.code, p.nom); }}
+            style={{
+              display: "flex", flexDirection: "column", alignItems: "center",
+              gap: 4, padding: "10px 6px", borderRadius: 12,
+              background: selected === p.code ? `${ACCENT}18` : CARD,
+              border: `1px solid ${selected === p.code ? BORDER_ACCENT : BORDER}`,
+              cursor: "pointer", transition: "all 0.15s",
+              color: TEXT, fontSize: 11, fontWeight: 600,
+            }}
+          >
+            <span style={{ fontSize: 22 }}>{p.flag}</span>
+            <span style={{ color: selected === p.code ? ACCENT : MUTED, lineHeight: 1.2, textAlign: "center" }}>{p.nom}</span>
+            {selected === p.code && <Check size={10} color={ACCENT} />}
+          </button>
+        ))}
+        <button
+          onClick={() => { setSelected("AU"); onSelect("AU", "Autre"); }}
+          style={{
+            display: "flex", flexDirection: "column", alignItems: "center",
+            gap: 4, padding: "10px 6px", borderRadius: 12,
+            background: selected === "AU" ? `${ACCENT}18` : CARD,
+            border: `1px solid ${selected === "AU" ? BORDER_ACCENT : BORDER}`,
+            cursor: "pointer", transition: "all 0.15s",
+            color: TEXT, fontSize: 11, fontWeight: 600,
+          }}
+        >
+          <span style={{ fontSize: 22 }}>🌍</span>
+          <span style={{ color: selected === "AU" ? ACCENT : MUTED }}>Autre</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Theme selector ─────────────────────────────────────────────────────────────
+function ThemeSelector({ selectedId, onSelect }: { selectedId: string; onSelect: (id: string) => void }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, maxWidth: 440 }}>
+      {THEMES.slice(0, 9).map(t => {
+        const c = t.couleurs;
+        const sel = selectedId === t.id;
+        return (
+          <button key={t.id} onClick={() => onSelect(t.id)}
+            style={{
+              padding: 0, borderRadius: 14, overflow: "hidden",
+              border: `2px solid ${sel ? (c.accent || ACCENT) : BORDER}`,
+              background: c.fond || CARD,
+              cursor: "pointer", transition: "all 0.15s",
+              boxShadow: sel ? `0 0 0 3px ${(c.accent || ACCENT)}25` : "none",
+              position: "relative",
+            }}
+          >
+            {/* Mockup */}
+            <div style={{ height: 72, background: c.fond || "#fff", display: "flex", flexDirection: "column", gap: 5, padding: "10px 10px 6px" }}>
+              <div style={{ height: 5, width: "60%", borderRadius: 3, background: c.texte || "#111", opacity: 0.7 }} />
+              <div style={{ height: 3, width: "80%", borderRadius: 2, background: c.texte || "#111", opacity: 0.25 }} />
+              <div style={{ height: 3, width: "50%", borderRadius: 2, background: c.texte || "#111", opacity: 0.15 }} />
+              <div style={{ marginTop: "auto", display: "flex", gap: 5 }}>
+                {[0, 1, 2].map(i => (
+                  <div key={i} style={{ flex: 1, height: 22, borderRadius: 5, background: c.surface || "#eee" }} />
+                ))}
+              </div>
+            </div>
+            {/* Label */}
+            <div style={{
+              background: CARD, borderTop: `1px solid ${BORDER}`,
+              padding: "6px 8px", display: "flex", alignItems: "center", justifyContent: "space-between",
+            }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: TEXT, letterSpacing: "0.05em" }}>{t.nom}</div>
+                <div style={{ fontSize: 9, color: MUTED, marginTop: 1 }}>{t.ambiance[0]}</div>
+              </div>
+              {sel && (
+                <div style={{ width: 16, height: 16, borderRadius: "50%", background: c.accent || ACCENT, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Check size={9} color="#fff" />
+                </div>
+              )}
+              {!sel && (
+                <div style={{ width: 12, height: 12, borderRadius: "50%", background: c.accent || ACCENT, flexShrink: 0 }} />
+              )}
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Plan card ──────────────────────────────────────────────────────────────────
+function PlanCard({ plan, onConfirm, onThemeChange, loading }: {
   plan: PlanBoutique & { messageIA?: string };
-  messageIA: string;
-  onConfirmer: () => void;
-  onModifier: () => void;
-  onChangeTheme?: (themeId: string) => void;
+  onConfirm: () => void;
+  onThemeChange: (id: string) => void;
   loading: boolean;
 }) {
-  const theme = THEMES[plan.themeId] || Object.values(THEMES)[0];
-  const aiThemeId = plan.themeId; // garder l'id suggéré par Axia pour le badge
+  const t = THEMES.find(t => t.id === plan.themeId) || THEMES[0];
+  const c = t?.couleurs || {};
   return (
-    <div className="space-y-4">
-      <div className="flex gap-3">
-        <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ background: "rgba(245,166,35,0.15)", border: "1px solid rgba(245,166,35,0.25)" }}>
-          <Bot size={14} style={{ color: ACCENT }} />
-        </div>
-        <div className="flex-1 rounded-2xl px-4 py-3"
-          style={{ background: "rgba(245,166,35,0.07)", border: "1px solid rgba(245,166,35,0.15)" }}>
-          <p className="text-sm text-[#3D3D3D] leading-relaxed">{messageIA}</p>
-        </div>
-      </div>
-
-      <div className="rounded-2xl overflow-hidden border" style={{ background: "#ffffff", borderColor: "rgba(0,0,0,0.08)", boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04)" }}>
-        <div className="p-4 border-b" style={{ borderColor: "rgba(0,0,0,0.06)", background: `linear-gradient(135deg, ${theme.couleur}12, ${theme.couleur}06)` }}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: `${theme.couleur}20`, border: `2px solid ${theme.couleur}40` }}>
-              <div style={{ width: 16, height: 16, borderRadius: "50%", background: theme.couleur }} />
+    <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 440 }}>
+      {/* Store preview */}
+      <div style={{
+        background: CARD, border: `1px solid ${BORDER_ACCENT}`,
+        borderRadius: 16, overflow: "hidden",
+      }}>
+        <div style={{
+          padding: "14px 16px",
+          background: `linear-gradient(135deg, ${c.fond || "#111"}22, transparent)`,
+          borderBottom: `1px solid ${BORDER}`,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{
+              width: 42, height: 42, borderRadius: 12,
+              background: `${c.accent || ACCENT}22`,
+              border: `2px solid ${c.accent || ACCENT}50`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <div style={{ width: 18, height: 18, borderRadius: "50%", background: c.accent || ACCENT }} />
             </div>
             <div>
-              <p className="font-bold text-[#111111]">{plan.nomBoutique}</p>
-              <p className="text-xs text-[#808080]">{plan.categorie} · {plan.pays} · {plan.devise}</p>
+              <div style={{ fontWeight: 800, fontSize: 15, color: TEXT }}>{plan.nomBoutique}</div>
+              <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{plan.categorie} · {plan.pays} · {plan.devise}</div>
             </div>
-            <div className="ml-auto text-xs px-2 py-1 rounded-lg border font-medium"
-              style={{ color: theme.couleur, borderColor: `${theme.couleur}30`, background: `${theme.couleur}10` }}>
-              {theme.nom}
+            <div style={{
+              marginLeft: "auto", fontSize: 10, fontWeight: 700,
+              padding: "4px 10px", borderRadius: 999,
+              color: c.accent || ACCENT,
+              background: `${c.accent || ACCENT}18`,
+              border: `1px solid ${c.accent || ACCENT}30`,
+              letterSpacing: "0.06em",
+            }}>
+              {t.nom}
             </div>
           </div>
-          {plan.description && <p className="text-xs text-[#808080] mt-2">{plan.description}</p>}
+          {plan.description && (
+            <div style={{ marginTop: 10, fontSize: 12, color: MUTED, lineHeight: 1.5 }}>{plan.description}</div>
+          )}
         </div>
 
-        <div className="p-4 border-b" style={{ borderColor: "rgba(0,0,0,0.06)" }}>
-          <div className="flex items-center gap-2 mb-3">
-            <Package size={13} className="text-[#999999]" />
-            <p className="text-xs font-semibold text-[#999999] uppercase tracking-wider">{plan.produits.length} produits</p>
+        {/* Products */}
+        <div style={{ padding: "12px 16px", borderBottom: `1px solid ${BORDER}` }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 10 }}>
+            {plan.produits.length} produits générés
           </div>
-          <div className="space-y-2">
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {plan.produits.map((p, i) => (
-              <div key={i} className="flex items-center justify-between text-sm">
-                <span className="text-[#595959]">{p.nom}</span>
-                <span className="font-semibold text-[#333333]">{p.prix.toLocaleString()} {plan.devise}</span>
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13 }}>
+                <span style={{ color: TEXT, opacity: 0.8 }}>{p.nom}</span>
+                <span style={{ color: c.accent || ACCENT, fontWeight: 700 }}>{p.prix.toLocaleString()} {plan.devise}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {plan.livraison && (
-          <div className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Truck size={13} className="text-[#999999]" />
-              <p className="text-xs font-semibold text-[#999999] uppercase tracking-wider">Livraison configurée</p>
-            </div>
-            <div className="flex gap-4 text-xs text-[#666666]">
-              <span>Locale : {plan.livraison.locale.toLocaleString()} {plan.devise}</span>
-              <span>Nationale : {plan.livraison.nationale.toLocaleString()} {plan.devise}</span>
-            </div>
-            {plan.livraison.gratuite > 0 && (
-              <p className="text-xs text-green-400 mt-1">Gratuit dès {plan.livraison.gratuite.toLocaleString()} {plan.devise}</p>
-            )}
+        {/* Theme picker */}
+        <div style={{ padding: "12px 16px" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 10 }}>
+            Choisir le design
           </div>
-        )}
-      </div>
-
-      {/* ── Theme picker ── */}
-      {onChangeTheme && (
-        <div>
-          <div className="flex items-center gap-2 mb-2.5">
-            <p className="text-xs font-semibold text-[#999999] uppercase tracking-wider">Choisir votre thème</p>
-            <div className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
-              style={{ background: "rgba(245,166,35,0.1)", color: ACCENT, border: "1px solid rgba(245,166,35,0.2)" }}>
-              <div className="w-1.5 h-1.5 rounded-full" style={{ background: ACCENT }} />
-              Axia recommande <strong>{THEMES[aiThemeId]?.nom ?? aiThemeId}</strong>
-            </div>
-          </div>
-          {/* 3 styles en avant — mini-maquette illustrative (vraies couleurs/rayon/police du thème) */}
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            {STYLE_PICKS.map((s) => {
-              const selected = plan.themeId === s.id;
-              const t = THEMES[s.id];
-              return (
-                <button key={s.id} onClick={() => onChangeTheme(s.id)} disabled={loading}
-                  className="relative p-1.5 rounded-2xl border-2 transition-all text-left hover:scale-[1.02]"
-                  style={{ borderColor: selected ? t.couleur : "rgba(0,0,0,0.08)", background: selected ? `${t.couleur}0a` : "white" }}>
-                  <ThemeMockup id={s.id} />
-                  <p className="text-[11px] font-semibold text-[#111111] leading-tight mt-1.5 px-0.5">{s.label}</p>
-                  <p className="text-[9.5px] text-[#999999] leading-tight px-0.5">{s.desc}</p>
-                  {selected && (
-                    <div className="absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center"
-                      style={{ background: t.couleur }}>
-                      <Check size={9} color="white" />
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Plus de styles — mêmes maquettes, format compact */}
-          <details className="group">
-            <summary className="text-[11px] font-semibold text-[#999999] cursor-pointer hover:text-[#666666] transition-colors list-none flex items-center gap-1">
-              <span className="group-open:hidden">Plus de styles ({AUTRES_THEMES.length})</span>
-              <span className="hidden group-open:inline">Masquer les autres styles</span>
-            </summary>
-            <div className="grid grid-cols-4 gap-2 mt-2.5">
-              {AUTRES_THEMES.map((id) => {
-                const t = THEMES[id];
-                const selected = plan.themeId === id;
-                return (
-                  <button key={id} onClick={() => onChangeTheme(id)} disabled={loading}
-                    className="relative p-1 rounded-xl border-2 transition-all text-left hover:scale-[1.02]"
-                    style={{ borderColor: selected ? t.couleur : "rgba(0,0,0,0.08)", background: selected ? `${t.couleur}0a` : "white" }}>
-                    <ThemeMockup id={id} compact />
-                    <p className="text-[9.5px] font-semibold text-[#111111] leading-tight mt-1 px-0.5 truncate">{t.nom}</p>
-                    {selected && (
-                      <div className="absolute top-1.5 right-1.5 w-3.5 h-3.5 rounded-full flex items-center justify-center"
-                        style={{ background: t.couleur }}>
-                        <Check size={7} color="white" />
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </details>
+          <ThemeSelector selectedId={plan.themeId} onSelect={onThemeChange} />
         </div>
-      )}
-
-      <div className="flex gap-3">
-        <button onClick={onModifier} disabled={loading}
-          className="flex-1 py-3 rounded-xl text-sm font-medium transition-all disabled:opacity-40"
-          style={{ border: "1px solid rgba(0,0,0,0.12)", color: "rgba(0,0,0,0.55)", background: "transparent" }}>
-          Modifier
-        </button>
-        <button onClick={onConfirmer} disabled={loading}
-          className="flex-1 font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 text-sm hover:scale-[1.02]"
-          style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, color: "#080808", boxShadow: `0 8px 25px rgba(245,166,35,0.3)` }}>
-          {loading ? <><Loader2 size={15} className="animate-spin" /> Création...</> : <><Sparkles size={15} /> Créer ma boutique</>}
-        </button>
       </div>
+
+      <button onClick={onConfirm} disabled={loading}
+        style={{
+          width: "100%", padding: "15px 24px",
+          borderRadius: 14, border: "none", cursor: loading ? "not-allowed" : "pointer",
+          background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_D})`,
+          color: "#050608", fontSize: 14, fontWeight: 800,
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          boxShadow: `0 8px 30px ${ACCENT}35`, opacity: loading ? 0.6 : 1,
+          transition: "all 0.15s",
+        }}
+      >
+        {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+        Ce design me convient — Créer ma boutique
+      </button>
     </div>
   );
 }
 
-function EtapeIA({ onBack, compte }: { onBack: () => void; compte: CompteData }) {
+// ── Compte form ────────────────────────────────────────────────────────────────
+function CompteForm({ onSubmit, loading }: { onSubmit: (d: CompteData) => void; loading: boolean }) {
+  const { register, handleSubmit, formState: { errors } } = useForm<CompteData>({ resolver: zodResolver(schemaCompte) });
+  const fields = [
+    { key: "name" as const,     Icon: User,  label: "Ton prénom",          type: "text",     ph: "Aminata" },
+    { key: "email" as const,    Icon: Mail,  label: "Adresse email",       type: "email",    ph: "aminata@example.com" },
+    { key: "password" as const, Icon: Lock,  label: "Mot de passe",        type: "password", ph: "Minimum 6 caractères" },
+    { key: "whatsapp" as const, Icon: Phone, label: "Numéro WhatsApp",     type: "tel",      ph: "+221 77 000 00 00" },
+  ];
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 420 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {fields.map(f => (
+          <div key={f.key}>
+            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
+              {f.label}
+            </label>
+            <div style={{ position: "relative" }}>
+              <div style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
+                <f.Icon size={14} color={MUTED} />
+              </div>
+              <input
+                {...register(f.key)} type={f.type} placeholder={f.ph}
+                style={{
+                  width: "100%", paddingLeft: 40, paddingRight: 16, paddingTop: 12, paddingBottom: 12,
+                  background: CARD, border: `1px solid ${errors[f.key] ? "rgba(239,68,68,0.5)" : BORDER}`,
+                  borderRadius: 12, color: TEXT, fontSize: 13, outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+            {errors[f.key] && (
+              <p style={{ color: "#f87171", fontSize: 11, marginTop: 4 }}>{errors[f.key]?.message}</p>
+            )}
+          </div>
+        ))}
+
+        <button type="submit" disabled={loading}
+          style={{
+            marginTop: 6, padding: "14px 24px", borderRadius: 14, border: "none",
+            cursor: loading ? "not-allowed" : "pointer",
+            background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_D})`,
+            color: "#050608", fontSize: 14, fontWeight: 800,
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            boxShadow: `0 8px 30px ${ACCENT}35`, opacity: loading ? 0.6 : 1,
+            width: "100%",
+          }}
+        >
+          {loading ? <Loader2 size={16} className="animate-spin" /> : <><Sparkles size={16} /> Lancer ma boutique <ArrowRight size={16} /></>}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+// ─── Progress steps during creation ───────────────────────────────────────────
+const CREATION_STEPS = [
+  "Provisionnement de la boutique…",
+  "Application du design choisi…",
+  "Création de tes produits…",
+  "Configuration de la livraison…",
+  "Génération des avis clients…",
+  "Finalisation en cours…",
+];
+
+// ─── Main page ────────────────────────────────────────────────────────────────
+export default function InscriptionPage() {
   const router = useRouter();
-  const [description, setDescription] = useState("");
-  const [loading,     setLoading]     = useState(false);
-  const [erreur,      setErreur]      = useState("");
-  const [plan,        setPlan]        = useState<(PlanBoutique & { messageIA?: string }) | null>(null);
-  const [messageIA,   setMessageIA]   = useState("");
-  const [phase,       setPhase]       = useState<"saisie"|"plan"|"creation"|"succes">("saisie");
-  const [progress,    setProgress]    = useState<string[]>([]);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  const analyser = async () => {
-    if (!description.trim() || loading) return;
-    setLoading(true); setErreur("");
-    try {
-      const res  = await fetch("/api/ai/onboarding", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phase: "analyser", description }) });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-      setPlan(data.plan);
-      setMessageIA(data.messageIA || data.plan.messageIA || "Voici ce que je vais créer pour vous !");
-      setPhase("plan");
-    } catch (err: any) { setErreur(err.message || "Erreur lors de l'analyse."); }
-    finally { setLoading(false); }
-  };
+  const [phase, setPhase] = useState<Phase>("welcome");
+  const [vente, setVente] = useState("");
+  const [paysCode, setPaysCode] = useState("");
+  const [paysNom, setPaysNom] = useState("");
+  const [plan, setPlan] = useState<(PlanBoutique & { messageIA?: string }) | null>(null);
+  const [messageIA, setMessageIA] = useState("");
+  const [erreur, setErreur] = useState("");
+  const [compte, setCompte] = useState<CompteData | null>(null);
+  const [venteInput, setVenteInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [creationSteps, setCreationSteps] = useState<string[]>([]);
+  const [showThinking, setShowThinking] = useState(false);
 
-  const executer = async () => {
+  // Scroll to bottom when new content appears
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [phase, showThinking, creationSteps]);
+
+  const submitVente = useCallback(() => {
+    if (!venteInput.trim()) return;
+    setVente(venteInput.trim());
+    setPhase("q-pays");
+  }, [venteInput]);
+
+  const submitPays = useCallback((code: string, nom: string) => {
+    setPaysCode(code);
+    setPaysNom(nom);
+    // Small delay so user sees their selection before next phase
+    setTimeout(() => setPhase("analyse"), 400);
+  }, []);
+
+  // Call AI onboarding API — "analyser" phase
+  useEffect(() => {
+    if (phase !== "analyse") return;
+    setShowThinking(true);
+    const description = `${vente}. Pays: ${paysNom} (${paysCode}).`;
+    fetch("/api/ai/onboarding", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phase: "analyser", description }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        setShowThinking(false);
+        if (data.plan) {
+          setPlan(data.plan);
+          setMessageIA(data.messageIA || data.plan.messageIA || "Voici ce que j'ai préparé pour toi !");
+          setPhase("plan");
+        } else {
+          setErreur(data.message || "Erreur lors de l'analyse.");
+          setPhase("q-vente");
+        }
+      })
+      .catch(() => {
+        setShowThinking(false);
+        setErreur("Erreur réseau — réessaie.");
+        setPhase("q-vente");
+      });
+  }, [phase, vente, paysCode, paysNom]);
+
+  const confirmPlan = useCallback(() => {
+    setPhase("q-compte");
+  }, []);
+
+  const launchCreation = useCallback(async (compteData: CompteData) => {
     if (!plan) return;
-    setLoading(true); setErreur(""); setPhase("creation");
-    const steps = ["Création de votre boutique...", "Configuration du thème...", "Ajout des produits...", "Configuration de la livraison...", "Finalisation..."];
+    setCompte(compteData);
+    setLoading(true);
+    setPhase("creation");
+    setCreationSteps([]);
+
+    // Animate steps
     let i = 0;
-    const interval = setInterval(() => { if (i < steps.length) { setProgress(p => [...p, steps[i]]); i++; } }, 600);
+    const interval = setInterval(() => {
+      if (i < CREATION_STEPS.length) {
+        setCreationSteps(prev => [...prev, CREATION_STEPS[i]]);
+        i++;
+      }
+    }, 700);
+
     try {
-      const res  = await fetch("/api/ai/onboarding", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phase: "executer", plan, compte }) });
+      const res = await fetch("/api/ai/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phase: "executer", plan, compte: compteData }),
+      });
       const data = await res.json();
       clearInterval(interval);
       if (!res.ok) throw new Error(data.message);
+      setCreationSteps(CREATION_STEPS);
       setPhase("succes");
-      const loginResult = await signIn("credentials", { email: compte.email, password: compte.password, redirect: false });
-      setTimeout(() => router.push(loginResult?.ok ? "/dashboard" : "/connexion?inscription=success"), 1500);
-    } catch (err: any) { clearInterval(interval); setErreur(err.message || "Erreur"); setPhase("plan"); }
-    finally { setLoading(false); }
-  };
+      const loginResult = await signIn("credentials", {
+        email: compteData.email,
+        password: compteData.password,
+        redirect: false,
+      });
+      setTimeout(() => router.push(loginResult?.ok ? "/dashboard" : "/connexion?inscription=success"), 1800);
+    } catch (err: any) {
+      clearInterval(interval);
+      setErreur(err.message || "Erreur lors de la création.");
+      setPhase("plan");
+    } finally {
+      setLoading(false);
+    }
+  }, [plan, router]);
 
-  if (phase === "succes") return (
-    <div className="text-center py-8 space-y-4">
-      <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto"
-        style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)" }}>
-        <CheckCircle2 size={32} className="text-green-400" />
-      </div>
-      <h3 className="text-xl font-bold text-[#111111]">Boutique créée !</h3>
-      <p className="text-[#808080] text-sm">Redirection vers votre dashboard...</p>
-      <div className="flex justify-center"><Loader2 size={20} className="animate-spin" style={{ color: ACCENT }} /></div>
-    </div>
-  );
+  // ── Render ────────────────────────────────────────────────────────────────
+  return (
+    <div style={{
+      minHeight: "100vh", background: BG,
+      fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif",
+      color: TEXT, display: "flex", flexDirection: "column",
+    }}>
+      <style dangerouslySetInnerHTML={{ __html: ANIMATION_CSS }} />
 
-  if (phase === "creation") return (
-    <div className="py-6 space-y-4">
-      <div className="text-center mb-4">
-        <Sparkles size={24} className="mx-auto mb-2" style={{ color: ACCENT }} />
-        <p className="font-semibold text-[#111111]">L'IA construit votre boutique...</p>
+      {/* ── Ambient background ── */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0 }}>
+        <div style={{ position: "absolute", top: "-10%", left: "50%", transform: "translateX(-50%)", width: 800, height: 400, borderRadius: "50%", background: `radial-gradient(ellipse, ${ACCENT}09 0%, transparent 70%)` }} />
+        <div style={{ position: "absolute", bottom: 0, right: 0, width: 400, height: 400, background: `radial-gradient(ellipse, rgba(99,102,241,0.06) 0%, transparent 70%)` }} />
+        <div style={{ position: "absolute", inset: 0, opacity: 0.015, backgroundImage: `linear-gradient(${ACCENT} 1px,transparent 1px),linear-gradient(90deg,${ACCENT} 1px,transparent 1px)`, backgroundSize: "48px 48px" }} />
       </div>
-      <div className="space-y-2">
-        {progress.map((step, i) => (
-          <div key={i} className="flex items-center gap-3 text-sm">
-            <CheckCircle2 size={16} className="text-green-400 flex-shrink-0" />
-            <span className="text-[#4D4D4D]">{step}</span>
-          </div>
-        ))}
-        {progress.length < 5 && (
-          <div className="flex items-center gap-3 text-sm">
-            <Loader2 size={16} className="animate-spin flex-shrink-0" style={{ color: ACCENT }} />
-            <span className="text-[#8C8C8C]">En cours...</span>
+
+      {/* ── Header ── */}
+      <div style={{ position: "relative", zIndex: 1, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: 640, margin: "0 auto", width: "100%" }}>
+        <Link href="/">
+          <img src="/logo.png" alt="Axso" style={{ height: 30, objectFit: "contain" }}
+            onError={(e) => {
+              const el = e.currentTarget as HTMLImageElement;
+              el.style.display = "none";
+              const span = document.createElement("span");
+              span.textContent = "AXSO";
+              span.style.cssText = `color:${ACCENT};font-weight:900;font-size:18px;letter-spacing:0.12em;`;
+              el.parentNode?.appendChild(span);
+            }}
+          />
+        </Link>
+        <Link href="/connexion" style={{ fontSize: 13, color: MUTED, textDecoration: "none" }}>
+          Déjà un compte ? <span style={{ color: ACCENT, fontWeight: 600 }}>Connexion</span>
+        </Link>
+      </div>
+
+      {/* ── Chat container ── */}
+      <div style={{
+        position: "relative", zIndex: 1, flex: 1,
+        maxWidth: 640, margin: "0 auto", width: "100%",
+        padding: "0 20px 120px",
+        display: "flex", flexDirection: "column", gap: 20,
+      }}>
+
+        {/* ── WELCOME ── */}
+        {phase === "welcome" && (
+          <div className="msg-in" style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", paddingTop: 60, gap: 24 }}>
+            {/* Axia avatar large */}
+            <div style={{ position: "relative" }}>
+              <div style={{ width: 80, height: 80, borderRadius: "28%", background: "linear-gradient(135deg,#1B2A4A,#2d4270)", border: `2px solid ${BORDER_ACCENT}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 60px ${ACCENT}20` }}>
+                <img src="/axia-icon.png" alt="Axia" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }} />
+              </div>
+              <div style={{ position: "absolute", bottom: -4, right: -4, width: 24, height: 24, borderRadius: "50%", background: "#22C55E", border: `2px solid ${BG}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Sparkles size={12} color="#fff" />
+              </div>
+            </div>
+
+            <div>
+              <h1 style={{ fontSize: 28, fontWeight: 900, margin: 0, lineHeight: 1.2 }}>
+                Je suis <span style={{ background: `linear-gradient(135deg,${ACCENT},${ACCENT_D})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Axia</span>.
+              </h1>
+              <p style={{ fontSize: 16, color: MUTED, marginTop: 10, lineHeight: 1.6, maxWidth: 380, margin: "10px auto 0" }}>
+                En quelques questions, je vais créer ton site e-commerce ultra haut de gamme — design, produits, configuration complète.
+              </p>
+            </div>
+
+            {/* Features */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, width: "100%", maxWidth: 400 }}>
+              {[
+                { icon: Palette, label: "15 designs premium", desc: "Sur mesure pour ton secteur" },
+                { icon: Store,   label: "Boutique complète",  desc: "Produits + livraison + SEO" },
+                { icon: Globe,   label: "Mondial",            desc: "100+ pays, toutes devises" },
+                { icon: Sparkles,label: "100% IA",            desc: "Généré en 30 secondes" },
+              ].map(({ icon: Icon, label, desc }) => (
+                <div key={label} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: "12px 14px", textAlign: "left" }}>
+                  <Icon size={16} color={ACCENT} />
+                  <div style={{ fontWeight: 700, fontSize: 12, marginTop: 6 }}>{label}</div>
+                  <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{desc}</div>
+                </div>
+              ))}
+            </div>
+
+            <button onClick={() => setPhase("q-vente")}
+              style={{
+                padding: "16px 40px", borderRadius: 16, border: "none",
+                background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_D})`,
+                color: "#050608", fontSize: 15, fontWeight: 800, cursor: "pointer",
+                boxShadow: `0 12px 40px ${ACCENT}40`, display: "flex", alignItems: "center", gap: 10,
+                transition: "transform 0.15s",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.03)")}
+              onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+            >
+              <Sparkles size={18} /> Créer ma boutique gratuitement <ArrowRight size={18} />
+            </button>
+
+            <p style={{ fontSize: 12, color: MUTED }}>Gratuit · Pas de carte bancaire · En ligne en 60 secondes</p>
           </div>
         )}
-      </div>
-    </div>
-  );
 
-  return (
-    <div className="space-y-4">
-      <div className="mb-2">
-        <h2 className="text-xl font-bold text-[#111111]">Axia crée votre boutique</h2>
-        <p className="text-[#808080] text-sm mt-0.5">Décrivez votre business en quelques mots</p>
-      </div>
+        {/* ── QUESTION VENTE ── */}
+        {phase !== "welcome" && (
+          <AxiaMsg delay={0}>
+            Dis-moi ce que tu veux vendre. Plus tu es précis, meilleur sera ton site. 🎯
+          </AxiaMsg>
+        )}
 
-      {phase === "saisie" && (
-        <div className="flex gap-3">
-          <div className="ax-axia-mascot w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0" style={{ background: "#1B2A4A" }}>
-            <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
-          </div>
-          <div className="flex-1 rounded-2xl px-4 py-3"
-            style={{ background: "rgba(245,166,35,0.06)", border: "1px solid rgba(245,166,35,0.15)" }}>
-            <p className="text-sm text-[#444444]">
-              Bonjour {compte.name.split(" ")[0]} ! Décrivez votre business et je crée tout automatiquement —
-              nom, thème, produits, livraison. Ex : <em style={{ color: ACCENT }}>"Je vends des vêtements mode à Dakar"</em> ou{" "}
-              <em style={{ color: ACCENT }}>"Bijoux artisanaux au Maroc"</em>
-            </p>
-          </div>
-        </div>
-      )}
-
-      {erreur && (
-        <div className="flex items-center gap-2 rounded-xl p-3 text-sm"
-          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
-          <AlertCircle size={15} className="flex-shrink-0" /> {erreur}
-        </div>
-      )}
-
-      {phase === "plan" && plan && (
-        <PlanPreviewCard plan={plan} messageIA={messageIA}
-          onConfirmer={executer}
-          onModifier={() => { setPlan(null); setPhase("saisie"); }}
-          onChangeTheme={(themeId) => setPlan(p => p ? { ...p, themeId } : p)}
-          loading={loading} />
-      )}
-
-      {phase === "saisie" && (
-        <>
-          <div className="flex flex-wrap gap-2">
-            {["Mode africaine au Cameroun", "Cosmétiques naturels au Sénégal", "Artisanat et bijoux au Maroc"].map(ex => (
-              <button key={ex} onClick={() => setDescription(ex)}
-                className="text-xs px-3 py-1.5 rounded-lg transition-all"
-                style={{ background: "rgba(245,166,35,0.07)", border: "1px solid rgba(245,166,35,0.18)", color: "rgba(0,0,0,0.5)" }}>
-                {ex}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <textarea value={description} onChange={e => setDescription(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), analyser())}
-              placeholder="Décrivez votre business : produits, pays, clientèle cible..."
-              rows={3} disabled={loading} className={inputCls + " resize-none flex-1"} />
-            <button onClick={analyser} disabled={!description.trim() || loading}
-              className="w-12 rounded-xl flex items-center justify-center transition-colors disabled:opacity-40 self-end"
-              style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})` }}>
-              {loading ? <Loader2 size={16} className="animate-spin" style={{ color: "#080808" }} /> : <Send size={16} style={{ color: "#080808" }} />}
-            </button>
-          </div>
-          <button type="button" onClick={onBack}
-            className="w-full py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all"
-            style={{ border: "1px solid rgba(0,0,0,0.1)", color: "rgba(0,0,0,0.45)" }}>
-            <ArrowLeft size={15} /> Retour
-          </button>
-        </>
-      )}
-    </div>
-  );
-}
-
-export default function InscriptionPage() {
-  const router   = useRouter();
-  const [etape,  setEtape]  = useState(0);
-  const [compte, setCompte] = useState<CompteData | null>(null);
-
-  const formCompte = useForm<CompteData>({ resolver: zodResolver(schemaCompte) });
-  const onSubmitCompte = (data: CompteData) => { setCompte(data); setEtape(1); };
-
-  return (
-    <div className="min-h-screen flex overflow-hidden" style={{ background: "#ffffff", fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
-      {/* Ambient */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-1/3 w-[500px] h-[500px] rounded-full"
-          style={{ background: "radial-gradient(ellipse, rgba(245,166,35,0.09) 0%, transparent 70%)" }} />
-        <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full"
-          style={{ background: "radial-gradient(ellipse, rgba(124,58,237,0.07) 0%, transparent 70%)" }} />
-        <div className="absolute inset-0 opacity-[0.018]"
-          style={{ backgroundImage: "linear-gradient(rgba(245,166,35,1) 1px,transparent 1px),linear-gradient(90deg,rgba(245,166,35,1) 1px,transparent 1px)", backgroundSize: "52px 52px" }} />
-      </div>
-
-      {/* ── Left panel ── */}
-      <div className="hidden lg:flex flex-col justify-between w-[44%] px-14 py-12 relative">
-        <Link href="/">
-          <img src="/logo.png" alt="axso"
-            style={{ height: "34px", width: "auto", objectFit: "contain" }} />
-        </Link>
-
-        <div className="max-w-sm">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-7"
-            style={{ background: "rgba(245,166,35,0.1)", border: "1px solid rgba(245,166,35,0.25)", color: ACCENT }}>
-            <Sparkles size={11} /> Inscription gratuite · Propulsée par Axia
-          </div>
-          <h1 className="text-3xl font-bold text-[#111111] leading-tight mb-4">
-            Crée ta boutique avec<br />
-            <span style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              Axia
-            </span>
-          </h1>
-          <p className="text-[#737373] text-sm leading-relaxed mb-8">
-            En 2 étapes, votre boutique est en ligne — nom, thème, produits, livraison. Tout configuré automatiquement.
-          </p>
-
-          <div className="space-y-3">
-            {[
-              { icon: Store, label: "Votre compte",       desc: "Email et mot de passe",     done: etape > 0, axia: false },
-              { icon: Bot,   label: "Axia configure tout", desc: "Décrivez votre business",  done: false,     axia: true },
-            ].map((s, i) => (
-              <div key={i}
-                className="flex items-center gap-3 p-3.5 rounded-2xl transition-all"
+        {(phase === "q-vente") && (
+          <div className="msg-in" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {erreur && (
+              <div style={{ padding: "10px 14px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 12, fontSize: 13, color: "#f87171" }}>
+                {erreur}
+              </div>
+            )}
+            {/* Quick examples */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {[
+                "Mode & vêtements africains",
+                "Cosmétiques naturels",
+                "Bijoux artisanaux",
+                "Formations en ligne",
+                "Électronique & gadgets",
+                "Alimentation & épices",
+              ].map(ex => (
+                <button key={ex} onClick={() => setVenteInput(ex)}
+                  style={{
+                    padding: "6px 14px", borderRadius: 999, fontSize: 12, fontWeight: 500,
+                    background: venteInput === ex ? `${ACCENT}22` : CARD,
+                    border: `1px solid ${venteInput === ex ? BORDER_ACCENT : BORDER}`,
+                    color: venteInput === ex ? ACCENT : MUTED,
+                    cursor: "pointer", transition: "all 0.12s",
+                  }}
+                >
+                  {ex}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <textarea
+                value={venteInput}
+                onChange={e => setVenteInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitVente(); } }}
+                placeholder="Ex : Je vends des vêtements mode femme inspirés de la culture africaine..."
+                rows={3}
                 style={{
-                  background: i === etape ? "rgba(245,166,35,0.06)" : i < etape ? "rgba(245,166,35,0.03)" : "transparent",
-                  border: i === etape ? "1px solid rgba(245,166,35,0.2)" : "1px solid transparent",
-                  opacity: i > etape ? 0.4 : 1,
-                }}>
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
-                  style={{ background: i <= etape ? (s.axia ? "#1B2A4A" : `linear-gradient(135deg,${ACCENT},${ACCENT_DARK})`) : "rgba(0,0,0,0.06)", color: i <= etape ? "#080808" : "rgba(0,0,0,0.4)" }}>
-                  {s.done ? <Check size={14} /> : s.axia ? <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" /> : <s.icon size={14} />}
-                </div>
-                <div>
-                  <p className="text-sm font-semibold" style={{ color: i === etape ? "#111111" : "rgba(0,0,0,0.45)" }}>{s.label}</p>
-                  <p className="text-xs text-[#999999]">{s.desc}</p>
-                </div>
-                {i === etape && <div className="ml-auto w-2 h-2 rounded-full animate-pulse" style={{ background: ACCENT }} />}
-              </div>
-            ))}
+                  flex: 1, background: CARD, border: `1px solid ${BORDER}`,
+                  borderRadius: 14, padding: "12px 16px", color: TEXT, fontSize: 13,
+                  resize: "none", outline: "none", lineHeight: 1.6,
+                  fontFamily: "inherit",
+                }}
+              />
+              <button onClick={submitVente} disabled={!venteInput.trim()}
+                style={{
+                  width: 44, height: 44, borderRadius: 12, border: "none",
+                  background: venteInput.trim() ? `linear-gradient(135deg,${ACCENT},${ACCENT_D})` : BORDER,
+                  cursor: venteInput.trim() ? "pointer" : "not-allowed",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  alignSelf: "flex-end", flexShrink: 0,
+                }}
+              >
+                <Send size={16} color={venteInput.trim() ? "#050608" : MUTED} />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
-        <p className="text-[#B3B3B3] text-xs">© 2026 Axso · Made for Africa</p>
-      </div>
+        {/* ── USER ANSWER VENTE ── */}
+        {vente && phase !== "q-vente" && (
+          <UserMsg>{vente}</UserMsg>
+        )}
 
-      {/* ── Right panel ── */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 relative">
-        <div className="absolute top-8 left-6 lg:hidden">
-          <Link href="/">
-            <img src="/logo.png" alt="axso"
-              style={{ height: "30px", width: "auto", objectFit: "contain" }} />
-          </Link>
-        </div>
+        {/* ── QUESTION PAYS ── */}
+        {(phase === "q-pays" || (paysCode && phase !== "q-vente")) && phase !== "welcome" && vente && (
+          <>
+            <AxiaMsg delay={100}>
+              Super ! Dans quel pays es-tu basé ? Je vais adapter la devise, la livraison et le design à ton marché. 🌍
+            </AxiaMsg>
+            {phase === "q-pays" && <PaysSelector onSelect={submitPays} />}
+          </>
+        )}
 
-        <div className="w-full max-w-md pt-16 lg:pt-0">
-          {/* Mobile stepper */}
-          <div className="flex items-center justify-center gap-2 mb-6 lg:hidden">
-            {["Compte", "Boutique Axia"].map((label, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-                  style={{ background: i <= etape ? `linear-gradient(135deg,${ACCENT},${ACCENT_DARK})` : "rgba(0,0,0,0.08)", color: i <= etape ? "#080808" : "rgba(0,0,0,0.4)" }}>
-                  {i < etape ? <Check size={12} /> : i + 1}
-                </div>
-                <span className="text-xs text-[#8C8C8C] hidden sm:block">{label}</span>
-                {i < 1 && <div className="w-6 h-0.5" style={{ background: i < etape ? ACCENT : "rgba(0,0,0,0.1)" }} />}
+        {/* ── USER ANSWER PAYS ── */}
+        {paysNom && phase !== "q-pays" && phase !== "welcome" && (
+          <UserMsg>📍 {paysNom}</UserMsg>
+        )}
+
+        {/* ── ANALYSE ── */}
+        {phase === "analyse" && (
+          <>
+            <AxiaMsg delay={0}>
+              Parfait ! Laisse-moi analyser ton projet et concevoir ton site… ✨
+            </AxiaMsg>
+            <AxiaThinking />
+          </>
+        )}
+
+        {showThinking && phase === "analyse" && null}
+
+        {/* ── PLAN PREVIEW ── */}
+        {(phase === "plan" || phase === "q-compte" || phase === "creation" || phase === "succes") && plan && (
+          <>
+            <AxiaMsg delay={0}>
+              <strong style={{ color: ACCENT }}>Ton site est prêt à être lancé.</strong>{" "}
+              {messageIA}
+            </AxiaMsg>
+            {phase === "plan" && (
+              <div className="msg-in">
+                <PlanCard
+                  plan={plan}
+                  onConfirm={confirmPlan}
+                  onThemeChange={(id) => setPlan(p => p ? { ...p, themeId: id } : p)}
+                  loading={false}
+                />
               </div>
-            ))}
-          </div>
+            )}
+          </>
+        )}
 
-          <div className="rounded-3xl p-8 border"
-            style={{ background: "#ffffff", borderColor: "rgba(245,166,35,0.2)", boxShadow: "0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(245,166,35,0.06)" }}>
-
-            {/* ÉTAPE 0 — Compte */}
-            {etape === 0 && (
-              <form onSubmit={formCompte.handleSubmit(onSubmitCompte)} className="space-y-4">
-                <div className="mb-6">
-                  {/* Axia greeting */}
-                  <div className="flex gap-3 mb-5">
-                    <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 border"
-                      style={{ borderColor: "rgba(245,166,35,0.25)", background: "#1B2A4A" }}>
-                      <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-1 rounded-2xl px-4 py-2.5 text-sm text-[#444444]"
-                      style={{ background: "rgba(245,166,35,0.06)", border: "1px solid rgba(245,166,35,0.15)" }}>
-                      Bonjour ! Je suis <strong style={{ color: ACCENT }}>Axia</strong>, votre IA. En 2 étapes, je crée votre boutique complète automatiquement.
-                    </div>
+        {/* ── QUESTION COMPTE ── */}
+        {(phase === "q-compte" || phase === "creation" || phase === "succes") && (
+          <>
+            <AxiaMsg delay={100}>
+              Dernière étape — crée ton compte pour lancer ta boutique. 🚀
+            </AxiaMsg>
+            {phase === "q-compte" && (
+              <div className="msg-in">
+                <CompteForm onSubmit={launchCreation} loading={loading} />
+                {erreur && (
+                  <div style={{ marginTop: 10, padding: "10px 14px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 12, fontSize: 13, color: "#f87171" }}>
+                    {erreur}
                   </div>
-                  <h2 className="text-xl font-bold text-[#111111]">Créez votre compte</h2>
-                  <p className="text-[#808080] text-sm mt-0.5">Gratuit · Pas de carte requise</p>
-                </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
 
-                {[
-                  { field: "name",     label: "Votre nom",     type: "text",     ph: "Aminata Diallo" },
-                  { field: "email",    label: "Email",          type: "email",    ph: "aminata@example.com" },
-                  { field: "password", label: "Mot de passe",   type: "password", ph: "Minimum 6 caractères" },
-                  { field: "whatsapp", label: "WhatsApp",       type: "tel",      ph: "+221 77 123 45 67" },
-                ].map(({ field, label, type, ph }) => (
-                  <div key={field}>
-                    <label className="block text-[#595959] text-sm font-medium mb-1.5">{label}</label>
-                    <input {...formCompte.register(field as keyof CompteData)} type={type} placeholder={ph} className={inputCls} />
-                    {formCompte.formState.errors[field as keyof CompteData] && (
-                      <p className="text-red-400 text-xs mt-1">{formCompte.formState.errors[field as keyof CompteData]?.message}</p>
-                    )}
+        {/* ── CREATION ── */}
+        {phase === "creation" && (
+          <div className="msg-in" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ background: CARD, border: `1px solid ${BORDER_ACCENT}`, borderRadius: 16, padding: "16px 20px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                <Loader2 size={18} color={ACCENT} className="animate-spin" />
+                <span style={{ fontWeight: 700, fontSize: 14 }}>Axia construit ta boutique…</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {creationSteps.map((s, i) => (
+                  <div key={i} className="msg-in" style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13 }}>
+                    <CheckCircle2 size={14} color="#22C55E" style={{ flexShrink: 0 }} />
+                    <span style={{ color: TEXT, opacity: 0.8 }}>{s}</span>
                   </div>
                 ))}
-
-                <button type="submit"
-                  className="w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-95 mt-2"
-                  style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, color: "#080808", boxShadow: `0 8px 30px rgba(245,166,35,0.3)` }}>
-                  <div className="w-5 h-5 rounded-md overflow-hidden flex-shrink-0" style={{ background: "#1B2A4A" }}>
-                    <img src="/axia-icon.png" alt="" className="w-full h-full object-cover" />
+                {creationSteps.length < CREATION_STEPS.length && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13 }}>
+                    <Loader2 size={14} color={ACCENT} className="animate-spin" style={{ flexShrink: 0 }} />
+                    <span style={{ color: MUTED }}>En cours…</span>
                   </div>
-                  Continuer avec Axia <ArrowRight size={16} />
-                </button>
-              </form>
-            )}
-
-            {/* ÉTAPE 1 — IA */}
-            {etape === 1 && compte && <EtapeIA compte={compte} onBack={() => setEtape(0)} />}
+                )}
+              </div>
+            </div>
           </div>
+        )}
 
-          <p className="text-center text-[#999999] text-sm mt-5">
-            Déjà un compte ?{" "}
-            <Link href="/connexion" className="font-semibold hover:opacity-80 transition-opacity" style={{ color: ACCENT }}>
-              Se connecter
-            </Link>
-          </p>
-          <p className="text-center text-[#A6A6A6] text-xs mt-2">
-            Vous êtes livreur ?{" "}
-            <Link href="/inscription/livreur" className="underline underline-offset-2 hover:opacity-80 transition-opacity" style={{ color: "rgba(0,0,0,0.4)" }}>
-              Rejoindre la plateforme →
-            </Link>
-          </p>
-        </div>
+        {/* ── SUCCÈS ── */}
+        {phase === "succes" && (
+          <div className="msg-in" style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 20, paddingTop: 20 }}>
+            <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(34,197,94,0.12)", border: "2px solid rgba(34,197,94,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <CheckCircle2 size={36} color="#22C55E" />
+            </div>
+            <div>
+              <h2 style={{ fontSize: 22, fontWeight: 900, margin: 0 }}>Ta boutique est en ligne ! 🎉</h2>
+              <p style={{ color: MUTED, fontSize: 14, marginTop: 8 }}>
+                {plan?.nomBoutique && <strong style={{ color: ACCENT }}>{plan.nomBoutique}</strong>} est prête. Redirection vers ton dashboard…
+              </p>
+            </div>
+            <Loader2 size={22} color={ACCENT} className="animate-spin" />
+          </div>
+        )}
+
+        <div ref={bottomRef} />
       </div>
+
+      {/* ── Footer ── */}
+      {phase === "welcome" && (
+        <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "0 20px 32px", color: MUTED, fontSize: 12 }}>
+          Tu es livreur ?{" "}
+          <Link href="/inscription/livreur" style={{ color: ACCENT, textDecoration: "none", fontWeight: 600 }}>
+            Rejoindre la plateforme →
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
