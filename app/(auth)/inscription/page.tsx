@@ -9,51 +9,123 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
   ArrowRight, Check, Loader2, Sparkles, Send, CheckCircle2,
-  Store, Globe, Palette, User, Lock, Phone, Mail,
+  Store, Globe, Palette, User, Lock, Phone, Mail, ChevronRight,
+  ChevronLeft, X, Bell, Info, AlertCircle,
 } from "lucide-react";
 import type { PlanBoutique } from "@/lib/ai-agent";
 import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
-const ACCENT = "#F5A623";
-const ACCENT_D = "#C8760A";
-const BG = "#06090F";
-const SURFACE = "#0C1018";
-const CARD = "#101520";
-const BORDER = "rgba(255,255,255,0.07)";
-const BORDER_ACCENT = "rgba(245,166,35,0.25)";
-const TEXT = "#F0F0F0";
-const MUTED = "#6B7280";
+// ─── Palette afrocentrique luxe claire ───────────────────────────────────────
+const IVORY   = "#FAF6EF";
+const LINEN   = "#F2E8D4";
+const PARCH   = "#E0CEAA";
+const GOLD    = "#B07D3E";
+const GOLD_D  = "#7A5020";
+const GOLD_L  = "#F0C070";
+const TERRA   = "#8B3A1A";
+const INK     = "#1A1208";
+const MID     = "#5A3E22";
+const MUTED   = "#9A7C5A";
+const WHITE   = "#FFFFFF";
+const SUCCESS = "#2A9D5C";
+
+// ─── Styles CSS ───────────────────────────────────────────────────────────────
+const CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(18px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  @keyframes dotBlink {
+    0%,80%,100% { opacity:.25; transform:scale(.75); }
+    40%         { opacity:1;   transform:scale(1); }
+  }
+  @keyframes toastIn {
+    from { opacity:0; transform:translateX(110%); }
+    to   { opacity:1; transform:translateX(0); }
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.55} }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  @keyframes scaleUp { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
+  @keyframes heroIn {
+    from { opacity:0; transform:translateY(28px) scale(.97); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+  }
+
+  .msg-in   { animation: fadeUp  .48s cubic-bezier(.34,1.3,.64,1) both; }
+  .fade-in  { animation: fadeIn  .5s ease both; }
+  .scale-up { animation: scaleUp .4s cubic-bezier(.34,1.3,.64,1) both; }
+  .hero-in  { animation: heroIn  .7s cubic-bezier(.22,1,.36,1) both; }
+  .dot { animation: dotBlink 1.4s ease-in-out infinite; }
+
+  .gold-btn {
+    background: linear-gradient(135deg, ${GOLD} 0%, ${GOLD_D} 100%);
+    color: ${WHITE}; border:none; cursor:pointer;
+    transition: all .22s; font-family:'Outfit',sans-serif;
+    font-weight:700; letter-spacing:.04em;
+  }
+  .gold-btn:hover:not(:disabled) {
+    transform:translateY(-2px);
+    box-shadow:0 10px 32px rgba(176,125,62,.38);
+  }
+  .gold-btn:active:not(:disabled) { transform:translateY(0); }
+  .gold-btn:disabled { opacity:.5; cursor:not-allowed; }
+
+  .ghost-btn {
+    background:transparent;
+    border:1.5px solid ${PARCH}; color:${MID};
+    cursor:pointer; transition:all .18s;
+    font-family:'Outfit',sans-serif; font-weight:500;
+  }
+  .ghost-btn:hover { border-color:${GOLD}; color:${GOLD}; }
+
+  .field {
+    width:100%; background:${WHITE};
+    border:1.5px solid ${PARCH}; border-radius:12px;
+    padding:13px 14px 13px 44px;
+    font-family:'Outfit',sans-serif; font-size:14px;
+    color:${INK}; outline:none;
+    transition:border-color .18s, box-shadow .18s;
+  }
+  .field:focus { border-color:${GOLD}; box-shadow:0 0 0 3px rgba(176,125,62,.13); }
+  .field::placeholder { color:${MUTED}; }
+
+  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar-track { background:${LINEN}; }
+  ::-webkit-scrollbar-thumb { background:${PARCH}; border-radius:2px; }
+`;
 
 // ─── Pays ─────────────────────────────────────────────────────────────────────
 const PAYS_LIST = [
-  { code: "SN", nom: "Sénégal",       flag: "🇸🇳" },
-  { code: "CI", nom: "Côte d'Ivoire", flag: "🇨🇮" },
-  { code: "CM", nom: "Cameroun",      flag: "🇨🇲" },
-  { code: "MA", nom: "Maroc",         flag: "🇲🇦" },
-  { code: "NG", nom: "Nigeria",       flag: "🇳🇬" },
-  { code: "GH", nom: "Ghana",         flag: "🇬🇭" },
-  { code: "TG", nom: "Togo",          flag: "🇹🇬" },
-  { code: "BJ", nom: "Bénin",         flag: "🇧🇯" },
-  { code: "ML", nom: "Mali",          flag: "🇲🇱" },
-  { code: "KE", nom: "Kenya",         flag: "🇰🇪" },
-  { code: "FR", nom: "France",        flag: "🇫🇷" },
-  { code: "BE", nom: "Belgique",      flag: "🇧🇪" },
-  { code: "CA", nom: "Canada",        flag: "🇨🇦" },
-  { code: "US", nom: "États-Unis",    flag: "🇺🇸" },
-  { code: "AE", nom: "Émirats",       flag: "🇦🇪" },
-  { code: "GB", nom: "Royaume-Uni",   flag: "🇬🇧" },
+  { code:"SN", nom:"Sénégal",       flag:"🇸🇳", devise:"XOF" },
+  { code:"CI", nom:"Côte d'Ivoire", flag:"🇨🇮", devise:"XOF" },
+  { code:"CM", nom:"Cameroun",      flag:"🇨🇲", devise:"XAF" },
+  { code:"MA", nom:"Maroc",         flag:"🇲🇦", devise:"MAD" },
+  { code:"NG", nom:"Nigeria",       flag:"🇳🇬", devise:"NGN" },
+  { code:"GH", nom:"Ghana",         flag:"🇬🇭", devise:"GHS" },
+  { code:"TG", nom:"Togo",          flag:"🇹🇬", devise:"XOF" },
+  { code:"BJ", nom:"Bénin",         flag:"🇧🇯", devise:"XOF" },
+  { code:"ML", nom:"Mali",          flag:"🇲🇱", devise:"XOF" },
+  { code:"KE", nom:"Kenya",         flag:"🇰🇪", devise:"KES" },
+  { code:"FR", nom:"France",        flag:"🇫🇷", devise:"EUR" },
+  { code:"BE", nom:"Belgique",      flag:"🇧🇪", devise:"EUR" },
+  { code:"CA", nom:"Canada",        flag:"🇨🇦", devise:"CAD" },
+  { code:"US", nom:"États-Unis",    flag:"🇺🇸", devise:"USD" },
+  { code:"AE", nom:"Émirats",       flag:"🇦🇪", devise:"AED" },
+  { code:"GB", nom:"Royaume-Uni",   flag:"🇬🇧", devise:"GBP" },
+  { code:"AU", nom:"Autre",         flag:"🌍",  devise:"XAF" },
 ];
 
-// ─── Templates from AXSO Design Library ──────────────────────────────────────
-const THEMES = MANIFESTE_LIBRAIRIE.map((e) => ({
-  id: e.fichier,
-  nom: e.nom,
-  couleurs: e.couleurs,
-  ambiance: e.ambiance,
+// ─── Templates ────────────────────────────────────────────────────────────────
+const THEMES = MANIFESTE_LIBRAIRIE.map(e => ({
+  id: e.fichier, nom: e.nom, couleurs: e.couleurs, ambiance: e.ambiance,
 }));
 
-// ─── Schema compte ────────────────────────────────────────────────────────────
+// ─── Schema ───────────────────────────────────────────────────────────────────
 const schemaCompte = z.object({
   name:     z.string().min(2, "Minimum 2 caractères"),
   email:    z.string().email("Email invalide"),
@@ -62,317 +134,389 @@ const schemaCompte = z.object({
 });
 type CompteData = z.infer<typeof schemaCompte>;
 
-// ─── Phase machine ────────────────────────────────────────────────────────────
-type Phase =
-  | "welcome"
-  | "q-vente"
-  | "q-pays"
-  | "q-theme"
-  | "analyse"
-  | "plan"
-  | "q-compte"
-  | "creation"
-  | "succes";
+type Phase = "welcome"|"q-vente"|"q-pays"|"analyse"|"plan"|"q-compte"|"creation"|"succes";
 
-// ─── CSS animations (injected once) ──────────────────────────────────────────
-const ANIMATION_CSS = `
-@keyframes msgIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes dotBlink {
-  0%,80%,100% { opacity: 0.2; transform: scale(0.85); }
-  40%         { opacity: 1;   transform: scale(1); }
-}
-@keyframes shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position:  200% center; }
-}
-@keyframes pulse-ring {
-  0%   { transform: scale(1);    opacity: 0.6; }
-  50%  { transform: scale(1.15); opacity: 0.2; }
-  100% { transform: scale(1);    opacity: 0.6; }
-}
-.msg-in { animation: msgIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-.dot-blink { animation: dotBlink 1.2s ease-in-out infinite; }
-`;
+const STEPS_CREATION = [
+  "Provisionnement de ta boutique…",
+  "Application du design sélectionné…",
+  "Création de ta gamme de produits…",
+  "Configuration des modes de paiement…",
+  "Génération des premiers avis clients…",
+  "Mise en ligne de ta boutique…",
+];
 
-// ─── Components ───────────────────────────────────────────────────────────────
+// ─── TOAST NOTIFICATIONS ──────────────────────────────────────────────────────
+type Toast = { id: number; type: "success"|"info"|"error"; msg: string };
+let _toastId = 0;
 
-function AxiaAvatar({ size = 36 }: { size?: number }) {
+function ToastContainer({ toasts, onClose }: { toasts: Toast[]; onClose: (id: number) => void }) {
   return (
-    <div className="flex-shrink-0 relative" style={{ width: size, height: size }}>
-      <div
-        style={{
-          width: size, height: size, borderRadius: "30%",
-          background: `linear-gradient(135deg, #1B2A4A, #2d4270)`,
-          border: `1.5px solid ${BORDER_ACCENT}`,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: `0 0 ${size * 0.5}px rgba(245,166,35,0.15)`,
-        }}
-      >
-        <img src="/axia-icon.png" alt="Axia" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }}
-          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+    <div style={{
+      position:"fixed", top:20, right:20, zIndex:9999,
+      display:"flex", flexDirection:"column", gap:10,
+      pointerEvents:"none",
+    }}>
+      {toasts.map(t => (
+        <div key={t.id} style={{
+          display:"flex", alignItems:"center", gap:10,
+          background: t.type==="success" ? "#EDFAF4" : t.type==="error" ? "#FEF0EC" : "#FBF8EE",
+          border:`1.5px solid ${t.type==="success" ? "#A8E8C8" : t.type==="error" ? "#F5C8B8" : PARCH}`,
+          borderLeft:`4px solid ${t.type==="success" ? SUCCESS : t.type==="error" ? TERRA : GOLD}`,
+          borderRadius:12, padding:"11px 16px",
+          maxWidth:320, minWidth:220,
+          boxShadow:"0 6px 28px rgba(28,18,8,.14)",
+          animation:"toastIn .35s cubic-bezier(.34,1.3,.64,1) both",
+          pointerEvents:"all",
+          fontFamily:"'Outfit',sans-serif",
+        }}>
+          {t.type==="success" && <CheckCircle2 size={16} color={SUCCESS} style={{flexShrink:0}}/>}
+          {t.type==="info"    && <Info         size={16} color={GOLD}    style={{flexShrink:0}}/>}
+          {t.type==="error"   && <AlertCircle  size={16} color={TERRA}   style={{flexShrink:0}}/>}
+          <span style={{ fontSize:13, color:INK, flex:1, lineHeight:1.45 }}>{t.msg}</span>
+          <button onClick={()=>onClose(t.id)} style={{ background:"none", border:"none", cursor:"pointer", color:MUTED, padding:"2px", flexShrink:0, pointerEvents:"all" }}>
+            <X size={13}/>
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function useToast() {
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const push = useCallback((type: Toast["type"], msg: string, ms = 4500) => {
+    const id = ++_toastId;
+    setToasts(p => [...p, { id, type, msg }]);
+    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), ms);
+  }, []);
+  const close = useCallback((id: number) => setToasts(p => p.filter(t => t.id !== id)), []);
+  return { toasts, push, close };
+}
+
+// ─── Ornements ────────────────────────────────────────────────────────────────
+function Diamond({ size=12, color=GOLD, opacity=0.5 }: { size?:number; color?:string; opacity?:number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 12 12" style={{flexShrink:0}}>
+      <rect x="1" y="1" width="10" height="10" fill="none"
+        stroke={color} strokeWidth="1" opacity={opacity} transform="rotate(45 6 6)" rx="1.5"/>
+      <rect x="3.5" y="3.5" width="5" height="5" fill={color}
+        opacity={opacity*0.6} transform="rotate(45 6 6)" rx="0.5"/>
+    </svg>
+  );
+}
+
+function Divider() {
+  return (
+    <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+      <div style={{ flex:1, height:"1px", background:`linear-gradient(to right,transparent,${PARCH})` }}/>
+      <Diamond size={14}/>
+      <div style={{ flex:1, height:"1px", background:`linear-gradient(to left,transparent,${PARCH})` }}/>
+    </div>
+  );
+}
+
+// ─── Avatar Axia ──────────────────────────────────────────────────────────────
+function AxiaAvatar({ size=38 }: { size?:number }) {
+  return (
+    <div style={{ position:"relative", width:size, height:size, flexShrink:0 }}>
+      <div style={{
+        width:size, height:size, borderRadius:size*.27,
+        background:"linear-gradient(135deg,#1B2A4A 0%,#2B3E66 100%)",
+        border:"1.5px solid rgba(176,125,62,.4)",
+        overflow:"hidden", display:"flex", alignItems:"center", justifyContent:"center",
+        boxShadow:"0 4px 16px rgba(176,125,62,.22)",
+      }}>
+        <img src="/axia-icon.png" alt="Axia"
+          style={{ width:"100%", height:"100%", objectFit:"cover" }}
+          onError={e=>{ (e.currentTarget as HTMLImageElement).style.display="none"; }}/>
       </div>
       <div style={{
-        position: "absolute", bottom: -2, right: -2,
-        width: size * 0.32, height: size * 0.32,
-        borderRadius: "50%", background: "#22C55E",
-        border: `1.5px solid ${BG}`,
-      }} />
+        position:"absolute", bottom:-2, right:-2,
+        width:size*.3, height:size*.3, borderRadius:"50%",
+        background:SUCCESS, border:`1.5px solid ${IVORY}`,
+      }}/>
+    </div>
+  );
+}
+
+// ─── Bulles ───────────────────────────────────────────────────────────────────
+function AxiaMsg({ children, delay=0 }: { children:React.ReactNode; delay?:number }) {
+  return (
+    <div className="msg-in" style={{ display:"flex", alignItems:"flex-start", gap:11, animationDelay:`${delay}ms` }}>
+      <AxiaAvatar size={36}/>
+      <div style={{
+        background:WHITE, border:`1.5px solid ${PARCH}`,
+        borderRadius:"4px 18px 18px 18px",
+        padding:"12px 16px", maxWidth:"78%",
+        color:INK, fontSize:14, lineHeight:1.7,
+        boxShadow:"0 2px 14px rgba(28,18,8,.07)",
+        fontFamily:"'Outfit',sans-serif",
+      }}>{children}</div>
+    </div>
+  );
+}
+
+function UserMsg({ children }: { children:React.ReactNode }) {
+  return (
+    <div className="msg-in" style={{ display:"flex", justifyContent:"flex-end" }}>
+      <div style={{
+        background:`linear-gradient(135deg,${GOLD}18,${TERRA}08)`,
+        border:`1.5px solid ${PARCH}`,
+        borderRadius:"18px 4px 18px 18px",
+        padding:"11px 16px", maxWidth:"72%",
+        color:INK, fontSize:14, lineHeight:1.65,
+        fontFamily:"'Outfit',sans-serif",
+        boxShadow:"0 1px 8px rgba(28,18,8,.05)",
+      }}>{children}</div>
     </div>
   );
 }
 
 function AxiaThinking() {
   return (
-    <div className="flex items-center gap-3">
-      <AxiaAvatar size={32} />
+    <div style={{ display:"flex", alignItems:"center", gap:11 }}>
+      <AxiaAvatar size={36}/>
       <div style={{
-        background: CARD, border: `1px solid ${BORDER}`,
-        borderRadius: "0 16px 16px 16px", padding: "12px 16px",
-        display: "flex", gap: 5, alignItems: "center",
+        background:WHITE, border:`1.5px solid ${PARCH}`,
+        borderRadius:"4px 18px 18px 18px",
+        padding:"14px 18px", display:"flex", gap:6, alignItems:"center",
+        boxShadow:"0 2px 14px rgba(28,18,8,.07)",
       }}>
-        {[0, 1, 2].map(i => (
-          <div key={i} className="dot-blink" style={{
-            width: 6, height: 6, borderRadius: "50%",
-            background: ACCENT, animationDelay: `${i * 0.2}s`,
-          }} />
+        {[0,1,2].map(i=>(
+          <div key={i} className="dot" style={{
+            width:7, height:7, borderRadius:"50%",
+            background:GOLD, animationDelay:`${i*.18}s`,
+          }}/>
         ))}
       </div>
     </div>
   );
 }
 
-function AxiaMsg({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+// ─── Sélecteur de pays ────────────────────────────────────────────────────────
+function PaysSelector({ onSelect }: { onSelect:(code:string,nom:string,devise:string)=>void }) {
+  const [sel,setSel] = useState("");
   return (
-    <div className="msg-in flex items-start gap-3" style={{ animationDelay: `${delay}ms` }}>
-      <AxiaAvatar size={32} />
-      <div style={{
-        background: CARD, border: `1px solid ${BORDER}`,
-        borderRadius: "0 16px 16px 16px",
-        padding: "13px 16px", maxWidth: "82%",
-        color: TEXT, fontSize: 14, lineHeight: 1.6,
-      }}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function UserMsg({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="msg-in flex justify-end">
-      <div style={{
-        background: `linear-gradient(135deg, ${ACCENT}22, ${ACCENT}14)`,
-        border: `1px solid ${BORDER_ACCENT}`,
-        borderRadius: "16px 0 16px 16px",
-        padding: "12px 16px", maxWidth: "75%",
-        color: TEXT, fontSize: 14, lineHeight: 1.6,
-      }}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-// ── Pays selector ──────────────────────────────────────────────────────────────
-function PaysSelector({ onSelect }: { onSelect: (code: string, nom: string) => void }) {
-  const [selected, setSelected] = useState("");
-  return (
-    <div className="msg-in">
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, maxWidth: 420 }}>
-        {PAYS_LIST.map(p => (
+    <div className="msg-in" style={{ paddingLeft:47 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, maxWidth:440 }}>
+        {PAYS_LIST.map(p=>(
           <button key={p.code}
-            onClick={() => { setSelected(p.code); onSelect(p.code, p.nom); }}
+            onClick={()=>{ setSel(p.code); onSelect(p.code,p.nom,p.devise); }}
             style={{
-              display: "flex", flexDirection: "column", alignItems: "center",
-              gap: 4, padding: "10px 6px", borderRadius: 12,
-              background: selected === p.code ? `${ACCENT}18` : CARD,
-              border: `1px solid ${selected === p.code ? BORDER_ACCENT : BORDER}`,
-              cursor: "pointer", transition: "all 0.15s",
-              color: TEXT, fontSize: 11, fontWeight: 600,
-            }}
-          >
-            <span style={{ fontSize: 22 }}>{p.flag}</span>
-            <span style={{ color: selected === p.code ? ACCENT : MUTED, lineHeight: 1.2, textAlign: "center" }}>{p.nom}</span>
-            {selected === p.code && <Check size={10} color={ACCENT} />}
+              display:"flex", flexDirection:"column", alignItems:"center",
+              gap:4, padding:"9px 4px", borderRadius:12,
+              background:sel===p.code?`${GOLD}14`:WHITE,
+              border:`1.5px solid ${sel===p.code?GOLD:PARCH}`,
+              cursor:"pointer", transition:"all .15s",
+              boxShadow:sel===p.code?`0 0 0 2.5px ${GOLD}20`:"none",
+            }}>
+            <span style={{ fontSize:19 }}>{p.flag}</span>
+            <span style={{ fontSize:10, fontWeight:600, textAlign:"center", lineHeight:1.2, color:sel===p.code?GOLD_D:MID, fontFamily:"'Outfit',sans-serif" }}>{p.nom}</span>
           </button>
         ))}
-        <button
-          onClick={() => { setSelected("AU"); onSelect("AU", "Autre"); }}
-          style={{
-            display: "flex", flexDirection: "column", alignItems: "center",
-            gap: 4, padding: "10px 6px", borderRadius: 12,
-            background: selected === "AU" ? `${ACCENT}18` : CARD,
-            border: `1px solid ${selected === "AU" ? BORDER_ACCENT : BORDER}`,
-            cursor: "pointer", transition: "all 0.15s",
-            color: TEXT, fontSize: 11, fontWeight: 600,
-          }}
-        >
-          <span style={{ fontSize: 22 }}>🌍</span>
-          <span style={{ color: selected === "AU" ? ACCENT : MUTED }}>Autre</span>
-        </button>
       </div>
     </div>
   );
 }
 
-// ── Theme selector avec vrais aperçus iframes ──────────────────────────────────
-function ThemeSelector({
+// ─── Carrousel de thèmes (iframe live + infos utilisateur) ────────────────────
+function ThemeCarousel({
   selectedId, onSelect, nomBoutique, produits, devise,
 }: {
-  selectedId: string;
-  onSelect: (id: string) => void;
-  nomBoutique?: string;
-  produits?: { nom: string; prix: number; description?: string }[];
-  devise?: string;
+  selectedId:string; onSelect:(id:string)=>void;
+  nomBoutique?:string; produits?:{nom:string;prix:number;description?:string}[]; devise?:string;
 }) {
-  const produitsParam = encodeURIComponent(JSON.stringify((produits || []).slice(0, 6)));
-  const nomParam = encodeURIComponent(nomBoutique || "Ma Boutique");
-  const deviseParam = encodeURIComponent(devise || "XAF");
+  const [idx,setIdx] = useState(0);
+  const total = THEMES.length;
+  const visible = 3;
+
+  const prev = () => setIdx(i=>(i-1+total)%total);
+  const next = () => setIdx(i=>(i+1)%total);
+
+  const produitsParam = encodeURIComponent(JSON.stringify((produits||[]).slice(0,6)));
+  const nomParam  = encodeURIComponent(nomBoutique||"Ma Boutique");
+  const devParam  = encodeURIComponent(devise||"XAF");
+
+  const visibles = () => Array.from({length:visible},(_,i)=>THEMES[(idx+i)%total]);
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, maxWidth: 500 }}>
-      {THEMES.slice(0, 9).map(t => {
-        const c = t.couleurs;
-        const sel = selectedId === t.id;
-        const previewUrl = `/api/preview-theme?fichier=${encodeURIComponent(t.id)}&nom=${nomParam}&devise=${deviseParam}&produits=${produitsParam}`;
+    <div style={{ paddingLeft:47 }}>
+      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+        <button onClick={prev} className="ghost-btn"
+          style={{ width:38, height:38, borderRadius:"50%", padding:0, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+          <ChevronLeft size={16}/>
+        </button>
 
-        return (
-          <button key={t.id} onClick={() => onSelect(t.id)}
-            style={{
-              padding: 0, borderRadius: 14, overflow: "hidden",
-              border: `2px solid ${sel ? (c.accent || ACCENT) : BORDER}`,
-              cursor: "pointer", transition: "all 0.18s",
-              boxShadow: sel ? `0 0 0 4px ${(c.accent || ACCENT)}30, 0 8px 24px rgba(0,0,0,0.4)` : "0 2px 8px rgba(0,0,0,0.3)",
-              position: "relative", background: c.fond || "#fff",
-            }}
-          >
-            {/* Iframe live preview */}
-            <div style={{ position: "relative", height: 130, overflow: "hidden" }}>
-              <iframe
-                src={previewUrl}
-                title={t.nom}
-                sandbox="allow-same-origin allow-scripts"
-                scrolling="no"
+        <div style={{ display:"flex", gap:12, flex:1, overflow:"hidden" }}>
+          {visibles().map((t,i)=>{
+            const sel = selectedId===t.id;
+            const center = i===1;
+            const url = `/api/preview-theme?fichier=${encodeURIComponent(t.id)}&nom=${nomParam}&devise=${devParam}&produits=${produitsParam}`;
+            return (
+              <button key={`${t.id}-${idx}-${i}`}
+                onClick={()=>onSelect(t.id)}
                 style={{
-                  width: 900, height: 700,
-                  border: "none", pointerEvents: "none",
-                  transformOrigin: "top left",
-                  transform: "scale(0.185)",
-                  position: "absolute", top: 0, left: 0,
-                }}
-              />
-              {/* Overlay to capture clicks */}
-              <div style={{ position: "absolute", inset: 0, zIndex: 2 }} />
-              {/* Selection badge */}
-              {sel && (
-                <div style={{
-                  position: "absolute", top: 8, right: 8, zIndex: 3,
-                  width: 22, height: 22, borderRadius: "50%",
-                  background: c.accent || ACCENT,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: `0 2px 8px ${(c.accent || ACCENT)}60`,
+                  flex:1, padding:0, borderRadius:16, overflow:"hidden",
+                  border:`2px solid ${sel?GOLD:PARCH}`,
+                  cursor:"pointer",
+                  boxShadow:sel ? `0 0 0 3px ${GOLD}30,0 10px 32px rgba(28,18,8,.16)`
+                            : center ? "0 4px 16px rgba(28,18,8,.1)"
+                            : "0 2px 8px rgba(28,18,8,.06)",
+                  position:"relative", background:t.couleurs.fond||WHITE,
+                  transform:center&&!sel?"scale(1.04)":"scale(1)",
+                  transition:"all .25s cubic-bezier(.34,1.3,.64,1)",
                 }}>
-                  <Check size={12} color="#fff" strokeWidth={3} />
+                {/* Iframe preview avec données utilisateur */}
+                <div style={{ height:160, overflow:"hidden", position:"relative" }}>
+                  <iframe
+                    src={url} title={t.nom}
+                    sandbox="allow-same-origin allow-scripts"
+                    scrolling="no"
+                    style={{
+                      width:960, height:750, border:"none",
+                      pointerEvents:"none",
+                      transformOrigin:"top left",
+                      transform:"scale(0.172)",
+                      position:"absolute", top:0, left:0,
+                    }}
+                  />
+                  <div style={{ position:"absolute", inset:0, zIndex:2 }}/>
+                  {sel && (
+                    <div style={{
+                      position:"absolute", top:8, right:8, zIndex:3,
+                      width:22, height:22, borderRadius:"50%",
+                      background:`linear-gradient(135deg,${GOLD},${GOLD_D})`,
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                      boxShadow:`0 2px 8px ${GOLD}55`,
+                    }}>
+                      <Check size={12} color={WHITE} strokeWidth={3}/>
+                    </div>
+                  )}
+                  <div style={{
+                    position:"absolute", bottom:0, left:0, right:0, zIndex:3,
+                    padding:"20px 10px 6px",
+                    background:"linear-gradient(to top,rgba(0,0,0,.5),transparent)",
+                  }}>
+                    <div style={{ fontSize:9, fontWeight:800, color:"rgba(255,255,255,.95)", letterSpacing:".1em", textTransform:"uppercase", fontFamily:"'Outfit',sans-serif" }}>
+                      {t.nom}
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
+                <div style={{
+                  background:sel?`${GOLD}0c`:LINEN,
+                  borderTop:`1px solid ${sel?GOLD+"28":PARCH}`,
+                  padding:"6px 10px",
+                  display:"flex", alignItems:"center", justifyContent:"space-between",
+                }}>
+                  <span style={{ fontSize:10, color:sel?GOLD_D:MID, fontWeight:700, fontFamily:"'Outfit',sans-serif" }}>
+                    {t.ambiance[0]||""}
+                  </span>
+                  <div style={{
+                    width:9, height:9, borderRadius:"50%",
+                    background:t.couleurs.accent||GOLD,
+                    boxShadow:sel?`0 0 8px ${t.couleurs.accent||GOLD}90`:"none",
+                  }}/>
+                </div>
+              </button>
+            );
+          })}
+        </div>
 
-            {/* Label */}
-            <div style={{
-              background: CARD, borderTop: `1px solid ${sel ? (c.accent || ACCENT) + "40" : BORDER}`,
-              padding: "7px 9px", display: "flex", alignItems: "center", justifyContent: "space-between",
-            }}>
-              <div style={{ textAlign: "left" }}>
-                <div style={{ fontSize: 10, fontWeight: 800, color: sel ? (c.accent || ACCENT) : TEXT, letterSpacing: "0.06em", textTransform: "uppercase" }}>{t.nom}</div>
-                <div style={{ fontSize: 9, color: MUTED, marginTop: 1 }}>{t.ambiance[0]}</div>
-              </div>
-              <div style={{
-                width: 10, height: 10, borderRadius: "50%",
-                background: c.accent || ACCENT, flexShrink: 0,
-                boxShadow: sel ? `0 0 6px ${(c.accent || ACCENT)}80` : "none",
-              }} />
-            </div>
-          </button>
-        );
-      })}
+        <button onClick={next} className="ghost-btn"
+          style={{ width:38, height:38, borderRadius:"50%", padding:0, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+          <ChevronRight size={16}/>
+        </button>
+      </div>
+
+      {/* Dots */}
+      <div style={{ display:"flex", justifyContent:"center", gap:6, marginTop:12 }}>
+        {THEMES.map((_,i)=>(
+          <button key={i} onClick={()=>setIdx(i)}
+            style={{
+              width:i===idx?20:6, height:6, borderRadius:3,
+              background:i===idx?GOLD:PARCH,
+              border:"none", cursor:"pointer", transition:"all .25s", padding:0,
+            }}/>
+        ))}
+      </div>
+
+      {selectedId && (
+        <div style={{ textAlign:"center", marginTop:8, fontSize:12, color:GOLD_D, fontWeight:700, fontFamily:"'Outfit',sans-serif" }}>
+          ✓ {THEMES.find(t=>t.id===selectedId)?.nom} sélectionné
+        </div>
+      )}
     </div>
   );
 }
 
-// ── Plan card ──────────────────────────────────────────────────────────────────
-function PlanCard({ plan, onConfirm, onThemeChange, loading }: {
-  plan: PlanBoutique & { messageIA?: string };
-  onConfirm: () => void;
-  onThemeChange: (id: string) => void;
-  loading: boolean;
+// ─── Plan card ────────────────────────────────────────────────────────────────
+function PlanCard({ plan, onConfirm, onThemeChange }: {
+  plan: PlanBoutique & { messageIA?:string };
+  onConfirm:()=>void; onThemeChange:(id:string)=>void;
 }) {
-  const t = THEMES.find(t => t.id === plan.themeId) || THEMES[0];
-  const c = t?.couleurs || {};
+  const t = THEMES.find(x=>x.id===plan.themeId)||THEMES[0];
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 440 }}>
-      {/* Store preview */}
+    <div className="msg-in" style={{ paddingLeft:47, display:"flex", flexDirection:"column", gap:16 }}>
       <div style={{
-        background: CARD, border: `1px solid ${BORDER_ACCENT}`,
-        borderRadius: 16, overflow: "hidden",
+        background:WHITE, border:`1.5px solid ${PARCH}`,
+        borderRadius:20, overflow:"hidden",
+        boxShadow:"0 6px 28px rgba(28,18,8,.1)",
       }}>
+        {/* Header */}
         <div style={{
-          padding: "14px 16px",
-          background: `linear-gradient(135deg, ${c.fond || "#111"}22, transparent)`,
-          borderBottom: `1px solid ${BORDER}`,
+          padding:"18px 22px",
+          background:`linear-gradient(135deg,${LINEN} 0%,${IVORY} 100%)`,
+          borderBottom:`1px solid ${PARCH}`,
+          display:"flex", alignItems:"center", gap:14,
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{
-              width: 42, height: 42, borderRadius: 12,
-              background: `${c.accent || ACCENT}22`,
-              border: `2px solid ${c.accent || ACCENT}50`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <div style={{ width: 18, height: 18, borderRadius: "50%", background: c.accent || ACCENT }} />
+          <div style={{
+            width:48, height:48, borderRadius:15,
+            background:`${t.couleurs.accent||GOLD}18`,
+            border:`2px solid ${t.couleurs.accent||GOLD}40`,
+            display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
+          }}>
+            <div style={{ width:22, height:22, borderRadius:"50%", background:t.couleurs.accent||GOLD }}/>
+          </div>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:700, color:INK }}>
+              {plan.nomBoutique}
             </div>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: 15, color: TEXT }}>{plan.nomBoutique}</div>
-              <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{plan.categorie} · {plan.pays} · {plan.devise}</div>
-            </div>
-            <div style={{
-              marginLeft: "auto", fontSize: 10, fontWeight: 700,
-              padding: "4px 10px", borderRadius: 999,
-              color: c.accent || ACCENT,
-              background: `${c.accent || ACCENT}18`,
-              border: `1px solid ${c.accent || ACCENT}30`,
-              letterSpacing: "0.06em",
-            }}>
-              {t.nom}
+            <div style={{ fontSize:11, color:MUTED, marginTop:2, fontFamily:"'Outfit',sans-serif" }}>
+              {plan.categorie} · {plan.pays} · {plan.devise}
             </div>
           </div>
-          {plan.description && (
-            <div style={{ marginTop: 10, fontSize: 12, color: MUTED, lineHeight: 1.5 }}>{plan.description}</div>
-          )}
+          <div style={{
+            fontSize:10, fontWeight:800, padding:"4px 10px", borderRadius:999,
+            color:t.couleurs.accent||GOLD_D, background:`${t.couleurs.accent||GOLD}14`,
+            border:`1px solid ${t.couleurs.accent||GOLD}30`,
+            letterSpacing:".07em", textTransform:"uppercase",
+            fontFamily:"'Outfit',sans-serif", flexShrink:0,
+          }}>{t.nom}</div>
         </div>
 
-        {/* Products */}
-        <div style={{ padding: "12px 16px", borderBottom: `1px solid ${BORDER}` }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 10 }}>
-            {plan.produits.length} produits générés
+        {/* Produits */}
+        <div style={{ padding:"14px 22px", borderBottom:`1px solid ${PARCH}` }}>
+          <div style={{ fontSize:10, fontWeight:800, color:MUTED, textTransform:"uppercase", letterSpacing:".12em", marginBottom:10, fontFamily:"'Outfit',sans-serif" }}>
+            {plan.produits.length} produits générés par Axia
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {plan.produits.map((p, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13 }}>
-                <span style={{ color: TEXT, opacity: 0.8 }}>{p.nom}</span>
-                <span style={{ color: c.accent || ACCENT, fontWeight: 700 }}>{p.prix.toLocaleString()} {plan.devise}</span>
-              </div>
-            ))}
-          </div>
+          {plan.produits.map((p,i)=>(
+            <div key={i} style={{
+              display:"flex", justifyContent:"space-between", alignItems:"center",
+              padding:"7px 0", borderBottom:i<plan.produits.length-1?`1px solid ${PARCH}`:"none",
+              fontFamily:"'Outfit',sans-serif",
+            }}>
+              <span style={{ fontSize:13, color:INK, opacity:.85 }}>{p.nom}</span>
+              <span style={{ fontSize:13, fontWeight:700, color:GOLD_D }}>{p.prix.toLocaleString()} {plan.devise}</span>
+            </div>
+          ))}
         </div>
 
-        {/* Theme picker */}
-        <div style={{ padding: "12px 16px" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 10 }}>
-            Choisir le design — aperçu avec tes produits
+        {/* Carrousel design */}
+        <div style={{ padding:"16px 0 16px" }}>
+          <div style={{ fontSize:10, fontWeight:800, color:MUTED, textTransform:"uppercase", letterSpacing:".12em", marginBottom:14, paddingLeft:22, fontFamily:"'Outfit',sans-serif" }}>
+            Aperçu live de ton site avec tes produits — choisis ton design
           </div>
-          <ThemeSelector
+          <ThemeCarousel
             selectedId={plan.themeId}
             onSelect={onThemeChange}
             nomBoutique={plan.nomBoutique}
@@ -382,489 +526,481 @@ function PlanCard({ plan, onConfirm, onThemeChange, loading }: {
         </div>
       </div>
 
-      <button onClick={onConfirm} disabled={loading}
-        style={{
-          width: "100%", padding: "15px 24px",
-          borderRadius: 14, border: "none", cursor: loading ? "not-allowed" : "pointer",
-          background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_D})`,
-          color: "#050608", fontSize: 14, fontWeight: 800,
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          boxShadow: `0 8px 30px ${ACCENT}35`, opacity: loading ? 0.6 : 1,
-          transition: "all 0.15s",
-        }}
-      >
-        {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-        Ce design me convient — Créer ma boutique
+      <button onClick={onConfirm} className="gold-btn"
+        style={{ padding:"15px 24px", borderRadius:14, fontSize:14, display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
+        <Sparkles size={16}/> Ce design me convient — Créer ma boutique <ArrowRight size={16}/>
       </button>
     </div>
   );
 }
 
-// ── Compte form ────────────────────────────────────────────────────────────────
-function CompteForm({ onSubmit, loading }: { onSubmit: (d: CompteData) => void; loading: boolean }) {
-  const { register, handleSubmit, formState: { errors } } = useForm<CompteData>({ resolver: zodResolver(schemaCompte) });
+// ─── Formulaire compte ────────────────────────────────────────────────────────
+function CompteForm({ onSubmit, loading, erreur }: {
+  onSubmit:(d:CompteData)=>void; loading:boolean; erreur?:string;
+}) {
+  const { register, handleSubmit, formState:{errors} } = useForm<CompteData>({ resolver:zodResolver(schemaCompte) });
   const fields = [
-    { key: "name" as const,     Icon: User,  label: "Ton prénom",          type: "text",     ph: "Aminata" },
-    { key: "email" as const,    Icon: Mail,  label: "Adresse email",       type: "email",    ph: "aminata@example.com" },
-    { key: "password" as const, Icon: Lock,  label: "Mot de passe",        type: "password", ph: "Minimum 6 caractères" },
-    { key: "whatsapp" as const, Icon: Phone, label: "Numéro WhatsApp",     type: "tel",      ph: "+221 77 000 00 00" },
+    { key:"name"     as const, Icon:User,  label:"Ton prénom",    type:"text",     ph:"Aminata" },
+    { key:"email"    as const, Icon:Mail,  label:"Adresse email", type:"email",    ph:"aminata@example.com" },
+    { key:"password" as const, Icon:Lock,  label:"Mot de passe",  type:"password", ph:"Minimum 6 caractères" },
+    { key:"whatsapp" as const, Icon:Phone, label:"WhatsApp",      type:"tel",      ph:"+221 77 000 00 00" },
   ];
   return (
-    <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 420 }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {fields.map(f => (
+    <div className="msg-in" style={{ paddingLeft:47 }}>
+      <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth:420, display:"flex", flexDirection:"column", gap:12 }}>
+        {fields.map(f=>(
           <div key={f.key}>
-            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
+            <label style={{ display:"block", fontSize:11, fontWeight:800, color:MID, textTransform:"uppercase", letterSpacing:".09em", marginBottom:5, fontFamily:"'Outfit',sans-serif" }}>
               {f.label}
             </label>
-            <div style={{ position: "relative" }}>
-              <div style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
-                <f.Icon size={14} color={MUTED} />
+            <div style={{ position:"relative" }}>
+              <div style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }}>
+                <f.Icon size={14} color={MUTED}/>
               </div>
-              <input
-                {...register(f.key)} type={f.type} placeholder={f.ph}
-                style={{
-                  width: "100%", paddingLeft: 40, paddingRight: 16, paddingTop: 12, paddingBottom: 12,
-                  background: CARD, border: `1px solid ${errors[f.key] ? "rgba(239,68,68,0.5)" : BORDER}`,
-                  borderRadius: 12, color: TEXT, fontSize: 13, outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
+              <input {...register(f.key)} type={f.type} placeholder={f.ph} className="field"/>
             </div>
             {errors[f.key] && (
-              <p style={{ color: "#f87171", fontSize: 11, marginTop: 4 }}>{errors[f.key]?.message}</p>
+              <p style={{ color:TERRA, fontSize:11, marginTop:4, fontFamily:"'Outfit',sans-serif" }}>
+                {errors[f.key]?.message}
+              </p>
             )}
           </div>
         ))}
-
-        <button type="submit" disabled={loading}
-          style={{
-            marginTop: 6, padding: "14px 24px", borderRadius: 14, border: "none",
-            cursor: loading ? "not-allowed" : "pointer",
-            background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_D})`,
-            color: "#050608", fontSize: 14, fontWeight: 800,
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-            boxShadow: `0 8px 30px ${ACCENT}35`, opacity: loading ? 0.6 : 1,
-            width: "100%",
-          }}
-        >
-          {loading ? <Loader2 size={16} className="animate-spin" /> : <><Sparkles size={16} /> Lancer ma boutique <ArrowRight size={16} /></>}
+        {erreur && (
+          <div style={{ padding:"10px 14px", background:`${TERRA}0d`, border:`1px solid ${TERRA}28`, borderRadius:10, fontSize:13, color:TERRA, fontFamily:"'Outfit',sans-serif" }}>
+            {erreur}
+          </div>
+        )}
+        <button type="submit" disabled={loading} className="gold-btn"
+          style={{ marginTop:4, padding:"14px 24px", borderRadius:13, fontSize:14, display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
+          {loading ? <><Loader2 size={16} className="animate-spin"/> Lancement…</>
+                   : <><Sparkles size={16}/> Lancer ma boutique <ArrowRight size={16}/></>}
         </button>
-      </div>
-    </form>
+      </form>
+    </div>
   );
 }
 
-// ─── Progress steps during creation ───────────────────────────────────────────
-const CREATION_STEPS = [
-  "Provisionnement de la boutique…",
-  "Application du design choisi…",
-  "Création de tes produits…",
-  "Configuration de la livraison…",
-  "Génération des avis clients…",
-  "Finalisation en cours…",
-];
-
-// ─── Main page ────────────────────────────────────────────────────────────────
+// ─── Page principale ──────────────────────────────────────────────────────────
 export default function InscriptionPage() {
   const router = useRouter();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const { toasts, push: toast, close: closeToast } = useToast();
 
-  const [phase, setPhase] = useState<Phase>("welcome");
-  const [vente, setVente] = useState("");
-  const [paysCode, setPaysCode] = useState("");
-  const [paysNom, setPaysNom] = useState("");
-  const [plan, setPlan] = useState<(PlanBoutique & { messageIA?: string }) | null>(null);
-  const [messageIA, setMessageIA] = useState("");
-  const [erreur, setErreur] = useState("");
-  const [compte, setCompte] = useState<CompteData | null>(null);
-  const [venteInput, setVenteInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [creationSteps, setCreationSteps] = useState<string[]>([]);
-  const [showThinking, setShowThinking] = useState(false);
+  const [phase,setPhase]         = useState<Phase>("welcome");
+  const [vente,setVente]         = useState("");
+  const [venteInput,setVenteInput] = useState("");
+  const [paysCode,setPaysCode]   = useState("");
+  const [paysNom,setPaysNom]     = useState("");
+  const [devise,setDevise]       = useState("XAF");
+  const [plan,setPlan]           = useState<(PlanBoutique&{messageIA?:string})|null>(null);
+  const [messageIA,setMessageIA] = useState("");
+  const [erreur,setErreur]       = useState("");
+  const [loading,setLoading]     = useState(false);
+  const [steps,setSteps]         = useState<string[]>([]);
 
-  // Scroll to bottom when new content appears
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [phase, showThinking, creationSteps]);
+  useEffect(()=>{
+    setTimeout(()=>bottomRef.current?.scrollIntoView({behavior:"smooth"}),100);
+  },[phase,steps.length]);
 
-  const submitVente = useCallback(() => {
-    if (!venteInput.trim()) return;
+  const submitVente = useCallback(()=>{
+    if(!venteInput.trim()) return;
     setVente(venteInput.trim());
+    toast("info","Axia analyse ton projet… ✨");
     setPhase("q-pays");
-  }, [venteInput]);
+  },[venteInput,toast]);
 
-  const submitPays = useCallback((code: string, nom: string) => {
-    setPaysCode(code);
-    setPaysNom(nom);
-    // Small delay so user sees their selection before next phase
-    setTimeout(() => setPhase("analyse"), 400);
-  }, []);
+  const submitPays = useCallback((code:string,nom:string,dev:string)=>{
+    setPaysCode(code); setPaysNom(nom); setDevise(dev);
+    toast("info",`Marché ${nom} détecté — devise ${dev} 🌍`);
+    setTimeout(()=>setPhase("analyse"),600);
+  },[toast]);
 
-  // Call AI onboarding API — "analyser" phase
-  useEffect(() => {
-    if (phase !== "analyse") return;
-    setShowThinking(true);
+  useEffect(()=>{
+    if(phase!=="analyse") return;
     const description = `${vente}. Pays: ${paysNom} (${paysCode}).`;
-    fetch("/api/ai/onboarding", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phase: "analyser", description }),
+    fetch("/api/ai/onboarding",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({phase:"analyser",description}),
     })
-      .then(r => r.json())
-      .then(data => {
-        setShowThinking(false);
-        if (data.plan) {
-          setPlan(data.plan);
-          setMessageIA(data.messageIA || data.plan.messageIA || "Voici ce que j'ai préparé pour toi !");
-          setPhase("plan");
-        } else {
-          setErreur(data.message || "Erreur lors de l'analyse.");
-          setPhase("q-vente");
-        }
-      })
-      .catch(() => {
-        setShowThinking(false);
-        setErreur("Erreur réseau — réessaie.");
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.plan){
+        setPlan(data.plan);
+        setMessageIA(data.messageIA||data.plan.messageIA||"Voici ce que j'ai préparé pour toi !");
+        toast("success","Plan de boutique généré — choisis ton design !");
+        setPhase("plan");
+      }else{
+        setErreur(data.message||"Erreur d'analyse.");
+        toast("error","Erreur lors de l'analyse. Réessaie.");
         setPhase("q-vente");
-      });
-  }, [phase, vente, paysCode, paysNom]);
-
-  const confirmPlan = useCallback(() => {
-    setPhase("q-compte");
-  }, []);
-
-  const launchCreation = useCallback(async (compteData: CompteData) => {
-    if (!plan) return;
-    setCompte(compteData);
-    setLoading(true);
-    setPhase("creation");
-    setCreationSteps([]);
-
-    // Animate steps
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < CREATION_STEPS.length) {
-        setCreationSteps(prev => [...prev, CREATION_STEPS[i]]);
-        i++;
       }
-    }, 700);
+    })
+    .catch(()=>{ setErreur("Erreur réseau."); toast("error","Erreur réseau."); setPhase("q-vente"); });
+  },[phase,vente,paysCode,paysNom,toast]);
 
-    try {
-      const res = await fetch("/api/ai/onboarding", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phase: "executer", plan, compte: compteData }),
+  const confirmPlan = useCallback(()=>{
+    toast("info","Design sélectionné ! Crée ton compte pour lancer. 🚀");
+    setPhase("q-compte");
+  },[toast]);
+
+  const launchCreation = useCallback(async(compteData:CompteData)=>{
+    if(!plan) return;
+    setLoading(true); setErreur("");
+    setPhase("creation"); setSteps([]);
+    toast("info","Lancement de ta boutique…");
+    let i=0;
+    const iv=setInterval(()=>{
+      if(i<STEPS_CREATION.length){ setSteps(p=>[...p,STEPS_CREATION[i]]); i++; }
+    },700);
+    try{
+      const res=await fetch("/api/ai/onboarding",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({phase:"executer",plan,compte:compteData}),
       });
-      const data = await res.json();
-      clearInterval(interval);
-      if (!res.ok) throw new Error(data.message);
-      setCreationSteps(CREATION_STEPS);
+      const data=await res.json();
+      clearInterval(iv);
+      if(!res.ok) throw new Error(data.message);
+      setSteps(STEPS_CREATION);
+      toast("success","🎉 Ta boutique est en ligne !");
       setPhase("succes");
-      const loginResult = await signIn("credentials", {
-        email: compteData.email,
-        password: compteData.password,
-        redirect: false,
-      });
-      setTimeout(() => router.push(loginResult?.ok ? "/dashboard" : "/connexion?inscription=success"), 1800);
-    } catch (err: any) {
-      clearInterval(interval);
-      setErreur(err.message || "Erreur lors de la création.");
-      setPhase("plan");
-    } finally {
-      setLoading(false);
-    }
-  }, [plan, router]);
+      const lr=await signIn("credentials",{email:compteData.email,password:compteData.password,redirect:false});
+      setTimeout(()=>router.push(lr?.ok?"/dashboard":"/connexion?inscription=success"),2000);
+    }catch(err:any){
+      clearInterval(iv);
+      setErreur(err.message||"Erreur.");
+      toast("error",err.message||"Erreur lors de la création.");
+      setPhase("q-compte");
+    }finally{ setLoading(false); }
+  },[plan,router,toast]);
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div style={{
-      minHeight: "100vh", background: BG,
-      fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif",
-      color: TEXT, display: "flex", flexDirection: "column",
+      minHeight:"100vh",
+      background:`radial-gradient(ellipse 150% 80% at 50% -5%,${LINEN} 0%,${IVORY} 55%,${WHITE} 100%)`,
+      fontFamily:"'Outfit',sans-serif", color:INK,
+      display:"flex", flexDirection:"column",
     }}>
-      <style dangerouslySetInnerHTML={{ __html: ANIMATION_CSS }} />
+      <style dangerouslySetInnerHTML={{__html:CSS}}/>
 
-      {/* ── Ambient background ── */}
-      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0 }}>
-        <div style={{ position: "absolute", top: "-10%", left: "50%", transform: "translateX(-50%)", width: 800, height: 400, borderRadius: "50%", background: `radial-gradient(ellipse, ${ACCENT}09 0%, transparent 70%)` }} />
-        <div style={{ position: "absolute", bottom: 0, right: 0, width: 400, height: 400, background: `radial-gradient(ellipse, rgba(99,102,241,0.06) 0%, transparent 70%)` }} />
-        <div style={{ position: "absolute", inset: 0, opacity: 0.015, backgroundImage: `linear-gradient(${ACCENT} 1px,transparent 1px),linear-gradient(90deg,${ACCENT} 1px,transparent 1px)`, backgroundSize: "48px 48px" }} />
-      </div>
+      {/* Pattern kente de fond */}
+      <div style={{
+        position:"fixed", inset:0, pointerEvents:"none", zIndex:0,
+        backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cline x1='0' y1='0' x2='40' y2='40' stroke='%23B07D3E' stroke-width='.5' opacity='.07'/%3E%3Cline x1='40' y1='0' x2='0' y2='40' stroke='%23B07D3E' stroke-width='.5' opacity='.07'/%3E%3Crect x='16' y='16' width='8' height='8' fill='none' stroke='%23B07D3E' stroke-width='.6' opacity='.09' transform='rotate(45 20 20)'/%3E%3C/svg%3E")`,
+      }}/>
+
+      {/* Bande kente supérieure */}
+      <div style={{
+        height:5, position:"relative", zIndex:1,
+        background:`repeating-linear-gradient(90deg,${GOLD} 0px,${GOLD} 8px,${TERRA} 8px,${TERRA} 16px,${GOLD_D} 16px,${GOLD_D} 24px,${TERRA} 24px,${TERRA} 32px,${GOLD_L} 32px,${GOLD_L} 40px)`,
+      }}/>
+
+      {/* Toasts */}
+      <ToastContainer toasts={toasts} onClose={closeToast}/>
 
       {/* ── Header ── */}
-      <div style={{ position: "relative", zIndex: 1, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: 640, margin: "0 auto", width: "100%" }}>
-        <Link href="/">
-          <img src="/logo.png" alt="Axso" style={{ height: 30, objectFit: "contain" }}
-            onError={(e) => {
-              const el = e.currentTarget as HTMLImageElement;
-              el.style.display = "none";
-              const span = document.createElement("span");
-              span.textContent = "AXSO";
-              span.style.cssText = `color:${ACCENT};font-weight:900;font-size:18px;letter-spacing:0.12em;`;
-              el.parentNode?.appendChild(span);
-            }}
-          />
+      <header style={{
+        position:"relative", zIndex:1,
+        display:"flex", alignItems:"center", justifyContent:"space-between",
+        maxWidth:720, margin:"0 auto", width:"100%",
+        padding:"18px 24px",
+      }}>
+        <Link href="/" style={{ display:"flex", alignItems:"center", gap:10, textDecoration:"none" }}>
+          <img src="/logo.png" alt="Axso" style={{ height:28, objectFit:"contain" }}
+            onError={e=>{ (e.currentTarget as HTMLImageElement).style.display="none"; }}/>
         </Link>
-        <Link href="/connexion" style={{ fontSize: 13, color: MUTED, textDecoration: "none" }}>
-          Déjà un compte ? <span style={{ color: ACCENT, fontWeight: 600 }}>Connexion</span>
-        </Link>
-      </div>
+        <div style={{ display:"flex", alignItems:"center", gap:14 }}>
+          {toasts.length>0 && (
+            <div style={{ position:"relative" }}>
+              <Bell size={18} color={GOLD}/>
+              <div style={{
+                position:"absolute", top:-5, right:-5,
+                width:14, height:14, borderRadius:"50%",
+                background:`linear-gradient(135deg,${TERRA},${GOLD_D})`,
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:8, color:WHITE, fontWeight:800,
+                border:`1.5px solid ${IVORY}`,
+              }}>{toasts.length}</div>
+            </div>
+          )}
+          <Link href="/connexion" style={{ fontSize:13, color:MID, textDecoration:"none", fontWeight:500 }}>
+            Déjà un compte ?{" "}
+            <span style={{ color:GOLD_D, fontWeight:800 }}>Connexion</span>
+          </Link>
+        </div>
+      </header>
 
-      {/* ── Chat container ── */}
-      <div style={{
-        position: "relative", zIndex: 1, flex: 1,
-        maxWidth: 640, margin: "0 auto", width: "100%",
-        padding: "0 20px 120px",
-        display: "flex", flexDirection: "column", gap: 20,
+      {/* ── Main ── */}
+      <main style={{
+        position:"relative", zIndex:1, flex:1,
+        maxWidth:720, margin:"0 auto", width:"100%",
+        padding:"8px 24px 160px",
+        display:"flex", flexDirection:"column", gap:22,
       }}>
 
         {/* ── WELCOME ── */}
-        {phase === "welcome" && (
-          <div className="msg-in" style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", paddingTop: 60, gap: 24 }}>
-            {/* Axia avatar large */}
-            <div style={{ position: "relative" }}>
-              <div style={{ width: 80, height: 80, borderRadius: "28%", background: "linear-gradient(135deg,#1B2A4A,#2d4270)", border: `2px solid ${BORDER_ACCENT}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 60px ${ACCENT}20` }}>
-                <img src="/axia-icon.png" alt="Axia" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }} />
-              </div>
-              <div style={{ position: "absolute", bottom: -4, right: -4, width: 24, height: 24, borderRadius: "50%", background: "#22C55E", border: `2px solid ${BG}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Sparkles size={12} color="#fff" />
-              </div>
-            </div>
-
-            <div>
-              <h1 style={{ fontSize: 28, fontWeight: 900, margin: 0, lineHeight: 1.2 }}>
-                Je suis <span style={{ background: `linear-gradient(135deg,${ACCENT},${ACCENT_D})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Axia</span>.
-              </h1>
-              <p style={{ fontSize: 16, color: MUTED, marginTop: 10, lineHeight: 1.6, maxWidth: 380, margin: "10px auto 0" }}>
-                En quelques questions, je vais créer ton site e-commerce ultra haut de gamme — design, produits, configuration complète.
-              </p>
-            </div>
-
-            {/* Features */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, width: "100%", maxWidth: 400 }}>
-              {[
-                { icon: Palette, label: "15 designs premium", desc: "Sur mesure pour ton secteur" },
-                { icon: Store,   label: "Boutique complète",  desc: "Produits + livraison + SEO" },
-                { icon: Globe,   label: "Mondial",            desc: "100+ pays, toutes devises" },
-                { icon: Sparkles,label: "100% IA",            desc: "Généré en 30 secondes" },
-              ].map(({ icon: Icon, label, desc }) => (
-                <div key={label} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: "12px 14px", textAlign: "left" }}>
-                  <Icon size={16} color={ACCENT} />
-                  <div style={{ fontWeight: 700, fontSize: 12, marginTop: 6 }}>{label}</div>
-                  <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{desc}</div>
-                </div>
-              ))}
-            </div>
-
-            <button onClick={() => setPhase("q-vente")}
-              style={{
-                padding: "16px 40px", borderRadius: 16, border: "none",
-                background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_D})`,
-                color: "#050608", fontSize: 15, fontWeight: 800, cursor: "pointer",
-                boxShadow: `0 12px 40px ${ACCENT}40`, display: "flex", alignItems: "center", gap: 10,
-                transition: "transform 0.15s",
-              }}
-              onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.03)")}
-              onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
-            >
-              <Sparkles size={18} /> Créer ma boutique gratuitement <ArrowRight size={18} />
-            </button>
-
-            <p style={{ fontSize: 12, color: MUTED }}>Gratuit · Pas de carte bancaire · En ligne en 60 secondes</p>
-          </div>
-        )}
-
-        {/* ── QUESTION VENTE ── */}
-        {phase !== "welcome" && (
-          <AxiaMsg delay={0}>
-            Dis-moi ce que tu veux vendre. Plus tu es précis, meilleur sera ton site. 🎯
-          </AxiaMsg>
-        )}
-
-        {(phase === "q-vente") && (
-          <div className="msg-in" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {erreur && (
-              <div style={{ padding: "10px 14px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 12, fontSize: 13, color: "#f87171" }}>
-                {erreur}
-              </div>
-            )}
-            {/* Quick examples */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {[
-                "Mode & vêtements africains",
-                "Cosmétiques naturels",
-                "Bijoux artisanaux",
-                "Formations en ligne",
-                "Électronique & gadgets",
-                "Alimentation & épices",
-              ].map(ex => (
-                <button key={ex} onClick={() => setVenteInput(ex)}
-                  style={{
-                    padding: "6px 14px", borderRadius: 999, fontSize: 12, fontWeight: 500,
-                    background: venteInput === ex ? `${ACCENT}22` : CARD,
-                    border: `1px solid ${venteInput === ex ? BORDER_ACCENT : BORDER}`,
-                    color: venteInput === ex ? ACCENT : MUTED,
-                    cursor: "pointer", transition: "all 0.12s",
-                  }}
-                >
-                  {ex}
-                </button>
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: 10 }}>
-              <textarea
-                value={venteInput}
-                onChange={e => setVenteInput(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitVente(); } }}
-                placeholder="Ex : Je vends des vêtements mode femme inspirés de la culture africaine..."
-                rows={3}
-                style={{
-                  flex: 1, background: CARD, border: `1px solid ${BORDER}`,
-                  borderRadius: 14, padding: "12px 16px", color: TEXT, fontSize: 13,
-                  resize: "none", outline: "none", lineHeight: 1.6,
-                  fontFamily: "inherit",
-                }}
-              />
-              <button onClick={submitVente} disabled={!venteInput.trim()}
-                style={{
-                  width: 44, height: 44, borderRadius: 12, border: "none",
-                  background: venteInput.trim() ? `linear-gradient(135deg,${ACCENT},${ACCENT_D})` : BORDER,
-                  cursor: venteInput.trim() ? "pointer" : "not-allowed",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  alignSelf: "flex-end", flexShrink: 0,
-                }}
-              >
-                <Send size={16} color={venteInput.trim() ? "#050608" : MUTED} />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── USER ANSWER VENTE ── */}
-        {vente && phase !== "q-vente" && (
-          <UserMsg>{vente}</UserMsg>
-        )}
-
-        {/* ── QUESTION PAYS ── */}
-        {(phase === "q-pays" || (paysCode && phase !== "q-vente")) && phase !== "welcome" && vente && (
-          <>
-            <AxiaMsg delay={100}>
-              Super ! Dans quel pays es-tu basé ? Je vais adapter la devise, la livraison et le design à ton marché. 🌍
-            </AxiaMsg>
-            {phase === "q-pays" && <PaysSelector onSelect={submitPays} />}
-          </>
-        )}
-
-        {/* ── USER ANSWER PAYS ── */}
-        {paysNom && phase !== "q-pays" && phase !== "welcome" && (
-          <UserMsg>📍 {paysNom}</UserMsg>
-        )}
-
-        {/* ── ANALYSE ── */}
-        {phase === "analyse" && (
-          <>
-            <AxiaMsg delay={0}>
-              Parfait ! Laisse-moi analyser ton projet et concevoir ton site… ✨
-            </AxiaMsg>
-            <AxiaThinking />
-          </>
-        )}
-
-        {showThinking && phase === "analyse" && null}
-
-        {/* ── PLAN PREVIEW ── */}
-        {(phase === "plan" || phase === "q-compte" || phase === "creation" || phase === "succes") && plan && (
-          <>
-            <AxiaMsg delay={0}>
-              <strong style={{ color: ACCENT }}>Ton site est prêt à être lancé.</strong>{" "}
-              {messageIA}
-            </AxiaMsg>
-            {phase === "plan" && (
-              <div className="msg-in">
-                <PlanCard
-                  plan={plan}
-                  onConfirm={confirmPlan}
-                  onThemeChange={(id) => setPlan(p => p ? { ...p, themeId: id } : p)}
-                  loading={false}
-                />
-              </div>
-            )}
-          </>
-        )}
-
-        {/* ── QUESTION COMPTE ── */}
-        {(phase === "q-compte" || phase === "creation" || phase === "succes") && (
-          <>
-            <AxiaMsg delay={100}>
-              Dernière étape — crée ton compte pour lancer ta boutique. 🚀
-            </AxiaMsg>
-            {phase === "q-compte" && (
-              <div className="msg-in">
-                <CompteForm onSubmit={launchCreation} loading={loading} />
-                {erreur && (
-                  <div style={{ marginTop: 10, padding: "10px 14px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 12, fontSize: 13, color: "#f87171" }}>
-                    {erreur}
+        {phase==="welcome" && (
+          <div className="hero-in" style={{ paddingTop:28 }}>
+            <div style={{ textAlign:"center" }}>
+              {/* Médaillon */}
+              <div style={{ display:"flex", justifyContent:"center", marginBottom:28 }}>
+                <div style={{ position:"relative" }}>
+                  <div style={{ position:"absolute", inset:-18, borderRadius:"50%", border:`1px solid ${GOLD}22`, background:`radial-gradient(circle,${GOLD}04 0%,transparent 70%)` }}/>
+                  <div style={{ position:"absolute", inset:-9, borderRadius:"50%", border:`1px dashed ${GOLD}30` }}/>
+                  <div style={{
+                    width:100, height:100, borderRadius:"28%",
+                    background:`linear-gradient(135deg,${LINEN} 0%,${PARCH} 100%)`,
+                    border:`2.5px solid ${GOLD}45`,
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    boxShadow:`0 12px 44px rgba(176,125,62,.24),inset 0 1px 0 rgba(255,255,255,.8)`,
+                  }}>
+                    <img src="/axia-icon.png" alt="Axia"
+                      style={{ width:"80%", height:"80%", objectFit:"cover", borderRadius:"22%" }}
+                      onError={e=>{ (e.currentTarget as HTMLImageElement).style.display="none"; }}/>
                   </div>
-                )}
+                  {[[-7,-7],[106,-9],[106,92],[-9,94]].map(([x,y],i)=>(
+                    <div key={i} style={{ position:"absolute", left:x, top:y, width:8, height:8, borderRadius:"50%", background:GOLD, opacity:.45 }}/>
+                  ))}
+                </div>
               </div>
-            )}
-          </>
-        )}
 
-        {/* ── CREATION ── */}
-        {phase === "creation" && (
-          <div className="msg-in" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <div style={{ background: CARD, border: `1px solid ${BORDER_ACCENT}`, borderRadius: 16, padding: "16px 20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                <Loader2 size={18} color={ACCENT} className="animate-spin" />
-                <span style={{ fontWeight: 700, fontSize: 14 }}>Axia construit ta boutique…</span>
+              <div style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"5px 14px", borderRadius:999, background:`${GOLD}12`, border:`1px solid ${GOLD}30`, marginBottom:18 }}>
+                <Sparkles size={12} color={GOLD}/>
+                <span style={{ fontSize:11, fontWeight:800, color:GOLD_D, letterSpacing:".08em", textTransform:"uppercase", fontFamily:"'Outfit',sans-serif" }}>Propulsé par l'IA</span>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {creationSteps.map((s, i) => (
-                  <div key={i} className="msg-in" style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13 }}>
-                    <CheckCircle2 size={14} color="#22C55E" style={{ flexShrink: 0 }} />
-                    <span style={{ color: TEXT, opacity: 0.8 }}>{s}</span>
+
+              <h1 style={{
+                fontFamily:"'Cormorant Garamond',serif",
+                fontSize:42, fontWeight:700, color:INK,
+                lineHeight:1.1, margin:"0 0 14px", letterSpacing:"-.02em",
+              }}>
+                Crée ton empire e-commerce<br/>
+                <em style={{ color:GOLD_D }}>avec Axia</em>
+              </h1>
+
+              <p style={{ fontSize:15, color:MID, lineHeight:1.8, maxWidth:480, margin:"0 auto 28px" }}>
+                En quelques questions, Axia conçoit ton site e-commerce ultra haut de gamme. Design, produits, livraison — tout configuré automatiquement.
+              </p>
+
+              <Divider/>
+
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, maxWidth:460, margin:"24px auto" }}>
+                {[
+                  { Icon:Palette,  label:"15 designs premium",  desc:"Afrocentriques & luxe" },
+                  { Icon:Store,    label:"Site complet",         desc:"Produits · Livraison · SEO" },
+                  { Icon:Globe,    label:"Mondial",              desc:"100+ pays, toutes devises" },
+                  { Icon:Sparkles, label:"100% IA",              desc:"En ligne en 60 secondes" },
+                ].map(({Icon,label,desc})=>(
+                  <div key={label} style={{
+                    background:WHITE, border:`1.5px solid ${PARCH}`,
+                    borderRadius:16, padding:"14px 16px", textAlign:"left",
+                    boxShadow:"0 2px 10px rgba(28,18,8,.06)",
+                  }}>
+                    <div style={{ width:32, height:32, borderRadius:10, background:`${GOLD}12`, border:`1px solid ${GOLD}28`, display:"flex", alignItems:"center", justifyContent:"center", marginBottom:10 }}>
+                      <Icon size={15} color={GOLD}/>
+                    </div>
+                    <div style={{ fontWeight:700, fontSize:12, color:INK, marginBottom:3 }}>{label}</div>
+                    <div style={{ fontSize:11, color:MUTED }}>{desc}</div>
                   </div>
                 ))}
-                {creationSteps.length < CREATION_STEPS.length && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13 }}>
-                    <Loader2 size={14} color={ACCENT} className="animate-spin" style={{ flexShrink: 0 }} />
-                    <span style={{ color: MUTED }}>En cours…</span>
-                  </div>
-                )}
+              </div>
+
+              <button
+                onClick={()=>{ setPhase("q-vente"); toast("info","Bienvenue ! Axia est là pour toi. 👋"); }}
+                className="gold-btn"
+                style={{ padding:"17px 52px", borderRadius:18, fontSize:15, display:"inline-flex", alignItems:"center", gap:12, boxShadow:`0 12px 44px rgba(176,125,62,.32)` }}>
+                <Sparkles size={18}/>
+                Créer ma boutique gratuitement
+                <ChevronRight size={18}/>
+              </button>
+              <p style={{ marginTop:12, fontSize:12, color:MUTED }}>
+                Gratuit · Sans carte bancaire · En ligne en 60 secondes
+              </p>
+
+              <div style={{ marginTop:32 }}>
+                <Divider/>
+                <p style={{ fontSize:11, color:MUTED, margin:"12px 0 10px", textTransform:"uppercase", letterSpacing:".1em" }}>
+                  Rejoint par 1 000+ boutiques en Afrique
+                </p>
+                <div style={{ display:"flex", justifyContent:"center", gap:8, flexWrap:"wrap" }}>
+                  {["🇸🇳 Sénégal","🇨🇮 Côte d'Ivoire","🇨🇲 Cameroun","🇳🇬 Nigeria","🇬🇭 Ghana"].map(c=>(
+                    <span key={c} style={{ fontSize:11, padding:"4px 12px", borderRadius:999, background:WHITE, border:`1px solid ${PARCH}`, color:MID }}>
+                      {c}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* ── SUCCÈS ── */}
-        {phase === "succes" && (
-          <div className="msg-in" style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 20, paddingTop: 20 }}>
-            <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(34,197,94,0.12)", border: "2px solid rgba(34,197,94,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <CheckCircle2 size={36} color="#22C55E" />
-            </div>
-            <div>
-              <h2 style={{ fontSize: 22, fontWeight: 900, margin: 0 }}>Ta boutique est en ligne ! 🎉</h2>
-              <p style={{ color: MUTED, fontSize: 14, marginTop: 8 }}>
-                {plan?.nomBoutique && <strong style={{ color: ACCENT }}>{plan.nomBoutique}</strong>} est prête. Redirection vers ton dashboard…
-              </p>
-            </div>
-            <Loader2 size={22} color={ACCENT} className="animate-spin" />
-          </div>
+        {/* ── CONVERSATION ── */}
+        {phase!=="welcome" && (
+          <>
+            <AxiaMsg delay={0}>
+              Bonjour ! 👋{" "}
+              <strong style={{color:GOLD_D}}>Dis-moi ce que tu veux vendre.</strong>{" "}
+              Plus tu es précis, plus ton site sera parfait.
+            </AxiaMsg>
+
+            {phase==="q-vente" && (
+              <div className="msg-in" style={{ paddingLeft:47, display:"flex", flexDirection:"column", gap:10 }}>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+                  {[
+                    "Mode & vêtements africains","Cosmétiques naturels",
+                    "Bijoux artisanaux","Formations en ligne",
+                    "Électronique & gadgets","Alimentation & épices",
+                  ].map(ex=>(
+                    <button key={ex} onClick={()=>setVenteInput(ex)}
+                      style={{
+                        padding:"6px 14px", borderRadius:999, fontSize:12, fontWeight:500,
+                        background:venteInput===ex?`${GOLD}14`:WHITE,
+                        border:`1.5px solid ${venteInput===ex?GOLD:PARCH}`,
+                        color:venteInput===ex?GOLD_D:MID,
+                        cursor:"pointer", transition:"all .13s", fontFamily:"'Outfit',sans-serif",
+                      }}>{ex}</button>
+                  ))}
+                </div>
+                <div style={{ display:"flex", gap:10 }}>
+                  <textarea
+                    value={venteInput}
+                    onChange={e=>setVenteInput(e.target.value)}
+                    onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); submitVente(); } }}
+                    placeholder="Ex: je vends des vêtements mode femme inspirés de la culture africaine, basée à Dakar…"
+                    rows={3}
+                    style={{
+                      flex:1, background:WHITE, border:`1.5px solid ${PARCH}`,
+                      borderRadius:14, padding:"12px 16px",
+                      color:INK, fontSize:13, resize:"none", outline:"none",
+                      lineHeight:1.6, fontFamily:"'Outfit',sans-serif",
+                      transition:"border-color .18s",
+                    }}
+                    onFocus={e=>e.currentTarget.style.borderColor=GOLD}
+                    onBlur={e=>e.currentTarget.style.borderColor=PARCH}
+                  />
+                  <button onClick={submitVente} disabled={!venteInput.trim()} className="gold-btn"
+                    style={{ width:46, height:46, borderRadius:12, padding:0, display:"flex", alignItems:"center", justifyContent:"center", alignSelf:"flex-end", flexShrink:0, opacity:venteInput.trim()?1:.3 }}>
+                    <Send size={16} color={WHITE}/>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {vente&&phase!=="q-vente" && <UserMsg>{vente}</UserMsg>}
+
+            {vente&&(phase==="q-pays"||paysCode) && (
+              <AxiaMsg delay={80}>
+                Dans quel pays es-tu basé ? Je vais adapter la devise, la livraison et le design à ton marché. 🌍
+              </AxiaMsg>
+            )}
+            {phase==="q-pays" && <PaysSelector onSelect={submitPays}/>}
+            {paysNom&&phase!=="q-pays" && <UserMsg>📍 {paysNom}</UserMsg>}
+
+            {phase==="analyse" && (
+              <>
+                <AxiaMsg delay={0}>Laisse-moi analyser ton projet et concevoir ton site sur-mesure… ✨</AxiaMsg>
+                <AxiaThinking/>
+              </>
+            )}
+
+            {(phase==="plan"||phase==="q-compte"||phase==="creation"||phase==="succes") && plan && (
+              <>
+                <AxiaMsg delay={0}>
+                  <strong style={{color:GOLD_D}}>Ton site est prêt à être lancé.</strong>{" "}{messageIA}
+                </AxiaMsg>
+                {phase==="plan" && (
+                  <PlanCard
+                    plan={plan}
+                    onConfirm={confirmPlan}
+                    onThemeChange={id=>setPlan(p=>p?{...p,themeId:id}:p)}
+                  />
+                )}
+              </>
+            )}
+
+            {(phase==="q-compte"||phase==="creation"||phase==="succes") && (
+              <>
+                <AxiaMsg delay={100}>
+                  Dernière étape — crée ton compte pour lancer ta boutique. 🚀
+                </AxiaMsg>
+                {phase==="q-compte" && (
+                  <CompteForm onSubmit={launchCreation} loading={loading} erreur={erreur||undefined}/>
+                )}
+              </>
+            )}
+
+            {phase==="creation" && (
+              <div className="msg-in scale-up" style={{ paddingLeft:47 }}>
+                <div style={{
+                  background:WHITE, border:`1.5px solid ${PARCH}`,
+                  borderRadius:18, padding:"18px 22px",
+                  boxShadow:"0 4px 22px rgba(28,18,8,.09)", maxWidth:440,
+                }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:16 }}>
+                    <Loader2 size={18} color={GOLD} className="animate-spin"/>
+                    <span style={{ fontWeight:700, fontSize:14, fontFamily:"'Cormorant Garamond',serif", color:INK }}>
+                      Axia construit ta boutique…
+                    </span>
+                  </div>
+                  {steps.map((s,i)=>(
+                    <div key={i} className="msg-in" style={{ display:"flex", alignItems:"center", gap:10, fontSize:13, marginBottom:8 }}>
+                      <CheckCircle2 size={14} color={SUCCESS} style={{flexShrink:0}}/>
+                      <span style={{color:MID}}>{s}</span>
+                    </div>
+                  ))}
+                  {steps.length<STEPS_CREATION.length && (
+                    <div style={{ display:"flex", alignItems:"center", gap:10, fontSize:13 }}>
+                      <Loader2 size={14} color={GOLD} className="animate-spin" style={{flexShrink:0}}/>
+                      <span style={{color:MUTED}}>En cours…</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {phase==="succes" && (
+              <div className="scale-up" style={{ display:"flex", flexDirection:"column", alignItems:"center", textAlign:"center", gap:20, padding:"24px 0" }}>
+                <div style={{
+                  width:80, height:80, borderRadius:"50%",
+                  background:"rgba(42,157,92,.1)", border:"2px solid rgba(42,157,92,.3)",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  boxShadow:"0 10px 36px rgba(42,157,92,.18)",
+                }}>
+                  <CheckCircle2 size={40} color={SUCCESS}/>
+                </div>
+                <div>
+                  <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:28, fontWeight:700, color:INK, margin:0 }}>
+                    Ta boutique est en ligne ! 🎉
+                  </h2>
+                  <p style={{ color:MID, fontSize:14, marginTop:8 }}>
+                    {plan?.nomBoutique&&<strong style={{color:GOLD_D}}>{plan.nomBoutique}</strong>} est prête. Redirection…
+                  </p>
+                </div>
+                <Loader2 size={22} color={GOLD} className="animate-spin"/>
+              </div>
+            )}
+          </>
         )}
 
-        <div ref={bottomRef} />
-      </div>
+        <div ref={bottomRef}/>
+      </main>
 
-      {/* ── Footer ── */}
-      {phase === "welcome" && (
-        <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "0 20px 32px", color: MUTED, fontSize: 12 }}>
-          Tu es livreur ?{" "}
-          <Link href="/inscription/livreur" style={{ color: ACCENT, textDecoration: "none", fontWeight: 600 }}>
-            Rejoindre la plateforme →
-          </Link>
-        </div>
+      {/* Footer */}
+      {phase==="welcome" && (
+        <footer style={{
+          position:"relative", zIndex:1, textAlign:"center",
+          padding:"0 24px 32px", color:MUTED, fontSize:12,
+        }}>
+          <Divider/>
+          <div style={{ marginTop:12 }}>
+            Tu es livreur ?{" "}
+            <Link href="/inscription/livreur" style={{ color:GOLD_D, fontWeight:800, textDecoration:"none" }}>
+              Rejoindre la plateforme →
+            </Link>
+          </div>
+        </footer>
       )}
     </div>
   );
