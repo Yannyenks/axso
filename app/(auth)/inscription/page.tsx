@@ -754,8 +754,7 @@ export default function InscriptionPage() {
         padding:"16px 24px",
       }}>
         <Link href="/" style={{ display:"flex", alignItems:"center", gap:10, textDecoration:"none" }}>
-          <img src="/logo.svg" alt="Axso" style={{ height:30, objectFit:"contain" }}
-            onError={e=>{ (e.currentTarget as HTMLImageElement).src="/logo.png"; }}/>
+          <img src="/logo.png" alt="Axso" style={{ height:38, objectFit:"contain" }}/>
         </Link>
         <div style={{ display:"flex", alignItems:"center", gap:14 }}>
           {toasts.length>0 && (
