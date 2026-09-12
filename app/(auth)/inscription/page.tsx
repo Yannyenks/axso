@@ -218,52 +218,82 @@ function PaysSelector({ onSelect }: { onSelect: (code: string, nom: string) => v
   );
 }
 
-// ── Theme selector ─────────────────────────────────────────────────────────────
-function ThemeSelector({ selectedId, onSelect }: { selectedId: string; onSelect: (id: string) => void }) {
+// ── Theme selector avec vrais aperçus iframes ──────────────────────────────────
+function ThemeSelector({
+  selectedId, onSelect, nomBoutique, produits, devise,
+}: {
+  selectedId: string;
+  onSelect: (id: string) => void;
+  nomBoutique?: string;
+  produits?: { nom: string; prix: number; description?: string }[];
+  devise?: string;
+}) {
+  const produitsParam = encodeURIComponent(JSON.stringify((produits || []).slice(0, 6)));
+  const nomParam = encodeURIComponent(nomBoutique || "Ma Boutique");
+  const deviseParam = encodeURIComponent(devise || "XAF");
+
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, maxWidth: 440 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, maxWidth: 500 }}>
       {THEMES.slice(0, 9).map(t => {
         const c = t.couleurs;
         const sel = selectedId === t.id;
+        const previewUrl = `/api/preview-theme?fichier=${encodeURIComponent(t.id)}&nom=${nomParam}&devise=${deviseParam}&produits=${produitsParam}`;
+
         return (
           <button key={t.id} onClick={() => onSelect(t.id)}
             style={{
               padding: 0, borderRadius: 14, overflow: "hidden",
               border: `2px solid ${sel ? (c.accent || ACCENT) : BORDER}`,
-              background: c.fond || CARD,
-              cursor: "pointer", transition: "all 0.15s",
-              boxShadow: sel ? `0 0 0 3px ${(c.accent || ACCENT)}25` : "none",
-              position: "relative",
+              cursor: "pointer", transition: "all 0.18s",
+              boxShadow: sel ? `0 0 0 4px ${(c.accent || ACCENT)}30, 0 8px 24px rgba(0,0,0,0.4)` : "0 2px 8px rgba(0,0,0,0.3)",
+              position: "relative", background: c.fond || "#fff",
             }}
           >
-            {/* Mockup */}
-            <div style={{ height: 72, background: c.fond || "#fff", display: "flex", flexDirection: "column", gap: 5, padding: "10px 10px 6px" }}>
-              <div style={{ height: 5, width: "60%", borderRadius: 3, background: c.texte || "#111", opacity: 0.7 }} />
-              <div style={{ height: 3, width: "80%", borderRadius: 2, background: c.texte || "#111", opacity: 0.25 }} />
-              <div style={{ height: 3, width: "50%", borderRadius: 2, background: c.texte || "#111", opacity: 0.15 }} />
-              <div style={{ marginTop: "auto", display: "flex", gap: 5 }}>
-                {[0, 1, 2].map(i => (
-                  <div key={i} style={{ flex: 1, height: 22, borderRadius: 5, background: c.surface || "#eee" }} />
-                ))}
-              </div>
-            </div>
-            {/* Label */}
-            <div style={{
-              background: CARD, borderTop: `1px solid ${BORDER}`,
-              padding: "6px 8px", display: "flex", alignItems: "center", justifyContent: "space-between",
-            }}>
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: TEXT, letterSpacing: "0.05em" }}>{t.nom}</div>
-                <div style={{ fontSize: 9, color: MUTED, marginTop: 1 }}>{t.ambiance[0]}</div>
-              </div>
+            {/* Iframe live preview */}
+            <div style={{ position: "relative", height: 130, overflow: "hidden" }}>
+              <iframe
+                src={previewUrl}
+                title={t.nom}
+                sandbox="allow-same-origin allow-scripts"
+                scrolling="no"
+                style={{
+                  width: 900, height: 700,
+                  border: "none", pointerEvents: "none",
+                  transformOrigin: "top left",
+                  transform: "scale(0.185)",
+                  position: "absolute", top: 0, left: 0,
+                }}
+              />
+              {/* Overlay to capture clicks */}
+              <div style={{ position: "absolute", inset: 0, zIndex: 2 }} />
+              {/* Selection badge */}
               {sel && (
-                <div style={{ width: 16, height: 16, borderRadius: "50%", background: c.accent || ACCENT, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <Check size={9} color="#fff" />
+                <div style={{
+                  position: "absolute", top: 8, right: 8, zIndex: 3,
+                  width: 22, height: 22, borderRadius: "50%",
+                  background: c.accent || ACCENT,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: `0 2px 8px ${(c.accent || ACCENT)}60`,
+                }}>
+                  <Check size={12} color="#fff" strokeWidth={3} />
                 </div>
               )}
-              {!sel && (
-                <div style={{ width: 12, height: 12, borderRadius: "50%", background: c.accent || ACCENT, flexShrink: 0 }} />
-              )}
+            </div>
+
+            {/* Label */}
+            <div style={{
+              background: CARD, borderTop: `1px solid ${sel ? (c.accent || ACCENT) + "40" : BORDER}`,
+              padding: "7px 9px", display: "flex", alignItems: "center", justifyContent: "space-between",
+            }}>
+              <div style={{ textAlign: "left" }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: sel ? (c.accent || ACCENT) : TEXT, letterSpacing: "0.06em", textTransform: "uppercase" }}>{t.nom}</div>
+                <div style={{ fontSize: 9, color: MUTED, marginTop: 1 }}>{t.ambiance[0]}</div>
+              </div>
+              <div style={{
+                width: 10, height: 10, borderRadius: "50%",
+                background: c.accent || ACCENT, flexShrink: 0,
+                boxShadow: sel ? `0 0 6px ${(c.accent || ACCENT)}80` : "none",
+              }} />
             </div>
           </button>
         );
@@ -340,9 +370,15 @@ function PlanCard({ plan, onConfirm, onThemeChange, loading }: {
         {/* Theme picker */}
         <div style={{ padding: "12px 16px" }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 10 }}>
-            Choisir le design
+            Choisir le design — aperçu avec tes produits
           </div>
-          <ThemeSelector selectedId={plan.themeId} onSelect={onThemeChange} />
+          <ThemeSelector
+            selectedId={plan.themeId}
+            onSelect={onThemeChange}
+            nomBoutique={plan.nomBoutique}
+            produits={plan.produits}
+            devise={plan.devise}
+          />
         </div>
       </div>
 
