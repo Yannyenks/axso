@@ -2,6 +2,7 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { hash } from "bcryptjs";
+import { provisionerThemeInitial } from "../lib/axso-design-library";
 
 const adapter = new PrismaPg({
   connectionString:
@@ -71,7 +72,6 @@ async function main() {
       telephone: "+221771234567",
       adresse: "Rue 10, Almadies, Dakar",
       logoUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200",
-      themeId: "noir-obsidien",
       commissionRate: 0.03,
       statut: "active",
       planType: "premium",
@@ -297,6 +297,14 @@ async function main() {
     });
   }
 
+  // Provisionne un design de la bibliothèque AXSO Design maintenant que les
+  // vrais produits existent — remplace l'ancien themeId classique en dur.
+  const themeMode = await provisionerThemeInitial({
+    tenantId: tenantMode.id, categorie: tenantMode.categorie, slug: tenantMode.slug,
+    nomBoutique: tenantMode.nomBoutique, devise: tenantMode.devise, commissionRate: tenantMode.commissionRate ?? 0.06,
+  });
+  await prisma.tenant.update({ where: { id: tenantMode.id }, data: { themeId: themeMode.id } });
+
   console.log("✅ Tenant 1 — Mode Aminata créé");
 
   // ==========================================
@@ -315,7 +323,6 @@ async function main() {
       telephone: "+2250701234567",
       adresse: "Cocody Riviera 3, Abidjan",
       logoUrl: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=200",
-      themeId: "violet-cosmos",
       commissionRate: 0.03,
       statut: "active",
       planType: "gratuit",
@@ -455,6 +462,12 @@ async function main() {
     },
   });
 
+  const themeBeaute = await provisionerThemeInitial({
+    tenantId: tenantBeaute.id, categorie: tenantBeaute.categorie, slug: tenantBeaute.slug,
+    nomBoutique: tenantBeaute.nomBoutique, devise: tenantBeaute.devise, commissionRate: tenantBeaute.commissionRate ?? 0.06,
+  });
+  await prisma.tenant.update({ where: { id: tenantBeaute.id }, data: { themeId: themeBeaute.id } });
+
   console.log("✅ Tenant 2 — Beauté Grâce créé");
 
   // ==========================================
@@ -473,7 +486,6 @@ async function main() {
       telephone: "+237691234567",
       adresse: "Bonanjo, Douala",
       logoUrl: "https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=200",
-      themeId: "terre-et-or",
       commissionRate: 0.03,
       statut: "active",
       planType: "gratuit",
@@ -614,6 +626,12 @@ async function main() {
       actif: true,
     },
   });
+
+  const themeMarche = await provisionerThemeInitial({
+    tenantId: tenantMarche.id, categorie: tenantMarche.categorie, slug: tenantMarche.slug,
+    nomBoutique: tenantMarche.nomBoutique, devise: tenantMarche.devise, commissionRate: tenantMarche.commissionRate ?? 0.06,
+  });
+  await prisma.tenant.update({ where: { id: tenantMarche.id }, data: { themeId: themeMarche.id } });
 
   console.log("✅ Tenant 3 — Marché Douala créé");
 

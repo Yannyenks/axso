@@ -3,50 +3,23 @@ import { FooterMarketing } from "@/components/marketing/FooterMarketing";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Palette, ShoppingBag, Star } from "lucide-react";
+import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
 
 export const metadata: Metadata = {
   title: "Thèmes — AXSO",
-  description: "Choisissez votre thème de boutique parmi notre collection de designs premium conçus pour l'Afrique.",
+  description: "Choisissez votre design de boutique parmi la bibliothèque AXSO Design — des designs prêts à l'emploi conçus pour l'Afrique.",
 };
 
-const THEMES = [
-  {
-    id: "noir-obsidien", nom: "Noir Obsidien",
-    desc: "Élégance sombre, accents dorés. Le luxe à l'africaine.",
-    accent: "#F5A623", bg: "#0a0a0a", surface: "#111",
-    tags: ["Mode", "Luxe", "Bijoux"], popular: true,
-  },
-  {
-    id: "kente-royal", nom: "Kente Royal",
-    desc: "Inspiré des tissus Kente, couleurs riches et royales.",
-    accent: "#D4AF37", bg: "#1a1000", surface: "#1f1500",
-    tags: ["Artisanat", "Culture", "Mode"],
-  },
-  {
-    id: "violet-cosmos", nom: "Violet Cosmos",
-    desc: "Violet profond, ambiance cosmique et avant-gardiste.",
-    accent: "#7c3aed", bg: "#0d0a1a", surface: "#120f22",
-    tags: ["Tech", "Beauté", "Cosmétiques"],
-  },
-  {
-    id: "terre-et-or", nom: "Terre & Or",
-    desc: "Tons chauds terreux, naturel et authentique.",
-    accent: "#c2622d", bg: "#1a0f0a", surface: "#1f1510",
-    tags: ["Food", "Bio", "Artisanat"],
-  },
-  {
-    id: "ocean-atlantique", nom: "Océan Atlantique",
-    desc: "Bleu profond, fraîcheur et modernité coastale.",
-    accent: "#0ea5e9", bg: "#050f1a", surface: "#08131f",
-    tags: ["Sport", "Tech", "Électronique"],
-  },
-  {
-    id: "bwiti-forest", nom: "Bwiti Forest",
-    desc: "Vert forêt, nature, bien-être et croissance.",
-    accent: "#16a34a", bg: "#050f08", surface: "#07120a",
-    tags: ["Bio", "Santé", "Agriculture"],
-  },
-];
+const THEMES = MANIFESTE_LIBRAIRIE.map((e, i) => ({
+  id: e.fichier,
+  nom: e.nom,
+  desc: `Un design ${e.ambiance.join(", ")} — vos vrais produits déjà branchés dès l'activation.`,
+  accent: e.couleurs.accent || "#F5A623",
+  bg: e.couleurs.fond || "#0a0a0a",
+  surface: e.couleurs.surface || "#111",
+  tags: e.ambiance.map((a) => a.charAt(0).toUpperCase() + a.slice(1)),
+  popular: i === 0,
+}));
 
 export default function ThemesPage() {
   return (

@@ -4,10 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
-import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { CustomSectionsRenderer } from "@/components/storefront/CustomSectionsRenderer";
-import { TEMPLATE_COMPONENTS } from "@/components/storefront/templates/registry";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -47,15 +45,8 @@ export default async function AProposPage({ params }: Props) {
   const aboutPage = cfg.aboutPage;
   const about = cfg.sections.about; // section "Notre histoire" déjà existante sur la home — repli si aboutPage vide
 
-  const TemplateAbout = TEMPLATE_COMPONENTS[tenant.themeId]?.AboutPage;
-  if (TemplateAbout) {
-    return <TemplateAbout tenant={tenant} cfg={cfg} slug={slug} />;
-  }
-
   return (
     <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
-      <ThemeEffect themeId={tenant.themeId} />
-
       <StorefrontNavbar
         slug={slug}
         nomBoutique={tenant.nomBoutique}

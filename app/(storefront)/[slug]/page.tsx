@@ -6,7 +6,6 @@ import { formatMontant } from "@/lib/utils";
 import { prixClient } from "@/lib/pricing";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import Link from "next/link";
-import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { WishlistHeartButton } from "@/components/storefront/WishlistHeartButton";
 import { SectionCountdown } from "@/components/storefront/SectionCountdown";
@@ -16,7 +15,6 @@ import { ScrollReveal, type RevealType } from "@/components/storefront/ScrollRev
 import { HomeFaqSection } from "@/components/storefront/HomeFaqSection";
 import { CustomSectionsRenderer } from "@/components/storefront/CustomSectionsRenderer";
 import { Package, Lock, RotateCcw, MessageCircle, Star } from "lucide-react";
-import { TEMPLATE_COMPONENTS } from "@/components/storefront/templates/registry";
 import { ImportedLiteralHomePage } from "@/components/storefront/templates/ImportedLiteralHomePage";
 import { BlockTreeRenderer } from "@/components/storefront/blocks/BlockTreeRenderer";
 
@@ -77,12 +75,9 @@ export default async function StorefrontPage({ params }: Props) {
   const isDark = (r * 299 + g * 587 + b * 114) / 1000 < 128;
   const socialLinks = tenant.socialLinks as Record<string, string> || {};
 
-  const heroGradients: Record<string, string> = {
-    "noir-obsidien": `radial-gradient(ellipse at 40% 50%, #1a1200 0%, #0a0a0a 70%)`,
-    "violet-cosmos": `radial-gradient(ellipse at 40% 50%, #2d1058 0%, #1a0a2e 70%)`,
-    "terre-et-or": `linear-gradient(135deg, #fef3e8 0%, #fde8d0 60%, #fef3e8 100%)`,
-  };
-  const heroGradient = heroGradients[tenant.themeId] || heroGradients["terre-et-or"];
+  // Dégradé de secours du socle par défaut (voir commentaire plus bas) —
+  // pas de logique par ancien id de thème, un seul dégradé de repli suffit.
+  const heroGradient = `linear-gradient(135deg, #fef3e8 0%, #fde8d0 60%, #fef3e8 100%)`;
 
   // Animations de section pilotées par le builder (onglet "Animations") —
   // taux d'apparition par section si défini, sinon le preset global du thème.
@@ -120,11 +115,13 @@ export default async function StorefrontPage({ params }: Props) {
     return <ImportedLiteralHomePage cfg={cfg} />;
   }
 
-  const TemplateHome = TEMPLATE_COMPONENTS[tenant.themeId]?.HomePage;
-  if (TemplateHome) {
-    return <TemplateHome tenant={tenant} cfg={cfg} vedettes={vedettes} slug={slug} />;
-  }
-
+  // Ce qui suit (jusqu'à la fin du fichier) est le socle de repli — plus
+  // aucune boutique réelle n'y arrive normalement (toutes provisionnées via
+  // builderTree/builderHtml, voir lib/axso-design-library.ts), sauf si le
+  // provisionnement automatique échouait (non bloquant par design, voir
+  // lib/axso-design-library.ts::provisionerThemeInitial) : dans ce cas précis
+  // la boutique reste sur le socle "terre-et-or" et DOIT quand même s'afficher
+  // correctement, piloté par cfg.sections/cfg.layout/cfg.boutons.
   const colonnesDesktop = layoutCfg.colonnesProduits || 4;
   const colonnesMobile = layoutCfg.colonnesMobile || 2;
   const GRID_PRODUITS = `grid-cols-${colonnesMobile} sm:grid-cols-3 lg:grid-cols-${colonnesDesktop}`;
@@ -706,8 +703,6 @@ export default async function StorefrontPage({ params }: Props) {
 
   return (
     <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
-      <ThemeEffect themeId={tenant.themeId} />
-
       {/* ─── BARRE D'ANNONCE ─── */}
       {sec.annonce.actif && (
         <div

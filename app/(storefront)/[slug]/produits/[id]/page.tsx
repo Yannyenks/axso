@@ -8,9 +8,7 @@ import { prixClient } from "@/lib/pricing";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { ViewContentTracker } from "@/components/storefront/ViewContentTracker";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
-import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { ProductPageClient } from "@/components/storefront/ProductPageClient";
-import { TEMPLATE_COMPONENTS } from "@/components/storefront/templates/registry";
 import { ImportedLiteralProductPage } from "@/components/storefront/templates/ImportedLiteralProductPage";
 import { lierProduitAuGabarit, lierProduitLibrairieAuGabarit } from "@/lib/theme-import-clone";
 import { formatMontant } from "@/lib/utils";
@@ -130,21 +128,7 @@ export default async function ProduitPage({ params }: Props) {
     );
   }
 
-  const TemplateProductPage = TEMPLATE_COMPONENTS[tenant.themeId]?.ProductPage;
-  if (TemplateProductPage) {
-    return (
-      <TemplateProductPage
-        tenant={tenant}
-        cfg={cfg}
-        slug={slug}
-        produit={produit}
-        prixAffiche={prixAffiche}
-        prixCompareAffiche={prixCompareAffiche}
-        produitsSimilaires={produitsSimilaires}
-      />
-    );
-  }
-
+  // Socle de repli — voir le commentaire équivalent dans page.tsx (accueil).
   // Programme de la formation — affiché avant achat (aperçu gratuit pour les
   // leçons marquées "gratuite", verrouillé pour le reste) pour donner
   // confiance à l'acheteur sur le contenu réel qu'il va recevoir.
@@ -235,7 +219,6 @@ export default async function ProduitPage({ params }: Props) {
 
   return (
     <>
-      <ThemeEffect themeId={tenant.themeId} />
       <ViewContentTracker produitId={produit.id} nom={produit.nom} prix={prixAffiche} devise={tenant.devise} />
       <StorefrontNavbar
         slug={slug}

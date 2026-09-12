@@ -89,9 +89,6 @@ export type StatutLivraison =
 // Statuts escrow
 export type StatutEscrow = "held" | "released" | "disputed";
 
-// Thèmes disponibles
-export type IdTheme = "noir-obsidien" | "violet-cosmos" | "terre-et-or";
-
 // Métriques dashboard
 export interface MetriquesDashboard {
   ventesJour: number;

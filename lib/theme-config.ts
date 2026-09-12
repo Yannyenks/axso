@@ -1,4 +1,3 @@
-import { TEMPLATE_DEFAULTS } from "@/lib/theme-templates";
 
 // ─── Couleurs ────────────────────────────────────────────────────────────────
 export interface ThemeColors {
@@ -285,12 +284,12 @@ export interface BlockNode {
   style?: BlockStyleOverrides;
 }
 
-// Thèmes dont le rendu storefront est encore piloté par `sections`/JSX
-// partagé (pas un arbre React écrit à la main comme les 10 thèmes premium) —
-// seuls ceux-ci peuvent activer le Constructeur libre pour l'instant.
-export const THEMES_LIBRE_ELIGIBLES = [
-  "terre-et-or", "noir-obsidien", "violet-cosmos", "ocean-atlantique", "kente-royal", "bwiti-forest",
-] as const;
+// "terre-et-or" est désormais le seul socle interne — piloté par
+// `sections`/JSX partagé (voir DEFAULTS plus bas), jamais proposé au
+// marchand comme un thème parmi d'autres (la bibliothèque AXSO Design,
+// lib/axso-design-library.ts, est la seule gamme visible). Seul ce socle
+// peut activer le Constructeur libre.
+export const THEMES_LIBRE_ELIGIBLES = ["terre-et-or"] as const;
 
 // ─── Config principale ───────────────────────────────────────────────────────
 export interface ThemeConfig {
@@ -415,49 +414,14 @@ const DEFAULT_LAYOUT: ThemeLayout = {
   ombre: "md",
 };
 
+// Un seul socle structurel interne — jamais exposé au marchand comme un
+// thème parmi d'autres (voir THEMES_LIBRE_ELIGIBLES ci-dessus). Nécessaire
+// pour que resolveThemeConfig/resolveThemeConfigAsync gardent toujours une
+// forme ThemeConfig valide, y compris si un Theme venait à manquer, ou
+// (cas réel) si le provisionnement automatique depuis la bibliothèque AXSO
+// Design échouait — voir lib/axso-design-library.ts::provisionerThemeInitial
+// et le commentaire équivalent dans app/(storefront)/[slug]/page.tsx.
 const DEFAULTS: Record<string, ThemeConfig> = {
-  "noir-obsidien": {
-    colors: { fond: "#0a0a0a", accent: "#F5A623", texte: "#F5F5F0", surface: "#111111", texteMuted: "#888888", bordure: "#222222" },
-    fonts: { titre: "playfair", corps: "inter", poidsTitre: "700" },
-    radius: "16px",
-    layout: { ...DEFAULT_LAYOUT },
-    boutons: { ...DEFAULT_BOUTONS },
-    navigationStyle: { ...DEFAULT_NAV, style: "dark" },
-    animations: { ...DEFAULT_ANIMATIONS },
-    sections: {
-      annonce: { actif: true, texte: "✦ Livraison gratuite dès 30 000 XOF ✦ Paiement 100% sécurisé ✦ Retours sous 14 jours", couleurFond: "#F5A623", couleurTexte: "#0a0a0a" },
-      hero: { actif: true, style: "centered", titre: "Élégance redéfinie", sousTitre: "Découvrez notre collection exclusive de pièces uniques sélectionnées avec soin", ctaTexte: "Explorer la collection", ctaLien: "produits", overlay: 55, hauteur: "80vh", textPosition: "center" },
-      confiance: { ...DEFAULT_CONFIANCE },
-      vedettes: { actif: true, titre: "Nos Best-Sellers", nombre: 8, triPar: "ventes", colonnes: 4, layout: "grid" },
-      collections: { actif: true, titre: "Nos Collections", layout: "grid" },
-      about: { ...DEFAULT_ABOUT },
-      promo: { actif: true, titre: "Nouvelle Saison", texte: "Découvrez les nouvelles arrivées et laissez-vous séduire par l'excellence", ctaTexte: "Voir la collection", style: "gradient" },
-      faq: { ...DEFAULT_FAQ },
-      avis: { actif: true, titre: "Ce que disent nos clients", layout: "cards" },
-      newsletter: { actif: false, titre: "Rejoignez notre univers", texte: "Recevez nos offres exclusives et nouveautés en avant-première", placeholder: "votre@email.com", ctaTexte: "S'abonner", style: "centered" },
-    },
-  },
-  "violet-cosmos": {
-    colors: { fond: "#1a0a2e", accent: "#7c3aed", texte: "#f0eaff", surface: "#200a3e", texteMuted: "#9876cc", bordure: "#2d1058" },
-    fonts: { titre: "playfair", corps: "inter", poidsTitre: "700" },
-    radius: "20px",
-    layout: { ...DEFAULT_LAYOUT },
-    boutons: { ...DEFAULT_BOUTONS, hover: "glow" },
-    navigationStyle: { ...DEFAULT_NAV, style: "dark" },
-    animations: { ...DEFAULT_ANIMATIONS, preset: "dynamic" },
-    sections: {
-      annonce: { actif: true, texte: "✨ Collection Cosmos — Expédition 24h ✨ -10% sur votre 1ère commande avec COSMOS10", couleurFond: "#7c3aed", couleurTexte: "#ffffff" },
-      hero: { actif: true, style: "fullscreen", titre: "Au-delà de l'ordinaire", sousTitre: "Une collection unique inspirée des mystères de l'univers", ctaTexte: "Découvrir le cosmos", ctaLien: "produits", overlay: 60, hauteur: "100vh", textPosition: "center" },
-      confiance: { ...DEFAULT_CONFIANCE },
-      vedettes: { actif: true, titre: "Sélection Cosmos", nombre: 8, triPar: "featured", colonnes: 4, layout: "grid" },
-      collections: { actif: true, titre: "Univers de marque", layout: "masonry" },
-      about: { ...DEFAULT_ABOUT },
-      promo: { actif: true, titre: "Offre Cosmos", texte: "-20% sur votre première commande — une aventure commence ici", ctaTexte: "Profiter de l'offre", style: "gradient" },
-      faq: { ...DEFAULT_FAQ },
-      avis: { actif: true, titre: "Ils voyagent avec nous", layout: "carousel" },
-      newsletter: { actif: true, titre: "Entrez dans l'univers", texte: "Accédez en avant-première à nos lancements et collections exclusives", placeholder: "votre@email.com", ctaTexte: "Rejoindre le cosmos", style: "split" },
-    },
-  },
   "terre-et-or": {
     colors: { fond: "#fff8f0", accent: "#c2622d", texte: "#2c1503", surface: "#fef3e8", texteMuted: "#8a6248", bordure: "#f0e0d0" },
     fonts: { titre: "playfair", corps: "inter", poidsTitre: "700" },
@@ -477,90 +441,6 @@ const DEFAULTS: Record<string, ThemeConfig> = {
       faq: { ...DEFAULT_FAQ },
       avis: { actif: true, titre: "Ils nous font confiance", layout: "cards" },
       newsletter: { actif: false, titre: "Restez connecté", texte: "Recevez nos actualités et offres spéciales directement dans votre boîte mail", placeholder: "votre@email.com", ctaTexte: "S'abonner", style: "centered" },
-    },
-  },
-  "ocean-atlantique": {
-    colors: { fond: "#010d1f", accent: "#00b4d8", texte: "#e0f4ff", surface: "#021a33", texteMuted: "#6aa8c4", bordure: "#0a2a40" },
-    fonts: { titre: "playfair", corps: "inter", poidsTitre: "700" },
-    radius: "18px",
-    layout: { ...DEFAULT_LAYOUT },
-    boutons: { ...DEFAULT_BOUTONS },
-    navigationStyle: { ...DEFAULT_NAV, style: "dark", type: "transparent-scroll" },
-    animations: { ...DEFAULT_ANIMATIONS },
-    sections: {
-      annonce: { actif: true, texte: "🌊 Livraison express sous 24h · Paiement 100% sécurisé · Retours gratuits 30j", couleurFond: "#0077b6", couleurTexte: "#ffffff" },
-      hero: { actif: true, style: "centered", titre: "L'essence de l'Atlantique", sousTitre: "Une collection inspirée par la richesse des côtes ouest-africaines", ctaTexte: "Plonger dans la collection", ctaLien: "produits", overlay: 55, hauteur: "100vh", textPosition: "center" },
-      confiance: { ...DEFAULT_CONFIANCE },
-      vedettes: { actif: true, titre: "Sélection Atlantique", nombre: 8, triPar: "featured", colonnes: 4, layout: "grid" },
-      collections: { actif: true, titre: "Nos Trésors des Profondeurs", layout: "masonry" },
-      about: { ...DEFAULT_ABOUT },
-      promo: { actif: true, titre: "Vagues d'offres exclusives", texte: "Des promotions aussi vastes que l'Atlantique", ctaTexte: "Voir les offres", style: "gradient" },
-      faq: { ...DEFAULT_FAQ },
-      avis: { actif: true, titre: "Ils naviguent avec nous", layout: "cards" },
-      newsletter: { actif: true, titre: "Entrez dans nos flots", texte: "Recevez en avant-première nos nouveautés et offres exclusives", placeholder: "votre@email.com", ctaTexte: "M'inscrire", style: "banner" },
-    },
-  },
-  "kente-royal": {
-    colors: { fond: "#1a0e00", accent: "#f5a623", texte: "#fff8e8", surface: "#261400", texteMuted: "#c8a060", bordure: "#3a2200" },
-    fonts: { titre: "playfair", corps: "inter", poidsTitre: "700" },
-    radius: "14px",
-    layout: { ...DEFAULT_LAYOUT },
-    boutons: { ...DEFAULT_BOUTONS, style: "pill", hover: "glow" },
-    navigationStyle: { ...DEFAULT_NAV, style: "dark" },
-    animations: { ...DEFAULT_ANIMATIONS, preset: "luxury", global: "fade-in" },
-    sections: {
-      annonce: { actif: true, texte: "✦ Authenticité africaine ✦ Artisanat premium ✦ Livraison soignée 48h ✦", couleurFond: "#c8861a", couleurTexte: "#1a0e00" },
-      hero: { actif: true, style: "fullscreen", titre: "Kente Royal", sousTitre: "L'excellence du savoir-faire africain dans chaque pièce unique et intemporelle", ctaTexte: "Découvrir la collection royale", ctaLien: "produits", overlay: 40, hauteur: "100vh", textPosition: "center" },
-      confiance: { ...DEFAULT_CONFIANCE },
-      vedettes: { actif: true, titre: "Pièces d'exception", nombre: 8, triPar: "ventes", colonnes: 4, layout: "grid" },
-      collections: { actif: true, titre: "Collections Royales", layout: "masonry" },
-      about: { ...DEFAULT_ABOUT },
-      promo: { actif: true, titre: "L'Artisanat Royal vous attend", texte: "Chaque pièce est un hommage vibrant au riche patrimoine culturel africain", ctaTexte: "Explorer le patrimoine", style: "gradient" },
-      faq: { ...DEFAULT_FAQ },
-      avis: { actif: true, titre: "La voix de notre communauté royale", layout: "carousel" },
-      newsletter: { actif: false, titre: "Rejoindre la royauté", texte: "Accédez aux créations exclusives et aux offres réservées aux membres", placeholder: "votre@email.com", ctaTexte: "Rejoindre", style: "centered" },
-    },
-  },
-  "bwiti-forest": {
-    colors: { fond: "#071a0b", accent: "#4ade80", texte: "#e8ffe0", surface: "#0d2912", texteMuted: "#6aad6a", bordure: "#163d1e" },
-    fonts: { titre: "playfair", corps: "inter", poidsTitre: "700" },
-    radius: "20px",
-    layout: { ...DEFAULT_LAYOUT },
-    boutons: { ...DEFAULT_BOUTONS },
-    navigationStyle: { ...DEFAULT_NAV, style: "dark" },
-    animations: { ...DEFAULT_ANIMATIONS, preset: "elegant" },
-    sections: {
-      annonce: { actif: true, texte: "🌿 Produits 100% naturels · Bio & équitable · Livraison éco-responsable", couleurFond: "#15803d", couleurTexte: "#e8ffe0" },
-      hero: { actif: true, style: "split", titre: "La forêt primaire vous parle", sousTitre: "Des produits naturels authentiques, en harmonie avec la forêt équatoriale d'Afrique", ctaTexte: "Explorer la forêt", ctaLien: "produits", overlay: 50, hauteur: "80vh", textPosition: "left" },
-      confiance: { ...DEFAULT_CONFIANCE },
-      vedettes: { actif: true, titre: "Trésors de la Forêt", nombre: 8, triPar: "featured", colonnes: 4, layout: "grid" },
-      collections: { actif: true, titre: "Rituels Naturels", layout: "grid" },
-      about: { ...DEFAULT_ABOUT },
-      promo: { actif: true, titre: "Offrande de la forêt", texte: "La nature vous offre ses secrets les mieux gardés à prix exceptionnel", ctaTexte: "Découvrir les secrets", style: "gradient" },
-      faq: { ...DEFAULT_FAQ },
-      avis: { actif: true, titre: "La forêt témoigne", layout: "cards" },
-      newsletter: { actif: true, titre: "Entrez dans la forêt", texte: "Recevez nos rituels naturels et secrets directement dans votre boîte", placeholder: "votre@email.com", ctaTexte: "Entrer dans la forêt", style: "centered" },
-    },
-  },
-  "epure-minimal": {
-    colors: { fond: "#ffffff", accent: "#111111", texte: "#1a1a1a", surface: "#fafafa", texteMuted: "#8a8a8a", bordure: "#ececec" },
-    fonts: { titre: "inter", corps: "inter", poidsTitre: "600" },
-    radius: "6px",
-    layout: { ...DEFAULT_LAYOUT, styleCarte: "bordered", ombre: "sm" },
-    boutons: { ...DEFAULT_BOUTONS, style: "outline", hover: "darken" },
-    navigationStyle: { ...DEFAULT_NAV, style: "light" },
-    animations: { ...DEFAULT_ANIMATIONS, preset: "none", global: "fade-in" },
-    sections: {
-      annonce: { actif: false, texte: "Livraison sous 48h · Paiement sécurisé · Retours sous 14 jours", couleurFond: "#111111", couleurTexte: "#ffffff" },
-      hero: { actif: true, style: "minimal", titre: "L'essentiel, bien fait", sousTitre: "Une sélection épurée, pensée pour durer", ctaTexte: "Découvrir", ctaLien: "produits", overlay: 0, hauteur: "70vh", textPosition: "left" },
-      confiance: { ...DEFAULT_CONFIANCE, layout: "bar" },
-      vedettes: { actif: true, titre: "Sélection", nombre: 8, triPar: "ventes", colonnes: 4, layout: "grid" },
-      collections: { actif: true, titre: "Collections", layout: "grid" },
-      about: { ...DEFAULT_ABOUT },
-      promo: { actif: false, titre: "Nouveautés", texte: "Les dernières arrivées, sélectionnées avec soin", ctaTexte: "Voir", style: "solid" },
-      faq: { ...DEFAULT_FAQ },
-      avis: { actif: true, titre: "Avis clients", layout: "list" },
-      newsletter: { actif: false, titre: "Restez informé", texte: "Les nouveautés, sans spam", placeholder: "votre@email.com", ctaTexte: "S'abonner", style: "centered" },
     },
   },
 };
@@ -611,7 +491,7 @@ export function mergeThemeConfig(base: ThemeConfig, overrides: Record<string, an
 }
 
 export function resolveThemeConfig(themeId: string, savedConfig: Record<string, any> = {}): ThemeConfig {
-  const base = DEFAULTS[themeId] || TEMPLATE_DEFAULTS[themeId] || DEFAULTS["terre-et-or"];
+  const base = DEFAULTS[themeId] || DEFAULTS["terre-et-or"];
   const CHAMPS_CLONE = new Set(["builderHtml", "builderCss", "builderHtmlProduits", "builderHtmlProduit", "builderHtmlPanierChrome", "builderHtmlCheckoutChrome", "builderHtmlConfirmationChrome", "axsoDesignSelecteurVisuelPdp"]);
   const hasCustom = savedConfig && Object.keys(savedConfig).filter(k => !CHAMPS_CLONE.has(k)).length > 0;
   if (!hasCustom) return base;

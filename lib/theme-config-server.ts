@@ -1,14 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { THEME_DEFAULTS, resolveThemeConfig, mergeThemeConfig, type ThemeConfig } from "@/lib/theme-config";
-import { TEMPLATE_DEFAULTS } from "@/lib/theme-templates";
 
 export async function resolveThemeConfigAsync(
   themeId: string,
   tenantId: string,
   savedConfig: Record<string, any> = {}
 ): Promise<ThemeConfig> {
-  // Builtin theme (classique ou premium) — use sync resolver
-  if (THEME_DEFAULTS[themeId] || TEMPLATE_DEFAULTS[themeId]) {
+  // Socle interne ("terre-et-or", voir lib/theme-config.ts) — use sync resolver
+  if (THEME_DEFAULTS[themeId]) {
     return resolveThemeConfig(themeId, savedConfig);
   }
 
@@ -24,8 +23,8 @@ export async function resolveThemeConfigAsync(
 
   const dbConfig = dbTheme.config as Record<string, any>;
   const baseThemeId = dbConfig.baseThemeId || "terre-et-or";
-  // resolveThemeConfig() vérifie déjà les deux familles (classique + premium)
-  // et replie sur terre-et-or si l'id ne correspond à rien.
+  // resolveThemeConfig() replie déjà sur "terre-et-or" si l'id ne correspond
+  // à rien (voir lib/theme-config.ts).
   const builtinBase = resolveThemeConfig(baseThemeId);
 
   // Empile 2 couches de surcharges : la définition du thème custom (dbConfig),

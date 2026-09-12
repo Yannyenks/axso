@@ -5,19 +5,16 @@ import { toast } from "sonner";
 import { PCOnlyGate } from "@/components/dashboard/PCOnlyGate";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import {
-  Plus, Palette, Check, Trash2, Edit2, ExternalLink,
-  Sparkles, Sun, Layers, ArrowLeft, Zap,
+  Plus, Palette, Trash2, Edit2, ExternalLink,
+  Sparkles, ArrowLeft,
 } from "lucide-react";
 
 const THEMES_TUTORIAL_STEPS = [
-  { Icon: Palette,  titre: "Choisissez un thème Axso",     description: "Plusieurs thèmes premium prêts à l'emploi, pensés pour différents univers : mode, artisanat, beauté..." },
-  { Icon: Sun,      titre: "3 variantes par thème",         description: "Original, Clair ou Concentré : ajustez l'ambiance colorée en un clic sans perdre la structure du thème." },
-  { Icon: Sparkles, titre: "Créez votre thème personnalisé", description: "Partez d'un thème existant ou d'une page blanche pour composer vos propres couleurs et arrondis." },
+  { Icon: Palette,  titre: "Choisissez un design AXSO", description: "15 designs prêts à l'emploi, pensés pour différents univers : mode, artisanat, beauté... En choisir un branche directement vos vrais produits." },
+  { Icon: Sparkles, titre: "Importez votre propre design", description: "Envoyez un fichier HTML de référence — notre IA en extrait le style pour créer un thème AXSO personnalisé." },
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Variant = "original" | "light" | "concentrated";
-
 interface ThemeColors {
   fond: string;
   accent: string;
@@ -25,42 +22,6 @@ interface ThemeColors {
   surface: string;
   texteMuted?: string;
   bordure?: string;
-}
-
-function lightVariantColors(base: ThemeColors): ThemeColors {
-  return {
-    fond: "#FFFFFF",
-    surface: "#F8F9FB",
-    texte: "#111827",
-    texteMuted: "#6B7280",
-    bordure: "#E5E7EB",
-    accent: base.accent,
-  };
-}
-
-function concentratedVariantColors(base: ThemeColors): ThemeColors {
-  const accent = base.accent;
-  return {
-    fond: base.texte,
-    surface: shadeHex(base.texte, 15),
-    texte: "#FFFFFF",
-    texteMuted: "rgba(255,255,255,0.6)",
-    bordure: "rgba(255,255,255,0.12)",
-    accent,
-  };
-}
-
-function shadeHex(hex: string, amount: number): string {
-  try {
-    const h = hex.replace("#", "");
-    const num = parseInt(h, 16);
-    const r = Math.min(255, Math.max(0, (num >> 16) + amount));
-    const g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + amount));
-    const b = Math.min(255, Math.max(0, (num & 0xff) + amount));
-    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
-  } catch {
-    return hex;
-  }
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -83,23 +44,18 @@ export default function ThemesPage() {
     });
   }, []);
 
-  async function activer(themeSlug: string, variant: Variant, baseColors: ThemeColors) {
-    const key = `${themeSlug}-${variant}`;
-    setActivating(key);
+  // Thèmes perso (import manuel ou anciens thèmes créés avant la bibliothèque) —
+  // un Theme existe déjà, on ne fait qu'assigner directement son id.
+  async function activerCustom(id: string) {
+    setActivating(id);
     try {
-      let body: Record<string, any> = { themeId: themeSlug };
-      if (variant === "light") {
-        body.themeConfig = { colors: lightVariantColors(baseColors) };
-      } else if (variant === "concentrated") {
-        body.themeConfig = { colors: concentratedVariantColors(baseColors) };
-      }
       await fetch("/api/tenants", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ themeId: id }),
       });
-      setTenant((t: any) => ({ ...t, themeId: themeSlug, activeVariant: variant }));
-      toast.success(`Thème "${variant === "light" ? "Clair" : variant === "concentrated" ? "Concentré" : "Original"}" activé !`);
+      setTenant((t: any) => ({ ...t, themeId: id }));
+      toast.success("Thème activé !");
     } catch {
       toast.error("Erreur lors de l'activation");
     } finally {
@@ -107,10 +63,10 @@ export default function ThemesPage() {
     }
   }
 
-  // Bibliothèque AXSO Design — contrairement aux thèmes classiques/premium
-  // ci-dessous (un id partagé, assigné directement), chaque design de la
-  // bibliothèque crée un vrai Theme propre à CE tenant (vos produits déjà
-  // branchés dans la grille) — voir app/api/themes/provisionner.
+  // Bibliothèque AXSO Design — contrairement au thème perso ci-dessus (un id
+  // déjà existant, assigné directement), chaque design de la bibliothèque
+  // crée un vrai Theme propre à CE tenant (vos produits déjà branchés dans
+  // la grille) — voir app/api/themes/provisionner.
   async function activerLibrairie(fichier: string, nom: string) {
     setActivating(fichier);
     try {
@@ -162,7 +118,6 @@ export default function ThemesPage() {
   }
 
   const librairie = themes.filter((t) => t.axsoDesign);
-  const builtins = themes.filter((t) => t.builtin && !t.axsoDesign);
   const custom = themes.filter((t) => !t.builtin);
 
   return (
@@ -256,159 +211,13 @@ export default function ThemesPage() {
                   actif={tenant?.themeId === t.id}
                   activating={activating === t.id}
                   deleting={deleting === t.id}
-                  onActivate={() => {
-                    const colors = t.config?.colors || {};
-                    activer(t.id, "original", colors);
-                  }}
-                  onEdit={() => router.push(`/dashboard/themes/creer?id=${t.id}`)}
+                  onActivate={() => activerCustom(t.id)}
                   onDelete={() => supprimer(t.id)}
                 />
               ))}
             </div>
           </section>
         )}
-
-        {/* Thèmes intégrés — avec variantes */}
-        <section>
-          <div className="flex items-center gap-2 mb-4">
-            <Layers size={14} className="text-gray-500" />
-            <h2 className="text-sm font-bold text-gray-700">Thèmes Axso Premium</h2>
-            <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{builtins.length} thèmes · 3 variantes chacun</span>
-          </div>
-          <div className="space-y-6">
-            {builtins.map((t) => (
-              <BuiltinThemeRow
-                key={t.id}
-                theme={t}
-                activeThemeId={tenant?.themeId}
-                activating={activating}
-                onActivate={(variant) => {
-                  const baseColors = t.config?.colors || {};
-                  activer(t.slug || t.id, variant, baseColors);
-                }}
-                onEdit={() => router.push(`/dashboard/themes/creer?base=${t.slug || t.id}`)}
-              />
-            ))}
-          </div>
-        </section>
-      </div>
-    </div>
-  );
-}
-
-// ─── Ligne d'un thème intégré (3 variantes côte à côte) ──────────────────────
-function BuiltinThemeRow({
-  theme, activeThemeId, activating, onActivate, onEdit,
-}: {
-  theme: any;
-  activeThemeId: string;
-  activating: string | null;
-  onActivate: (v: Variant) => void;
-  onEdit: () => void;
-}) {
-  const [preview, setPreview] = useState<Variant>("original");
-  const slug = theme.slug || theme.id;
-  const isActive = activeThemeId === slug || activeThemeId === theme.id;
-
-  const base: ThemeColors = {
-    fond:    theme.config?.colors?.fond    || "#fff8f0",
-    accent:  theme.config?.colors?.accent  || "#F5A623",
-    texte:   theme.config?.colors?.texte   || "#111111",
-    surface: theme.config?.colors?.surface || "#fef3e8",
-    texteMuted: theme.config?.colors?.texteMuted,
-    bordure: theme.config?.colors?.bordure,
-  };
-
-  const variants: Array<{ id: Variant; label: string; Icon: any; colors: ThemeColors }> = [
-    { id: "original",     label: "Original",   Icon: Layers, colors: base },
-    { id: "light",        label: "Clair",       Icon: Sun,    colors: lightVariantColors(base) },
-    { id: "concentrated", label: "Concentré",   Icon: Zap,    colors: concentratedVariantColors(base) },
-  ];
-
-  const activeVariant = variants.find(v => v.id === preview)!;
-  const activatingKey = `${slug}-${preview}`;
-
-  return (
-    <div className={`rounded-2xl border-2 bg-white overflow-hidden transition-all ${isActive ? "border-[#F5A623] shadow-lg shadow-[#F5A623]/10" : "border-gray-200 hover:border-gray-300"}`}>
-      <div className="flex flex-col sm:flex-row">
-
-        {/* Preview principale */}
-        <div className="flex-1 min-w-0">
-          <ThemePreview colors={activeVariant.colors} radius={theme.config?.radius || "12px"} />
-        </div>
-
-        {/* Infos + variantes */}
-        <div className="w-full sm:w-64 flex-shrink-0 p-4 border-t sm:border-t-0 sm:border-l border-gray-100 flex flex-col">
-          {/* Nom + badge */}
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <div className="flex items-center gap-2 mb-0.5">
-                <p className="text-sm font-bold text-gray-800">{theme.nom}</p>
-                {isActive && (
-                  <span className="text-[9px] bg-[#F5A623] text-white px-1.5 py-0.5 rounded-full font-bold">ACTIF</span>
-                )}
-              </div>
-              {theme.description && (
-                <p className="text-[11px] text-gray-400 leading-snug">{theme.description}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Sélecteur de variante */}
-          <div className="mb-4">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Variante</p>
-            <div className="grid grid-cols-3 gap-1.5">
-              {variants.map(v => (
-                <button
-                  key={v.id}
-                  onClick={() => setPreview(v.id)}
-                  className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-all ${preview === v.id ? "border-[#F5A623] bg-[#FFF7ED]" : "border-gray-100 hover:border-gray-200 bg-gray-50"}`}
-                >
-                  {/* Mini preview de couleur */}
-                  <div className="flex gap-0.5 w-full">
-                    <div className="flex-1 h-3 rounded-l-md" style={{ backgroundColor: v.colors.fond }} />
-                    <div className="flex-1 h-3" style={{ backgroundColor: v.colors.accent }} />
-                    <div className="flex-1 h-3 rounded-r-md" style={{ backgroundColor: v.colors.surface }} />
-                  </div>
-                  <span className={`text-[10px] font-semibold leading-none ${preview === v.id ? "text-[#92400E]" : "text-gray-500"}`}>
-                    {v.label}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Palette de couleurs */}
-          <div className="flex gap-1 mb-4">
-            {[activeVariant.colors.fond, activeVariant.colors.accent, activeVariant.colors.texte, activeVariant.colors.surface].map((c, i) => (
-              <div key={i} className="w-5 h-5 rounded-full border border-gray-200 shadow-sm" style={{ backgroundColor: c }} title={c} />
-            ))}
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-2 mt-auto">
-            {isActive ? (
-              <div className="flex-1 text-center py-2 rounded-xl text-[11px] font-semibold text-[#F5A623] bg-[#FFF7ED] border border-[#F5A623]/20">
-                ✓ Thème actif
-              </div>
-            ) : (
-              <button
-                onClick={() => onActivate(preview)}
-                disabled={activating === activatingKey}
-                className="flex-1 py-2 rounded-xl text-[11px] font-bold text-white transition-all disabled:opacity-50 hover:opacity-90"
-                style={{ backgroundColor: activeVariant.colors.accent }}
-              >
-                {activating === activatingKey ? "..." : `Activer — ${activeVariant.label}`}
-              </button>
-            )}
-            <button
-              onClick={onEdit}
-              className="w-8 h-8 rounded-xl flex items-center justify-center border border-gray-200 hover:border-[#F5A623]/40 text-gray-400 hover:text-[#F5A623] transition-all"
-            >
-              <Edit2 size={13} />
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

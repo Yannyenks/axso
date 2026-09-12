@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
-import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { WishlistGrid } from "@/components/storefront/WishlistGrid";
 
 interface Props {
@@ -72,7 +71,6 @@ export default async function WishlistPage({ params }: Props) {
 
   return (
     <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
-      <ThemeEffect themeId={tenant.themeId} />
       <StorefrontNavbar
         slug={slug}
         nomBoutique={tenant.nomBoutique}

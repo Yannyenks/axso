@@ -3,7 +3,6 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
-import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { FormationPlayer } from "@/components/storefront/FormationPlayer";
 
 interface Props {
@@ -49,7 +48,6 @@ export default async function FormationAccessPage({ params }: Props) {
 
   return (
     <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
-      <ThemeEffect themeId={tenant.themeId} />
       <FormationPlayer
         commandeId={acces.commandeId}
         clientEmail={acces.clientEmail}

@@ -7,10 +7,8 @@ import { prixClient } from "@/lib/pricing";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import Link from "next/link";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
-import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { WishlistHeartButton } from "@/components/storefront/WishlistHeartButton";
 import { Package, ArrowLeft } from "lucide-react";
-import { TEMPLATE_COMPONENTS } from "@/components/storefront/templates/registry";
 
 interface Props {
   params: Promise<{ slug: string; collectionSlug: string }>;
@@ -85,14 +83,9 @@ export default async function CollectionPage({ params }: Props) {
     take: 60,
   });
 
-  const TemplateCollection = TEMPLATE_COMPONENTS[tenant.themeId]?.CollectionPage;
-  if (TemplateCollection) {
-    return <TemplateCollection tenant={tenant} cfg={cfg} collection={collection} produits={produits} slug={slug} />;
-  }
-
+  // Socle de repli — voir le commentaire équivalent dans page.tsx (accueil).
   return (
     <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
-      <ThemeEffect themeId={tenant.themeId} />
       <StorefrontNavbar
         slug={slug}
         nomBoutique={tenant.nomBoutique}

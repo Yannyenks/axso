@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
-import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { CommandeConfirmeeClient } from "./CommandeConfirmeeClient";
 import { ImportedLiteralConfirmationShell } from "@/components/storefront/templates/ImportedLiteralConfirmationShell";
 import { Lock } from "lucide-react";
@@ -68,8 +67,6 @@ export default async function CommandeConfirmeePage({ params, searchParams }: Pr
 
   return (
     <div style={{ backgroundColor: theme.fond, color: theme.texte, minHeight: "100vh" }}>
-      <ThemeEffect themeId={tenant.themeId} />
-
       {/* Navbar minimal */}
       <nav style={{ borderBottomColor: `${theme.accent}20` }} className="border-b">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">

@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Shirt, Sparkles, Coffee } from "lucide-react";
+import { Gem, Cpu, Coffee } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
 
 const themes: {
   id: string;
@@ -14,41 +15,28 @@ const themes: {
   surface: string;
   description: string;
   preview: { hero: string; prix: string; Icon: LucideIcon };
-}[] = [
-  {
-    id: "noir-obsidien",
-    nom: "Noir Obsidien",
-    categorie: "Mode & Luxe",
-    fond: "#0a0a0a",
-    accent: "#1B4FD8",
-    texte: "#F5F5F0",
-    surface: "#111",
-    description: "Élégance africaine contemporaine. Particules dorées, animations cinématiques.",
-    preview: { hero: "Prêt-à-porter Sénégalais", prix: "25 000 XOF", Icon: Shirt },
-  },
-  {
-    id: "violet-cosmos",
-    nom: "Violet Cosmos",
-    categorie: "Beauté & Cosmétiques",
-    fond: "#1a0a2e",
-    accent: "#7c3aed",
-    texte: "#f0eaff",
-    surface: "#200a3e",
-    description: "Magie et féminité. Shader nébuleuse GLSL, glassmorphism, halo lumineux.",
-    preview: { hero: "Huile de Baobab Pure", prix: "12 000 XOF", Icon: Sparkles },
-  },
-  {
-    id: "terre-et-or",
-    nom: "Terre & Or",
-    categorie: "Artisanat & Alimentation",
-    fond: "#fff8f0",
-    accent: "#c2622d",
-    texte: "#2c1503",
-    surface: "#fef3e8",
-    description: "Authenticité africaine. Motifs kente SVG animés, zéro WebGL, Lighthouse > 92.",
-    preview: { hero: "Café Arabica Cameroun", prix: "8 000 XAF", Icon: Coffee },
-  },
-];
+}[] = (() => {
+  const parNom = (nom: string) => MANIFESTE_LIBRAIRIE.find((e) => e.nom === nom)!;
+  const specs: { nom: string; categorie: string; Icon: LucideIcon; hero: string; prix: string }[] = [
+    { nom: "AUBE", categorie: "Bijoux & Joaillerie", Icon: Gem, hero: "Bague Or 18 Carats", prix: "45 000 XOF" },
+    { nom: "NEXUS", categorie: "Tech & Électronique", Icon: Cpu, hero: "Smartphone Pro Max", prix: "350 000 XOF" },
+    { nom: "IGNITE", categorie: "Alimentation", Icon: Coffee, hero: "Café Arabica Premium", prix: "8 000 XAF" },
+  ];
+  return specs.map((s) => {
+    const e = parNom(s.nom);
+    return {
+      id: e.fichier,
+      nom: e.nom,
+      categorie: s.categorie,
+      fond: e.couleurs.fond || "#0a0a0a",
+      accent: e.couleurs.accent || "#1B4FD8",
+      texte: e.couleurs.texte || "#F5F5F0",
+      surface: e.couleurs.surface || "#111",
+      description: `Design ${e.ambiance.join(", ")} — vos vrais produits déjà branchés dès l'activation.`,
+      preview: { hero: s.hero, prix: s.prix, Icon: s.Icon },
+    };
+  });
+})();
 
 export function ThemesSection() {
   const [actif, setActif] = useState(0);
@@ -99,13 +87,13 @@ export function ThemesSection() {
           }}
         >
           <span className="text-[#1B4FD8] text-sm font-semibold uppercase tracking-widest mb-4 block">
-            3 Thèmes Premium
+            Bibliothèque AXSO Design
           </span>
           <h2 className="text-4xl sm:text-5xl font-bold font-playfair text-gray-900 mb-4">
             Votre boutique, votre identité
           </h2>
           <p className="text-gray-400 text-xl max-w-2xl mx-auto">
-            Chaque thème est conçu pour un marché africain spécifique. Personnalisable à l'infini.
+            15 designs prêts à l'emploi, chacun pensé pour un univers spécifique. Activez-en un, vos vrais produits s'y branchent aussitôt.
           </p>
         </div>
 

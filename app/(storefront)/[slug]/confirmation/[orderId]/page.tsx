@@ -3,7 +3,6 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
-import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { verifierPaiementNotchPay, hasNotchPay } from "@/lib/notchpay";
 import { confirmerPaiementCommande } from "@/lib/paiement-commande";
 import { TYPES_LIVRAISON_DIGITALE } from "@/lib/affiliation";
@@ -128,7 +127,6 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
 
   return (
     <div style={{ backgroundColor: theme.fond, color: theme.texte, minHeight: "100vh" }}>
-      <ThemeEffect themeId={tenant.themeId} />
       {contenuConfirmation}
 
       <footer className="border-t py-8 text-center text-sm opacity-40 mt-8" style={{ borderColor: `${theme.accent}20` }}>

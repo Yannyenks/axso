@@ -16,7 +16,6 @@ import { NouvelleBoutiqueModal } from "@/components/dashboard/NouvelleBoutiqueMo
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { aAcces, NOMS_PALIERS, type Palier } from "@/lib/plans";
 import { resolveThemeConfig } from "@/lib/theme-config";
-import { PRINCIPAL_THEME_IDS, TEMPLATE_META } from "@/lib/theme-templates";
 
 const BOUTIQUE_TUTORIAL_STEPS = [
   { Icon: Store,   titre: "Complétez votre profil",        description: "Nom, description, contacts, pays... Chaque champ rempli fait grimper votre score de complétion vers 100%." },
@@ -24,30 +23,6 @@ const BOUTIQUE_TUTORIAL_STEPS = [
   { Icon: Truck,   titre: "Configurez la livraison",        description: "Frais fixes, minimum pour la livraison gratuite et zones desservies — tout est ajustable à tout moment." },
   { Icon: Layers,  titre: "Gérez plusieurs boutiques",       description: "Basculez d'une boutique à l'autre en un clic ou créez-en une nouvelle si votre palier le permet." },
 ];
-
-const NOMS_CLASSIQUES: Record<string, string> = { "noir-obsidien": "Noir Obsidien", "terre-et-or": "Terre & Or" };
-const DESCS_CLASSIQUES: Record<string, string> = {
-  "noir-obsidien": "Luxe & Mode", "violet-cosmos": "Beauté & Art", "terre-et-or": "Artisanat & Culture",
-  "ocean-atlantique": "Luxe Côtier & Marine", "kente-royal": "Artisanat Africain Premium", "bwiti-forest": "Nature & Bien-être Bio",
-};
-const BADGES_CLASSIQUES: Record<string, string | null> = {
-  "noir-obsidien": "✦ Premium", "violet-cosmos": "✦ Premium", "terre-et-or": null,
-  "ocean-atlantique": "~ 3D", "kente-royal": "♦ 3D", "bwiti-forest": "* 3D",
-};
-
-// Gamme classique + premium historique (lib/theme-templates.ts) — mêmes ids
-// que /dashboard/themes et l'inscription, pour ne plus se désynchroniser.
-const THEMES = PRINCIPAL_THEME_IDS.map((id) => {
-  const c = resolveThemeConfig(id).colors;
-  const meta = TEMPLATE_META[id];
-  return {
-    id,
-    nom: meta?.nom || NOMS_CLASSIQUES[id] || id,
-    desc: meta?.description || DESCS_CLASSIQUES[id] || "",
-    fond: c.fond, accent: c.accent, texte: c.texte,
-    badge: meta?.badge || BADGES_CLASSIQUES[id] || null,
-  };
-});
 
 const PAYS = [
   { code: "SN", nom: "Sénégal" }, { code: "CM", nom: "Cameroun" }, { code: "CI", nom: "Côte d'Ivoire" },
@@ -229,7 +204,10 @@ export default function BoutiquePage() {
   }
 
   const urlProd = tenant ? `${tenant.slug}.axso.com` : "";
-  const theme = THEMES.find(t => t.id === form.themeId) || THEMES.find(t => t.id === "terre-et-or") || THEMES[0];
+  // Aperçu décoratif uniquement — le choix du design se fait dans Theme
+  // Studio (voir bannière ci-dessous) ; ces couleurs (socle "terre-et-or")
+  // ne reflètent pas forcément le design réellement actif de la boutique.
+  const theme = resolveThemeConfig("terre-et-or").colors;
   const dirty = !!savedForm && JSON.stringify(form) !== JSON.stringify(savedForm);
   const enLigne = statutLocal === "active";
 
@@ -424,46 +402,12 @@ export default function BoutiquePage() {
                 <div>
                   <div className="flex items-center gap-1.5">
                     <Sparkles size={13} className="text-[#F5A623]" />
-                    <h2 className="text-[13px] font-bold text-[#111111] leading-tight">Bibliothèque AXSO Design</h2>
+                    <h2 className="text-[13px] font-bold text-[#111111] leading-tight">Thème visuel — Theme Studio</h2>
                   </div>
-                  <p className="text-[11.5px] text-[#AAAAAA] mt-1 leading-tight">15 designs prêts à l'emploi, vos vrais produits déjà branchés — dans Theme Studio</p>
+                  <p className="text-[11.5px] text-[#AAAAAA] mt-1 leading-tight">15 designs prêts à l'emploi, vos vrais produits déjà branchés, ou importez le vôtre</p>
                 </div>
                 <ArrowUpRight size={16} className="text-[#CCCCCC] group-hover:text-[#F5A623] transition-colors flex-shrink-0" />
               </button>
-              <div className="ax-card p-6 space-y-3">
-                <div>
-                  <h2 className="text-[14px] font-bold text-[#111111] leading-tight">Thème visuel — gamme historique</h2>
-                  <p className="text-[11.5px] text-[#AAAAAA] mt-0.5 leading-tight">Choisissez l'ambiance de votre vitrine</p>
-                </div>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {THEMES.map(t => (
-                    <button key={t.id} type="button" onClick={() => set("themeId", t.id)}
-                      className="text-left rounded-2xl border-2 overflow-hidden transition-all"
-                      style={form.themeId === t.id
-                        ? { borderColor: "#F5A623", boxShadow: "0 0 0 4px rgba(245,166,35,0.08)" }
-                        : { borderColor: "#EBEBEB" }}>
-                      <div className="relative">
-                        <ThemeMockup t={t} nom={form.nomBoutique} />
-                        {form.themeId === t.id && (
-                          <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[#F5A623] flex items-center justify-center text-white shadow-sm"><Check size={10} /></div>
-                        )}
-                      </div>
-                      <div className="bg-white px-3.5 py-2.5 flex items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-[#111111] font-semibold text-[12px] leading-tight truncate">{t.nom}</p>
-                            {t.badge && (
-                              <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold leading-none flex-shrink-0"
-                                style={{ background: `${t.accent}18`, color: t.accent }}>{t.badge}</span>
-                            )}
-                          </div>
-                          <p className="text-[#AAAAAA] text-[10.5px] leading-tight truncate mt-0.5">{t.desc}</p>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           )}
 
@@ -831,28 +775,6 @@ function LongueurBadge({ n, min, max }: { n: number; min: number; max: number })
   );
 }
 
-// ─── Mockup miniature d'un thème ────────────────────────────────────────────
-function ThemeMockup({ t, nom }: { t: typeof THEMES[number]; nom: string }) {
-  return (
-    <div style={{ backgroundColor: t.fond }}>
-      <div className="flex items-center justify-between gap-2 px-3 py-2" style={{ borderBottom: `1px solid ${t.accent}22` }}>
-        <span style={{ color: t.texte, fontWeight: 700, fontSize: 10, lineHeight: 1 }} className="truncate min-w-0">{nom || "Ma Boutique"}</span>
-        <div className="flex gap-1 flex-shrink-0">
-          {[0, 1, 2].map(i => <div key={i} className="w-2.5 h-1.5 rounded-sm" style={{ background: `${t.texte}30` }} />)}
-        </div>
-      </div>
-      <div className="h-9 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${t.accent}22, transparent)` }}>
-        <div className="h-1.5 w-14 rounded-full" style={{ background: t.accent }} />
-      </div>
-      <div className="grid grid-cols-3 gap-1.5 p-2.5">
-        {[0, 1, 2].map(i => (
-          <div key={i} className="aspect-square rounded-lg" style={{ background: `${t.accent}16` }} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ─── Saisie des zones de livraison (chips) ──────────────────────────────────
 function ZonesInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const zones = value.split(",").map(z => z.trim()).filter(Boolean);
@@ -897,7 +819,7 @@ function ZonesInput({ value, onChange }: { value: string; onChange: (v: string) 
 }
 
 // ─── Aperçu en direct de la vitrine ──────────────────────────────────────────
-function LivePreview({ form, theme, slug }: { form: any; theme: typeof THEMES[number]; slug?: string }) {
+function LivePreview({ form, theme, slug }: { form: any; theme: { fond: string; accent: string; texte: string }; slug?: string }) {
   return (
     <div className="ax-card overflow-hidden">
       <div className="px-4 py-2.5 border-b border-[#F0F0F0] flex items-center gap-2 bg-[#FAFAFA]">

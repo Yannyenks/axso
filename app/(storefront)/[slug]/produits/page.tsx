@@ -7,10 +7,8 @@ import { prixClient } from "@/lib/pricing";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import Link from "next/link";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
-import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { WishlistHeartButton } from "@/components/storefront/WishlistHeartButton";
 import { Package, Search } from "lucide-react";
-import { TEMPLATE_COMPONENTS } from "@/components/storefront/templates/registry";
 import { ImportedLiteralProductListPage } from "@/components/storefront/templates/ImportedLiteralProductListPage";
 
 interface Props {
@@ -112,14 +110,9 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
     return <ImportedLiteralProductListPage cfg={cfg} />;
   }
 
-  const TemplateProductList = TEMPLATE_COMPONENTS[tenant.themeId]?.ProductListPage;
-  if (TemplateProductList) {
-    return <TemplateProductList tenant={tenant} cfg={cfg} produits={produits} slug={slug} filtres={{ q, min, max, tri, collection }} />;
-  }
-
+  // Socle de repli — voir le commentaire équivalent dans page.tsx (accueil).
   return (
     <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
-      <ThemeEffect themeId={tenant.themeId} />
       <StorefrontNavbar
         slug={slug}
         nomBoutique={tenant.nomBoutique}

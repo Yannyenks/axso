@@ -5,11 +5,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Mail, Phone, MapPin, MessageCircle } from "lucide-react";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
-import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { CustomSectionsRenderer } from "@/components/storefront/CustomSectionsRenderer";
 import { ContactForm } from "@/components/storefront/ContactForm";
-import { TEMPLATE_COMPONENTS } from "@/components/storefront/templates/registry";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -45,11 +43,6 @@ export default async function ContactPage({ params }: Props) {
   const contactPage = cfg.contactPage;
   const afficherFormulaire = contactPage?.afficherFormulaire ?? true;
 
-  const TemplateContact = TEMPLATE_COMPONENTS[tenant.themeId]?.ContactPage;
-  if (TemplateContact) {
-    return <TemplateContact tenant={tenant} cfg={cfg} slug={slug} />;
-  }
-
   const coordonnees = [
     tenant.telephone && { Icon: Phone, label: "Téléphone", value: tenant.telephone, href: `tel:${tenant.telephone.replace(/\s/g, "")}` },
     tenant.whatsapp && { Icon: MessageCircle, label: "WhatsApp", value: tenant.whatsapp, href: `https://wa.me/${tenant.whatsapp.replace(/\D/g, "")}` },
@@ -59,8 +52,6 @@ export default async function ContactPage({ params }: Props) {
 
   return (
     <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
-      <ThemeEffect themeId={tenant.themeId} />
-
       <StorefrontNavbar
         slug={slug}
         nomBoutique={tenant.nomBoutique}

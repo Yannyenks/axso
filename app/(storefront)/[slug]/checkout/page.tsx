@@ -6,7 +6,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { CheckoutForm } from "@/components/storefront/CheckoutForm";
 import { ImportedLiteralCheckoutShell } from "@/components/storefront/templates/ImportedLiteralCheckoutShell";
-import { ThemeEffect } from "@/components/themes/ThemeEffect";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { Lock } from "lucide-react";
 
@@ -38,7 +37,6 @@ export default async function CheckoutPage({ params }: Props) {
 
   return (
     <div style={{ backgroundColor: theme.fond, color: theme.texte, minHeight: "100vh" }}>
-      <ThemeEffect themeId={tenant.themeId} />
       {/* Navbar minimal */}
       <nav style={{ borderBottomColor: `${theme.accent}20` }} className="border-b">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">

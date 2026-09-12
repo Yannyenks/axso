@@ -7,7 +7,6 @@ import Link from "next/link";
 import { CartContent } from "@/components/storefront/CartContent";
 import { ImportedLiteralCartShell } from "@/components/storefront/templates/ImportedLiteralCartShell";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
-import { ThemeEffect } from "@/components/themes/ThemeEffect";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -27,7 +26,6 @@ export default async function PanierPage({ params }: Props) {
 
   return (
     <div style={{ backgroundColor: theme.fond, color: theme.texte, minHeight: "100vh" }}>
-      <ThemeEffect themeId={tenant.themeId} />
       {/* Navbar */}
       <nav style={{ borderBottomColor: `${theme.accent}20` }} className="sticky top-0 z-50 backdrop-blur-lg border-b">
         <div style={{ backgroundColor: `${theme.fond}cc` }} className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
