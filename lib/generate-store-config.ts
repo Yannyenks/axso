@@ -627,28 +627,6 @@ export function buildAboutContactPages(type: CategoryType, nom: string, langue: 
   };
 }
 
-// ─── Sélection du thème par catégorie ────────────────────────────────────────
-function selectThemeId(type: CategoryType): string {
-  const map: Record<CategoryType, string> = {
-    fashion:     "noir-obsidien",
-    beauty:      "violet-cosmos",
-    food:        "terre-et-or",
-    tech:        "ocean-atlantique",
-    home:        "bwiti-forest",
-    jewelry:     "kente-royal",
-    kids:        "terre-et-or",
-    health:      "bwiti-forest",
-    sport:       "noir-obsidien",
-    services:    "violet-cosmos",
-    agriculture: "bwiti-forest",
-    artisan:     "kente-royal",
-    books:       "terre-et-or",
-    auto:        "ocean-atlantique",
-    general:     "terre-et-or",
-  };
-  return map[type] || "terre-et-or";
-}
-
 // ─── Sélection de la mise en page produit par catégorie ──────────────────────
 function selectProductLayout(type: CategoryType): "amazon" | "classic" | "minimal" | "fullwidth" {
   if (["fashion","beauty","jewelry","artisan"].includes(type)) return "amazon";
@@ -662,11 +640,10 @@ export function generateStoreConfig(opts: {
   nomBoutique: string;
   pays?: string;
   devise?: string;
-}): { themeId: string; themeConfig: Record<string, any> } {
+}): { themeConfig: Record<string, any> } {
   const { categorie, nomBoutique, pays } = opts;
   const type   = detectCategory(categorie);
   const langue = detectLangue(pays);
-  const themeId = selectThemeId(type);
   const { sections, sectionOrder, customSections } = buildHomeSections(type, nomBoutique, langue);
   const productSections = buildProductSections(type);
   const productLayout = selectProductLayout(type);
@@ -684,5 +661,5 @@ export function generateStoreConfig(opts: {
     contactPage,
   };
 
-  return { themeId, themeConfig };
+  return { themeConfig };
 }

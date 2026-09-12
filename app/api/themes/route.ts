@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { resolveThemeConfig } from "@/lib/theme-config";
 import { PRINCIPAL_THEME_IDS, TEMPLATE_IDS, TEMPLATE_META } from "@/lib/theme-templates";
+import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-library";
 
 export async function GET(req: NextRequest) {
   try {
@@ -47,7 +48,33 @@ export async function GET(req: NextRequest) {
       .filter((t) => t.tenantId !== null)
       .map((t) => ({ ...t, builtin: false }));
 
-    return NextResponse.json({ themes: [...themesBuiltin, ...themesCustom] });
+    // Bibliothèque AXSO Design (Templates/*.html) — remplace progressivement
+    // la gamme ci-dessus (voir plan de migration). `axsoDesign: true` +
+    // `fichier` signalent au picker qu'il doit passer par
+    // POST /api/themes/provisionner (qui crée un vrai Theme pour CE tenant,
+    // vrais produits déjà branchés) plutôt que d'assigner directement un id
+    // partagé comme pour les thèmes classiques/premium ci-dessus.
+    const themesLibrairie = MANIFESTE_LIBRAIRIE.map((e, i) => ({
+      id: `axso-design:${e.fichier}`,
+      slug: e.fichier,
+      fichier: e.fichier,
+      nom: e.nom,
+      description: e.ambiance.join(" · "),
+      badge: "✦ AXSO Design",
+      config: { colors: e.couleurs, fonts: e.polices },
+      effetId: null,
+      tenantId: null,
+      builtin: true,
+      axsoDesign: true,
+      actif: true,
+      premium: false,
+      ordre: 100 + i,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      apercu: null,
+    }));
+
+    return NextResponse.json({ themes: [...themesLibrairie, ...themesBuiltin, ...themesCustom] });
   } catch (e) {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }

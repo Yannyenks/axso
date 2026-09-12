@@ -6,6 +6,7 @@ import { slugify } from "@/lib/utils";
 import { z } from "zod";
 import { generateStoreConfig } from "@/lib/generate-store-config";
 import { genererAvisDemo } from "@/lib/gemini";
+import { provisionerThemeInitial } from "@/lib/axso-design-library";
 
 const schemaAnalyser = z.object({
   phase: z.literal("analyser"),
@@ -122,7 +123,6 @@ export async function POST(request: Request) {
             devise: plan.devise,
             whatsapp: compte.whatsapp || "",
             email: compte.email,
-            themeId: plan.themeId,
             description: plan.description || "",
             parametresLivraison,
             commissionRate: 0.06,
@@ -169,6 +169,25 @@ export async function POST(request: Request) {
 
         return { tenant, produitsCreees };
       });
+
+      // Provisionne le design de la bibliothèque AXSO Design choisi par
+      // plan.themeId (un fichier, ex. "aube-site" — voir lib/ai-agent.ts)
+      // maintenant que les vrais produits existent en base : la grille
+      // accueil/boutique les affiche directement. Non bloquant — en cas
+      // d'échec, la boutique reste sur le socle par défaut ("terre-et-or").
+      try {
+        const theme = await provisionerThemeInitial({
+          tenantId: tenant.id,
+          categorie: plan.categorie,
+          slug: tenant.slug,
+          nomBoutique: tenant.nomBoutique,
+          devise: tenant.devise,
+          fichier: plan.themeId,
+        });
+        await prisma.tenant.update({ where: { id: tenant.id }, data: { themeId: theme.id } });
+      } catch (err) {
+        console.warn("[API/AI/ONBOARDING] Provisionnement bibliothèque échoué (non bloquant):", err);
+      }
 
       // Avis clients IA de démonstration — pour qu'une boutique fraîchement
       // générée par l'IA n'affiche jamais une section "Avis" vide. Ne bloque

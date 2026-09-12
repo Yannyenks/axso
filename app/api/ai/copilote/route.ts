@@ -7,6 +7,7 @@ import { OUTILS_COPILOTE } from "@/lib/ai-agent";
 import { type ToolDefinition } from "@/lib/llm-client";
 import { runAgent } from "@/lib/agent-runner";
 import { slugify } from "@/lib/utils";
+import { selectionnerGabaritLibrairie, provisionerThemeInitial } from "@/lib/axso-design-library";
 import { z } from "zod";
 
 const schema = z.object({
@@ -85,11 +86,20 @@ async function executerOutil(
       }
 
       case "modifier_theme": {
-        await prisma.tenant.update({
-          where: { id: tenantId },
-          data: { themeId: input.themeId },
+        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+        if (!tenant) return { succes: false, resultat: "Boutique introuvable" };
+        const entree = selectionnerGabaritLibrairie(input.categorie || tenant.categorie);
+        const theme = await provisionerThemeInitial({
+          tenantId,
+          categorie: input.categorie || tenant.categorie,
+          slug: tenant.slug,
+          nomBoutique: tenant.nomBoutique,
+          devise: tenant.devise,
+          commissionRate: tenant.commissionRate ?? 0.06,
+          fichier: entree.fichier,
         });
-        return { succes: true, resultat: `Thème changé pour "${input.themeId}"` };
+        await prisma.tenant.update({ where: { id: tenantId }, data: { themeId: theme.id } });
+        return { succes: true, resultat: `Design "${entree.nom}" activé, vos produits y sont déjà branchés` };
       }
 
       case "lire_statistiques": {

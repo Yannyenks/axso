@@ -107,6 +107,38 @@ export default function ThemesPage() {
     }
   }
 
+  // Bibliothèque AXSO Design — contrairement aux thèmes classiques/premium
+  // ci-dessous (un id partagé, assigné directement), chaque design de la
+  // bibliothèque crée un vrai Theme propre à CE tenant (vos produits déjà
+  // branchés dans la grille) — voir app/api/themes/provisionner.
+  async function activerLibrairie(fichier: string, nom: string) {
+    setActivating(fichier);
+    try {
+      const res = await fetch("/api/themes/provisionner", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fichier }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error();
+      setTenant((t: any) => ({ ...t, themeId: data.theme.id }));
+      // Le nouveau Theme (propre à ce tenant) doit apparaître dans "custom"
+      // pour que isLibrairieActive() le détecte.
+      const td = await fetch("/api/themes").then((r) => r.json());
+      setThemes(td.themes || []);
+      toast.success(`Design "${nom}" activé !`);
+    } catch {
+      toast.error("Erreur lors de l'activation");
+    } finally {
+      setActivating(null);
+    }
+  }
+
+  function isLibrairieActive(fichier: string) {
+    const actif = themes.find((t) => t.id === tenant?.themeId);
+    return !!actif && typeof actif.slug === "string" && actif.slug.startsWith(`axso-design-${fichier}-`);
+  }
+
   async function supprimer(id: string) {
     if (!confirm("Supprimer ce thème ?")) return;
     setDeleting(id);
@@ -129,7 +161,8 @@ export default function ThemesPage() {
     );
   }
 
-  const builtins = themes.filter((t) => t.builtin);
+  const librairie = themes.filter((t) => t.axsoDesign);
+  const builtins = themes.filter((t) => t.builtin && !t.axsoDesign);
   const custom = themes.filter((t) => !t.builtin);
 
   return (
@@ -186,6 +219,26 @@ export default function ThemesPage() {
 
       {/* ── Body ── */}
       <div className="flex-1 overflow-y-auto px-6 py-6">
+
+        {/* Bibliothèque AXSO Design */}
+        <section className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles size={14} className="text-[#F5A623]" />
+            <h2 className="text-sm font-bold text-gray-700">Bibliothèque AXSO Design</h2>
+            <span className="text-[10px] bg-[#F5A623]/15 text-[#F5A623] px-2 py-0.5 rounded-full font-semibold">{librairie.length} designs</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {librairie.map((t) => (
+              <SimpleThemeCard
+                key={t.id}
+                theme={t}
+                actif={isLibrairieActive(t.fichier)}
+                activating={activating === t.fichier}
+                onActivate={() => activerLibrairie(t.fichier, t.nom)}
+              />
+            ))}
+          </div>
+        </section>
 
         {/* Thèmes perso */}
         {custom.length > 0 && (
@@ -405,7 +458,7 @@ function SimpleThemeCard({
   theme, actif, activating, deleting, onActivate, onEdit, onDelete,
 }: {
   theme: any; actif: boolean; activating: boolean;
-  deleting?: boolean; onActivate: () => void; onEdit: () => void;
+  deleting?: boolean; onActivate: () => void; onEdit?: () => void;
   onDelete?: () => void;
 }) {
   const colors: ThemeColors = {
@@ -443,9 +496,11 @@ function SimpleThemeCard({
               {activating ? "..." : "Activer"}
             </button>
           )}
-          <button onClick={onEdit} className="w-8 h-8 rounded-xl flex items-center justify-center border border-gray-200 hover:border-[#F5A623]/40 text-gray-400 hover:text-[#F5A623] transition-all">
-            <Edit2 size={13} />
-          </button>
+          {onEdit && (
+            <button onClick={onEdit} className="w-8 h-8 rounded-xl flex items-center justify-center border border-gray-200 hover:border-[#F5A623]/40 text-gray-400 hover:text-[#F5A623] transition-all">
+              <Edit2 size={13} />
+            </button>
+          )}
           {onDelete && (
             <button onClick={onDelete} disabled={deleting} className="w-8 h-8 rounded-xl flex items-center justify-center border border-gray-200 hover:border-red-200 text-gray-400 hover:text-red-400 transition-all">
               {deleting ? <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" /> : <Trash2 size={13} />}

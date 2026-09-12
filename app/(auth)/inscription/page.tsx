@@ -11,8 +11,7 @@ import {
   Bot, Send, CheckCircle2, Package, Truck, AlertCircle,
 } from "lucide-react";
 import type { PlanBoutique } from "@/lib/ai-agent";
-import { resolveThemeConfig } from "@/lib/theme-config";
-import { PRINCIPAL_THEME_IDS, TEMPLATE_META } from "@/lib/theme-templates";
+import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
 import { fontEntry } from "@/lib/theme-fonts";
 
 const ACCENT      = "#F5A623";
@@ -30,26 +29,21 @@ const inputCls =
   "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#111111] text-sm " +
   "placeholder:text-[#999999] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/15 focus:outline-none transition-all";
 
-const NOMS_CLASSIQUES: Record<string, string> = {
-  "noir-obsidien": "Noir Obsidien",
-  "terre-et-or":   "Terre & Or",
-};
-
-// Gamme principale : classiques conservés + thèmes premium (lib/theme-templates.ts).
-const THEMES: Record<string, { nom: string; couleur: string }> = Object.fromEntries(
-  PRINCIPAL_THEME_IDS.map((id) => [
-    id,
-    { nom: TEMPLATE_META[id]?.nom || NOMS_CLASSIQUES[id] || id, couleur: resolveThemeConfig(id).colors.accent },
+// Bibliothèque AXSO Design (Templates/*.html) — plan.themeId (voir
+// lib/ai-agent.ts) est désormais un `fichier` de ce manifeste, pas un des
+// 16 anciens ids classiques/premium.
+const THEMES: Record<string, { nom: string; couleur: string; couleurs: Record<string, string | undefined>; polices: Record<string, string | undefined> }> = Object.fromEntries(
+  MANIFESTE_LIBRAIRIE.map((e) => [
+    e.fichier,
+    { nom: e.nom, couleur: e.couleurs.accent || ACCENT, couleurs: e.couleurs, polices: e.polices },
   ])
 );
 
-// 3 styles "coup d'œil" mis en avant. Les autres thèmes de la gamme
-// principale vivent dans "Plus de styles".
-const STYLE_PICKS: { id: string; label: string; desc: string }[] = [
-  { id: "terre-et-or",   label: "Clair",     desc: "Chaleureux et lumineux" },
-  { id: "noir-obsidien", label: "Sombre",    desc: "Élégant et contrasté" },
-  { id: "noir-atelier",  label: "Éditorial", desc: "Mode & artisanat premium" },
-];
+// 3 styles "coup d'œil" mis en avant. Les autres designs de la bibliothèque
+// vivent dans "Plus de styles".
+const STYLE_PICKS: { id: string; label: string; desc: string }[] = MANIFESTE_LIBRAIRIE.slice(0, 3).map((e) => ({
+  id: e.fichier, label: e.nom, desc: e.ambiance.join(" · "),
+}));
 const STYLE_PICK_IDS = new Set(STYLE_PICKS.map(s => s.id));
 const AUTRES_THEMES = Object.keys(THEMES).filter(id => !STYLE_PICK_IDS.has(id));
 
@@ -63,28 +57,28 @@ function mockupFontStack(fontId?: string): string {
   return "system-ui, -apple-system, sans-serif";
 }
 
-// Mini-mockup illustratif d'un thème : reproduit ses vraies couleurs/rayon/
-// police plutôt qu'un simple point de couleur, sans aller jusqu'à un aperçu
-// live (pas d'iframe) — juste assez pour donner une intuition visuelle.
+// Mini-mockup illustratif d'un design : reproduit ses vraies couleurs/police
+// plutôt qu'un simple point de couleur, sans aller jusqu'à un aperçu live
+// (pas d'iframe) — juste assez pour donner une intuition visuelle.
 function ThemeMockup({ id, compact }: { id: string; compact?: boolean }) {
-  const t = resolveThemeConfig(id);
-  const c = t.colors;
+  const t = THEMES[id];
+  const c = t?.couleurs || {};
   return (
     <div
       className={"w-full flex flex-col justify-center overflow-hidden " + (compact ? "gap-1 px-2.5 py-2" : "gap-1.5 px-3.5 py-3")}
       style={{
         height: compact ? 56 : 92,
-        background: c.fond,
-        border: `1px solid ${c.bordure || "rgba(0,0,0,0.1)"}`,
-        borderRadius: t.radius,
+        background: c.fond || "#fff",
+        border: `1px solid rgba(0,0,0,0.1)`,
+        borderRadius: 12,
       }}>
       <p className="truncate"
-        style={{ color: c.texte, fontFamily: mockupFontStack(t.fonts?.titre), fontWeight: (t.fonts?.poidsTitre as any) || 700, fontSize: compact ? 10 : 12, lineHeight: 1 }}>
+        style={{ color: c.texte || "#111", fontFamily: mockupFontStack(t?.polices?.titre), fontWeight: 700, fontSize: compact ? 10 : 12, lineHeight: 1 }}>
         Ma boutique
       </p>
-      <div style={{ width: "70%", height: compact ? 3 : 4, borderRadius: 2, background: c.texteMuted || c.texte, opacity: 0.4 }} />
+      <div style={{ width: "70%", height: compact ? 3 : 4, borderRadius: 2, background: c.texte || "#111", opacity: 0.4 }} />
       <div className="self-start"
-        style={{ marginTop: compact ? 2 : 5, background: c.accent, color: c.fond, fontSize: compact ? 8 : 9, fontWeight: 700, padding: compact ? "2px 7px" : "3px 10px", borderRadius: 999 }}>
+        style={{ marginTop: compact ? 2 : 5, background: c.accent || ACCENT, color: c.fond || "#fff", fontSize: compact ? 8 : 9, fontWeight: 700, padding: compact ? "2px 7px" : "3px 10px", borderRadius: 999 }}>
         Voir
       </div>
     </div>
@@ -99,7 +93,7 @@ function PlanPreviewCard({ plan, messageIA, onConfirmer, onModifier, onChangeThe
   onChangeTheme?: (themeId: string) => void;
   loading: boolean;
 }) {
-  const theme = THEMES[plan.themeId] || THEMES["terre-et-or"];
+  const theme = THEMES[plan.themeId] || Object.values(THEMES)[0];
   const aiThemeId = plan.themeId; // garder l'id suggéré par Axia pour le badge
   return (
     <div className="space-y-4">

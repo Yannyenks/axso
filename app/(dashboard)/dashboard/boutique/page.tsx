@@ -15,6 +15,8 @@ import { PlanBadge } from "@/components/dashboard/PlanBadge";
 import { NouvelleBoutiqueModal } from "@/components/dashboard/NouvelleBoutiqueModal";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { aAcces, NOMS_PALIERS, type Palier } from "@/lib/plans";
+import { resolveThemeConfig } from "@/lib/theme-config";
+import { PRINCIPAL_THEME_IDS, TEMPLATE_META } from "@/lib/theme-templates";
 
 const BOUTIQUE_TUTORIAL_STEPS = [
   { Icon: Store,   titre: "Complétez votre profil",        description: "Nom, description, contacts, pays... Chaque champ rempli fait grimper votre score de complétion vers 100%." },
@@ -23,14 +25,29 @@ const BOUTIQUE_TUTORIAL_STEPS = [
   { Icon: Layers,  titre: "Gérez plusieurs boutiques",       description: "Basculez d'une boutique à l'autre en un clic ou créez-en une nouvelle si votre palier le permet." },
 ];
 
-const THEMES = [
-  { id: "noir-obsidien",      nom: "Noir Obsidien",       desc: "Luxe & Mode",               fond: "#0a0a0a", accent: "#1B4FD8", texte: "#F5F5F0", badge: "✦ Premium" },
-  { id: "violet-cosmos",      nom: "Violet Cosmos",       desc: "Beauté & Art",              fond: "#1a0a2e", accent: "#1B2A4A", texte: "#f0eaff", badge: "✦ Premium" },
-  { id: "terre-et-or",        nom: "Terre & Or",          desc: "Artisanat & Culture",       fond: "#fff8f0", accent: "#c2622d", texte: "#2c1503", badge: null },
-  { id: "ocean-atlantique",   nom: "Océan Atlantique",    desc: "Luxe Côtier & Marine",      fond: "#010d1f", accent: "#00b4d8", texte: "#e0f4ff", badge: "~ 3D" },
-  { id: "kente-royal",        nom: "Kente Royal",         desc: "Artisanat Africain Premium",fond: "#1a0e00", accent: "#1b4fd8", texte: "#fff8e8", badge: "♦ 3D" },
-  { id: "bwiti-forest",       nom: "Bwiti Forest",        desc: "Nature & Bien-être Bio",    fond: "#071a0b", accent: "#4ade80", texte: "#e8ffe0", badge: "* 3D" },
-];
+const NOMS_CLASSIQUES: Record<string, string> = { "noir-obsidien": "Noir Obsidien", "terre-et-or": "Terre & Or" };
+const DESCS_CLASSIQUES: Record<string, string> = {
+  "noir-obsidien": "Luxe & Mode", "violet-cosmos": "Beauté & Art", "terre-et-or": "Artisanat & Culture",
+  "ocean-atlantique": "Luxe Côtier & Marine", "kente-royal": "Artisanat Africain Premium", "bwiti-forest": "Nature & Bien-être Bio",
+};
+const BADGES_CLASSIQUES: Record<string, string | null> = {
+  "noir-obsidien": "✦ Premium", "violet-cosmos": "✦ Premium", "terre-et-or": null,
+  "ocean-atlantique": "~ 3D", "kente-royal": "♦ 3D", "bwiti-forest": "* 3D",
+};
+
+// Gamme classique + premium historique (lib/theme-templates.ts) — mêmes ids
+// que /dashboard/themes et l'inscription, pour ne plus se désynchroniser.
+const THEMES = PRINCIPAL_THEME_IDS.map((id) => {
+  const c = resolveThemeConfig(id).colors;
+  const meta = TEMPLATE_META[id];
+  return {
+    id,
+    nom: meta?.nom || NOMS_CLASSIQUES[id] || id,
+    desc: meta?.description || DESCS_CLASSIQUES[id] || "",
+    fond: c.fond, accent: c.accent, texte: c.texte,
+    badge: meta?.badge || BADGES_CLASSIQUES[id] || null,
+  };
+});
 
 const PAYS = [
   { code: "SN", nom: "Sénégal" }, { code: "CM", nom: "Cameroun" }, { code: "CI", nom: "Côte d'Ivoire" },
@@ -212,7 +229,7 @@ export default function BoutiquePage() {
   }
 
   const urlProd = tenant ? `${tenant.slug}.axso.com` : "";
-  const theme = THEMES.find(t => t.id === form.themeId) || THEMES[2];
+  const theme = THEMES.find(t => t.id === form.themeId) || THEMES.find(t => t.id === "terre-et-or") || THEMES[0];
   const dirty = !!savedForm && JSON.stringify(form) !== JSON.stringify(savedForm);
   const enLigne = statutLocal === "active";
 
@@ -402,9 +419,20 @@ export default function BoutiquePage() {
                     hint="Format large — 1200×400px recommandé" />
                 </div>
               </div>
+              <button type="button" onClick={() => router.push("/dashboard/themes")}
+                className="w-full ax-card p-5 flex items-center justify-between gap-3 text-left hover:border-[#F5A623]/40 transition-all group">
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles size={13} className="text-[#F5A623]" />
+                    <h2 className="text-[13px] font-bold text-[#111111] leading-tight">Bibliothèque AXSO Design</h2>
+                  </div>
+                  <p className="text-[11.5px] text-[#AAAAAA] mt-1 leading-tight">15 designs prêts à l'emploi, vos vrais produits déjà branchés — dans Theme Studio</p>
+                </div>
+                <ArrowUpRight size={16} className="text-[#CCCCCC] group-hover:text-[#F5A623] transition-colors flex-shrink-0" />
+              </button>
               <div className="ax-card p-6 space-y-3">
                 <div>
-                  <h2 className="text-[14px] font-bold text-[#111111] leading-tight">Thème visuel</h2>
+                  <h2 className="text-[14px] font-bold text-[#111111] leading-tight">Thème visuel — gamme historique</h2>
                   <p className="text-[11.5px] text-[#AAAAAA] mt-0.5 leading-tight">Choisissez l'ambiance de votre vitrine</p>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-3">

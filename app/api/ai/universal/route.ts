@@ -13,6 +13,7 @@ import { slugify } from "@/lib/utils";
 import { z } from "zod";
 import { planActif } from "@/lib/abonnement";
 import { filtrerOutilsParPalier, type Palier } from "@/lib/plans";
+import { selectionnerGabaritLibrairie, provisionerThemeInitial } from "@/lib/axso-design-library";
 
 type OutilDef = AgentTool & { tier?: Palier };
 
@@ -113,11 +114,6 @@ function buildSystemPrompt(ctx: { boutique?: string; pays?: string; devise?: str
   return lines.join("\n");
 }
 
-
-const PAYS_THEMES: Record<string, string> = {
-  SN: "terre-et-or", CM: "bwiti-forest", CI: "kente-royal",
-  GH: "ocean-atlantique", NG: "noir-obsidien", KE: "violet-cosmos", MA: "terre-et-or",
-};
 
 const OUTILS: OutilDef[] = [
   // ─── IMAGES ───────────────────────────────────────────────────────────────
@@ -235,11 +231,11 @@ const OUTILS: OutilDef[] = [
   {
     name: "modifier_boutique",
     tier: "palier1",
-    description: "Modifie le thème, la description ou les paramètres de la boutique",
+    description: "Modifie le design visuel, la description ou les paramètres de la boutique. Pour le design, donne une catégorie/ambiance (ex: 'bijoux', 'mode', 'tech') : un nouveau design de la bibliothèque AXSO Design est provisionné avec les vrais produits déjà branchés.",
     parameters: {
       type: "object" as const,
       properties: {
-        themeId: { type: "string", enum: ["noir-obsidien","violet-cosmos","terre-et-or","kente-royal","ocean-atlantique","bwiti-forest"] },
+        categorieDesign: { type: "string", description: "Catégorie/ambiance du nouveau design recherché — omets ce champ si le marchand ne demande pas de changer de design" },
         description: { type: "string" },
         metaTitle: { type: "string" },
         metaDescription: { type: "string" },
@@ -977,12 +973,32 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
 
       case "modifier_boutique": {
         const data: any = {};
-        if (args.themeId) data.themeId = args.themeId;
         if (args.description) data.description = args.description;
         if (args.metaTitle) data.metaTitle = args.metaTitle;
         if (args.metaDescription) data.metaDescription = args.metaDescription;
+
+        let resultatDesign = "";
+        if (args.categorieDesign) {
+          const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+          if (!tenant) return { succes: false, resultat: "Boutique introuvable" };
+          const entree = selectionnerGabaritLibrairie(args.categorieDesign);
+          const theme = await provisionerThemeInitial({
+            tenantId,
+            categorie: args.categorieDesign,
+            slug: tenant.slug,
+            nomBoutique: tenant.nomBoutique,
+            devise: tenant.devise,
+            commissionRate: tenant.commissionRate ?? 0.06,
+            fichier: entree.fichier,
+          });
+          data.themeId = theme.id;
+          resultatDesign = `design "${entree.nom}" activé`;
+        }
+
+        if (Object.keys(data).length === 0) return { succes: false, resultat: "Rien à modifier" };
         await prisma.tenant.update({ where: { id: tenantId }, data });
-        return { succes: true, resultat: `✅ Boutique mise à jour : ${Object.keys(data).join(", ")}` };
+        const autres = Object.keys(data).filter((k) => k !== "themeId");
+        return { succes: true, resultat: `✅ Boutique mise à jour : ${[resultatDesign, ...autres].filter(Boolean).join(", ")}` };
       }
 
       case "creer_code_promo": {

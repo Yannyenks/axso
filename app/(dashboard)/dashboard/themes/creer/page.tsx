@@ -12,7 +12,7 @@ import { PRINCIPAL_THEME_IDS, TEMPLATE_META } from "@/lib/theme-templates";
 
 type Device = "desktop" | "tablet" | "mobile";
 type Panel = "couleurs" | "typographie" | "sections" | "effets";
-type Mode = "base" | "import";
+type Mode = "librairie" | "base" | "import";
 
 const EFFETS = [
   { id: "", label: "Aucun" },
@@ -74,9 +74,37 @@ export default function CreerThemePage() {
   const debounceRef = useRef<any>(null);
 
   // ─── Import de template — extraction de style par l'IA ────────────────────
-  const [mode, setMode] = useState<Mode>("base");
+  const [mode, setMode] = useState<Mode>("librairie");
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
+
+  // ─── Bibliothèque AXSO Design (Templates/*.html) ───────────────────────────
+  const [librairie, setLibrairie] = useState<any[]>([]);
+  const [provisionnant, setProvisionnant] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/themes").then((r) => r.json()).then((d) => {
+      setLibrairie((d.themes || []).filter((t: any) => t.axsoDesign));
+    });
+  }, []);
+
+  async function utiliserDesignLibrairie(fichier: string, nom: string) {
+    setProvisionnant(fichier);
+    try {
+      const res = await fetch("/api/themes/provisionner", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fichier }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(`Design "${nom}" activé !`);
+      router.push("/dashboard/themes");
+    } catch {
+      toast.error("Erreur lors de l'activation");
+    } finally {
+      setProvisionnant(null);
+    }
+  }
 
   async function importerDepuisFichier() {
     if (!importFile) { toast.error("Choisissez un fichier .html à analyser"); return; }
@@ -259,9 +287,9 @@ export default function CreerThemePage() {
         </div>
       </header>
 
-      {/* Mode : partir d'un thème existant, ou importer son propre design */}
+      {/* Mode : bibliothèque AXSO Design, ancienne gamme, ou import de design perso */}
       <div className="flex items-center gap-1 px-4 py-2 bg-white border-b border-gray-100 flex-shrink-0">
-        {([["base", "Partir d'un thème"], ["import", "Importer mon design"]] as [Mode, string][]).map(([m, label]) => (
+        {([["librairie", "Bibliothèque AXSO Design"], ["base", "Ancienne gamme"], ["import", "Importer mon design"]] as [Mode, string][]).map(([m, label]) => (
           <button key={m} onClick={() => setMode(m)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${mode === m ? "bg-[#F5A623]/15 text-[#F5A623]" : "text-gray-500 hover:text-gray-700"}`}>
             {label}
@@ -269,7 +297,33 @@ export default function CreerThemePage() {
         ))}
       </div>
 
-      {mode === "import" ? (
+      {mode === "librairie" ? (
+        <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
+          <p className="text-xs text-gray-500 mb-4 max-w-2xl">
+            15 designs prêts à l'emploi, pensés pour différents univers. En choisir un crée
+            immédiatement une boutique avec vos vrais produits déjà branchés dans la grille.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-6xl">
+            {librairie.map((t) => (
+              <div key={t.id} className="rounded-2xl border-2 border-gray-200 bg-white overflow-hidden hover:border-gray-300 transition-all">
+                <div className="h-24 flex items-center justify-center gap-1.5 p-4" style={{ backgroundColor: t.config?.colors?.fond }}>
+                  {[t.config?.colors?.accent, t.config?.colors?.texte, t.config?.colors?.surface].map((c, i) => (
+                    <div key={i} className="w-6 h-6 rounded-full border border-black/10" style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+                <div className="p-3.5">
+                  <p className="text-sm font-bold text-gray-800">{t.nom}</p>
+                  <p className="text-[11px] text-gray-400 mb-3 leading-snug">{t.description}</p>
+                  <button onClick={() => utiliserDesignLibrairie(t.fichier, t.nom)} disabled={!!provisionnant}
+                    className="w-full py-2 rounded-xl text-[11px] font-bold text-white disabled:opacity-50 hover:opacity-90 transition-all bg-[#F5A623]">
+                    {provisionnant === t.fichier ? "..." : "Utiliser ce design"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : mode === "import" ? (
         <div className="flex-1 flex items-center justify-center bg-gray-50 p-6">
           <div className="w-full max-w-md bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-1.5">

@@ -7,6 +7,7 @@ import { generateStoreConfig } from "@/lib/generate-store-config";
 import { genererAvisDemo } from "@/lib/gemini";
 import { mergeThemeConfig, appliquerNouveauTheme } from "@/lib/theme-config";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
+import { MANIFESTE_LIBRAIRIE, provisionerThemeInitial } from "@/lib/axso-design-library";
 
 const schemaCreation = z.object({
   name: z.string().min(2),
@@ -46,8 +47,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Générer la config complète en fonction de la catégorie du business
-    const { themeId: themeGenere, themeConfig } = generateStoreConfig({
+    // Générer la config structurelle (sections/page produit/à propos/contact)
+    // en fonction de la catégorie du business — le design visuel lui-même
+    // (accueil/boutique/fiche produit) est désormais provisionné après coup
+    // depuis la bibliothèque AXSO Design (voir plus bas), pas choisi ici.
+    const { themeConfig } = generateStoreConfig({
       categorie: data.categorie,
       nomBoutique: data.nomBoutique,
       pays: data.pays,
@@ -65,7 +69,6 @@ export async function POST(request: Request) {
           devise: data.devise,
           whatsapp: data.whatsapp,
           email: data.email,
-          themeId: data.themeId !== "terre-et-or" ? data.themeId : themeGenere,
           themeConfig: themeConfig as any,
           commissionRate: 0.06,
           statut: "active",
@@ -85,6 +88,28 @@ export async function POST(request: Request) {
 
       return { tenant, user };
     });
+
+    // Provisionne un design de la bibliothèque AXSO Design d'après la
+    // catégorie (aucun produit encore créé à ce stade sur ce chemin
+    // d'inscription simple — la grille accueil/boutique reste vide jusqu'au
+    // premier produit ajouté, comme le ferait un thème classique fraîchement
+    // créé). `data.themeId`, s'il correspond à un design précis de la
+    // bibliothèque, le force. Non bloquant : en cas d'échec, la boutique
+    // reste sur le socle par défaut ("terre-et-or").
+    try {
+      const fichierForce = MANIFESTE_LIBRAIRIE.some((e) => e.fichier === data.themeId) ? data.themeId : undefined;
+      const theme = await provisionerThemeInitial({
+        tenantId: tenant.id,
+        categorie: data.categorie,
+        slug: tenant.slug,
+        nomBoutique: tenant.nomBoutique,
+        devise: tenant.devise,
+        fichier: fichierForce,
+      });
+      await prisma.tenant.update({ where: { id: tenant.id }, data: { themeId: theme.id } });
+    } catch (err) {
+      console.warn("[API/TENANTS] Provisionnement bibliothèque échoué (non bloquant):", err);
+    }
 
     // Avis clients IA de démonstration — pour qu'une boutique neuve inspire
     // confiance dès le premier jour. Ne bloque jamais la création du tenant :

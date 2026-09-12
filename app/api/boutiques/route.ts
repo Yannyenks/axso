@@ -8,6 +8,7 @@ import { aAcces } from "@/lib/plans";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
 import { generateStoreConfig } from "@/lib/generate-store-config";
+import { MANIFESTE_LIBRAIRIE, provisionerThemeInitial } from "@/lib/axso-design-library";
 
 const schemaCreation = z.object({
   nomBoutique: z.string().min(2),
@@ -94,7 +95,7 @@ export async function POST(req: Request) {
   // même email chez la plupart des fournisseurs).
   const emailBoutique = userEmail.includes("@") ? userEmail.replace("@", `+${data.slug}@`) : userEmail;
 
-  const { themeId: themeGenere, themeConfig } = generateStoreConfig({
+  const { themeConfig } = generateStoreConfig({
     categorie: data.categorie,
     nomBoutique: data.nomBoutique,
     pays: data.pays,
@@ -111,7 +112,6 @@ export async function POST(req: Request) {
         pays: data.pays,
         devise: data.devise,
         whatsapp: data.whatsapp,
-        themeId: data.themeId !== "terre-et-or" ? data.themeId : themeGenere,
         themeConfig: themeConfig as any,
         commissionRate: 0.06,
         statut: "active",
@@ -123,6 +123,24 @@ export async function POST(req: Request) {
     });
     return t;
   });
+
+  // Provisionne un design de la bibliothèque AXSO Design d'après la
+  // catégorie — non bloquant, la boutique reste sur le socle par défaut
+  // ("terre-et-or") en cas d'échec.
+  try {
+    const fichierForce = MANIFESTE_LIBRAIRIE.some((e) => e.fichier === data.themeId) ? data.themeId : undefined;
+    const theme = await provisionerThemeInitial({
+      tenantId: tenant.id,
+      categorie: data.categorie,
+      slug: tenant.slug,
+      nomBoutique: tenant.nomBoutique,
+      devise: tenant.devise,
+      fichier: fichierForce,
+    });
+    await prisma.tenant.update({ where: { id: tenant.id }, data: { themeId: theme.id } });
+  } catch (err) {
+    console.warn("[API/BOUTIQUES] Provisionnement bibliothèque échoué (non bloquant):", err);
+  }
 
   return NextResponse.json({ success: true, tenantId: tenant.id, slug: tenant.slug }, { status: 201 });
 }

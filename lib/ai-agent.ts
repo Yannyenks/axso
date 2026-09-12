@@ -1,5 +1,6 @@
 import { completionAuto } from "./llm-client";
 import { generateProductImageUrl, buildProductImagePrompt } from "./image-gen";
+import { selectionnerGabaritLibrairie } from "./axso-design-manifest";
 
 export interface PlanProduit {
   nom: string;
@@ -28,6 +29,10 @@ export interface PlanBoutique {
   categorie: string;
   pays: string;
   devise: string;
+  // Fichier de la bibliothèque AXSO Design (ex: "aube-site") choisi
+  // automatiquement d'après `categorie` — voir selectionnerGabaritLibrairie.
+  // Ce n'est plus l'IA qui choisit un thème parmi un enum figé : le champ
+  // est calculé après coup dans analyserBusinessEtCreerPlan (ci-dessous).
   themeId: string;
   description: string;
   produits: PlanProduit[];
@@ -70,7 +75,6 @@ Analyse la description du business et génère un plan de boutique complet en JS
 Règles strictes :
 - pays : code ISO 2 lettres (ex: SN, FR, US, MA, NG, DE, BR, AE, etc.) — détecte le pays depuis la description
 - devise : adapte à la devise locale du pays (EUR pour France, USD pour USA, XOF pour Sénégal, GBP pour UK, etc.)
-- themeId : choisis parmi — "terre-et-or" (artisanat/naturel/chaleureux), "noir-obsidien" (luxe/sombre), "noir-atelier" (mode/artisanat premium, éditorial sombre), "pulse" (sport/sneakers, énergique et coloré)
 - slug : lettres minuscules, chiffres, tirets seulement (ex: mode-aminata, tech-paris, shop-dubai)
 - Propose 3 à 5 produits représentatifs avec des prix réalistes en devise locale
 - Si la boutique vend des produits digitaux (ebooks, formations, templates, musique, logiciels, NFT, etc.), mets "type": "digital" sur chaque produit et stock: 999
@@ -87,7 +91,6 @@ Format JSON attendu :
   "categorie": "...",
   "pays": "...",
   "devise": "...",
-  "themeId": "...",
   "description": "...",
   "messageIA": "Message chaleureux expliquant le plan en 2-3 phrases avec des emojis",
   "produits": [
@@ -159,6 +162,10 @@ export async function analyserBusinessEtCreerPlan(
     plan.devise = PAYS_DEVISES[plan.pays];
   }
 
+  // Design de la bibliothèque AXSO Design le plus proche de la catégorie —
+  // déterministe, aucun appel IA supplémentaire (voir Templates/*.html).
+  plan.themeId = selectionnerGabaritLibrairie(plan.categorie || "").fichier;
+
   // Génère les visuels produits via Gemini dès la création de la boutique
   // (échec silencieux par image — ne doit jamais faire échouer la création de boutique)
   if (Array.isArray(plan.produits)) {
@@ -223,17 +230,16 @@ export const OUTILS_COPILOTE: CopiloteTool[] = [
   },
   {
     name: "modifier_theme",
-    description: "Change le thème visuel de la boutique",
+    description: "Change le design visuel de la boutique — provisionne un nouveau design de la bibliothèque AXSO Design adapté à une catégorie/ambiance, avec les vrais produits du marchand déjà branchés",
     input_schema: {
       type: "object" as const,
       properties: {
-        themeId: {
+        categorie: {
           type: "string",
-          enum: ["noir-obsidien", "violet-cosmos", "terre-et-or", "kente-royal", "ocean-atlantique", "bwiti-forest"],
-          description: "ID du thème",
+          description: "Catégorie/ambiance recherchée (ex: 'bijoux', 'mode', 'tech', 'beauté') — sert à choisir le design le plus proche dans la bibliothèque",
         },
       },
-      required: ["themeId"],
+      required: ["categorie"],
     },
   },
   {
