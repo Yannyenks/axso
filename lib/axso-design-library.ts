@@ -21,6 +21,33 @@ import {
 
 export { MANIFESTE_LIBRAIRIE, selectionnerGabaritLibrairie, type EntreeLibrairie };
 
+// Construit le mapping couleurs ThemeConfig → noms de variables CSS en
+// comparant les valeurs hex du manifeste aux valeurs de `:root{}` dans le HTML
+// brut du template. Stocké une fois dans Theme.config à la provision pour que
+// ImportedLiteralHomePage puisse injecter des surcharges précises.
+function parseCssVarMapping(
+  htmlBrut: string,
+  couleurs: EntreeLibrairie["couleurs"],
+): Record<string, string> {
+  const rootMatch = htmlBrut.match(/:root\s*\{([^}]*)\}/);
+  if (!rootMatch) return {};
+  const cssVars: Record<string, string> = {};
+  for (const decl of rootMatch[1].split(";")) {
+    const m = decl.match(/--([a-z0-9-]+)\s*:\s*(#[a-fA-F0-9]{3,6})/i);
+    if (m) cssVars[m[1]] = m[2].toLowerCase();
+  }
+  const mapping: Record<string, string> = {};
+  for (const [key, value] of Object.entries(couleurs)) {
+    if (!value) continue;
+    const lower = value.toLowerCase();
+    const found = Object.keys(cssVars)
+      .filter((v) => cssVars[v] === lower)
+      .map((v) => `--${v}`);
+    if (found.length > 0) mapping[key] = found.join(",");
+  }
+  return mapping;
+}
+
 // Provisionne une vraie boutique à partir de la bibliothèque : lit le
 // fichier source, clone la grille (accueil + boutique) avec les vrais
 // produits du marchand, construit le ThemeConfig complet, crée le Theme en
@@ -54,10 +81,12 @@ export async function provisionerThemeDepuisLibrairie(params: {
   // ThemeConfig, non fournis par le clonage) : réutilise resolveThemeConfig
   // comme le fait déjà l'import manuel (app/api/themes/importer/route.ts).
   const base = resolveThemeConfig("terre-et-or");
+  const axsoDesignCssVarMapping = parseCssVarMapping(htmlBrut, entree.couleurs);
   const config: ThemeConfig = {
     ...base,
     colors: { ...base.colors, ...entree.couleurs },
     fonts: { ...base.fonts, ...entree.polices },
+    axsoDesignCssVarMapping,
     builderCss: vues.css,
     builderHtml: vues.chromeAvant + home + vues.chromeApres,
     builderHtmlProduits: vues.chromeAvant + boutique + vues.chromeApres,

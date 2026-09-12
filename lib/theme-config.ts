@@ -326,6 +326,11 @@ export interface ThemeConfig {
   // (lierProduitLibrairieAuGabarit) — le sélecteur du visuel PDP est propre
   // au design d'origine (lib/axso-design-library.ts), pas au produit.
   axsoDesignSelecteurVisuelPdp?: string;
+  // Mapping couleurs ThemeConfig → noms de variables CSS du template HTML.
+  // Calculé une fois à la provision (lib/axso-design-library.ts) et stocké
+  // dans Theme.config pour que ImportedLiteralHomePage puisse injecter des
+  // surcharges précises quand le marchand modifie ses couleurs via le builder.
+  axsoDesignCssVarMapping?: Record<string, string>;
 }
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -487,6 +492,7 @@ export function mergeThemeConfig(base: ThemeConfig, overrides: Record<string, an
     builderHtmlCheckoutChrome: overrides.builderHtmlCheckoutChrome ?? base.builderHtmlCheckoutChrome,
     builderHtmlConfirmationChrome: overrides.builderHtmlConfirmationChrome ?? base.builderHtmlConfirmationChrome,
     axsoDesignSelecteurVisuelPdp: overrides.axsoDesignSelecteurVisuelPdp ?? base.axsoDesignSelecteurVisuelPdp,
+    axsoDesignCssVarMapping: overrides.axsoDesignCssVarMapping ?? base.axsoDesignCssVarMapping,
   };
 }
 

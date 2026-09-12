@@ -15,6 +15,40 @@ function toKey(nom: string, i: number) {
   return "p" + i + "_" + nom.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12);
 }
 
+// Remplace `const PRODUCTS = { … };` en comptant les accolades (le regex
+// échouait sur les objets multi-niveaux ou avec des lookaheads instables).
+function replacePRODUCTS(html: string, newDef: string): string {
+  const start = html.indexOf("const PRODUCTS");
+  if (start === -1) return html;
+  const braceStart = html.indexOf("{", start);
+  if (braceStart === -1) return html;
+  let depth = 0, i = braceStart;
+  while (i < html.length) {
+    if (html[i] === "{") depth++;
+    else if (html[i] === "}") { if (--depth === 0) break; }
+    i++;
+  }
+  // sauter le `;` et les espaces / sauts de ligne qui suivent
+  let end = i + 1;
+  while (end < html.length && (html[end] === ";" || html[end] === "\n" || html[end] === "\r" || html[end] === " ")) end++;
+  return html.slice(0, start) + newDef + "\n" + html.slice(end);
+}
+
+// Même approche pour `function fmt(n){…}` (peut être multi-lignes).
+function replaceFmt(html: string, newFmt: string): string {
+  const start = html.indexOf("function fmt(");
+  if (start === -1) return html;
+  const braceStart = html.indexOf("{", start);
+  if (braceStart === -1) return html;
+  let depth = 0, i = braceStart;
+  while (i < html.length) {
+    if (html[i] === "{") depth++;
+    else if (html[i] === "}") { if (--depth === 0) break; }
+    i++;
+  }
+  return html.slice(0, start) + newFmt + html.slice(i + 1);
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const fichier = searchParams.get("fichier") || "";
@@ -83,21 +117,16 @@ function renderBoutiqueGrid(){
     `$1${safeNom}`
   );
 
-  // Remplacer le bloc PRODUCTS existant
-  html = html.replace(
-    /const PRODUCTS\s*=\s*\{[\s\S]*?\};\s*(?=const PROMO_CODES|let cart|\/\/ |function)/,
-    injectedProducts + "\n"
-  );
+  // Remplacer le bloc PRODUCTS existant (comptage d'accolades)
+  html = replacePRODUCTS(html, injectedProducts);
 
-  // Remplacer fmt
-  html = html.replace(/function fmt\(n\)\{[^}]+\}/g, fmtOverride);
+  // Remplacer fmt (comptage d'accolades)
+  html = replaceFmt(html, fmtOverride);
 
-  // Injecter les overrides de grilles AVANT la dernière balise </script>
-  // pour que renderHomeGrid/renderBoutiqueGrid soient redéfinis après l'original
-  html = html.replace(
-    /(<\/script>\s*<\/body>)/i,
-    `<script>\n${gridOverride}\n</script>\n$1`
-  );
+  // Injecter les overrides de grilles juste avant </body> ; on les enveloppe
+  // dans un listener 'load' pour qu'ils s'exécutent après le rendu initial.
+  const gridScript = `<script>\n${gridOverride}\nwindow.addEventListener('load',function(){if(typeof renderHomeGrid==='function')renderHomeGrid();if(typeof renderBoutiqueGrid==='function')renderBoutiqueGrid();});\n</script>`;
+  html = html.replace(/<\/body>/i, gridScript + "\n</body>");
 
   // Mode PREVIEW : désactiver les liens de navigation et rendre non-interactif
   const previewStyle = `

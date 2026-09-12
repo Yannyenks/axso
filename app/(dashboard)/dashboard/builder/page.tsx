@@ -16,7 +16,7 @@ import {
   ShoppingBag, Maximize2, Minimize2, ZoomIn, Package,
   ShoppingCart, Share2, Info, Phone, Undo2, Redo2,
 } from "lucide-react";
-import { resolveThemeConfig, type ThemeConfig, type CustomSection, DEFAULT_PRODUCT_SECTIONS, type ProductPageSection, THEMES_LIBRE_ELIGIBLES } from "@/lib/theme-config";
+import { resolveThemeConfig, mergeThemeConfig, type ThemeConfig, type CustomSection, DEFAULT_PRODUCT_SECTIONS, type ProductPageSection, THEMES_LIBRE_ELIGIBLES } from "@/lib/theme-config";
 import { FONTS, googleFontsHref, typographyCss } from "@/lib/theme-fonts";
 import { BuilderCanvas } from "./canvas/BuilderCanvas";
 import { Wand2 } from "lucide-react";
@@ -162,7 +162,25 @@ export default function BuilderPage() {
     const data = await fetch("/api/tenants/moi-complet").then((r) => r.json());
     if (data.error) return;
     setTenant(data);
-    const resolved = resolveThemeConfig(data.themeId, (data.themeConfig as any) || {});
+
+    // Réplique resolveThemeConfigAsync (server) côté client en utilisant la
+    // config du Theme actif retournée par moi-complet (activeThemeConfig).
+    // Sans ça, les thèmes AXSO Design tombaient sur les défauts "terre-et-or"
+    // (leurs IDs ne sont pas dans THEME_DEFAULTS), ce qui affichait de fausses
+    // couleurs/polices dans les panneaux du builder.
+    const activeThemeConfig = (data.activeThemeConfig as Record<string, any>) || {};
+    const tenantConfig = (data.themeConfig as Record<string, any>) || {};
+    let resolved: ThemeConfig;
+    if (Object.keys(activeThemeConfig).length > 0) {
+      const baseThemeId = (activeThemeConfig.baseThemeId as string) || "terre-et-or";
+      const builtinBase = resolveThemeConfig(baseThemeId);
+      const themeBase = mergeThemeConfig(builtinBase, activeThemeConfig);
+      resolved = Object.keys(tenantConfig).length > 0
+        ? mergeThemeConfig(themeBase, tenantConfig)
+        : themeBase;
+    } else {
+      resolved = resolveThemeConfig(data.themeId, tenantConfig);
+    }
     setConfig(resolved);
     setOriginalConfig(resolved);
   }, []);
