@@ -429,7 +429,11 @@ export function lierProduitLibrairieAuGabarit(params: {
   produit: ProduitPourClone;
 }): string {
   const { gabaritPage, selecteurVisuelPdp, produit } = params;
-  const racine = parse(gabaritPage).firstChild as ParsedElement;
+  // `gabaritPage` (builderHtmlProduit) est chromeAvant+vue+chromeApres, donc
+  // PLUSIEURS éléments racines — un simple `.firstChild` ne capturerait que
+  // le premier fragment de chrome (ex. les <defs> SVG) et perdrait tout le
+  // reste. On enveloppe dans un conteneur de travail avant de parser.
+  const racine = parse(`<div>${gabaritPage}</div>`).firstChild as ParsedElement;
   if (!racine) return gabaritPage;
 
   racine.querySelector("#pdpName")?.set_content(echapperHtml(produit.nom));
@@ -444,5 +448,5 @@ export function lierProduitLibrairieAuGabarit(params: {
   racine.querySelector("#pdpAddBtn")?.setAttribute(ATTR_AJOUTER_PANIER, "1");
 
   nettoyerElement(racine);
-  return racine.outerHTML;
+  return racine.innerHTML;
 }
