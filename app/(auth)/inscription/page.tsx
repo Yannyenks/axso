@@ -10,93 +10,95 @@ import { z } from "zod";
 import {
   ArrowRight, Check, Loader2, Sparkles, Send, CheckCircle2,
   Store, Globe, Palette, User, Lock, Phone, Mail, ChevronRight,
-  ChevronLeft, X, Bell, Info, AlertCircle,
+  X, Bell, Info, AlertCircle, Wand2, Star,
 } from "lucide-react";
 import type { PlanBoutique } from "@/lib/ai-agent";
 import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
 
-// ─── Palette afrocentrique luxe claire ───────────────────────────────────────
-const IVORY   = "#FAF6EF";
-const LINEN   = "#F2E8D4";
-const PARCH   = "#E0CEAA";
-const GOLD    = "#B07D3E";
-const GOLD_D  = "#7A5020";
-const GOLD_L  = "#F0C070";
-const TERRA   = "#8B3A1A";
-const INK     = "#1A1208";
-const MID     = "#5A3E22";
-const MUTED   = "#9A7C5A";
-const WHITE   = "#FFFFFF";
-const SUCCESS = "#2A9D5C";
+// ─── Palette AXSO (couleurs du logo) ─────────────────────────────────────────
+const NAVY    = "#1B2A4A";   // navy AXSO (--axso-navy)
+const YELLOW  = "#F5A623";   // ambre jaune — accent principal (--accent)
+const YELLOW_D= "#D4911A";   // ambre foncé (--accent-dark)
+const YELLOW_L= "#FFD280";   // ambre clair (--axso-amber-light)
+const BG      = "#FFFDF8";   // fond global ivoire très chaud
+const SURFACE = "#FFFFFF";   // cartes
+const BORDER  = "#F0E0B8";   // bordures ambrées
+const BORDER_L= "#FBF5E8";   // bordures légères
+const MID     = "#5A4020";   // texte secondaire brun chaud
+const MUTED   = "#A08050";   // texte discret
+const SUCCESS = "#16A34A";
+const ERROR   = "#DC2626";
 
-// ─── Styles CSS ───────────────────────────────────────────────────────────────
+// ─── CSS ─────────────────────────────────────────────────────────────────────
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600;700;800&display=swap');
-
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap');
   *, *::before, *::after { box-sizing: border-box; }
   body { margin: 0; }
 
   @keyframes fadeUp {
-    from { opacity:0; transform:translateY(18px); }
+    from { opacity:0; transform:translateY(16px); }
     to   { opacity:1; transform:translateY(0); }
   }
   @keyframes dotBlink {
-    0%,80%,100% { opacity:.25; transform:scale(.75); }
-    40%         { opacity:1;   transform:scale(1); }
+    0%,80%,100% { opacity:.2; transform:scale(.7); }
+    40%         { opacity:1;  transform:scale(1); }
   }
   @keyframes toastIn {
-    from { opacity:0; transform:translateX(110%); }
+    from { opacity:0; transform:translateX(120%); }
     to   { opacity:1; transform:translateX(0); }
   }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.55} }
-  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-  @keyframes scaleUp { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
-  @keyframes heroIn {
-    from { opacity:0; transform:translateY(28px) scale(.97); }
+  @keyframes fadeIn  { from{opacity:0}            to{opacity:1} }
+  @keyframes scaleUp { from{opacity:0;transform:scale(.93)} to{opacity:1;transform:scale(1)} }
+  @keyframes heroIn  {
+    from { opacity:0; transform:translateY(32px) scale(.96); }
     to   { opacity:1; transform:translateY(0) scale(1); }
   }
-
-  .msg-in   { animation: fadeUp  .48s cubic-bezier(.34,1.3,.64,1) both; }
-  .fade-in  { animation: fadeIn  .5s ease both; }
-  .scale-up { animation: scaleUp .4s cubic-bezier(.34,1.3,.64,1) both; }
-  .hero-in  { animation: heroIn  .7s cubic-bezier(.22,1,.36,1) both; }
-  .dot { animation: dotBlink 1.4s ease-in-out infinite; }
-
-  .gold-btn {
-    background: linear-gradient(135deg, ${GOLD} 0%, ${GOLD_D} 100%);
-    color: ${WHITE}; border:none; cursor:pointer;
-    transition: all .22s; font-family:'Outfit',sans-serif;
-    font-weight:700; letter-spacing:.04em;
+  @keyframes glowPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(245,166,35,.0); }
+    50%     { box-shadow: 0 0 0 8px rgba(245,166,35,.16); }
   }
-  .gold-btn:hover:not(:disabled) {
-    transform:translateY(-2px);
-    box-shadow:0 10px 32px rgba(176,125,62,.38);
-  }
-  .gold-btn:active:not(:disabled) { transform:translateY(0); }
-  .gold-btn:disabled { opacity:.5; cursor:not-allowed; }
 
-  .ghost-btn {
-    background:transparent;
-    border:1.5px solid ${PARCH}; color:${MID};
-    cursor:pointer; transition:all .18s;
-    font-family:'Outfit',sans-serif; font-weight:500;
+  .msg-in   { animation: fadeUp  .45s cubic-bezier(.34,1.3,.64,1) both; }
+  .fade-in  { animation: fadeIn  .4s ease both; }
+  .scale-up { animation: scaleUp .38s cubic-bezier(.34,1.3,.64,1) both; }
+  .hero-in  { animation: heroIn  .65s cubic-bezier(.22,1,.36,1) both; }
+  .dot      { animation: dotBlink 1.4s ease-in-out infinite; }
+
+  .btn-primary {
+    background: linear-gradient(135deg, ${YELLOW} 0%, ${YELLOW_D} 100%);
+    color: ${NAVY}; border: none; cursor: pointer;
+    font-family: 'Sora', sans-serif; font-weight: 700;
+    letter-spacing: .02em; transition: all .2s;
   }
-  .ghost-btn:hover { border-color:${GOLD}; color:${GOLD}; }
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(245,166,35,.38);
+  }
+  .btn-primary:active:not(:disabled) { transform: translateY(0); }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1.5px solid ${BORDER}; color: ${MID};
+    cursor: pointer; font-family: 'Inter', sans-serif;
+    font-weight: 500; transition: all .18s;
+  }
+  .btn-ghost:hover { border-color: ${YELLOW}; color: ${YELLOW_D}; }
 
   .field {
-    width:100%; background:${WHITE};
-    border:1.5px solid ${PARCH}; border-radius:12px;
-    padding:13px 14px 13px 44px;
-    font-family:'Outfit',sans-serif; font-size:14px;
-    color:${INK}; outline:none;
-    transition:border-color .18s, box-shadow .18s;
+    width: 100%; background: ${SURFACE};
+    border: 1.5px solid ${BORDER}; border-radius: 12px;
+    padding: 13px 14px 13px 44px;
+    font-family: 'Inter', sans-serif; font-size: 14px;
+    color: ${NAVY}; outline: none;
+    transition: border-color .18s, box-shadow .18s;
   }
-  .field:focus { border-color:${GOLD}; box-shadow:0 0 0 3px rgba(176,125,62,.13); }
-  .field::placeholder { color:${MUTED}; }
+  .field:focus { border-color: ${YELLOW}; box-shadow: 0 0 0 3px rgba(245,166,35,.15); }
+  .field::placeholder { color: ${MUTED}; }
 
-  ::-webkit-scrollbar { width:4px; }
-  ::-webkit-scrollbar-track { background:${LINEN}; }
-  ::-webkit-scrollbar-thumb { background:${PARCH}; border-radius:2px; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: ${BG}; }
+  ::-webkit-scrollbar-thumb { background: ${BORDER}; border-radius: 2px; }
 `;
 
 // ─── Pays ─────────────────────────────────────────────────────────────────────
@@ -120,12 +122,75 @@ const PAYS_LIST = [
   { code:"AU", nom:"Autre",         flag:"🌍",  devise:"XAF" },
 ];
 
-// ─── Templates ────────────────────────────────────────────────────────────────
-const THEMES = MANIFESTE_LIBRAIRIE.map(e => ({
-  id: e.fichier, nom: e.nom, couleurs: e.couleurs, ambiance: e.ambiance,
-}));
+// ─── Logique 4 propositions Axia ──────────────────────────────────────────────
+// Détecte la catégorie depuis la description libre de l'utilisateur
+function detecterCategorie(vente: string): string {
+  const v = vente.toLowerCase();
+  const map: { kw: string[]; cat: string }[] = [
+    { kw:["mode","vêtement","tissu","kente","wax","pagne","robe","chemise","couture","habit"], cat:"fashion" },
+    { kw:["bijou","bague","collier","bracelet","or","argent","joaillerie","perle","montre"], cat:"jewelry" },
+    { kw:["cosmétique","beauté","soin","maquillage","parfum","crème","sérum","skincare","cheveux"], cat:"beauty" },
+    { kw:["sport","fitness","gym","training","football","basket","rugby","musculation","running"], cat:"sport" },
+    { kw:["tech","électronique","gadget","téléphone","ordinateur","accessoire tech","console"], cat:"tech" },
+    { kw:["alimentation","nourriture","épice","café","thé","boisson","restaur","food","snack"], cat:"food" },
+    { kw:["artisan","handmade","fait main","poterie","sculpture","art","peinture","tisser"], cat:"artisan" },
+    { kw:["maison","décor","meuble","intérieur","ameublement","bougie","plante"], cat:"home" },
+    { kw:["formation","cours","ebook","digital","service","conseil","coaching","mentoring"], cat:"services" },
+    { kw:["agriculture","bio","naturel","ferme","fruits","légumes","jardinage","herbes"], cat:"agriculture" },
+  ];
+  for (const { kw, cat } of map) {
+    if (kw.some(k => v.includes(k))) return cat;
+  }
+  return "general";
+}
 
-// ─── Schema ───────────────────────────────────────────────────────────────────
+// Retourne 4 IDs de thèmes adaptés à la catégorie, priorité au themeId du plan
+function choisir4Themes(vente: string, planThemeId?: string): string[] {
+  const cat = detecterCategorie(vente);
+  const parCat: Record<string, string[]> = {
+    fashion:     ["ndop-site.html","aube-site.html","halle-site.html","cadran-site.html"],
+    jewelry:     ["aube-site.html","cadran-site.html","halle-site.html","ndop-site.html"],
+    beauty:      ["clarte-site.html","aube-site.html","equilibre-site.html","halle-site.html"],
+    sport:       ["grind-site.html","onze-site.html","circuit-site.html","ring-site.html"],
+    tech:        ["nexus-site.html","opal-site.html","circuit-site.html","ignite-site.html"],
+    food:        ["ignite-site.html","sentier-site.html","halle-site.html","pop-site.html"],
+    artisan:     ["ndop-site.html","halle-site.html","aube-site.html","sentier-site.html"],
+    home:        ["halle-site.html","equilibre-site.html","clarte-site.html","aube-site.html"],
+    services:    ["opal-site.html","nexus-site.html","equilibre-site.html","cadran-site.html"],
+    agriculture: ["sentier-site.html","clarte-site.html","equilibre-site.html","ndop-site.html"],
+    general:     ["ndop-site.html","aube-site.html","halle-site.html","pop-site.html"],
+  };
+  let themes = [...(parCat[cat] || parCat.general)];
+  // Mettre le thème suggéré par l'IA en premier
+  if (planThemeId) {
+    themes = [planThemeId, ...themes.filter(t => t !== planThemeId)];
+  }
+  return themes.slice(0, 4);
+}
+
+// Explication personnalisée d'Axia pour chaque thème
+function rationaleTheme(fichier: string, nomBoutique: string, vente: string): string {
+  const e = MANIFESTE_LIBRAIRIE.find(x => x.fichier === fichier);
+  if (!e) return "Un design sélectionné pour ton marché.";
+  const amb = e.ambiance.slice(0, 2).join(" & ");
+  const cat = detecterCategorie(vente);
+  const map: Record<string, string> = {
+    fashion:     "s'adapte parfaitement à l'univers mode",
+    jewelry:     "met en valeur l'aspect précieux de tes produits",
+    beauty:      "inspire confiance et soin",
+    sport:       "reflète l'énergie et la performance",
+    tech:        "projette une image moderne et technologique",
+    food:        "stimule l'appétit et l'envie d'achat",
+    artisan:     "célèbre l'authenticité artisanale",
+    home:        "crée une atmosphère chaleureuse",
+    services:    "inspire professionnalisme et expertise",
+    agriculture: "valorise le naturel et le terroir",
+    general:     "s'adapte à toute activité commerciale",
+  };
+  return `Style ${amb} — ${map[cat] || "idéal pour ta boutique"} ${nomBoutique}.`;
+}
+
+// ─── Schema compte ────────────────────────────────────────────────────────────
 const schemaCompte = z.object({
   name:     z.string().min(2, "Minimum 2 caractères"),
   email:    z.string().email("Email invalide"),
@@ -145,36 +210,32 @@ const STEPS_CREATION = [
   "Mise en ligne de ta boutique…",
 ];
 
-// ─── TOAST NOTIFICATIONS ──────────────────────────────────────────────────────
+// ─── Toast notifications ──────────────────────────────────────────────────────
 type Toast = { id: number; type: "success"|"info"|"error"; msg: string };
-let _toastId = 0;
+let _tid = 0;
 
-function ToastContainer({ toasts, onClose }: { toasts: Toast[]; onClose: (id: number) => void }) {
+function ToastStack({ toasts, onClose }: { toasts: Toast[]; onClose:(id:number)=>void }) {
   return (
-    <div style={{
-      position:"fixed", top:20, right:20, zIndex:9999,
-      display:"flex", flexDirection:"column", gap:10,
-      pointerEvents:"none",
-    }}>
+    <div style={{ position:"fixed", top:20, right:20, zIndex:9999, display:"flex", flexDirection:"column", gap:9, pointerEvents:"none" }}>
       {toasts.map(t => (
         <div key={t.id} style={{
           display:"flex", alignItems:"center", gap:10,
-          background: t.type==="success" ? "#EDFAF4" : t.type==="error" ? "#FEF0EC" : "#FBF8EE",
-          border:`1.5px solid ${t.type==="success" ? "#A8E8C8" : t.type==="error" ? "#F5C8B8" : PARCH}`,
-          borderLeft:`4px solid ${t.type==="success" ? SUCCESS : t.type==="error" ? TERRA : GOLD}`,
-          borderRadius:12, padding:"11px 16px",
-          maxWidth:320, minWidth:220,
-          boxShadow:"0 6px 28px rgba(28,18,8,.14)",
-          animation:"toastIn .35s cubic-bezier(.34,1.3,.64,1) both",
+          background: t.type==="success" ? "#F0FDF4" : t.type==="error" ? "#FEF2F2" : "#EFF4FF",
+          border:`1.5px solid ${t.type==="success"?"#A7F3D0":t.type==="error"?"#FECACA":BORDER}`,
+          borderLeft:`4px solid ${t.type==="success"?SUCCESS:t.type==="error"?ERROR:YELLOW}`,
+          borderRadius:12, padding:"11px 14px",
+          maxWidth:310, minWidth:200,
+          boxShadow:"0 6px 24px rgba(10,22,40,.13)",
+          animation:"toastIn .32s cubic-bezier(.34,1.3,.64,1) both",
           pointerEvents:"all",
-          fontFamily:"'Outfit',sans-serif",
+          fontFamily:"'Inter',sans-serif",
         }}>
-          {t.type==="success" && <CheckCircle2 size={16} color={SUCCESS} style={{flexShrink:0}}/>}
-          {t.type==="info"    && <Info         size={16} color={GOLD}    style={{flexShrink:0}}/>}
-          {t.type==="error"   && <AlertCircle  size={16} color={TERRA}   style={{flexShrink:0}}/>}
-          <span style={{ fontSize:13, color:INK, flex:1, lineHeight:1.45 }}>{t.msg}</span>
-          <button onClick={()=>onClose(t.id)} style={{ background:"none", border:"none", cursor:"pointer", color:MUTED, padding:"2px", flexShrink:0, pointerEvents:"all" }}>
-            <X size={13}/>
+          {t.type==="success" && <CheckCircle2 size={15} color={SUCCESS} style={{flexShrink:0}}/>}
+          {t.type==="info"    && <Info         size={15} color={YELLOW}    style={{flexShrink:0}}/>}
+          {t.type==="error"   && <AlertCircle  size={15} color={ERROR}   style={{flexShrink:0}}/>}
+          <span style={{ fontSize:13, color:NAVY, flex:1, lineHeight:1.45 }}>{t.msg}</span>
+          <button onClick={()=>onClose(t.id)} style={{ background:"none", border:"none", cursor:"pointer", color:MUTED, padding:2, flexShrink:0, pointerEvents:"all" }}>
+            <X size={12}/>
           </button>
         </div>
       ))}
@@ -183,36 +244,14 @@ function ToastContainer({ toasts, onClose }: { toasts: Toast[]; onClose: (id: nu
 }
 
 function useToast() {
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const push = useCallback((type: Toast["type"], msg: string, ms = 4500) => {
-    const id = ++_toastId;
-    setToasts(p => [...p, { id, type, msg }]);
-    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), ms);
-  }, []);
-  const close = useCallback((id: number) => setToasts(p => p.filter(t => t.id !== id)), []);
+  const [toasts,setToasts] = useState<Toast[]>([]);
+  const push = useCallback((type:Toast["type"], msg:string, ms=4000)=>{
+    const id = ++_tid;
+    setToasts(p=>[...p,{id,type,msg}]);
+    setTimeout(()=>setToasts(p=>p.filter(t=>t.id!==id)), ms);
+  },[]);
+  const close = useCallback((id:number)=>setToasts(p=>p.filter(t=>t.id!==id)),[]);
   return { toasts, push, close };
-}
-
-// ─── Ornements ────────────────────────────────────────────────────────────────
-function Diamond({ size=12, color=GOLD, opacity=0.5 }: { size?:number; color?:string; opacity?:number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 12 12" style={{flexShrink:0}}>
-      <rect x="1" y="1" width="10" height="10" fill="none"
-        stroke={color} strokeWidth="1" opacity={opacity} transform="rotate(45 6 6)" rx="1.5"/>
-      <rect x="3.5" y="3.5" width="5" height="5" fill={color}
-        opacity={opacity*0.6} transform="rotate(45 6 6)" rx="0.5"/>
-    </svg>
-  );
-}
-
-function Divider() {
-  return (
-    <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-      <div style={{ flex:1, height:"1px", background:`linear-gradient(to right,transparent,${PARCH})` }}/>
-      <Diamond size={14}/>
-      <div style={{ flex:1, height:"1px", background:`linear-gradient(to left,transparent,${PARCH})` }}/>
-    </div>
-  );
 }
 
 // ─── Avatar Axia ──────────────────────────────────────────────────────────────
@@ -221,10 +260,10 @@ function AxiaAvatar({ size=38 }: { size?:number }) {
     <div style={{ position:"relative", width:size, height:size, flexShrink:0 }}>
       <div style={{
         width:size, height:size, borderRadius:size*.27,
-        background:"linear-gradient(135deg,#1B2A4A 0%,#2B3E66 100%)",
-        border:"1.5px solid rgba(176,125,62,.4)",
+        background:`linear-gradient(135deg,${NAVY} 0%,${YELLOW_D} 100%)`,
+        border:`1.5px solid ${YELLOW}50`,
         overflow:"hidden", display:"flex", alignItems:"center", justifyContent:"center",
-        boxShadow:"0 4px 16px rgba(176,125,62,.22)",
+        boxShadow:`0 4px 14px rgba(245,166,35,.28)`,
       }}>
         <img src="/axia-icon.png" alt="Axia"
           style={{ width:"100%", height:"100%", objectFit:"cover" }}
@@ -233,24 +272,24 @@ function AxiaAvatar({ size=38 }: { size?:number }) {
       <div style={{
         position:"absolute", bottom:-2, right:-2,
         width:size*.3, height:size*.3, borderRadius:"50%",
-        background:SUCCESS, border:`1.5px solid ${IVORY}`,
+        background:SUCCESS, border:`2px solid ${BG}`,
       }}/>
     </div>
   );
 }
 
-// ─── Bulles ───────────────────────────────────────────────────────────────────
+// ─── Bulles de chat ───────────────────────────────────────────────────────────
 function AxiaMsg({ children, delay=0 }: { children:React.ReactNode; delay?:number }) {
   return (
     <div className="msg-in" style={{ display:"flex", alignItems:"flex-start", gap:11, animationDelay:`${delay}ms` }}>
       <AxiaAvatar size={36}/>
       <div style={{
-        background:WHITE, border:`1.5px solid ${PARCH}`,
+        background:SURFACE, border:`1.5px solid ${BORDER}`,
         borderRadius:"4px 18px 18px 18px",
         padding:"12px 16px", maxWidth:"78%",
-        color:INK, fontSize:14, lineHeight:1.7,
-        boxShadow:"0 2px 14px rgba(28,18,8,.07)",
-        fontFamily:"'Outfit',sans-serif",
+        color:NAVY, fontSize:14, lineHeight:1.7,
+        boxShadow:"0 2px 12px rgba(10,22,40,.07)",
+        fontFamily:"'Inter',sans-serif",
       }}>{children}</div>
     </div>
   );
@@ -260,13 +299,13 @@ function UserMsg({ children }: { children:React.ReactNode }) {
   return (
     <div className="msg-in" style={{ display:"flex", justifyContent:"flex-end" }}>
       <div style={{
-        background:`linear-gradient(135deg,${GOLD}18,${TERRA}08)`,
-        border:`1.5px solid ${PARCH}`,
+        background:`linear-gradient(135deg,${YELLOW}14,${YELLOW_D}0a)`,
+        border:`1.5px solid ${BORDER}`,
         borderRadius:"18px 4px 18px 18px",
         padding:"11px 16px", maxWidth:"72%",
-        color:INK, fontSize:14, lineHeight:1.65,
-        fontFamily:"'Outfit',sans-serif",
-        boxShadow:"0 1px 8px rgba(28,18,8,.05)",
+        color:NAVY, fontSize:14, lineHeight:1.65,
+        fontFamily:"'Inter',sans-serif",
+        boxShadow:"0 1px 6px rgba(10,22,40,.05)",
       }}>{children}</div>
     </div>
   );
@@ -277,15 +316,15 @@ function AxiaThinking() {
     <div style={{ display:"flex", alignItems:"center", gap:11 }}>
       <AxiaAvatar size={36}/>
       <div style={{
-        background:WHITE, border:`1.5px solid ${PARCH}`,
+        background:SURFACE, border:`1.5px solid ${BORDER}`,
         borderRadius:"4px 18px 18px 18px",
-        padding:"14px 18px", display:"flex", gap:6, alignItems:"center",
-        boxShadow:"0 2px 14px rgba(28,18,8,.07)",
+        padding:"13px 18px", display:"flex", gap:6, alignItems:"center",
+        boxShadow:"0 2px 12px rgba(10,22,40,.07)",
       }}>
         {[0,1,2].map(i=>(
           <div key={i} className="dot" style={{
             width:7, height:7, borderRadius:"50%",
-            background:GOLD, animationDelay:`${i*.18}s`,
+            background:YELLOW, animationDelay:`${i*.18}s`,
           }}/>
         ))}
       </div>
@@ -298,20 +337,22 @@ function PaysSelector({ onSelect }: { onSelect:(code:string,nom:string,devise:st
   const [sel,setSel] = useState("");
   return (
     <div className="msg-in" style={{ paddingLeft:47 }}>
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, maxWidth:440 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, maxWidth:460 }}>
         {PAYS_LIST.map(p=>(
           <button key={p.code}
             onClick={()=>{ setSel(p.code); onSelect(p.code,p.nom,p.devise); }}
             style={{
               display:"flex", flexDirection:"column", alignItems:"center",
               gap:4, padding:"9px 4px", borderRadius:12,
-              background:sel===p.code?`${GOLD}14`:WHITE,
-              border:`1.5px solid ${sel===p.code?GOLD:PARCH}`,
+              background:sel===p.code?`${YELLOW}12`:SURFACE,
+              border:`1.5px solid ${sel===p.code?YELLOW:BORDER}`,
               cursor:"pointer", transition:"all .15s",
-              boxShadow:sel===p.code?`0 0 0 2.5px ${GOLD}20`:"none",
+              boxShadow:sel===p.code?`0 0 0 2px ${YELLOW}22`:"none",
             }}>
             <span style={{ fontSize:19 }}>{p.flag}</span>
-            <span style={{ fontSize:10, fontWeight:600, textAlign:"center", lineHeight:1.2, color:sel===p.code?GOLD_D:MID, fontFamily:"'Outfit',sans-serif" }}>{p.nom}</span>
+            <span style={{ fontSize:10, fontWeight:600, textAlign:"center", lineHeight:1.2, color:sel===p.code?YELLOW_D:MID, fontFamily:"'Inter',sans-serif" }}>
+              {p.nom}
+            </span>
           </button>
         ))}
       </div>
@@ -319,214 +360,212 @@ function PaysSelector({ onSelect }: { onSelect:(code:string,nom:string,devise:st
   );
 }
 
-// ─── Carrousel de thèmes (iframe live + infos utilisateur) ────────────────────
-function ThemeCarousel({
-  selectedId, onSelect, nomBoutique, produits, devise,
+// ─── 4 Propositions de design Axia (iframes live avec données boutique) ───────
+function PropositionsDesign({
+  themeIds, selectedId, onSelect,
+  nomBoutique, produits, devise, vente,
 }: {
-  selectedId:string; onSelect:(id:string)=>void;
-  nomBoutique?:string; produits?:{nom:string;prix:number;description?:string}[]; devise?:string;
+  themeIds: string[]; selectedId: string; onSelect:(id:string)=>void;
+  nomBoutique?:string; produits?:{nom:string;prix:number;description?:string}[];
+  devise?:string; vente?:string;
 }) {
-  const [idx,setIdx] = useState(0);
-  const total = THEMES.length;
-  const visible = 3;
-
-  const prev = () => setIdx(i=>(i-1+total)%total);
-  const next = () => setIdx(i=>(i+1)%total);
-
   const produitsParam = encodeURIComponent(JSON.stringify((produits||[]).slice(0,6)));
-  const nomParam  = encodeURIComponent(nomBoutique||"Ma Boutique");
-  const devParam  = encodeURIComponent(devise||"XAF");
-
-  const visibles = () => Array.from({length:visible},(_,i)=>THEMES[(idx+i)%total]);
+  const nomParam      = encodeURIComponent(nomBoutique || "Ma Boutique");
+  const devParam      = encodeURIComponent(devise || "XAF");
 
   return (
-    <div style={{ paddingLeft:47 }}>
-      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-        <button onClick={prev} className="ghost-btn"
-          style={{ width:38, height:38, borderRadius:"50%", padding:0, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-          <ChevronLeft size={16}/>
-        </button>
-
-        <div style={{ display:"flex", gap:12, flex:1, overflow:"hidden" }}>
-          {visibles().map((t,i)=>{
-            const sel = selectedId===t.id;
-            const center = i===1;
-            const url = `/api/preview-theme?fichier=${encodeURIComponent(t.id)}&nom=${nomParam}&devise=${devParam}&produits=${produitsParam}`;
-            return (
-              <button key={`${t.id}-${idx}-${i}`}
-                onClick={()=>onSelect(t.id)}
-                style={{
-                  flex:1, padding:0, borderRadius:16, overflow:"hidden",
-                  border:`2px solid ${sel?GOLD:PARCH}`,
-                  cursor:"pointer",
-                  boxShadow:sel ? `0 0 0 3px ${GOLD}30,0 10px 32px rgba(28,18,8,.16)`
-                            : center ? "0 4px 16px rgba(28,18,8,.1)"
-                            : "0 2px 8px rgba(28,18,8,.06)",
-                  position:"relative", background:t.couleurs.fond||WHITE,
-                  transform:center&&!sel?"scale(1.04)":"scale(1)",
-                  transition:"all .25s cubic-bezier(.34,1.3,.64,1)",
-                }}>
-                {/* Iframe preview avec données utilisateur */}
-                <div style={{ height:160, overflow:"hidden", position:"relative" }}>
-                  <iframe
-                    src={url} title={t.nom}
-                    sandbox="allow-same-origin allow-scripts"
-                    scrolling="no"
-                    style={{
-                      width:960, height:750, border:"none",
-                      pointerEvents:"none",
-                      transformOrigin:"top left",
-                      transform:"scale(0.172)",
-                      position:"absolute", top:0, left:0,
-                    }}
-                  />
-                  <div style={{ position:"absolute", inset:0, zIndex:2 }}/>
-                  {sel && (
-                    <div style={{
-                      position:"absolute", top:8, right:8, zIndex:3,
-                      width:22, height:22, borderRadius:"50%",
-                      background:`linear-gradient(135deg,${GOLD},${GOLD_D})`,
-                      display:"flex", alignItems:"center", justifyContent:"center",
-                      boxShadow:`0 2px 8px ${GOLD}55`,
-                    }}>
-                      <Check size={12} color={WHITE} strokeWidth={3}/>
-                    </div>
-                  )}
-                  <div style={{
-                    position:"absolute", bottom:0, left:0, right:0, zIndex:3,
-                    padding:"20px 10px 6px",
-                    background:"linear-gradient(to top,rgba(0,0,0,.5),transparent)",
-                  }}>
-                    <div style={{ fontSize:9, fontWeight:800, color:"rgba(255,255,255,.95)", letterSpacing:".1em", textTransform:"uppercase", fontFamily:"'Outfit',sans-serif" }}>
-                      {t.nom}
-                    </div>
-                  </div>
-                </div>
+    <div className="msg-in" style={{ paddingLeft:47 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, maxWidth:560 }}>
+        {themeIds.map((id, idx) => {
+          const e = MANIFESTE_LIBRAIRIE.find(x => x.fichier === id);
+          if (!e) return null;
+          const sel = selectedId === id;
+          const url = `/api/preview-theme?fichier=${encodeURIComponent(id)}&nom=${nomParam}&devise=${devParam}&produits=${produitsParam}`;
+          const raison = rationaleTheme(id, nomBoutique||"ta boutique", vente||"");
+          return (
+            <button key={id} onClick={()=>onSelect(id)}
+              style={{
+                padding:0, borderRadius:18, overflow:"hidden",
+                border:`2px solid ${sel?YELLOW:BORDER}`,
+                cursor:"pointer", textAlign:"left",
+                boxShadow: sel
+                  ? `0 0 0 3px ${YELLOW}22, 0 10px 32px rgba(245,166,35,.18)`
+                  : "0 2px 12px rgba(10,22,40,.08)",
+                background:e.couleurs.fond||SURFACE,
+                transition:"all .22s cubic-bezier(.34,1.3,.64,1)",
+                position:"relative",
+              }}>
+              {/* Numéro de proposition */}
+              <div style={{
+                position:"absolute", top:10, left:10, zIndex:4,
+                width:22, height:22, borderRadius:"50%",
+                background: sel ? YELLOW : "rgba(10,22,40,.55)",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:10, fontWeight:800, color:"#fff",
+                fontFamily:"'Sora',sans-serif",
+              }}>
+                {idx+1}
+              </div>
+              {/* Badge "Recommandé" si premier */}
+              {idx===0 && (
                 <div style={{
-                  background:sel?`${GOLD}0c`:LINEN,
-                  borderTop:`1px solid ${sel?GOLD+"28":PARCH}`,
-                  padding:"6px 10px",
-                  display:"flex", alignItems:"center", justifyContent:"space-between",
+                  position:"absolute", top:10, right:sel?36:10, zIndex:4,
+                  background:`${YELLOW}ee`, borderRadius:999,
+                  fontSize:9, fontWeight:700, color:"#fff",
+                  padding:"2px 8px", fontFamily:"'Sora',sans-serif",
+                  letterSpacing:".05em", display:"flex", alignItems:"center", gap:4,
                 }}>
-                  <span style={{ fontSize:10, color:sel?GOLD_D:MID, fontWeight:700, fontFamily:"'Outfit',sans-serif" }}>
-                    {t.ambiance[0]||""}
-                  </span>
-                  <div style={{
-                    width:9, height:9, borderRadius:"50%",
-                    background:t.couleurs.accent||GOLD,
-                    boxShadow:sel?`0 0 8px ${t.couleurs.accent||GOLD}90`:"none",
-                  }}/>
+                  <Star size={9} fill="#fff" strokeWidth={0}/> Recommandé
                 </div>
-              </button>
-            );
-          })}
-        </div>
-
-        <button onClick={next} className="ghost-btn"
-          style={{ width:38, height:38, borderRadius:"50%", padding:0, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-          <ChevronRight size={16}/>
-        </button>
+              )}
+              {/* Badge check si sélectionné */}
+              {sel && (
+                <div style={{
+                  position:"absolute", top:10, right:10, zIndex:4,
+                  width:22, height:22, borderRadius:"50%",
+                  background:YELLOW, display:"flex", alignItems:"center", justifyContent:"center",
+                  boxShadow:`0 2px 8px ${YELLOW}55`,
+                }}>
+                  <Check size={12} color="#fff" strokeWidth={3}/>
+                </div>
+              )}
+              {/* Iframe live avec les infos de la boutique */}
+              <div style={{ height:170, overflow:"hidden", position:"relative" }}>
+                <iframe
+                  src={url} title={e.nom}
+                  sandbox="allow-same-origin allow-scripts"
+                  scrolling="no"
+                  style={{
+                    width:960, height:750, border:"none",
+                    pointerEvents:"none",
+                    transformOrigin:"top left",
+                    transform:"scale(0.175)",
+                    position:"absolute", top:0, left:0,
+                  }}
+                />
+                <div style={{ position:"absolute", inset:0, zIndex:2 }}/>
+                {/* Gradient bas */}
+                <div style={{
+                  position:"absolute", bottom:0, left:0, right:0, zIndex:3,
+                  height:50, background:"linear-gradient(to top,rgba(0,0,0,.5),transparent)",
+                  display:"flex", alignItems:"flex-end", padding:"0 10px 7px",
+                }}>
+                  <span style={{ fontSize:10, fontWeight:800, color:"rgba(255,255,255,.95)", letterSpacing:".09em", textTransform:"uppercase", fontFamily:"'Sora',sans-serif" }}>
+                    {e.nom}
+                  </span>
+                </div>
+              </div>
+              {/* Footer description */}
+              <div style={{
+                padding:"10px 12px",
+                background: sel ? `${YELLOW}08` : BG,
+                borderTop:`1px solid ${sel?YELLOW+"25":BORDER}`,
+              }}>
+                <div style={{ fontSize:11, fontWeight:700, color:sel?YELLOW_D:NAVY, marginBottom:3, fontFamily:"'Sora',sans-serif" }}>
+                  {e.ambiance.slice(0,2).map(a=>a.charAt(0).toUpperCase()+a.slice(1)).join(" · ")}
+                </div>
+                <div style={{ fontSize:10, color:MUTED, lineHeight:1.4, fontFamily:"'Inter',sans-serif" }}>
+                  {raison}
+                </div>
+              </div>
+            </button>
+          );
+        })}
       </div>
-
-      {/* Dots */}
-      <div style={{ display:"flex", justifyContent:"center", gap:6, marginTop:12 }}>
-        {THEMES.map((_,i)=>(
-          <button key={i} onClick={()=>setIdx(i)}
-            style={{
-              width:i===idx?20:6, height:6, borderRadius:3,
-              background:i===idx?GOLD:PARCH,
-              border:"none", cursor:"pointer", transition:"all .25s", padding:0,
-            }}/>
-        ))}
-      </div>
-
-      {selectedId && (
-        <div style={{ textAlign:"center", marginTop:8, fontSize:12, color:GOLD_D, fontWeight:700, fontFamily:"'Outfit',sans-serif" }}>
-          ✓ {THEMES.find(t=>t.id===selectedId)?.nom} sélectionné
-        </div>
-      )}
     </div>
   );
 }
 
 // ─── Plan card ────────────────────────────────────────────────────────────────
-function PlanCard({ plan, onConfirm, onThemeChange }: {
+function PlanCard({ plan, vente, themeIds, onConfirm, onThemeChange }: {
   plan: PlanBoutique & { messageIA?:string };
-  onConfirm:()=>void; onThemeChange:(id:string)=>void;
+  vente: string;
+  themeIds: string[];
+  onConfirm: ()=>void;
+  onThemeChange: (id:string)=>void;
 }) {
-  const t = THEMES.find(x=>x.id===plan.themeId)||THEMES[0];
+  const e = MANIFESTE_LIBRAIRIE.find(x => x.fichier === plan.themeId) || MANIFESTE_LIBRAIRIE[0];
   return (
-    <div className="msg-in" style={{ paddingLeft:47, display:"flex", flexDirection:"column", gap:16 }}>
+    <div className="msg-in" style={{ paddingLeft:47, display:"flex", flexDirection:"column", gap:14 }}>
+      {/* Récap boutique */}
       <div style={{
-        background:WHITE, border:`1.5px solid ${PARCH}`,
-        borderRadius:20, overflow:"hidden",
-        boxShadow:"0 6px 28px rgba(28,18,8,.1)",
+        background:SURFACE, border:`1.5px solid ${BORDER}`,
+        borderRadius:18, overflow:"hidden",
+        boxShadow:"0 4px 20px rgba(10,22,40,.09)",
       }}>
         {/* Header */}
         <div style={{
-          padding:"18px 22px",
-          background:`linear-gradient(135deg,${LINEN} 0%,${IVORY} 100%)`,
-          borderBottom:`1px solid ${PARCH}`,
+          padding:"16px 20px",
+          background:`linear-gradient(135deg,${BG} 0%,${BORDER_L} 100%)`,
+          borderBottom:`1px solid ${BORDER}`,
           display:"flex", alignItems:"center", gap:14,
         }}>
           <div style={{
-            width:48, height:48, borderRadius:15,
-            background:`${t.couleurs.accent||GOLD}18`,
-            border:`2px solid ${t.couleurs.accent||GOLD}40`,
+            width:46, height:46, borderRadius:14,
+            background:`${YELLOW}12`, border:`2px solid ${YELLOW}30`,
             display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
           }}>
-            <div style={{ width:22, height:22, borderRadius:"50%", background:t.couleurs.accent||GOLD }}/>
+            <Store size={20} color={YELLOW}/>
           </div>
           <div style={{ flex:1, minWidth:0 }}>
-            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:700, color:INK }}>
+            <div style={{ fontFamily:"'Sora',sans-serif", fontSize:18, fontWeight:800, color:NAVY, lineHeight:1.1 }}>
               {plan.nomBoutique}
             </div>
-            <div style={{ fontSize:11, color:MUTED, marginTop:2, fontFamily:"'Outfit',sans-serif" }}>
+            <div style={{ fontSize:11, color:MUTED, marginTop:3, fontFamily:"'Inter',sans-serif" }}>
               {plan.categorie} · {plan.pays} · {plan.devise}
             </div>
           </div>
           <div style={{
-            fontSize:10, fontWeight:800, padding:"4px 10px", borderRadius:999,
-            color:t.couleurs.accent||GOLD_D, background:`${t.couleurs.accent||GOLD}14`,
-            border:`1px solid ${t.couleurs.accent||GOLD}30`,
-            letterSpacing:".07em", textTransform:"uppercase",
-            fontFamily:"'Outfit',sans-serif", flexShrink:0,
-          }}>{t.nom}</div>
+            fontSize:10, fontWeight:700, padding:"3px 10px", borderRadius:999,
+            color:YELLOW, background:`${YELLOW}12`, border:`1px solid ${YELLOW}28`,
+            letterSpacing:".06em", textTransform:"uppercase",
+            fontFamily:"'Sora',sans-serif", flexShrink:0,
+          }}>{e.nom}</div>
         </div>
 
         {/* Produits */}
-        <div style={{ padding:"14px 22px", borderBottom:`1px solid ${PARCH}` }}>
-          <div style={{ fontSize:10, fontWeight:800, color:MUTED, textTransform:"uppercase", letterSpacing:".12em", marginBottom:10, fontFamily:"'Outfit',sans-serif" }}>
+        <div style={{ padding:"12px 20px" }}>
+          <div style={{ fontSize:10, fontWeight:700, color:MUTED, textTransform:"uppercase", letterSpacing:".1em", marginBottom:9, fontFamily:"'Sora',sans-serif" }}>
             {plan.produits.length} produits générés par Axia
           </div>
           {plan.produits.map((p,i)=>(
             <div key={i} style={{
               display:"flex", justifyContent:"space-between", alignItems:"center",
-              padding:"7px 0", borderBottom:i<plan.produits.length-1?`1px solid ${PARCH}`:"none",
-              fontFamily:"'Outfit',sans-serif",
+              padding:"6px 0", borderBottom:i<plan.produits.length-1?`1px solid ${BORDER_L}`:"none",
             }}>
-              <span style={{ fontSize:13, color:INK, opacity:.85 }}>{p.nom}</span>
-              <span style={{ fontSize:13, fontWeight:700, color:GOLD_D }}>{p.prix.toLocaleString()} {plan.devise}</span>
+              <span style={{ fontSize:13, color:NAVY, opacity:.85, fontFamily:"'Inter',sans-serif" }}>{p.nom}</span>
+              <span style={{ fontSize:13, fontWeight:700, color:YELLOW_D, fontFamily:"'Sora',sans-serif" }}>
+                {p.prix.toLocaleString()} {plan.devise}
+              </span>
             </div>
           ))}
         </div>
-
-        {/* Carrousel design */}
-        <div style={{ padding:"16px 0 16px" }}>
-          <div style={{ fontSize:10, fontWeight:800, color:MUTED, textTransform:"uppercase", letterSpacing:".12em", marginBottom:14, paddingLeft:22, fontFamily:"'Outfit',sans-serif" }}>
-            Aperçu live de ton site avec tes produits — choisis ton design
-          </div>
-          <ThemeCarousel
-            selectedId={plan.themeId}
-            onSelect={onThemeChange}
-            nomBoutique={plan.nomBoutique}
-            produits={plan.produits}
-            devise={plan.devise}
-          />
-        </div>
       </div>
 
-      <button onClick={onConfirm} className="gold-btn"
+      {/* Titre section design */}
+      <div style={{
+        display:"flex", alignItems:"center", gap:10,
+        padding:"10px 14px", borderRadius:12,
+        background:`${YELLOW}08`, border:`1px solid ${YELLOW}20`,
+      }}>
+        <Wand2 size={15} color={YELLOW}/>
+        <span style={{ fontSize:13, color:YELLOW_D, fontWeight:600, fontFamily:"'Sora',sans-serif" }}>
+          Axia a sélectionné 4 designs personnalisés pour <strong>{plan.nomBoutique}</strong> — choisis celui qui te correspond
+        </span>
+      </div>
+
+      {/* 4 propositions avec iframes */}
+      <PropositionsDesign
+        themeIds={themeIds}
+        selectedId={plan.themeId}
+        onSelect={onThemeChange}
+        nomBoutique={plan.nomBoutique}
+        produits={plan.produits}
+        devise={plan.devise}
+        vente={vente}
+      />
+
+      <button onClick={onConfirm} className="btn-primary"
         style={{ padding:"15px 24px", borderRadius:14, fontSize:14, display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
         <Sparkles size={16}/> Ce design me convient — Créer ma boutique <ArrowRight size={16}/>
       </button>
@@ -547,10 +586,10 @@ function CompteForm({ onSubmit, loading, erreur }: {
   ];
   return (
     <div className="msg-in" style={{ paddingLeft:47 }}>
-      <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth:420, display:"flex", flexDirection:"column", gap:12 }}>
+      <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth:420, display:"flex", flexDirection:"column", gap:11 }}>
         {fields.map(f=>(
           <div key={f.key}>
-            <label style={{ display:"block", fontSize:11, fontWeight:800, color:MID, textTransform:"uppercase", letterSpacing:".09em", marginBottom:5, fontFamily:"'Outfit',sans-serif" }}>
+            <label style={{ display:"block", fontSize:11, fontWeight:700, color:MID, textTransform:"uppercase", letterSpacing:".08em", marginBottom:5, fontFamily:"'Sora',sans-serif" }}>
               {f.label}
             </label>
             <div style={{ position:"relative" }}>
@@ -560,18 +599,18 @@ function CompteForm({ onSubmit, loading, erreur }: {
               <input {...register(f.key)} type={f.type} placeholder={f.ph} className="field"/>
             </div>
             {errors[f.key] && (
-              <p style={{ color:TERRA, fontSize:11, marginTop:4, fontFamily:"'Outfit',sans-serif" }}>
+              <p style={{ color:ERROR, fontSize:11, marginTop:4, fontFamily:"'Inter',sans-serif" }}>
                 {errors[f.key]?.message}
               </p>
             )}
           </div>
         ))}
         {erreur && (
-          <div style={{ padding:"10px 14px", background:`${TERRA}0d`, border:`1px solid ${TERRA}28`, borderRadius:10, fontSize:13, color:TERRA, fontFamily:"'Outfit',sans-serif" }}>
+          <div style={{ padding:"10px 14px", background:"#FEF2F2", border:`1px solid #FECACA`, borderRadius:10, fontSize:13, color:ERROR, fontFamily:"'Inter',sans-serif" }}>
             {erreur}
           </div>
         )}
-        <button type="submit" disabled={loading} className="gold-btn"
+        <button type="submit" disabled={loading} className="btn-primary"
           style={{ marginTop:4, padding:"14px 24px", borderRadius:13, fontSize:14, display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
           {loading ? <><Loader2 size={16} className="animate-spin"/> Lancement…</>
                    : <><Sparkles size={16}/> Lancer ma boutique <ArrowRight size={16}/></>}
@@ -587,17 +626,18 @@ export default function InscriptionPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const { toasts, push: toast, close: closeToast } = useToast();
 
-  const [phase,setPhase]         = useState<Phase>("welcome");
-  const [vente,setVente]         = useState("");
+  const [phase,setPhase]           = useState<Phase>("welcome");
+  const [vente,setVente]           = useState("");
   const [venteInput,setVenteInput] = useState("");
-  const [paysCode,setPaysCode]   = useState("");
-  const [paysNom,setPaysNom]     = useState("");
-  const [devise,setDevise]       = useState("XAF");
-  const [plan,setPlan]           = useState<(PlanBoutique&{messageIA?:string})|null>(null);
-  const [messageIA,setMessageIA] = useState("");
-  const [erreur,setErreur]       = useState("");
-  const [loading,setLoading]     = useState(false);
-  const [steps,setSteps]         = useState<string[]>([]);
+  const [paysCode,setPaysCode]     = useState("");
+  const [paysNom,setPaysNom]       = useState("");
+  const [devise,setDevise]         = useState("XAF");
+  const [plan,setPlan]             = useState<(PlanBoutique&{messageIA?:string})|null>(null);
+  const [themeIds,setThemeIds]     = useState<string[]>([]);
+  const [messageIA,setMessageIA]   = useState("");
+  const [erreur,setErreur]         = useState("");
+  const [loading,setLoading]       = useState(false);
+  const [steps,setSteps]           = useState<string[]>([]);
 
   useEffect(()=>{
     setTimeout(()=>bottomRef.current?.scrollIntoView({behavior:"smooth"}),100);
@@ -616,6 +656,7 @@ export default function InscriptionPage() {
     setTimeout(()=>setPhase("analyse"),600);
   },[toast]);
 
+  // Appel API analyse
   useEffect(()=>{
     if(phase!=="analyse") return;
     const description = `${vente}. Pays: ${paysNom} (${paysCode}).`;
@@ -627,11 +668,17 @@ export default function InscriptionPage() {
     .then(r=>r.json())
     .then(data=>{
       if(data.plan){
-        setPlan(data.plan);
-        setMessageIA(data.messageIA||data.plan.messageIA||"Voici ce que j'ai préparé pour toi !");
-        toast("success","Plan de boutique généré — choisis ton design !");
+        const p = data.plan as PlanBoutique & { messageIA?:string };
+        setPlan(p);
+        setMessageIA(data.messageIA || p.messageIA || "Voici ce que j'ai préparé pour toi !");
+        // Choisir 4 themes adaptés à la catégorie de boutique
+        const ids = choisir4Themes(vente, p.themeId);
+        setThemeIds(ids);
+        // S'assurer que le themeId du plan est dans notre sélection
+        if(!ids.includes(p.themeId)) { setPlan({...p, themeId:ids[0]}); }
+        toast("success","4 designs personnalisés prêts — choisis ton site !");
         setPhase("plan");
-      }else{
+      } else {
         setErreur(data.message||"Erreur d'analyse.");
         toast("error","Erreur lors de l'analyse. Réessaie.");
         setPhase("q-vente");
@@ -647,26 +694,25 @@ export default function InscriptionPage() {
 
   const launchCreation = useCallback(async(compteData:CompteData)=>{
     if(!plan) return;
-    setLoading(true); setErreur("");
-    setPhase("creation"); setSteps([]);
-    toast("info","Lancement de ta boutique…");
+    setLoading(true); setErreur(""); setPhase("creation"); setSteps([]);
+    toast("info","Lancement de ta boutique en cours…");
     let i=0;
     const iv=setInterval(()=>{
       if(i<STEPS_CREATION.length){ setSteps(p=>[...p,STEPS_CREATION[i]]); i++; }
     },700);
     try{
-      const res=await fetch("/api/ai/onboarding",{
+      const res = await fetch("/api/ai/onboarding",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({phase:"executer",plan,compte:compteData}),
       });
-      const data=await res.json();
+      const data = await res.json();
       clearInterval(iv);
       if(!res.ok) throw new Error(data.message);
       setSteps(STEPS_CREATION);
       toast("success","🎉 Ta boutique est en ligne !");
       setPhase("succes");
-      const lr=await signIn("credentials",{email:compteData.email,password:compteData.password,redirect:false});
+      const lr = await signIn("credentials",{email:compteData.email,password:compteData.password,redirect:false});
       setTimeout(()=>router.push(lr?.ok?"/dashboard":"/connexion?inscription=success"),2000);
     }catch(err:any){
       clearInterval(iv);
@@ -679,55 +725,54 @@ export default function InscriptionPage() {
   return (
     <div style={{
       minHeight:"100vh",
-      background:`radial-gradient(ellipse 150% 80% at 50% -5%,${LINEN} 0%,${IVORY} 55%,${WHITE} 100%)`,
-      fontFamily:"'Outfit',sans-serif", color:INK,
+      background:`radial-gradient(ellipse 160% 70% at 50% -10%,${BORDER_L} 0%,${BG} 50%,#fff 100%)`,
+      fontFamily:"'Inter',sans-serif", color:NAVY,
       display:"flex", flexDirection:"column",
     }}>
       <style dangerouslySetInnerHTML={{__html:CSS}}/>
 
-      {/* Pattern kente de fond */}
+      {/* Pattern géométrique de fond (discret) */}
       <div style={{
         position:"fixed", inset:0, pointerEvents:"none", zIndex:0,
-        backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cline x1='0' y1='0' x2='40' y2='40' stroke='%23B07D3E' stroke-width='.5' opacity='.07'/%3E%3Cline x1='40' y1='0' x2='0' y2='40' stroke='%23B07D3E' stroke-width='.5' opacity='.07'/%3E%3Crect x='16' y='16' width='8' height='8' fill='none' stroke='%23B07D3E' stroke-width='.6' opacity='.09' transform='rotate(45 20 20)'/%3E%3C/svg%3E")`,
+        backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Crect x='20' y='20' width='8' height='8' fill='none' stroke='%23F5A623' stroke-width='.5' opacity='.07' transform='rotate(45 24 24)'/%3E%3C/svg%3E")`,
       }}/>
 
-      {/* Bande kente supérieure */}
+      {/* Bande supérieure aux couleurs du logo */}
       <div style={{
-        height:5, position:"relative", zIndex:1,
-        background:`repeating-linear-gradient(90deg,${GOLD} 0px,${GOLD} 8px,${TERRA} 8px,${TERRA} 16px,${GOLD_D} 16px,${GOLD_D} 24px,${TERRA} 24px,${TERRA} 32px,${GOLD_L} 32px,${GOLD_L} 40px)`,
+        height:4, position:"relative", zIndex:1,
+        background:`linear-gradient(90deg,${NAVY} 0%,${YELLOW_D} 25%,${YELLOW} 50%,${YELLOW_L} 75%,${YELLOW} 100%)`,
       }}/>
 
       {/* Toasts */}
-      <ToastContainer toasts={toasts} onClose={closeToast}/>
+      <ToastStack toasts={toasts} onClose={closeToast}/>
 
       {/* ── Header ── */}
       <header style={{
         position:"relative", zIndex:1,
         display:"flex", alignItems:"center", justifyContent:"space-between",
         maxWidth:720, margin:"0 auto", width:"100%",
-        padding:"18px 24px",
+        padding:"16px 24px",
       }}>
         <Link href="/" style={{ display:"flex", alignItems:"center", gap:10, textDecoration:"none" }}>
-          <img src="/logo.png" alt="Axso" style={{ height:28, objectFit:"contain" }}
-            onError={e=>{ (e.currentTarget as HTMLImageElement).style.display="none"; }}/>
+          <img src="/logo.svg" alt="Axso" style={{ height:30, objectFit:"contain" }}
+            onError={e=>{ (e.currentTarget as HTMLImageElement).src="/logo.png"; }}/>
         </Link>
         <div style={{ display:"flex", alignItems:"center", gap:14 }}>
           {toasts.length>0 && (
-            <div style={{ position:"relative" }}>
-              <Bell size={18} color={GOLD}/>
+            <div style={{ position:"relative", cursor:"default" }}>
+              <Bell size={17} color={YELLOW}/>
               <div style={{
                 position:"absolute", top:-5, right:-5,
                 width:14, height:14, borderRadius:"50%",
-                background:`linear-gradient(135deg,${TERRA},${GOLD_D})`,
+                background:YELLOW, border:`2px solid ${BG}`,
                 display:"flex", alignItems:"center", justifyContent:"center",
-                fontSize:8, color:WHITE, fontWeight:800,
-                border:`1.5px solid ${IVORY}`,
+                fontSize:8, color:"#fff", fontWeight:800,
               }}>{toasts.length}</div>
             </div>
           )}
           <Link href="/connexion" style={{ fontSize:13, color:MID, textDecoration:"none", fontWeight:500 }}>
             Déjà un compte ?{" "}
-            <span style={{ color:GOLD_D, fontWeight:800 }}>Connexion</span>
+            <span style={{ color:YELLOW, fontWeight:700 }}>Connexion</span>
           </Link>
         </div>
       </header>
@@ -740,93 +785,112 @@ export default function InscriptionPage() {
         display:"flex", flexDirection:"column", gap:22,
       }}>
 
-        {/* ── WELCOME ── */}
+        {/* ── PAGE WELCOME ── */}
         {phase==="welcome" && (
           <div className="hero-in" style={{ paddingTop:28 }}>
             <div style={{ textAlign:"center" }}>
-              {/* Médaillon */}
-              <div style={{ display:"flex", justifyContent:"center", marginBottom:28 }}>
+              {/* Avatar hero */}
+              <div style={{ display:"flex", justifyContent:"center", marginBottom:24 }}>
                 <div style={{ position:"relative" }}>
-                  <div style={{ position:"absolute", inset:-18, borderRadius:"50%", border:`1px solid ${GOLD}22`, background:`radial-gradient(circle,${GOLD}04 0%,transparent 70%)` }}/>
-                  <div style={{ position:"absolute", inset:-9, borderRadius:"50%", border:`1px dashed ${GOLD}30` }}/>
+                  {/* Cercle animé */}
+                  <div style={{
+                    position:"absolute", inset:-16, borderRadius:"50%",
+                    border:`1.5px solid ${YELLOW}18`,
+                    animation:"glowPulse 3s ease-in-out infinite",
+                  }}/>
+                  <div style={{
+                    position:"absolute", inset:-8, borderRadius:"50%",
+                    border:`1px dashed ${YELLOW}25`,
+                  }}/>
                   <div style={{
                     width:100, height:100, borderRadius:"28%",
-                    background:`linear-gradient(135deg,${LINEN} 0%,${PARCH} 100%)`,
-                    border:`2.5px solid ${GOLD}45`,
+                    background:`linear-gradient(135deg,${NAVY} 0%,${YELLOW_D} 100%)`,
+                    border:`2px solid ${YELLOW}40`,
                     display:"flex", alignItems:"center", justifyContent:"center",
-                    boxShadow:`0 12px 44px rgba(176,125,62,.24),inset 0 1px 0 rgba(255,255,255,.8)`,
+                    boxShadow:`0 14px 48px rgba(245,166,35,.3)`,
                   }}>
                     <img src="/axia-icon.png" alt="Axia"
                       style={{ width:"80%", height:"80%", objectFit:"cover", borderRadius:"22%" }}
                       onError={e=>{ (e.currentTarget as HTMLImageElement).style.display="none"; }}/>
                   </div>
-                  {[[-7,-7],[106,-9],[106,92],[-9,94]].map(([x,y],i)=>(
-                    <div key={i} style={{ position:"absolute", left:x, top:y, width:8, height:8, borderRadius:"50%", background:GOLD, opacity:.45 }}/>
+                  {/* Dots décoratifs */}
+                  {[[-8,-8],[106,-10],[106,92],[-10,94]].map(([x,y],i)=>(
+                    <div key={i} style={{ position:"absolute", left:x, top:y, width:8, height:8, borderRadius:"50%", background:YELLOW, opacity:.35 }}/>
                   ))}
                 </div>
               </div>
 
-              <div style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"5px 14px", borderRadius:999, background:`${GOLD}12`, border:`1px solid ${GOLD}30`, marginBottom:18 }}>
-                <Sparkles size={12} color={GOLD}/>
-                <span style={{ fontSize:11, fontWeight:800, color:GOLD_D, letterSpacing:".08em", textTransform:"uppercase", fontFamily:"'Outfit',sans-serif" }}>Propulsé par l'IA</span>
+              {/* Badge IA */}
+              <div style={{
+                display:"inline-flex", alignItems:"center", gap:6,
+                padding:"5px 14px", borderRadius:999,
+                background:`${YELLOW}10`, border:`1px solid ${YELLOW}28`,
+                marginBottom:18,
+              }}>
+                <Sparkles size={12} color={YELLOW}/>
+                <span style={{ fontSize:11, fontWeight:700, color:YELLOW_D, letterSpacing:".07em", textTransform:"uppercase", fontFamily:"'Sora',sans-serif" }}>
+                  Propulsé par l'IA
+                </span>
               </div>
 
               <h1 style={{
-                fontFamily:"'Cormorant Garamond',serif",
-                fontSize:42, fontWeight:700, color:INK,
-                lineHeight:1.1, margin:"0 0 14px", letterSpacing:"-.02em",
+                fontFamily:"'Sora',sans-serif",
+                fontSize:40, fontWeight:800, color:NAVY,
+                lineHeight:1.1, margin:"0 0 14px",
+                letterSpacing:"-.03em",
               }}>
-                Crée ton empire e-commerce<br/>
-                <em style={{ color:GOLD_D }}>avec Axia</em>
+                Crée ton empire<br/>
+                <span style={{ color:YELLOW }}>e-commerce africain</span>
               </h1>
 
-              <p style={{ fontSize:15, color:MID, lineHeight:1.8, maxWidth:480, margin:"0 auto 28px" }}>
+              <p style={{ fontSize:15, color:MID, lineHeight:1.8, maxWidth:480, margin:"0 auto 28px", fontFamily:"'Inter',sans-serif" }}>
                 En quelques questions, Axia conçoit ton site e-commerce ultra haut de gamme. Design, produits, livraison — tout configuré automatiquement.
               </p>
 
-              <Divider/>
-
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, maxWidth:460, margin:"24px auto" }}>
+              {/* 4 features */}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, maxWidth:480, margin:"0 auto 28px" }}>
                 {[
                   { Icon:Palette,  label:"15 designs premium",  desc:"Afrocentriques & luxe" },
                   { Icon:Store,    label:"Site complet",         desc:"Produits · Livraison · SEO" },
-                  { Icon:Globe,    label:"Mondial",              desc:"100+ pays, toutes devises" },
+                  { Icon:Globe,    label:"100+ pays",            desc:"Toutes devises africaines" },
                   { Icon:Sparkles, label:"100% IA",              desc:"En ligne en 60 secondes" },
                 ].map(({Icon,label,desc})=>(
                   <div key={label} style={{
-                    background:WHITE, border:`1.5px solid ${PARCH}`,
+                    background:SURFACE, border:`1.5px solid ${BORDER}`,
                     borderRadius:16, padding:"14px 16px", textAlign:"left",
-                    boxShadow:"0 2px 10px rgba(28,18,8,.06)",
+                    boxShadow:"0 2px 8px rgba(10,22,40,.06)",
                   }}>
-                    <div style={{ width:32, height:32, borderRadius:10, background:`${GOLD}12`, border:`1px solid ${GOLD}28`, display:"flex", alignItems:"center", justifyContent:"center", marginBottom:10 }}>
-                      <Icon size={15} color={GOLD}/>
+                    <div style={{ width:32, height:32, borderRadius:10, background:`${YELLOW}10`, border:`1px solid ${YELLOW}22`, display:"flex", alignItems:"center", justifyContent:"center", marginBottom:10 }}>
+                      <Icon size={15} color={YELLOW}/>
                     </div>
-                    <div style={{ fontWeight:700, fontSize:12, color:INK, marginBottom:3 }}>{label}</div>
+                    <div style={{ fontWeight:700, fontSize:12, color:NAVY, marginBottom:2, fontFamily:"'Sora',sans-serif" }}>{label}</div>
                     <div style={{ fontSize:11, color:MUTED }}>{desc}</div>
                   </div>
                 ))}
               </div>
 
+              {/* CTA */}
               <button
                 onClick={()=>{ setPhase("q-vente"); toast("info","Bienvenue ! Axia est là pour toi. 👋"); }}
-                className="gold-btn"
-                style={{ padding:"17px 52px", borderRadius:18, fontSize:15, display:"inline-flex", alignItems:"center", gap:12, boxShadow:`0 12px 44px rgba(176,125,62,.32)` }}>
+                className="btn-primary"
+                style={{ padding:"17px 52px", borderRadius:18, fontSize:15, display:"inline-flex", alignItems:"center", gap:12, boxShadow:`0 12px 40px rgba(245,166,35,.32)` }}>
                 <Sparkles size={18}/>
                 Créer ma boutique gratuitement
                 <ChevronRight size={18}/>
               </button>
-              <p style={{ marginTop:12, fontSize:12, color:MUTED }}>
+              <p style={{ marginTop:11, fontSize:12, color:MUTED }}>
                 Gratuit · Sans carte bancaire · En ligne en 60 secondes
               </p>
 
-              <div style={{ marginTop:32 }}>
-                <Divider/>
-                <p style={{ fontSize:11, color:MUTED, margin:"12px 0 10px", textTransform:"uppercase", letterSpacing:".1em" }}>
+              {/* Drapeaux pays */}
+              <div style={{ marginTop:28 }}>
+                <div style={{ height:1, background:`linear-gradient(to right,transparent,${BORDER},transparent)`, margin:"0 auto 14px", maxWidth:400 }}/>
+                <p style={{ fontSize:11, color:MUTED, margin:"0 0 10px", textTransform:"uppercase", letterSpacing:".1em" }}>
                   Rejoint par 1 000+ boutiques en Afrique
                 </p>
                 <div style={{ display:"flex", justifyContent:"center", gap:8, flexWrap:"wrap" }}>
                   {["🇸🇳 Sénégal","🇨🇮 Côte d'Ivoire","🇨🇲 Cameroun","🇳🇬 Nigeria","🇬🇭 Ghana"].map(c=>(
-                    <span key={c} style={{ fontSize:11, padding:"4px 12px", borderRadius:999, background:WHITE, border:`1px solid ${PARCH}`, color:MID }}>
+                    <span key={c} style={{ fontSize:11, padding:"3px 11px", borderRadius:999, background:SURFACE, border:`1px solid ${BORDER}`, color:MID }}>
                       {c}
                     </span>
                   ))}
@@ -839,15 +903,16 @@ export default function InscriptionPage() {
         {/* ── CONVERSATION ── */}
         {phase!=="welcome" && (
           <>
+            {/* Q1 — Que vends-tu */}
             <AxiaMsg delay={0}>
               Bonjour ! 👋{" "}
-              <strong style={{color:GOLD_D}}>Dis-moi ce que tu veux vendre.</strong>{" "}
+              <strong style={{color:YELLOW_D}}>Dis-moi ce que tu vends.</strong>{" "}
               Plus tu es précis, plus ton site sera parfait.
             </AxiaMsg>
 
             {phase==="q-vente" && (
               <div className="msg-in" style={{ paddingLeft:47, display:"flex", flexDirection:"column", gap:10 }}>
-                <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
                   {[
                     "Mode & vêtements africains","Cosmétiques naturels",
                     "Bijoux artisanaux","Formations en ligne",
@@ -855,11 +920,11 @@ export default function InscriptionPage() {
                   ].map(ex=>(
                     <button key={ex} onClick={()=>setVenteInput(ex)}
                       style={{
-                        padding:"6px 14px", borderRadius:999, fontSize:12, fontWeight:500,
-                        background:venteInput===ex?`${GOLD}14`:WHITE,
-                        border:`1.5px solid ${venteInput===ex?GOLD:PARCH}`,
-                        color:venteInput===ex?GOLD_D:MID,
-                        cursor:"pointer", transition:"all .13s", fontFamily:"'Outfit',sans-serif",
+                        padding:"6px 13px", borderRadius:999, fontSize:12, fontWeight:500,
+                        background:venteInput===ex?`${YELLOW}12`:SURFACE,
+                        border:`1.5px solid ${venteInput===ex?YELLOW:BORDER}`,
+                        color:venteInput===ex?YELLOW_D:MID,
+                        cursor:"pointer", transition:"all .13s", fontFamily:"'Inter',sans-serif",
                       }}>{ex}</button>
                   ))}
                 </div>
@@ -871,18 +936,18 @@ export default function InscriptionPage() {
                     placeholder="Ex: je vends des vêtements mode femme inspirés de la culture africaine, basée à Dakar…"
                     rows={3}
                     style={{
-                      flex:1, background:WHITE, border:`1.5px solid ${PARCH}`,
+                      flex:1, background:SURFACE, border:`1.5px solid ${BORDER}`,
                       borderRadius:14, padding:"12px 16px",
-                      color:INK, fontSize:13, resize:"none", outline:"none",
-                      lineHeight:1.6, fontFamily:"'Outfit',sans-serif",
+                      color:NAVY, fontSize:13, resize:"none", outline:"none",
+                      lineHeight:1.6, fontFamily:"'Inter',sans-serif",
                       transition:"border-color .18s",
                     }}
-                    onFocus={e=>e.currentTarget.style.borderColor=GOLD}
-                    onBlur={e=>e.currentTarget.style.borderColor=PARCH}
+                    onFocus={e=>e.currentTarget.style.borderColor=YELLOW}
+                    onBlur={e=>e.currentTarget.style.borderColor=BORDER}
                   />
-                  <button onClick={submitVente} disabled={!venteInput.trim()} className="gold-btn"
-                    style={{ width:46, height:46, borderRadius:12, padding:0, display:"flex", alignItems:"center", justifyContent:"center", alignSelf:"flex-end", flexShrink:0, opacity:venteInput.trim()?1:.3 }}>
-                    <Send size={16} color={WHITE}/>
+                  <button onClick={submitVente} disabled={!venteInput.trim()} className="btn-primary"
+                    style={{ width:46, height:46, borderRadius:12, padding:0, display:"flex", alignItems:"center", justifyContent:"center", alignSelf:"flex-end", flexShrink:0, opacity:venteInput.trim()?1:.35 }}>
+                    <Send size={16} color="#fff"/>
                   </button>
                 </div>
               </div>
@@ -890,6 +955,7 @@ export default function InscriptionPage() {
 
             {vente&&phase!=="q-vente" && <UserMsg>{vente}</UserMsg>}
 
+            {/* Q2 — Pays */}
             {vente&&(phase==="q-pays"||paysCode) && (
               <AxiaMsg delay={80}>
                 Dans quel pays es-tu basé ? Je vais adapter la devise, la livraison et le design à ton marché. 🌍
@@ -898,21 +964,27 @@ export default function InscriptionPage() {
             {phase==="q-pays" && <PaysSelector onSelect={submitPays}/>}
             {paysNom&&phase!=="q-pays" && <UserMsg>📍 {paysNom}</UserMsg>}
 
+            {/* Analyse */}
             {phase==="analyse" && (
               <>
-                <AxiaMsg delay={0}>Laisse-moi analyser ton projet et concevoir ton site sur-mesure… ✨</AxiaMsg>
+                <AxiaMsg delay={0}>
+                  Parfait ! Je crée ton plan de boutique et je sélectionne les 4 meilleurs designs pour toi… ✨
+                </AxiaMsg>
                 <AxiaThinking/>
               </>
             )}
 
-            {(phase==="plan"||phase==="q-compte"||phase==="creation"||phase==="succes") && plan && (
+            {/* Plan + 4 propositions */}
+            {(phase==="plan"||phase==="q-compte"||phase==="creation"||phase==="succes") && plan && themeIds.length>0 && (
               <>
                 <AxiaMsg delay={0}>
-                  <strong style={{color:GOLD_D}}>Ton site est prêt à être lancé.</strong>{" "}{messageIA}
+                  <strong style={{color:YELLOW_D}}>J'ai analysé ton projet.</strong>{" "}{messageIA}
                 </AxiaMsg>
                 {phase==="plan" && (
                   <PlanCard
                     plan={plan}
+                    vente={vente}
+                    themeIds={themeIds}
                     onConfirm={confirmPlan}
                     onThemeChange={id=>setPlan(p=>p?{...p,themeId:id}:p)}
                   />
@@ -920,10 +992,14 @@ export default function InscriptionPage() {
               </>
             )}
 
+            {/* Q3 — Compte */}
             {(phase==="q-compte"||phase==="creation"||phase==="succes") && (
               <>
                 <AxiaMsg delay={100}>
-                  Dernière étape — crée ton compte pour lancer ta boutique. 🚀
+                  <span style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                    Excellent choix ! Crée ton compte pour lancer{" "}
+                    <strong style={{color:YELLOW_D}}>{plan?.nomBoutique}</strong>. 🚀
+                  </span>
                 </AxiaMsg>
                 {phase==="q-compte" && (
                   <CompteForm onSubmit={launchCreation} loading={loading} erreur={erreur||undefined}/>
@@ -931,28 +1007,29 @@ export default function InscriptionPage() {
               </>
             )}
 
+            {/* Création en cours */}
             {phase==="creation" && (
               <div className="msg-in scale-up" style={{ paddingLeft:47 }}>
                 <div style={{
-                  background:WHITE, border:`1.5px solid ${PARCH}`,
+                  background:SURFACE, border:`1.5px solid ${BORDER}`,
                   borderRadius:18, padding:"18px 22px",
-                  boxShadow:"0 4px 22px rgba(28,18,8,.09)", maxWidth:440,
+                  boxShadow:"0 4px 20px rgba(10,22,40,.09)", maxWidth:440,
                 }}>
                   <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:16 }}>
-                    <Loader2 size={18} color={GOLD} className="animate-spin"/>
-                    <span style={{ fontWeight:700, fontSize:14, fontFamily:"'Cormorant Garamond',serif", color:INK }}>
+                    <Loader2 size={18} color={YELLOW} className="animate-spin"/>
+                    <span style={{ fontWeight:700, fontSize:14, fontFamily:"'Sora',sans-serif", color:NAVY }}>
                       Axia construit ta boutique…
                     </span>
                   </div>
                   {steps.map((s,i)=>(
                     <div key={i} className="msg-in" style={{ display:"flex", alignItems:"center", gap:10, fontSize:13, marginBottom:8 }}>
                       <CheckCircle2 size={14} color={SUCCESS} style={{flexShrink:0}}/>
-                      <span style={{color:MID}}>{s}</span>
+                      <span style={{color:MID, fontFamily:"'Inter',sans-serif"}}>{s}</span>
                     </div>
                   ))}
                   {steps.length<STEPS_CREATION.length && (
                     <div style={{ display:"flex", alignItems:"center", gap:10, fontSize:13 }}>
-                      <Loader2 size={14} color={GOLD} className="animate-spin" style={{flexShrink:0}}/>
+                      <Loader2 size={14} color={YELLOW} className="animate-spin" style={{flexShrink:0}}/>
                       <span style={{color:MUTED}}>En cours…</span>
                     </div>
                   )}
@@ -960,25 +1037,26 @@ export default function InscriptionPage() {
               </div>
             )}
 
+            {/* Succès */}
             {phase==="succes" && (
               <div className="scale-up" style={{ display:"flex", flexDirection:"column", alignItems:"center", textAlign:"center", gap:20, padding:"24px 0" }}>
                 <div style={{
                   width:80, height:80, borderRadius:"50%",
-                  background:"rgba(42,157,92,.1)", border:"2px solid rgba(42,157,92,.3)",
+                  background:"rgba(22,163,74,.1)", border:"2px solid rgba(22,163,74,.3)",
                   display:"flex", alignItems:"center", justifyContent:"center",
-                  boxShadow:"0 10px 36px rgba(42,157,92,.18)",
+                  boxShadow:"0 10px 36px rgba(22,163,74,.18)",
                 }}>
                   <CheckCircle2 size={40} color={SUCCESS}/>
                 </div>
                 <div>
-                  <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:28, fontWeight:700, color:INK, margin:0 }}>
+                  <h2 style={{ fontFamily:"'Sora',sans-serif", fontSize:28, fontWeight:800, color:NAVY, margin:0 }}>
                     Ta boutique est en ligne ! 🎉
                   </h2>
                   <p style={{ color:MID, fontSize:14, marginTop:8 }}>
-                    {plan?.nomBoutique&&<strong style={{color:GOLD_D}}>{plan.nomBoutique}</strong>} est prête. Redirection…
+                    {plan?.nomBoutique&&<strong style={{color:YELLOW_D}}>{plan.nomBoutique}</strong>} est prête. Redirection…
                   </p>
                 </div>
-                <Loader2 size={22} color={GOLD} className="animate-spin"/>
+                <Loader2 size={22} color={YELLOW} className="animate-spin"/>
               </div>
             )}
           </>
@@ -991,15 +1069,13 @@ export default function InscriptionPage() {
       {phase==="welcome" && (
         <footer style={{
           position:"relative", zIndex:1, textAlign:"center",
-          padding:"0 24px 32px", color:MUTED, fontSize:12,
+          padding:"0 24px 28px", color:MUTED, fontSize:12,
         }}>
-          <Divider/>
-          <div style={{ marginTop:12 }}>
-            Tu es livreur ?{" "}
-            <Link href="/inscription/livreur" style={{ color:GOLD_D, fontWeight:800, textDecoration:"none" }}>
-              Rejoindre la plateforme →
-            </Link>
-          </div>
+          <div style={{ height:1, background:`linear-gradient(to right,transparent,${BORDER},transparent)`, margin:"0 auto 14px", maxWidth:400 }}/>
+          Tu es livreur ?{" "}
+          <Link href="/inscription/livreur" style={{ color:YELLOW, fontWeight:700, textDecoration:"none" }}>
+            Rejoindre la plateforme →
+          </Link>
         </footer>
       )}
     </div>
